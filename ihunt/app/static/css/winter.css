@@ -1,0 +1,30 @@
+@charset "utf-8";
+
+#arrows {
+	background-image: url(../images/winter/arrow_left.png), url(../images/winter/arrow_right.png);
+}
+
+#banner_top {
+	background-image: url(../images/winter/banner_top.png);
+}
+
+#banner_bottom {
+	background-image: url(../images/winter/banner_bottom.png);
+}
+
+#nav_user {
+	background-image: url(../images/winter/nav_bg.png);
+}
+
+ul#menu {
+	background:transparent url(../images/winter/navbar_bg.png) repeat-x top left;
+}
+
+ul#menu li a:hover
+{	
+	background:transparent url(../images/winter/navbar_bg.png) 0px -30px no-repeat;		
+}
+
+#team_table tbody tr:hover td{
+	border-bottom-color: #00D2E6;
+}

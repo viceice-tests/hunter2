@@ -1,0 +1,7 @@
+{% extends "base.html.tmpl" %}
+
+<form action="POST">
+	{% csrf_token %}
+	<input name="username" />
+	<input type="password" name="password" />
+</form>
