@@ -1,6 +1,19 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.db import models
 
+class Event(models.Model):
+    name = models.TextField(unique=True)
+    theme = models.TextField()
+    current = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return "<Event: {}>".format(self.name)
+
+    def clean(self):
+        if self.current:
+            if Event.objects.filter(current=True).count() > 0:
+                raise ValidationError("There can only be one current event")
 
 class Clue(models.Model):
     title = models.TextField(unique=True)
@@ -13,6 +26,7 @@ class Clue(models.Model):
 class ClueSet(models.Model):
     clues = models.ManyToManyField(Clue)
     start_date = models.DateTimeField()
+    event = models.ForeignKey(Event, related_name="cluesets")
 
 
 class Answer(models.Model):

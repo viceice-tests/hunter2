@@ -2,20 +2,19 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import datetime
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0003_guess'),
+        ('ihunt', '0001_initial'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='guess',
-            name='given',
-            field=models.DateTimeField(default=datetime.date(2014, 9, 14), auto_now_add=True),
-            preserve_default=False,
+            model_name='event',
+            name='current',
+            field=models.BooleanField(default=False),
+            preserve_default=True,
         ),
     ]

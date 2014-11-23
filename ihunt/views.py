@@ -1,7 +1,7 @@
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.contrib.auth import authenticate, login, logout, get_user
-from ihunt.app.models import Clue, Guess
+from ihunt.models import Clue, Guess, Event
 
 def render_with_context(request, *args, **kwargs):
     render_context = RequestContext(request)
@@ -13,10 +13,32 @@ def dumb_template(template_name):
         return render_with_context(request, template_name)
     return view_func
 
+def with_event(f):
+    """ Returns a wed function that receives an `event` kwarg """
+    class NoCurrentEventError(Exception):
+        pass
+    def view_func(request, event_id=None, *args, **kwargs):
+        event = None
+
+        if event_id is not None:
+            event = get_object_or_404(Event, pk=event_id)
+        else:
+            event = get_object_or_404(Event, current=True)
+
+        return f(request, event=event, *args, **kwargs)
+    return view_func
+
 index = dumb_template('index.html.tmpl')
 help = dumb_template('help.html.tmpl')
 faq = dumb_template('faq.html.tmpl')
 
+@with_event
+def test_view(request, event=None):
+    return render_with_context(
+        request, 
+        'test.html.tmpl',
+        {'event': event}
+    )
 
 def hunt(request):
     clue = Clue.objects.all()[0]

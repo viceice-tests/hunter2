@@ -1,13 +1,13 @@
 from django.conf.urls import patterns, include, url
-from django.conf.urls.static import static
-from django.contrib import admin
 
-from ihunt.app.urls import urlpatterns as app_patterns
+import ihunt.views
 
 urlpatterns = patterns('',
-    # Examples:
-    # url(r'^$', 'ihunt.views.home', name='home'),
-    # url(r'^blog/', include('blog.urls')),
-
-    url(r'^admin/', include(admin.site.urls)),
-) + app_patterns + static('/static/', document_root='static')
+    url(r'^hunt$', ihunt.views.hunt, name="hunt"),
+    url(r'^help$', ihunt.views.help, name="help"),
+    url(r'^faq$', ihunt.views.faq, name="faq"),
+    url(r'^login$', ihunt.views.login_view, name="login"),
+    url(r'^logout$', ihunt.views.logout_view, name="logout"),
+    url(r'^(event/(?P<event_id>[0-9]+)/)?test$', ihunt.views.test_view, name="test"),
+    url(r'^$', ihunt.views.index, name="index"),
+)

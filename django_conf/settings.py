@@ -42,7 +42,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'ihunt.app',
+    'ihunt',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -55,9 +55,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'ihunt.urls'
+ROOT_URLCONF = 'django_conf.urls'
 
-WSGI_APPLICATION = 'ihunt.wsgi.application'
+WSGI_APPLICATION = 'django_conf.wsgi.application'
 
 
 # Database

@@ -1,6 +1,6 @@
 from django.contrib import admin
 import django.contrib.auth.models as admin_model
-from ihunt.app.models import Clue, ClueSet, Answer, Guess, Team, UserProfile
+from ihunt.models import Clue, ClueSet, Event, Answer, Guess, Team, UserProfile
 
 class AnswerInline(admin.TabularInline):
     model = Answer
@@ -10,13 +10,15 @@ class GuessInline(admin.TabularInline):
     model = Guess
     readonly_fields = ('guess','given')
 
+class EventAdmin(admin.ModelAdmin):
+    pass
+
 class ClueSetAdmin(admin.ModelAdmin):
     pass
 
 class ClueAdmin(admin.ModelAdmin):
     inlines = [
         AnswerInline,
-        GuessInline
     ]
 
 class UserInline(admin.TabularInline):
@@ -37,3 +39,4 @@ class TeamAdmin(admin.ModelAdmin):
 admin.site.register(ClueSet, ClueSetAdmin)
 admin.site.register(Clue, ClueAdmin)
 admin.site.register(Team, TeamAdmin)
+admin.site.register(Event, EventAdmin)
