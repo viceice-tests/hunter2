@@ -1,17 +1,21 @@
+from django.contrib.auth import authenticate, login, logout, get_user
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
-from django.contrib.auth import authenticate, login, logout, get_user
+from django.utils import timezone
 from ihunt.models import Clue, Guess, Event
+
 
 def render_with_context(request, *args, **kwargs):
     render_context = RequestContext(request)
     return render_to_response(*args, context_instance=render_context, **kwargs)
+
 
 def dumb_template(template_name):
     """ Returns a view function that renders the template """
     def view_func(request):
         return render_with_context(request, template_name)
     return view_func
+
 
 def with_event(f):
     """ Returns a wed function that receives an `event` kwarg """
@@ -28,19 +32,26 @@ def with_event(f):
         return f(request, event=event, *args, **kwargs)
     return view_func
 
+
 index = dumb_template('index.html.tmpl')
 help = dumb_template('help.html.tmpl')
 faq = dumb_template('faq.html.tmpl')
 
+
 @with_event
 def test_view(request, event=None):
     return render_with_context(
-        request, 
+        request,
         'test.html.tmpl',
         {'event': event}
     )
 
-def hunt(request):
+
+@with_event
+def hunt(request, event=None):
+    now = timezone.now()
+    cluesets = list(event.cluesets.filter(start_date__lt=now).order_by('start_date'))
+
     clue = Clue.objects.all()[0]
     if request.method == 'GET':
         return render_with_context(
@@ -63,6 +74,7 @@ def hunt(request):
             {'clue': clue}
         )
 
+
 def login_view(request):
     if request.method == 'GET':
         return render_with_context(request, "login.html.tmpl")
@@ -74,6 +86,7 @@ def login_view(request):
             login(request, user)
             return redirect('index')
         return render_with_context(request, "login.html.tmpl", {'flash': 'Invalid login'})
+
 
 def logout_view(request):
     if request.user.is_authenticated():
