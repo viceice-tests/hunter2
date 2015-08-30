@@ -1,5 +1,5 @@
 from django.contrib import admin
-import django.contrib.auth.models as admin_model
+from ihunt.forms import UserProfileForm
 from ihunt.models import Clue, ClueSet, Event, Answer, Guess, Team, UserProfile
 
 class AnswerInline(admin.TabularInline):
@@ -21,14 +21,13 @@ class ClueAdmin(admin.ModelAdmin):
         AnswerInline,
     ]
 
-class UserInline(admin.TabularInline):
-    model = UserProfile
+class UserProfileAdmin(admin.ModelAdmin):
+    form = UserProfileForm
 
 class TeamAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'get_users',
-        'current_clue'
     )
 
     def get_users(self, obj):
@@ -36,7 +35,8 @@ class TeamAdmin(admin.ModelAdmin):
     get_users.short_description = 'Users'
 
 
-admin.site.register(ClueSet, ClueSetAdmin)
 admin.site.register(Clue, ClueAdmin)
-admin.site.register(Team, TeamAdmin)
+admin.site.register(ClueSet, ClueSetAdmin)
 admin.site.register(Event, EventAdmin)
+admin.site.register(Team, TeamAdmin)
+admin.site.register(UserProfile, UserProfileAdmin)

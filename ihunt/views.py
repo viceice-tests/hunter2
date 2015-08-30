@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login, logout, get_user
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.utils import timezone
@@ -47,31 +48,47 @@ def test_view(request, event=None):
     )
 
 
+@login_required
 @with_event
 def hunt(request, event=None):
+    user = request.user.profile
+    print(user)
     now = timezone.now()
     cluesets = list(event.cluesets.filter(start_date__lt=now).order_by('start_date'))
+    clue = None
 
-    clue = Clue.objects.all()[0]
-    if request.method == 'GET':
+    for cs in cluesets:
+        for c in cs.clues.all():
+            if not answered(c):
+                clue = c
+                break
+
+    if clue is not None:
+        if request.method == 'GET':
+            return render_with_context(
+                request,
+                "hunt.html.tmpl",
+                {'clue': clue}
+            )
+        elif request.method == 'POST':
+            given_answer = request.POST['answer']
+            guess = Guess(
+                guess=given_answer,
+                for_clue=clue,
+                by = get_user(request).profile
+            )
+            guess.save()
+            matching_answers = clue.answer_set.filter(answer__iexact=given_answer).count()
+            return render_with_context(
+                request,
+                "hunt.html.tmpl",
+                {'clue': clue}
+            )
+    else:
         return render_with_context(
             request,
-            "hunt.html.tmpl",
-            {'clue': clue}
-        )
-    elif request.method == 'POST':
-        given_answer = request.POST['answer']
-        guess = Guess(
-            guess=given_answer,
-            for_clue=clue,
-            by = get_user(request).profile
-        )
-        guess.save()
-        matching_answers = clue.answer_set.filter(answer__iexact=given_answer).count()
-        return render_with_context(
-            request,
-            "hunt.html.tmpl",
-            {'clue': clue}
+            "done.html.tmpl",
+            {}
         )
 
 

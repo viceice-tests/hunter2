@@ -1,5 +1,4 @@
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from sortedm2m.fields import SortedManyToManyField
@@ -16,9 +15,8 @@ class Event(models.Model):
         return "<Event: {}>".format(self.name)
 
     def clean(self):
-        if self.current:
-            if Event.objects.filter(current=True).count() > 0:
-                raise ValidationError("There can only be one current event")
+        if self.current and Event.objects.filter(current=True).count() > 0:
+            raise ValidationError("There can only be one current event")
 
 
 @python_2_unicode_compatible
@@ -37,7 +35,6 @@ class ClueSet(models.Model):
     event = models.ForeignKey(Event, related_name="cluesets")
 
     def __str__(self):
-        print(self.start_date.timetuple())
         return "<ClueSet: {} - {}>".format(self.event.name, strftime('%A %H:%M', self.start_date.timetuple()))
 
 
@@ -53,8 +50,7 @@ class Answer(models.Model):
 @python_2_unicode_compatible
 class Team(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    current_clue = models.ForeignKey(Clue)
-    current_clueset = models.ForeignKey(ClueSet)
+    at_event = models.ForeignKey(Event, related_name="event")
 
     def __str__(self):
         return "<Team: {}>".format(self.name)
@@ -67,10 +63,11 @@ class Team(models.Model):
 @python_2_unicode_compatible
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile")
-    team = models.ForeignKey(Team, related_name="users")
+    teams = models.ManyToManyField(Team, blank=True, related_name="users")
 
     def __str__(self):
         return "<UserProfile: {}>".format(self.user.username)
+
 
 @python_2_unicode_compatible
 class Guess(models.Model):
@@ -82,3 +79,9 @@ class Guess(models.Model):
     def __str__(self):
         return "<Guess: {} by {} ({})>".format(
             self.guess, self.by.user.username, self.by.team.name)
+
+    def is_right():
+        for answer in for_clue.Answer_set:
+            if answer == guess:
+                return True
+        return False
