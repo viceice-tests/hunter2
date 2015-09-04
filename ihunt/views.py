@@ -54,7 +54,7 @@ def hunt(request, event=None):
     user = request.user.profile
     print(user)
     now = timezone.now()
-    cluesets = list(event.cluesets.filter(start_date__lt=now).order_by('start_date'))
+    clues = list(event.clues.filter(clueset__start_date__lt=now).order_by('start_date'))
     clue = None
 
     for cs in cluesets:
