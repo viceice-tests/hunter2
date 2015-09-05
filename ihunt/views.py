@@ -22,6 +22,7 @@ def with_event(f):
     """ Returns a wed function that receives an `event` kwarg """
     class NoCurrentEventError(Exception):
         pass
+
     def view_func(request, event_id=None, *args, **kwargs):
         event = None
 
@@ -54,7 +55,9 @@ def hunt(request, event=None):
     user = request.user.profile
     print(user)
     now = timezone.now()
-    clues = list(event.clues.filter(clueset__start_date__lt=now).order_by('start_date'))
+    clues = list(
+        event.clues.filter(clueset__start_date__lt=now).order_by('start_date')
+    )
     clue = None
 
     for cs in cluesets:
@@ -75,10 +78,12 @@ def hunt(request, event=None):
             guess = Guess(
                 guess=given_answer,
                 for_clue=clue,
-                by = get_user(request).profile
+                by=get_user(request).profile
             )
             guess.save()
-            matching_answers = clue.answer_set.filter(answer__iexact=given_answer).count()
+            matching_answers = clue.answer_set.filter(
+                answer__iexact=given_answer
+            ).count()
             return render_with_context(
                 request,
                 "hunt.html.tmpl",
@@ -102,7 +107,9 @@ def login_view(request):
         if user is not None and user.is_active:
             login(request, user)
             return redirect('index')
-        return render_with_context(request, "login.html.tmpl", {'flash': 'Invalid login'})
+        return render_with_context(
+            request, "login.html.tmpl", {'flash': 'Invalid login'}
+        )
 
 
 def logout_view(request):

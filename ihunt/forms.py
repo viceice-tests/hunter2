@@ -13,5 +13,7 @@ class UserProfileForm(forms.ModelForm):
         print(self.cleaned_data['teams'])
         for team in self.cleaned_data['teams']:
             if team.at_event in events:
-                raise ValidationError("Cannot join multiple teams at the same event")
+                raise ValidationError(
+                    "Cannot join multiple teams at the same event"
+                )
             events.add(team.at_event)

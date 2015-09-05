@@ -2,11 +2,13 @@ from django.conf.urls import patterns, include, url
 
 import ihunt.views
 
-eventpatterns = patterns('',
+eventpatterns = patterns(
+    '',
     url(r'test$', ihunt.views.test_view, name='test'),
 )
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url(r'^hunt$', ihunt.views.hunt, name="hunt"),
     url(r'^help$', ihunt.views.help, name="help"),
     url(r'^faq$', ihunt.views.faq, name="faq"),

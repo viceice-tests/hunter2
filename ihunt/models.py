@@ -35,7 +35,9 @@ class ClueSet(models.Model):
     event = models.ForeignKey(Event, related_name="cluesets")
 
     def __str__(self):
-        return "<ClueSet: {} - {}>".format(self.event.name, strftime('%A %H:%M', self.start_date.timetuple()))
+        return "<ClueSet: {} - {}>".format(
+            self.event.name, strftime('%A %H:%M', self.start_date.timetuple())
+        )
 
 
 @python_2_unicode_compatible
