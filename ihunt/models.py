@@ -51,7 +51,10 @@ class Answer(models.Model):
 
 @python_2_unicode_compatible
 class Team(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    class Meta:
+        unique_together = (('name', 'at_event'), )
+
+    name = models.CharField(max_length=100)
     at_event = models.ForeignKey(Event, related_name="event")
 
     def __str__(self):
