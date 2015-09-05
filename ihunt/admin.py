@@ -32,14 +32,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 
 class TeamAdmin(admin.ModelAdmin):
-    list_display = (
-        'name',
-        'get_users',
-    )
-
-    def get_users(self, obj):
-        return obj.users.all()
-    get_users.short_description = 'Users'
+    pass
 
 
 admin.site.register(Clue, ClueAdmin)

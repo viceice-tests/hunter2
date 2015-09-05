@@ -58,7 +58,7 @@ class Team(models.Model):
     at_event = models.ForeignKey(Event, related_name="event")
 
     def __str__(self):
-        return "<Team: {}>".format(self.name)
+        return "<Team: {} @{}>".format(self.name, self.at_event.name)
 
     def add_user(self, user):
         user.team = self
