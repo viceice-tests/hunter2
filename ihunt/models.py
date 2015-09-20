@@ -30,7 +30,7 @@ class Puzzle(models.Model):
 
 @python_2_unicode_compatible
 class PuzzleSet(models.Model):
-    puzzles = SortedManyToManyField(Puzzle)
+    puzzles = SortedManyToManyField(Puzzle, blank=True)
     start_date = models.DateTimeField()
     event = models.ForeignKey(Event, related_name='puzzlesets')
 
