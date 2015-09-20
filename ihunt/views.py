@@ -4,7 +4,7 @@ from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.utils import timezone
 from ihunt.models import Event, Guess, Puzzle, PuzzleSet
-from ihunt.utils import answered, current_puzzle
+from ihunt.utils import answered, current_puzzle, with_event
 
 
 def render_with_context(request, *args, **kwargs):
@@ -16,23 +16,6 @@ def dumb_template(template_name):
     """ Returns a view function that renders the template """
     def view_func(request):
         return render_with_context(request, template_name)
-    return view_func
-
-
-def with_event(f):
-    """ Returns a wed function that receives an `event` kwarg """
-    class NoCurrentEventError(Exception):
-        pass
-
-    def view_func(request, event_id=None, *args, **kwargs):
-        event = None
-
-        if event_id is not None:
-            event = get_object_or_404(Event, pk=event_id)
-        else:
-            event = get_object_or_404(Event, current=True)
-
-        return f(request, event=event, *args, **kwargs)
     return view_func
 
 

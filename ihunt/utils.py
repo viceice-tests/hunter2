@@ -1,4 +1,5 @@
-from ihunt.models import Guess
+from django.shortcuts import get_object_or_404
+from ihunt.models import Event, Guess
 
 
 def answered(puzzle, team):
@@ -18,3 +19,20 @@ def current_puzzle(puzzlesets, team):
             if not answered(c, team):
                 return c
     return None
+
+
+def with_event(f):
+    """ Returns a wed function that receives an `event` kwarg """
+    class NoCurrentEventError(Exception):
+        pass
+
+    def view_func(request, event_id=None, *args, **kwargs):
+        event = None
+
+        if event_id is not None:
+            event = get_object_or_404(Event, pk=event_id)
+        else:
+            event = get_object_or_404(Event, current=True)
+
+        return f(request, event=event, *args, **kwargs)
+    return view_func
