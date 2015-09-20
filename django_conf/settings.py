@@ -27,6 +27,7 @@ TEMPLATE_DEBUG = True
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.auth.context_processors.auth',
     'django.core.context_processors.request',
+    'ihunt.context_processors.event_team',
 )
 
 ALLOWED_HOSTS = []

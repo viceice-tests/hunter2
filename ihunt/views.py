@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.utils import timezone
-from ihunt.models import Puzzle, Guess, Event
+from ihunt.models import Event, Guess, Puzzle, PuzzleSet
 from ihunt.utils import answered, current_puzzle
 
 
@@ -41,8 +41,19 @@ help = dumb_template('help.html.tmpl')
 faq = dumb_template('faq.html.tmpl')
 
 
+@login_required
 @with_event
+def puzzle(request, puzzle_id, event=None):
+    user = request.user.profile
 
+    puzzle = get_object_or_404(Puzzle, pk=puzzle_id)
+    puzzleset = get_object_or_404(PuzzleSet, puzzles=puzzle, event=event)
+
+    return render_with_context(
+        request,
+        'puzzle.html.tmpl',
+        {'puzzle': puzzle}
+    )
 
 @login_required
 @with_event
@@ -70,25 +81,25 @@ def hunt(request, event=None):
                 if puzzle is None:
                     return render_with_context(
                         request,
-                        "done.html.tmpl",
+                        'done.html.tmpl',
                         {}
                     )
         return render_with_context(
             request,
-            "hunt.html.tmpl",
-            {'puzzle': puzzle}
+            'puzzle.html.tmpl',
+            {'puzzle': puzzle},
         )
     else:
         return render_with_context(
             request,
-            "done.html.tmpl",
-            {}
+            'done.html.tmpl',
+            {},
         )
 
 
 def login_view(request):
     if request.method == 'GET':
-        return render_with_context(request, "login.html.tmpl")
+        return render_with_context(request, 'login.html.tmpl')
     elif request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
@@ -97,7 +108,7 @@ def login_view(request):
             login(request, user)
             return redirect('index')
         return render_with_context(
-            request, "login.html.tmpl", {'flash': 'Invalid login'}
+            request, 'login.html.tmpl', {'flash': 'Invalid login'}
         )
 
 
