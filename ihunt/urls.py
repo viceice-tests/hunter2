@@ -4,7 +4,6 @@ import ihunt.views
 
 eventpatterns = patterns(
     '',
-    url(r'test$', ihunt.views.test_view, name='test'),
 )
 
 urlpatterns = patterns(

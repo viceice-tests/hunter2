@@ -42,12 +42,6 @@ faq = dumb_template('faq.html.tmpl')
 
 
 @with_event
-def test_view(request, event=None):
-    return render_with_context(
-        request,
-        'test.html.tmpl',
-        {'event': event}
-    )
 
 
 @login_required
