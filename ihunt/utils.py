@@ -1,20 +1,20 @@
 from ihunt.models import Guess
 
 
-def answered(clue, team):
+def answered(puzzle, team):
     guesses = Guess.objects.filter(
         by__in=team.users.all()
     ).filter(
-        for_clue=clue
+        for_puzzle=puzzle
     ).filter(
-        guess__in=clue.answers.values('answer')
+        guess__in=puzzle.answers.values('answer')
     )
     return len(guesses) > 0
 
 
-def current_clue(cluesets, team):
-    for cs in cluesets:
-        for c in cs.clues.all():
+def current_puzzle(puzzlesets, team):
+    for cs in puzzlesets:
+        for c in cs.puzzles.all():
             if not answered(c, team):
                 return c
     return None

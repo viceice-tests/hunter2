@@ -3,8 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.utils import timezone
-from ihunt.models import Clue, Guess, Event
-from ihunt.utils import answered, current_clue
+from ihunt.models import Puzzle, Guess, Event
+from ihunt.utils import answered, current_puzzle
 
 
 def render_with_context(request, *args, **kwargs):
@@ -57,23 +57,23 @@ def hunt(request, event=None):
     team = user.teams.get(at_event=event)
 
     now = timezone.now()
-    cluesets = list(
-        event.cluesets.filter(start_date__lt=now).order_by('start_date')
+    puzzlesets = list(
+        event.puzzlesets.filter(start_date__lt=now).order_by('start_date')
     )
-    clue = current_clue(cluesets, team)
+    puzzle = current_puzzle(puzzlesets, team)
 
-    if clue is not None:
+    if puzzle is not None:
         if request.method == 'POST':
             given_answer = request.POST['answer']
             guess = Guess(
                 guess=given_answer,
-                for_clue=clue,
+                for_puzzle=puzzle,
                 by=get_user(request).profile
             )
             guess.save()
-            if answered(clue, team):
-                clue = current_clue(cluesets, team)
-                if clue is None:
+            if answered(puzzle, team):
+                puzzle = current_puzzle(puzzlesets, team)
+                if puzzle is None:
                     return render_with_context(
                         request,
                         "done.html.tmpl",
@@ -82,7 +82,7 @@ def hunt(request, event=None):
         return render_with_context(
             request,
             "hunt.html.tmpl",
-            {'clue': clue}
+            {'puzzle': puzzle}
         )
     else:
         return render_with_context(

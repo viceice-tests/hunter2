@@ -20,29 +20,29 @@ class Event(models.Model):
 
 
 @python_2_unicode_compatible
-class Clue(models.Model):
+class Puzzle(models.Model):
     title = models.TextField(unique=True)
     content = models.TextField()
 
     def __str__(self):
-        return '<Clue: {}>'.format(self.title)
+        return '<Puzzle: {}>'.format(self.title)
 
 
 @python_2_unicode_compatible
-class ClueSet(models.Model):
-    clues = SortedManyToManyField(Clue)
+class PuzzleSet(models.Model):
+    puzzles = SortedManyToManyField(Puzzle)
     start_date = models.DateTimeField()
-    event = models.ForeignKey(Event, related_name='cluesets')
+    event = models.ForeignKey(Event, related_name='puzzlesets')
 
     def __str__(self):
-        return '<ClueSet: {} - {}>'.format(
+        return '<PuzzleSet: {} - {}>'.format(
             self.event.name, strftime('%A %H:%M', self.start_date.timetuple())
         )
 
 
 @python_2_unicode_compatible
 class Answer(models.Model):
-    for_clue = models.ForeignKey(Clue, related_name='answers')
+    for_puzzle = models.ForeignKey(Puzzle, related_name='answers')
     answer = models.TextField()
 
     def __str__(self):
@@ -79,7 +79,7 @@ class UserProfile(models.Model):
 
 @python_2_unicode_compatible
 class Guess(models.Model):
-    for_clue = models.ForeignKey(Clue)
+    for_puzzle = models.ForeignKey(Puzzle)
     by = models.ForeignKey(UserProfile)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
@@ -93,7 +93,7 @@ class Guess(models.Model):
         )
 
     def is_right():
-        for answer in for_clue.Answer_set:
+        for answer in for_puzzle.Answer_set:
             if answer == guess:
                 return True
         return False
