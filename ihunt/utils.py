@@ -27,12 +27,10 @@ def with_event(f):
         pass
 
     def view_func(request, event_id=None, *args, **kwargs):
-        event = None
-
         if event_id is not None:
             event = get_object_or_404(Event, pk=event_id)
         else:
-            event = get_object_or_404(Event, current=True)
+            event = Event.objects.filter(current=True).first()
 
         return f(request, event=event, *args, **kwargs)
     return view_func
