@@ -41,6 +41,25 @@ class PuzzleSet(models.Model):
 
 
 @python_2_unicode_compatible
+class Clue(models.Model):
+    puzzle = models.ForeignKey(Puzzle, related_name='clue')
+    text = models.TextField()
+    time = models.DurationField()
+
+
+@python_2_unicode_compatible
+class Unlock(models.Model):
+    puzzle = models.ForeignKey(Puzzle, related_name='unlock')
+    text = models.TextField()
+
+
+@python_2_unicode_compatible
+class UnlockGuess(models.Model):
+    unlock = models.ForeignKey(Unlock, related_name='guess')
+    guess = models.TextField()
+
+
+@python_2_unicode_compatible
 class Answer(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, related_name='answers')
     answer = models.TextField()
@@ -55,7 +74,7 @@ class Team(models.Model):
         unique_together = (('name', 'at_event'), )
 
     name = models.CharField(max_length=100)
-    at_event = models.ForeignKey(Event, related_name='event')
+    at_event = models.ForeignKey(Event, related_name='teams')
 
     def __str__(self):
         return '<Team: {} @{}>'.format(self.name, self.at_event.name)
