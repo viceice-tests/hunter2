@@ -42,15 +42,21 @@ class PuzzleSet(models.Model):
 
 @python_2_unicode_compatible
 class Clue(models.Model):
-    puzzle = models.ForeignKey(Puzzle, related_name='clue')
+    puzzle = models.ForeignKey(Puzzle)
     text = models.TextField()
+
+    class Meta:
+        abstract = True
+
+
+@python_2_unicode_compatible
+class Hint(Clue):
     time = models.DurationField()
 
 
 @python_2_unicode_compatible
-class Unlock(models.Model):
-    puzzle = models.ForeignKey(Puzzle, related_name='unlock')
-    text = models.TextField()
+class Unlock(Clue):
+    pass
 
 
 @python_2_unicode_compatible

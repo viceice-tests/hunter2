@@ -1,16 +1,38 @@
 from django.contrib import admin
 from ihunt.forms import UserProfileForm
-from ihunt.models import Puzzle, PuzzleSet, Event, Answer, Guess, Team, UserProfile
+from ihunt.models import Puzzle, PuzzleSet, Hint, Unlock, UnlockGuess, Event, Answer, Guess, Team, UserProfile
+from nested_admin import NestedAdmin, NestedStackedInline
 
 
 class AnswerInline(admin.TabularInline):
     model = Answer
     fields = ('answer',)
+    extra = 0
 
 
-class PuzzleAdmin(admin.ModelAdmin):
+class HintInline(admin.TabularInline):
+    model = Hint
+    extra = 0
+
+
+class UnlockGuessInline(NestedStackedInline):
+    model = UnlockGuess
+    extra = 0
+
+
+class UnlockInline(NestedStackedInline):
+    model = Unlock
+    inlines = [
+        UnlockGuessInline,
+    ]
+    extra = 0
+
+
+class PuzzleAdmin(NestedAdmin):
     inlines = [
         AnswerInline,
+        HintInline,
+        UnlockInline,
     ]
 
 
