@@ -1,31 +1,39 @@
 from django.contrib import admin
+from ihunt import models
 from ihunt.forms import UserProfileForm
-from ihunt.models import Puzzle, PuzzleSet, Hint, Unlock, UnlockGuess, Event, Answer, Guess, Team, UserProfile
 from nested_admin import NestedAdmin, NestedStackedInline
 
 
 class AnswerInline(admin.TabularInline):
-    model = Answer
+    model = models.Answer
     fields = ('answer',)
     extra = 0
 
 
 class HintInline(admin.TabularInline):
-    model = Hint
+    model = models.Hint
     extra = 0
 
 
 class UnlockGuessInline(NestedStackedInline):
-    model = UnlockGuess
+    model = models.UnlockGuess
     extra = 0
 
 
 class UnlockInline(NestedStackedInline):
-    model = Unlock
+    model = models.Unlock
     inlines = [
         UnlockGuessInline,
     ]
     extra = 0
+
+
+class EventAdmin(admin.ModelAdmin):
+    pass
+
+
+class GuessAdmin(admin.ModelAdmin):
+    pass
 
 
 class PuzzleAdmin(NestedAdmin):
@@ -40,15 +48,11 @@ class PuzzleSetAdmin(admin.ModelAdmin):
     pass
 
 
-class GuessAdmin(admin.ModelAdmin):
-    pass
-
-
-class EventAdmin(admin.ModelAdmin):
-    pass
-
-
 class TeamAdmin(admin.ModelAdmin):
+    pass
+
+
+class ThemeAdmin(admin.ModelAdmin):
     pass
 
 
@@ -56,9 +60,10 @@ class UserProfileAdmin(admin.ModelAdmin):
     form = UserProfileForm
 
 
-admin.site.register(Puzzle, PuzzleAdmin)
-admin.site.register(PuzzleSet, PuzzleSetAdmin)
-admin.site.register(Event, EventAdmin)
-admin.site.register(Guess, GuessAdmin)
-admin.site.register(Team, TeamAdmin)
-admin.site.register(UserProfile, UserProfileAdmin)
+admin.site.register(models.Event, EventAdmin)
+admin.site.register(models.Guess, GuessAdmin)
+admin.site.register(models.Puzzle, PuzzleAdmin)
+admin.site.register(models.PuzzleSet, PuzzleSetAdmin)
+admin.site.register(models.Team, TeamAdmin)
+admin.site.register(models.Theme, ThemeAdmin)
+admin.site.register(models.UserProfile, UserProfileAdmin)

@@ -5,10 +5,14 @@ from sortedm2m.fields import SortedManyToManyField
 from time import strftime
 
 
+@python_2_unicode_compatible
 class Theme(models.Model):
     name = models.CharField(max_length=255, unique=True)
-    script = models.TextField()
-    style = models.TextField()
+    script = models.TextField(blank=True)
+    style = models.TextField(blank=True)
+
+    def __str__(self):
+        return '<Theme: {}>'.format(self.name)
 
 
 @python_2_unicode_compatible
