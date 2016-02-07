@@ -1,0 +1,9 @@
+{% extends "base.html.tmpl" %}
+
+{% if event.theme %}
+{% block style %}{{ eventtheme.style }}{% endblock %}
+{% endif %}
+
+{% if event.theme.script %}
+{% block script %}{{ eventtheme.script }}{% endblock %}
+{% endif %}

@@ -1,15 +1,13 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 
 import ihunt.views
 
-eventpatterns = patterns(
-    '',
+eventpatterns = [
     url(r'hunt$', ihunt.views.hunt, name='hunt'),
     url(r'puzzle/(?P<puzzle_id>[0-9]+)$', ihunt.views.puzzle, name='puzzle'),
-)
+]
 
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     url(r'^event/(?P<event_id>[0-9]+)/', include(eventpatterns)),
     url(r'^faq$', ihunt.views.faq, name='faq'),
     url(r'^help$', ihunt.views.help, name='help'),
@@ -17,4 +15,4 @@ urlpatterns = patterns(
     url(r'^logout$', ihunt.views.logout_view, name='logout'),
     url(r'', include(eventpatterns)),
     url(r'^$', ihunt.views.index, name='index'),
-)
+]

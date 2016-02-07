@@ -5,10 +5,16 @@ from sortedm2m.fields import SortedManyToManyField
 from time import strftime
 
 
+class Theme(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    script = models.TextField()
+    style = models.TextField()
+
+
 @python_2_unicode_compatible
 class Event(models.Model):
-    name = models.TextField(unique=True)
-    theme = models.TextField()
+    name = models.CharField(max_length=255, unique=True)
+    theme = models.ForeignKey(Theme, related_name='theme')
     current = models.BooleanField(default=False)
 
     def __str__(self):
@@ -40,7 +46,6 @@ class PuzzleSet(models.Model):
         )
 
 
-@python_2_unicode_compatible
 class Clue(models.Model):
     puzzle = models.ForeignKey(Puzzle)
     text = models.TextField()
@@ -49,17 +54,14 @@ class Clue(models.Model):
         abstract = True
 
 
-@python_2_unicode_compatible
 class Hint(Clue):
     time = models.DurationField()
 
 
-@python_2_unicode_compatible
 class Unlock(Clue):
     pass
 
 
-@python_2_unicode_compatible
 class UnlockGuess(models.Model):
     unlock = models.ForeignKey(Unlock, related_name='guess')
     guess = models.TextField()
