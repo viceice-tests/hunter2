@@ -3,15 +3,22 @@
 	<head>
 		<title>The iHunt</title>
 		<meta charset="UTF-8">
-		<link rel="stylesheet" href="/static/css/style.css" type="text/css" />
+
+		<link rel="stylesheet" href="{% static "ihunt/jquery-ui-1.11.4/jquery-ui.min.css" %}" type="text/css" />
+		<script src="{% static "ihunt/jquery-ui-1.11.4/external/jquery/jquery.js" %}"></script>
+		<script src="{% static "ihunt/jquery-ui-1.11.4/jquery-ui.min.js" %}"></script>
+
+		<link rel="stylesheet" href="{% static "ihunt/css/base.css" %}" type="text/css" />
+		<script src="{% static "ihunt/js/base.js" %}"></script>
+
 		{% block style %}{% endblock %}
-		<script src="/static/js/jquery-2.2.0.js"></script>
 		{% block script %}{% endblock %}
 	</head>
 	<noscript>
 		You do not have JavaScript Enabled. JavaScript is required to access and take part in the iHunt.
 	</noscript>
 	<body>
+		{% block debug %}{% endblock %}
 		<div id="banner_top">
 		</div>
 		<div id="arrows">
