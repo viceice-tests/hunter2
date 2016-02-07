@@ -14,5 +14,6 @@ def event_team(request, event):
         team = None
 
     return {
+        'event': event,
         'team': team
     }

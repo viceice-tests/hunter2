@@ -1,9 +1,17 @@
 {% extends "base.html" %}
 
-{% if event.theme %}
-{% block style %}{{ eventtheme.style }}{% endblock %}
+{% block style %}{% spaceless %}
+{% if event.theme.style %}
+<style>{{ event.theme.style }}</style>
+{% else %}
+{{ block.super }}
 {% endif %}
+{% endspaceless %}{% endblock %}
 
+{% block script %}{% spaceless %}
 {% if event.theme.script %}
-{% block script %}{{ eventtheme.script }}{% endblock %}
+<script>{{ event.theme.script }}</script>
+{% else %}
+{{ block.super }}
 {% endif %}
+{% endspaceless %}{% endblock %}
