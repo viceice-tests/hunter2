@@ -14,9 +14,9 @@ def dumb_template(template_name):
     return view_func
 
 
-index = dumb_template('index.html.tmpl')
-help = dumb_template('help.html.tmpl')
-faq = dumb_template('faq.html.tmpl')
+index = dumb_template('index.html')
+help = dumb_template('help.html')
+faq = dumb_template('faq.html')
 
 
 @login_required
@@ -29,7 +29,7 @@ def puzzle(request, puzzle_id, event=None):
 
     return render(
         request,
-        'puzzle.html.tmpl',
+        'puzzle.html',
         {'puzzle': puzzle}
     )
 
@@ -59,25 +59,25 @@ def hunt(request, event=None):
                 if puzzle is None:
                     return render(
                         request,
-                        'done.html.tmpl',
+                        'done.html',
                         {}
                     )
         return render(
             request,
-            'puzzle.html.tmpl',
+            'puzzle.html',
             {'puzzle': puzzle},
         )
     else:
         return render(
             request,
-            'done.html.tmpl',
+            'done.html',
             {},
         )
 
 
 def login_view(request):
     if request.method == 'GET':
-        return render(request, 'login.html.tmpl')
+        return render(request, 'login.html')
     elif request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
@@ -86,7 +86,7 @@ def login_view(request):
             login(request, user)
             return redirect('index')
         return render(
-            request, 'login.html.tmpl', {'flash': 'Invalid login'}
+            request, 'login.html', {'flash': 'Invalid login'}
         )
 
 
