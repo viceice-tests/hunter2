@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from sortedm2m.fields import SortedManyToManyField
@@ -123,8 +124,8 @@ class Guess(models.Model):
             self.guess, self.by.user.username
         )
 
-    def is_right():
-        for answer in for_puzzle.Answer_set:
-            if answer == guess:
+    def is_right(self):
+        for answer in self.for_puzzle.Answer_set:
+            if answer == self.guess:
                 return True
         return False
