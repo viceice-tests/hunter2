@@ -1,7 +1,6 @@
 from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
-import nested_admin
 
 from ihunt.urls import urlpatterns as app_patterns
 
