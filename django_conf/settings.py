@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from django_conf import toolbar
+import debug_toolbar
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -21,6 +23,8 @@ SECRET_KEY = 'gqf223qekhjo3l#k@7hj=^w$k9$jow9yc193$%1co7tstt=s27'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+INTERNAL_IPS = ('192.168.99.1,')
 
 TEMPLATES = [
     {
@@ -55,12 +59,14 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'debug_toolbar',
     'nested_admin',
     'sortedm2m',
     'ihunt',
 )
 
 MIDDLEWARE_CLASSES = (
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -106,5 +112,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = 'static'
 
 LOGIN_URL = '/login'

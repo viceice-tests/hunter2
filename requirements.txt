@@ -1,4 +1,5 @@
 Django
 psycopg2
+django-debug-toolbar
 django-sortedm2m
 django-nested-admin
