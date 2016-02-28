@@ -8,6 +8,7 @@
 		<script src="https://code.jquery.com/jquery-2.2.1.min.js" integrity="sha384-f02fb76d6fc0adb5e29ec25db808e6f4eed6367b8e70ef81a24fd549c4588a46b0b6fcf864fae95ed19f2887b033d74a" crossorigin="anonymous"></script>
 
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous" />
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 
 		<link rel="stylesheet" href="{% static "ihunt/css/base.css" %}" type="text/css" />
@@ -20,6 +21,26 @@
 		You do not have JavaScript Enabled. JavaScript is required to access and take part in the iHunt.
 	</noscript>
 	<body>
+		<nav class="navbar navbar-default">
+			<div class="collapse navbar-collapse" id="site-navbar-collapse-1">
+				<ul class="nav navbar-nav navbar-right">
+					<li>
+						<a href="#">Register</a>
+					</li>
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navLogin">Login<span class="caret"></span></a>
+						<div class="dropdown-menu">
+							<form class="form" id="formLogin">
+								{% csrf_token %}
+								<input name="username" id="username" placeholder="Username" type="text" />
+								<input name="password" id="password" placeholder="Password" type="password" />
+								<button type="submit" id="btnLogin" class="btn">Login</button>
+							</form>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</nav>
 		{% block debug %}{% endblock %}
 		<div id="banner_top">
 		</div>
@@ -47,13 +68,6 @@
 							<button type="button" class="buttonInput" onclick="displayLightbox('New User Registraiton','inc/be/ajax/newUser.php?life=', 'GET', 710, 800);">Register</button>
 						</div>
 						<div class="align_right">
-							
-								<form name="ihunt_userLogin" method="POST" action="{% url "login" %}">
-								{% csrf_token %}
-								Username: <input name="username" type="text" class="textInput"  size="20" maxlength="30"/> 
-								Password: <input name="password" type="password" class="textInput" size="20" maxlength="40"/> <input class="buttonInput" type="submit" value="Submit"/>
-								</form>
-								
 						</div>
 					{% endif %}
 				</div>
