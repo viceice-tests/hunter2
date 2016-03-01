@@ -88,6 +88,5 @@ def login_view(request):
 
 
 def logout_view(request):
-    if request.user.is_authenticated():
-        logout(request)
+    logout(request)
     return redirect('index')
