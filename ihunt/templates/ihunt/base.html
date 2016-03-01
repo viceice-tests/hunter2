@@ -26,12 +26,17 @@
 		<nav class="navbar navbar-inverse">
 			<div class="container-fluid">
 				<div class="collapse navbar-collapse" id="site-navbar-collapse-1">
+					<ul class="nav navbar-nav">
+						{% block topbar %}{% endblock %}
+					</ul>
 					<ul class="nav navbar-nav navbar-right">
+						{% if request.user.is_authenticated %}
+						{% else %}
 						<li>
 							<a href="#">Register</a>
 						</li>
 						<li class="dropdown">
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navLogin">Login<span class="caret"></span></a>
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navLogin">Login<span class="caret" /></a>
 							<div class="dropdown-menu">
 								<div class="container-fluid">
 									<form class="form" id="formLogin">
@@ -43,6 +48,7 @@
 								</div>
 							</div>
 						</li>
+						{% endif %}
 					</ul>
 				</div>
 			</div>
@@ -57,7 +63,6 @@
 					<div id="inumber-2" style="background-image:url(/static/images/summer/2.png)"></div>
 				</div>
 				<div id="nav_user">
-					{% if request.user.is_authenticated %}
 						<div class="align_left">
 							<a href="{% url "logout" %}"><button type="button" class="buttonInput" >Logout</button></a>
 						</div>
@@ -69,13 +74,11 @@
 									<span id="userTeamName" style="font-weight: bold; color: #00CDCD;">{{ team.name }}</span>
 						</div>
 
-					{% else %}
 						<div class="align_left">
 							<button type="button" class="buttonInput" onclick="displayLightbox('New User Registraiton','inc/be/ajax/newUser.php?life=', 'GET', 710, 800);">Register</button>
 						</div>
 						<div class="align_right">
 						</div>
-					{% endif %}
 				</div>
 				<div id="nav_user2">
 					<ul id='menu'>
