@@ -1,4 +1,5 @@
 from django.conf.urls import include, url
+from django.views.generic import TemplateView
 
 import ihunt.views
 
@@ -9,10 +10,10 @@ eventpatterns = [
 
 urlpatterns = [
     url(r'^event/(?P<event_id>[0-9]+)/', include(eventpatterns)),
-    url(r'^faq$', ihunt.views.faq, name='faq'),
-    url(r'^help$', ihunt.views.help, name='help'),
+    url(r'^$', TemplateView.as_view(template_name="ihunt/index.html"), name='index'),
+    url(r'^faq$', TemplateView.as_view(template_name="ihunt/faq.html"), name='faq'),
+    url(r'^help$', TemplateView.as_view(template_name="ihunt/help.html"), name='help'),
     url(r'^login$', ihunt.views.login_view, name='login'),
     url(r'^logout$', ihunt.views.logout_view, name='logout'),
     url(r'', include(eventpatterns)),
-    url(r'^$', ihunt.views.index, name='index'),
 ]

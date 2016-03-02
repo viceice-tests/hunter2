@@ -6,18 +6,6 @@ from ihunt.models import Guess, Puzzle
 from ihunt.utils import answered, current_puzzle, with_event
 
 
-def dumb_template(template_name):
-    """ Returns a view function that renders the template """
-    def view_func(request):
-        return render(request, template_name)
-    return view_func
-
-
-index = dumb_template('ihunt/index.html')
-help = dumb_template('ihunt/help.html')
-faq = dumb_template('ihunt/faq.html')
-
-
 @login_required
 @with_event
 def puzzle(request, puzzle_id, event=None):
