@@ -1,4 +1,5 @@
 from django.conf.urls import include, url
+from django.contrib.auth.views import logout
 from django.views.generic import TemplateView
 
 import ihunt.views
@@ -14,6 +15,6 @@ urlpatterns = [
     url(r'^faq$', TemplateView.as_view(template_name="ihunt/faq.html"), name='faq'),
     url(r'^help$', TemplateView.as_view(template_name="ihunt/help.html"), name='help'),
     url(r'^login$', ihunt.views.login_view, name='login'),
-    url(r'^logout$', ihunt.views.logout_view, name='logout'),
+    url(r'^logout$', logout, name='logout'),
     url(r'', include(eventpatterns)),
 ]
