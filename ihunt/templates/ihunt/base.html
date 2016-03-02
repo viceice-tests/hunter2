@@ -13,8 +13,8 @@
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous" />
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 
-		<link rel="stylesheet" href="{% static "ihunt/css/base.css" %}" type="text/css" />
-		<script src="{% static "ihunt/js/base.js" %}"></script>
+		<link rel="stylesheet" href="{% static 'ihunt/css/base.css' %}" type="text/css" />
+		<script src="{% static 'ihunt/js/base.js' %}"></script>
 
 		{% block style %}{% endblock %}
 		{% block script %}{% endblock %}
@@ -68,34 +68,11 @@
 					<div id="inumber-1" style="background-image:url(/static/images/summer/5.png)"></div>
 					<div id="inumber-2" style="background-image:url(/static/images/summer/2.png)"></div>
 				</div>
-				<div id="nav_user">
-						<div class="align_left">
-							<a href="{% url "logout" %}"><button type="button" class="buttonInput" >Logout</button></a>
-						</div>
-						<div class="align_right">
-								Logged in as:
-									<span style="font-weight: bold; color: #FFB272;">{{ request.user.username }}&nbsp;</span>
-								<br />
-								Team:
-									<span id="userTeamName" style="font-weight: bold; color: #00CDCD;">{{ team.name }}</span>
-						</div>
-
-						<div class="align_left">
-							<button type="button" class="buttonInput" onclick="displayLightbox('New User Registraiton','inc/be/ajax/newUser.php?life=', 'GET', 710, 800);">Register</button>
-						</div>
-						<div class="align_right">
-						</div>
-				</div>
 				<div id="nav_user2">
 					<ul id='menu'>
-						<li class="button"><a href='{% url "index" %}'>Home</a></li>
-						<li class="button"><a href='{% url "help" %}'>Help</a></li>
-						<li class="button"><a href='{% url "faq" %}'>FAQ</a></li>
-						{% if request.user.is_authenticated %}
-							<li class="button"><a href='{% url "hunt" %}'>The iHunt</a></li>
-						{% else %}
-							<li class="button"><a href='password_reset'>Password Reset</a></li>
-						{% endif %}
+						<li class="button"><a href="{% url 'index' %}">Home</a></li>
+						<li class="button"><a href="{% url 'help' %}">Help</a></li>
+						<li class="button"><a href="{% url 'faq' %}">FAQ</a></li>
 					</ul>
 				</div>
 				<div id="content_main">
