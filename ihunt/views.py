@@ -58,23 +58,3 @@ def hunt(request, event=None):
             'ihunt/done.html',
             {},
         )
-
-
-def login_view(request):
-    if request.method == 'GET':
-        return render(request, 'ihunt/login.html')
-    elif request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(username=username, password=password)
-        if user is not None and user.is_active:
-            login(request, user)
-            return redirect('index')
-        return render(
-            request, 'ihunt/login.html', {'flash': 'Invalid login'}
-        )
-
-
-def logout_view(request):
-    logout(request)
-    return redirect('index')

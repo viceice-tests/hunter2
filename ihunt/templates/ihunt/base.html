@@ -45,8 +45,9 @@
 							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navLogin">Login<span class="caret" /></a>
 							<div class="dropdown-menu">
 								<div class="container-fluid">
-									<form class="form" id="formLogin" action="/login" method="post">
+									<form class="form" id="formLogin" action="{% url 'login' %}" method="post">
 										{% csrf_token %}
+										<input name="next" id="next" value="{{ request.path }}" type="hidden" />
 										<input name="username" id="username" placeholder="Username" type="text" />
 										<input name="password" id="password" placeholder="Password" type="password" />
 										<button type="submit" id="btnLogin" class="btn">Login</button>
