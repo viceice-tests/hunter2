@@ -26,7 +26,10 @@ class Event(models.Model):
         return '<Event: {}>'.format(self.name)
 
     def clean(self):
-        if self.current and Event.objects.filter(current=True).count() > 0:
+        if (
+            self.current and
+            Event.objects.exclude(id=self.id).filter(current=True).count() > 0
+        ):
             raise ValidationError('There can only be one current event')
 
 
