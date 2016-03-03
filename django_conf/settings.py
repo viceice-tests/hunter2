@@ -63,7 +63,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'debug_toolbar',
     'nested_admin',
-    'rules',
+    'rules.apps.AutodiscoverRulesConfig',
     'sortedm2m',
     'ihunt',
 )
