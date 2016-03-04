@@ -1,6 +1,6 @@
-from django.contrib.auth import authenticate, login, logout, get_user
+from django.contrib.auth import get_user
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from ihunt.models import Guess, Puzzle
 from ihunt.utils import answered, current_puzzle, with_event
