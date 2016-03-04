@@ -34,3 +34,19 @@ rules.add_perm('ihunt.change_hint', is_admin_for_clue)
 rules.add_perm('ihunt.delete_hint', is_admin_for_clue)
 rules.add_perm('ihunt.change_unlock', is_admin_for_clue)
 rules.add_perm('ihunt.delete_unlock', is_admin_for_clue)
+
+
+@rules.predicate
+def is_user_for_userdata(user, userdata):
+    return user is userdata.user
+
+rules.add_perm('ihunt.change_userdata', is_user_for_userdata)
+rules.add_perm('ihunt.delete_userdata', is_user_for_userdata)
+
+
+@rules.predicate
+def is_user_for_teamdata(user, teamdata):
+    return user in teamdata.team.users
+
+rules.add_perm('ihunt.change_teamdata', is_user_for_teamdata)
+rules.add_perm('ihunt.delete_teamdata', is_user_for_teamdata)
