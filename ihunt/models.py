@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from sortedm2m.fields import SortedManyToManyField
 from time import strftime
+import jsonfield
 
 
 @python_2_unicode_compatible
@@ -146,3 +147,15 @@ class Guess(models.Model):
             if answer == self.guess:
                 return True
         return False
+
+
+class TeamPuzzleData(models.Model):
+    puzzle = models.ForeignKey(Puzzle)
+    team = models.ForeignKey(Team)
+    data = jsonfield.JSONField()
+
+
+class UserPuzzleData(models.Model):
+    puzzle = models.ForeignKey(Puzzle)
+    user = models.ForeignKey(User)
+    data = jsonfield.JSONField()
