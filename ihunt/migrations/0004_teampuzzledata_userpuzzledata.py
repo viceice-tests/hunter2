@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
-import jsonfield.fields
+import django.contrib.postgres.fields
 
 
 class Migration(migrations.Migration):
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             name='TeamPuzzleData',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('data', jsonfield.fields.JSONField(default=dict)),
+                ('data', django.contrib.postgres.fields.JSONField(default=dict)),
                 ('puzzle', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='ihunt.Puzzle')),
                 ('team', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='ihunt.Team')),
             ],
@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
             name='UserPuzzleData',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('data', jsonfield.fields.JSONField(default=dict)),
+                ('data', django.contrib.postgres.fields.JSONField(default=dict)),
                 ('puzzle', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='ihunt.Puzzle')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],

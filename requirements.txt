@@ -2,6 +2,5 @@ Django
 psycopg2
 rules
 django-debug-toolbar
-django-jsonfield
 django-sortedm2m
 django-nested-admin
