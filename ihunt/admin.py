@@ -1,7 +1,7 @@
 from django.contrib import admin
 from ihunt import models
 from ihunt.forms import UserProfileForm
-from nested_admin import NestedAdmin, NestedStackedInline
+from nested_admin import NestedModelAdmin, NestedStackedInline
 
 
 class AnswerInline(admin.TabularInline):
@@ -36,7 +36,7 @@ class GuessAdmin(admin.ModelAdmin):
     pass
 
 
-class PuzzleAdmin(NestedAdmin):
+class PuzzleAdmin(NestedModelAdmin):
     inlines = [
         AnswerInline,
         HintInline,
