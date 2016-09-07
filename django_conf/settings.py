@@ -49,6 +49,8 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+ACCOUNT_ACTIVATION_DAYS = 7
+
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
     'django.contrib.auth.backends.ModelBackend',
