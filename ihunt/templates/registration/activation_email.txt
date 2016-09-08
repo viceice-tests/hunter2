@@ -1,0 +1,7 @@
+Hi {{ user }},
+
+To activate your account please use the following key:
+http://{{ site.domain }}/accounts/activate/{{ activation_key }}/
+
+Thanks,
+The iHunt Admins
