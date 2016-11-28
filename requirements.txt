@@ -1,4 +1,5 @@
 Django
+PyExecJS
 psycopg2
 rules
 django-debug-toolbar
