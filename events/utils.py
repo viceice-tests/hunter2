@@ -9,7 +9,10 @@ def with_event(f):
         if event_id is not None:
             event = get_object_or_404(Event, pk=event_id)
         else:
-            event = Event.objects.filter(current=True).get()
+            try:
+                event = Event.objects.filter(current=True).get()
+            except Event.DoesNotExist
+                event = None
 
         return f(request, event=event, *args, **kwargs)
 
