@@ -28,10 +28,6 @@ class UnlockInline(NestedStackedInline):
     extra = 0
 
 
-class EventAdmin(admin.ModelAdmin):
-    pass
-
-
 class GuessAdmin(admin.ModelAdmin):
     pass
 
@@ -52,18 +48,12 @@ class TeamAdmin(admin.ModelAdmin):
     pass
 
 
-class ThemeAdmin(admin.ModelAdmin):
-    pass
-
-
 class UserProfileAdmin(admin.ModelAdmin):
     form = UserProfileForm
 
 
-admin.site.register(models.Event, EventAdmin)
 admin.site.register(models.Guess, GuessAdmin)
 admin.site.register(models.Puzzle, PuzzleAdmin)
 admin.site.register(models.PuzzleSet, PuzzleSetAdmin)
 admin.site.register(models.Team, TeamAdmin)
-admin.site.register(models.Theme, ThemeAdmin)
 admin.site.register(models.UserProfile, UserProfileAdmin)

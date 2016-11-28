@@ -1,6 +1,6 @@
 from django.conf.urls import include, url
 from django.views.generic import TemplateView
-from ihunt.utils import with_event
+from events.utils import with_event
 
 import django.contrib.auth.urls
 import ihunt.views

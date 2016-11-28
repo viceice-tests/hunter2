@@ -1,7 +1,5 @@
-from ihunt.utils import with_event
-from ihunt.models import Event, Team, UserProfile
-
-import json
+from events.utils import with_event
+from .models import Event, Team, UserProfile
 
 
 @with_event

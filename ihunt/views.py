@@ -1,15 +1,16 @@
 from django.contrib.auth import get_user
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render
 from django.utils import timezone
-from ihunt.models import Guess, Puzzle
-from ihunt.utils import answered, current_puzzle, with_event
+from events.utils import with_event
+from .models import Guess
+from .utils import answered, current_puzzle
 
 
 @login_required
 @with_event
 def puzzle(request, puzzle_id, event=None):
-#    puzzle = get_object_or_404(Puzzle, pk=puzzle_id)
+    # puzzle = get_object_or_404(Puzzle, pk=puzzle_id)
 
     return render(
         request,

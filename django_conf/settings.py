@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import debug_toolbar
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -35,7 +34,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',
-		'django.template.context_processors.request',
+                'django.template.context_processors.request',
                 'django.template.context_processors.static',
                 'django.contrib.messages.context_processors.messages',
                 'ihunt.context_processors.event_team',
@@ -67,6 +66,7 @@ INSTALLED_APPS = (
     'nested_admin',
     'rules.apps.AutodiscoverRulesConfig',
     'sortedm2m',
+    'events',
     'ihunt',
 )
 
