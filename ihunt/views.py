@@ -9,7 +9,7 @@ from ihunt.utils import answered, current_puzzle, with_event
 @login_required
 @with_event
 def puzzle(request, puzzle_id, event=None):
-    puzzle = get_object_or_404(Puzzle, pk=puzzle_id)
+#    puzzle = get_object_or_404(Puzzle, pk=puzzle_id)
 
     return render(
         request,
