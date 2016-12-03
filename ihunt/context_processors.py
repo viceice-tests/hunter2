@@ -1,5 +1,7 @@
 from events.utils import with_event
-from .models import Event, Team, UserProfile
+from .models import Team, UserProfile
+
+import events
 
 
 @with_event
@@ -7,7 +9,7 @@ def event_team(request, event):
     try:
         user = request.user.profile
         events = set([t.at_event for t in user.teams.all()])
-        events.add(Event.objects.filter(current=True).get())
+        events.add(events.models.Event.objects.filter(current=True).get())
         events.remove(event)
         team = user.teams.get(at_event=event)
     except AttributeError:

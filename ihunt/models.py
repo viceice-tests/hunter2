@@ -3,9 +3,10 @@ from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
-from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from time import strftime
+
+import events
 
 
 @python_2_unicode_compatible
@@ -21,7 +22,7 @@ class Puzzle(models.Model):
 class PuzzleSet(models.Model):
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     start_date = models.DateTimeField()
-    event = models.ForeignKey(Event, related_name='puzzlesets')
+    event = models.ForeignKey(events.models.Event, related_name='puzzlesets')
 
     def __str__(self):
         return '<PuzzleSet: {} - {}>'.format(
@@ -65,7 +66,7 @@ class Team(models.Model):
         unique_together = (('name', 'at_event'), )
 
     name = models.CharField(max_length=100)
-    at_event = models.ForeignKey(Event, related_name='teams')
+    at_event = models.ForeignKey(events.models.Event, related_name='teams')
     is_admin = models.BooleanField(default=False)
 
     def __str__(self):

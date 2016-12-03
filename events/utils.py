@@ -11,7 +11,7 @@ def with_event(f):
         else:
             try:
                 event = Event.objects.filter(current=True).get()
-            except Event.DoesNotExist
+            except Event.DoesNotExist:
                 event = None
 
         return f(request, event=event, *args, **kwargs)
