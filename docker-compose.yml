@@ -1,5 +1,5 @@
 db:
-  image: postgres:9.5
+  image: postgres:9.6
   volumes:
     - ihuntsite_db:/var/lib/postgresql/data
 web:
