@@ -22,6 +22,8 @@ SECRET_KEY = 'gqf223qekhjo3l#k@7hj=^w$k9$jow9yc193$%1co7tstt=s27'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+DEBUG_TOOLBAR_PATCH_SETTINGS = False
+
 INTERNAL_IPS = ('192.168.99.1,')
 
 TEMPLATES = [
@@ -43,7 +45,7 @@ TEMPLATES = [
     },
 ]
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
