@@ -1,6 +1,5 @@
 from django.conf.urls import include, url
 from django.views.generic import TemplateView
-from events.utils import with_event
 
 import django.contrib.auth.urls
 import ihunt.views
@@ -10,7 +9,7 @@ eventpatterns = [
     url(r'^puzzle/(?P<puzzle_id>[0-9]+)$', ihunt.views.puzzle, name='puzzle'),
     url(
         r'^$',
-        with_event(TemplateView.as_view(template_name='ihunt/index.html')),
+        TemplateView.as_view(template_name='ihunt/index.html'),
         name='index'
     ),
 ]

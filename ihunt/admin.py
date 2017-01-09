@@ -1,6 +1,5 @@
 from django.contrib import admin
 from ihunt import models
-from ihunt.forms import UserProfileForm
 from nested_admin import NestedModelAdmin, NestedStackedInline
 
 
@@ -44,16 +43,6 @@ class PuzzleSetAdmin(admin.ModelAdmin):
     pass
 
 
-class TeamAdmin(admin.ModelAdmin):
-    pass
-
-
-class UserProfileAdmin(admin.ModelAdmin):
-    form = UserProfileForm
-
-
 admin.site.register(models.Guess, GuessAdmin)
 admin.site.register(models.Puzzle, PuzzleAdmin)
 admin.site.register(models.PuzzleSet, PuzzleSetAdmin)
-admin.site.register(models.Team, TeamAdmin)
-admin.site.register(models.UserProfile, UserProfileAdmin)

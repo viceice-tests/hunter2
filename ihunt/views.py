@@ -2,14 +2,12 @@ from django.contrib.auth import get_user
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
-from events.utils import with_event
 from .models import Guess
 from .utils import answered, current_puzzle
 
 
 @login_required
-@with_event
-def puzzle(request, puzzle_id, event=None):
+def puzzle(request, puzzle_id):
     # puzzle = get_object_or_404(Puzzle, pk=puzzle_id)
 
     return render(
@@ -20,9 +18,9 @@ def puzzle(request, puzzle_id, event=None):
 
 
 @login_required
-@with_event
-def hunt(request, event=None):
+def hunt(request):
     user = request.user.profile
+    event = request.event
     team = user.teams.get(at_event=event)
 
     now = timezone.now()

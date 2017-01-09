@@ -24,7 +24,7 @@ DEBUG = True
 
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
-INTERNAL_IPS = ('127.0.0.1','192.168.99.1')
+INTERNAL_IPS = ('127.0.0.1', '192.168.99.1')
 
 TEMPLATES = [
     {
@@ -39,7 +39,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.template.context_processors.static',
                 'django.contrib.messages.context_processors.messages',
-                'ihunt.context_processors.event_team',
+                'teams.context_processors.event_team',
             ],
         },
     },
@@ -69,10 +69,11 @@ INSTALLED_APPS = (
     'rules.apps.AutodiscoverRulesConfig',
     'sortedm2m',
     'events',
+    'teams',
     'ihunt',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -81,6 +82,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'events.middleware.EventMiddleware',
+    'teams.middleware.TeamMiddleware',
 )
 
 ROOT_URLCONF = 'django_conf.urls'

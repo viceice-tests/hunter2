@@ -1,12 +1,11 @@
-from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from sortedm2m.fields import SortedManyToManyField
 from time import strftime
 
 import events
+import teams
 
 
 @python_2_unicode_compatible
@@ -61,51 +60,9 @@ class Answer(models.Model):
 
 
 @python_2_unicode_compatible
-class Team(models.Model):
-    class Meta:
-        unique_together = (('name', 'at_event'), )
-
-    name = models.CharField(max_length=100)
-    at_event = models.ForeignKey(events.models.Event, related_name='teams')
-    is_admin = models.BooleanField(default=False)
-
-    def __str__(self):
-        return '<Team: {} @{}>'.format(self.name, self.at_event.name)
-
-    def add_user(self, user):
-        user.team = self
-        user.save()
-
-    def clean(self):
-        if (
-            self.is_admin and
-            Team.objects.exclude(
-                id=self.id
-            ).filter(
-                at_event=self.at_event
-            ).filter(
-                is_admin=True
-            ).count() > 0
-        ):
-            raise ValidationError('There can only be one admin team per event')
-
-
-@python_2_unicode_compatible
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, related_name='profile')
-    teams = models.ManyToManyField(Team, blank=True, related_name='users')
-
-    def __str__(self):
-        return '<UserProfile: {}>'.format(self.user.username)
-
-    def team_at(self, event):
-        return self.teams.get(at_event=event)
-
-
-@python_2_unicode_compatible
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle)
-    by = models.ForeignKey(UserProfile)
+    by = models.ForeignKey(teams.models.UserProfile)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
 
@@ -126,11 +83,11 @@ class Guess(models.Model):
 
 class TeamPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle)
-    team = models.ForeignKey(Team)
+    team = models.ForeignKey(teams.models.Team)
     data = JSONField()
 
 
 class UserPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(teams.models.UserProfile)
     data = JSONField()
