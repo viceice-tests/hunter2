@@ -5,16 +5,22 @@ from django.utils import timezone
 from .models import Guess
 from .utils import answered, current_puzzle
 
+import logging
+
 
 @login_required
 def episode(request, episode_number):
-    episode = request.event.episodes.order_by('start_date')[episode_number]
+    logging.debug(request.event)
+    episodes = request.event.episodes.all().order_by('start_date')
+    logging.debug(episodes)
+    episode = episodes[int(episode_number) - 1:1].get()
+    logging.debug(episode)
 
     return render(request, 'ihunt/episode.html', {'episode': episode})
 
 
 @login_required
-def puzzle(request, puzzle_number):
+def puzzle(request, episode_number, puzzle_number):
     # puzzle = get_object_or_404(Puzzle, pk=puzzle_id)
 
     return render(request, 'ihunt/puzzle.html', {'puzzle': puzzle})
