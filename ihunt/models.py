@@ -18,13 +18,13 @@ class Puzzle(models.Model):
 
 
 @python_2_unicode_compatible
-class PuzzleSet(models.Model):
+class Episode(models.Model):
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     start_date = models.DateTimeField()
-    event = models.ForeignKey(events.models.Event, related_name='puzzlesets')
+    event = models.ForeignKey(events.models.Event, related_name='episodes')
 
     def __str__(self):
-        return '<PuzzleSet: {} - {}>'.format(
+        return '<Episode: {} - {}>'.format(
             self.event.name, strftime('%A %H:%M', self.start_date.timetuple())
         )
 

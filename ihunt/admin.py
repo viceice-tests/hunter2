@@ -39,10 +39,10 @@ class PuzzleAdmin(NestedModelAdmin):
     ]
 
 
-class PuzzleSetAdmin(admin.ModelAdmin):
+class EpisodeAdmin(admin.ModelAdmin):
     pass
 
 
 admin.site.register(models.Guess, GuessAdmin)
 admin.site.register(models.Puzzle, PuzzleAdmin)
-admin.site.register(models.PuzzleSet, PuzzleSetAdmin)
+admin.site.register(models.Episode, EpisodeAdmin)

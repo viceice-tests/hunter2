@@ -3,16 +3,16 @@ from events.rules import is_admin_for_event
 
 
 @rules.predicate
-def is_admin_for_puzzleset(user, puzzleset):
-    return is_admin_for_event(user, puzzleset.event)
+def is_admin_for_episode(user, episode):
+    return is_admin_for_event(user, episode.event)
 
-rules.add_perm('ihunt.change_puzzleset', is_admin_for_puzzleset)
-rules.add_perm('ihunt.delete_puzzleset', is_admin_for_puzzleset)
+rules.add_perm('ihunt.change_episode', is_admin_for_episode)
+rules.add_perm('ihunt.delete_episode', is_admin_for_episode)
 
 
 @rules.predicate
 def is_admin_for_puzzle(user, puzzle):
-    return is_admin_for_puzzleset(user, puzzle.puzzleset)
+    return is_admin_for_episode(user, puzzle.episode)
 
 rules.add_perm('ihunt.change_puzzle', is_admin_for_puzzle)
 rules.add_perm('ihunt.delete_puzzle', is_admin_for_puzzle)

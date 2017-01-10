@@ -24,10 +24,10 @@ def hunt(request):
     team = user.teams.get(at_event=event)
 
     now = timezone.now()
-    puzzlesets = list(
-        event.puzzlesets.filter(start_date__lt=now).order_by('start_date')
+    episodes = list(
+        event.episodes.filter(start_date__lt=now).order_by('start_date')
     )
-    puzzle = current_puzzle(puzzlesets, team)
+    puzzle = current_puzzle(episodes, team)
 
     if puzzle is not None:
         if request.method == 'POST':
@@ -39,7 +39,7 @@ def hunt(request):
             )
             guess.save()
             if answered(puzzle, team):
-                puzzle = current_puzzle(puzzlesets, team)
+                puzzle = current_puzzle(episodes, team)
                 if puzzle is None:
                     return render(
                         request,
