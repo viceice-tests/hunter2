@@ -20,13 +20,12 @@ class Puzzle(models.Model):
 @python_2_unicode_compatible
 class Episode(models.Model):
     puzzles = SortedManyToManyField(Puzzle, blank=True)
+    name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
     event = models.ForeignKey(events.models.Event, related_name='episodes')
 
     def __str__(self):
-        return '<Episode: {} - {}>'.format(
-            self.event.name, strftime('%A %H:%M', self.start_date.timetuple())
-        )
+        return '<Episode: {} - {}>'.format(self.event.name, self.name)
 
 
 class Clue(models.Model):
