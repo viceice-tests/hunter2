@@ -6,7 +6,16 @@ import ihunt.views
 
 eventpatterns = [
     url(r'^hunt$', ihunt.views.hunt, name='hunt'),
-    url(r'^puzzle/(?P<puzzle_id>[0-9]+)$', ihunt.views.puzzle, name='puzzle'),
+    url(
+        r'^ep/(?P<episode_number>[0-9]+)',
+        ihunt.views.episode,
+        name='episode'
+    ),
+    url(
+        r'^ep/(?P<episode_number>[0-9]+)/pz/(?P<puzzle_number>[0-9]+)$',
+        ihunt.views.puzzle,
+        name='puzzle'
+    ),
     url(
         r'^$',
         TemplateView.as_view(template_name='ihunt/index.html'),

@@ -7,14 +7,17 @@ from .utils import answered, current_puzzle
 
 
 @login_required
-def puzzle(request, puzzle_id):
+def episode(request, episode_number):
+    episode = request.event.episodes.order_by('start_date')[episode_number]
+
+    return render(request, 'ihunt/episode.html', {'episode': episode})
+
+
+@login_required
+def puzzle(request, puzzle_number):
     # puzzle = get_object_or_404(Puzzle, pk=puzzle_id)
 
-    return render(
-        request,
-        'ihunt/puzzle.html',
-        {'puzzle': puzzle}
-    )
+    return render(request, 'ihunt/puzzle.html', {'puzzle': puzzle})
 
 
 @login_required
