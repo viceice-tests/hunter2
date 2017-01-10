@@ -7,12 +7,12 @@ import ihunt.views
 eventpatterns = [
     url(r'^hunt$', ihunt.views.hunt, name='hunt'),
     url(
-        r'^ep/(?P<episode_number>[0-9]+)',
+        r'^ep/(?P<episode_number>[1-9]\d*)',
         ihunt.views.episode,
         name='episode'
     ),
     url(
-        r'^ep/(?P<episode_number>[0-9]+)/pz/(?P<puzzle_number>[0-9]+)$',
+        r'^ep/(?P<episode_number>[1-9]\d*)/pz/(?P<puzzle_number>[1-9]\d*)$',
         ihunt.views.puzzle,
         name='puzzle'
     ),
@@ -25,7 +25,7 @@ eventpatterns = [
 
 urlpatterns = [
     url(r'^', include(django.contrib.auth.urls)),
-    url(r'^event/(?P<event_id>[0-9]+)/', include(eventpatterns)),
+    url(r'^event/(?P<event_id>[1-9]\d*)/', include(eventpatterns)),
     url(
         r'^faq$',
         TemplateView.as_view(template_name='ihunt/faq.html'),
