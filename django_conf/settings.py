@@ -142,6 +142,6 @@ LOGGING = {
             'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
         },
         'django.db': {
-        }
+        },
     },
 }
