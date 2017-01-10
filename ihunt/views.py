@@ -3,25 +3,22 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
 from .models import Guess
-from .utils import answered, current_puzzle
+from .utils import answered, current_puzzle, episode_puzzle, event_episode
 
 import logging
 
 
 @login_required
 def episode(request, episode_number):
-    logging.debug(request.event)
-    episodes = request.event.episodes.all().order_by('start_date')
-    logging.debug(episodes)
-    episode = episodes[int(episode_number) - 1:1].get()
-    logging.debug(episode)
+    episode = event_episode(request.event, episode_number)
 
     return render(request, 'ihunt/episode.html', {'episode': episode})
 
 
 @login_required
 def puzzle(request, episode_number, puzzle_number):
-    # puzzle = get_object_or_404(Puzzle, pk=puzzle_id)
+    episode = event_episode(request.event, episode_number)
+    puzzle = episode_puzzle(episode, puzzle_number)
 
     return render(request, 'ihunt/puzzle.html', {'puzzle': puzzle})
 

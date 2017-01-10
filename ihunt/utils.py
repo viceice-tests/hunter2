@@ -18,3 +18,12 @@ def current_puzzle(puzzlesets, team):
             if not answered(c, team):
                 return c
     return None
+
+
+def episode_puzzle(episode, puzzle_number):
+    return episode.puzzles[int(episode_number) - 1:1].get()
+
+
+def event_episode(event, episode_number):
+    episodes = event.episodes.order_by('start_date')
+    return episodes[int(episode_number) - 1:1].get()
