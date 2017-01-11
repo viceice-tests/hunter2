@@ -1,0 +1,10 @@
+{% extends "ihunt/base.html" %}
+
+{% block content %}
+<h1>{{ episode }}</h1>
+<ol>
+{% for puzzle in puzzles %}
+	<li>{{ puzzle.title }}</li>
+{% endfor %}
+</ol>
+{% endblock %}
