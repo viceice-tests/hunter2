@@ -11,8 +11,9 @@ import logging
 @login_required
 def episode(request, episode_number):
     episode = event_episode(request.event, episode_number)
+    puzzles = list(episode.puzzles.all())
 
-    return render(request, 'ihunt/episode.html', {'episode': episode})
+    return render(request, 'ihunt/episode.html', {'episode': episode.name, 'puzzles': puzzles})
 
 
 @login_required

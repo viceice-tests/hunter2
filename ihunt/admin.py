@@ -1,15 +1,15 @@
 from django.contrib import admin
 from ihunt import models
-from nested_admin import NestedModelAdmin, NestedStackedInline
+from nested_admin import NestedModelAdmin, NestedStackedInline, NestedTabularInline
 
 
-class AnswerInline(admin.TabularInline):
+class AnswerInline(NestedTabularInline):
     model = models.Answer
     fields = ('answer',)
     extra = 0
 
 
-class HintInline(admin.TabularInline):
+class HintInline(NestedTabularInline):
     model = models.Hint
     extra = 0
 
