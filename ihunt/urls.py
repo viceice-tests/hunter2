@@ -7,7 +7,7 @@ import ihunt.views
 eventpatterns = [
     url(r'^hunt$', ihunt.views.hunt, name='hunt'),
     url(
-        r'^ep/(?P<episode_number>[1-9]\d*)',
+        r'^ep/(?P<episode_number>[1-9]\d*)$',
         ihunt.views.episode,
         name='episode'
     ),

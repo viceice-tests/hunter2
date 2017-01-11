@@ -4,7 +4,13 @@
 <h1>{{ episode }}</h1>
 <ol>
 {% for puzzle in puzzles %}
-	<li>{{ puzzle.title }}</li>
+	<li>
+{% if event_id %}
+		<a href="{% url 'puzzle' event_id episode_number forloop.counter %}">{{ puzzle.title }}</a>
+{% else %}
+		<a href="{% url 'puzzle' episode_number forloop.counter %}">{{ puzzle.title }}</a>
+{% endif %}
+	</li>
 {% endfor %}
 </ol>
 {% endblock %}

@@ -11,9 +11,27 @@ import logging
 @login_required
 def episode(request, episode_number):
     episode = event_episode(request.event, episode_number)
+
+    # TODO: Head starts
+    if episode.start_date > timezone.now():
+        return render(
+            request,
+            'ihunt/futureepisode.html',
+            {'episode': episode.name, 'startdate': episode.start_date}
+        )
+
     puzzles = list(episode.puzzles.all())
 
-    return render(request, 'ihunt/episode.html', {'episode': episode.name, 'puzzles': puzzles})
+    return render(
+        request,
+        'ihunt/episode.html',
+        {
+            'episode': episode.name,
+            'episode_number': episode_number,
+            'event_id': request.event_id,
+            'puzzles': puzzles,
+        }
+    )
 
 
 @login_required

@@ -14,6 +14,8 @@ class EventMiddleware(object):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if 'event_id' in view_kwargs:
             event_id = view_kwargs['event_id']
+            # Store event_id in request to allow for URL creation later
+            request.event_id = event_id
             request.event = get_object_or_404(Event, pk=event_id)
             logging.debug('Explicit Event: {}'.format(request.event))
             # Remove the event_id kwarg in case views are not expecting it.
