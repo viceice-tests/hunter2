@@ -26,4 +26,5 @@ def episode_puzzle(episode, puzzle_number):
 
 def event_episode(event, episode_number):
     episodes = event.episodes.order_by('start_date')
-    return episodes[int(episode_number) - 1:1].get()
+    ep_int = int(episode_number)
+    return episodes[ep_int - 1:ep_int].get()
