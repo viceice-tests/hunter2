@@ -1,5 +1,16 @@
 import rules
-from events.rules import is_admin_for_event
+from teams.models import Team
+
+
+@rules.predicate
+def is_admin_for_event(user, event):
+    try:
+        admin_team = event.teams.filter(is_admin=True).get()
+    except Team.DoesNotExist:
+        return False
+    return user in admin_team.users
+
+rules.add_perm('ihunt.change_event', is_admin_for_event)
 
 
 @rules.predicate

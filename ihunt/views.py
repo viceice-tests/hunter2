@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
 from .models import Guess
+from .rules import is_admin_for_episode
 from .utils import answered, current_puzzle, episode_puzzle, event_episode
 
 import logging
@@ -11,9 +12,10 @@ import logging
 @login_required
 def episode(request, episode_number):
     episode = event_episode(request.event, episode_number)
+    admin = is_admin_for_episode(request.user, episode)
 
     # TODO: Head starts
-    if episode.start_date > timezone.now():
+    if episode.start_date > timezone.now() and not admin:
         return render(
             request,
             'ihunt/futureepisode.html',
