@@ -24,7 +24,9 @@ rules.add_perm('ihunt.delete_episode', is_admin_for_episode)
 
 @rules.predicate
 def is_admin_for_puzzle(user, puzzle):
-    return is_admin_for_episode(user, puzzle.episode)
+    return any(
+        [is_admin_for_episode(user, ep) for ep in puzzle.episodes.all()]
+    )
 
 rules.add_perm('ihunt.change_puzzle', is_admin_for_puzzle)
 rules.add_perm('ihunt.delete_puzzle', is_admin_for_puzzle)

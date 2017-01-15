@@ -19,7 +19,7 @@ class Puzzle(models.Model):
 
 @python_2_unicode_compatible
 class Episode(models.Model):
-    puzzles = SortedManyToManyField(Puzzle, blank=True)
+    puzzles = SortedManyToManyField(Puzzle, blank=True, related_name='episodes')
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
     event = models.ForeignKey(events.models.Event, related_name='episodes')
