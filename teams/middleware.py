@@ -16,6 +16,8 @@ class TeamMiddleware(object):
 
         try:
             user = request.user.profile
+        except AttributeError:
+            return
         except UserProfile.DoesNotExist:
             return
 
