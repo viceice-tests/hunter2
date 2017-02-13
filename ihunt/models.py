@@ -24,6 +24,9 @@ class Episode(models.Model):
     start_date = models.DateTimeField()
     event = models.ForeignKey(events.models.Event, related_name='episodes')
 
+    class Meta:
+        unique_together = (('event', 'start_date'))
+
     def __str__(self):
         return '<Episode: {} - {}>'.format(self.event.name, self.name)
 
