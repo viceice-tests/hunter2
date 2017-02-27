@@ -1,10 +1,12 @@
 from django.contrib.auth import get_user
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
-from .models import Guess
+from .models import *
+from .runtime import *
+from .utils import *
 from . import rules
-from .utils import answered, current_puzzle, episode_puzzle, event_episode
 
 import logging
 
@@ -55,11 +57,33 @@ def puzzle(request, episode_number, puzzle_number):
         else:
             return redirect('episode', episode_number=episode_number)
 
-    return render(
+    team_data, created = TeamPuzzleData.objects.get_or_create(
+        puzzle=puzzle, team=request.team
+    )
+    user_data, created = UserPuzzleData.objects.get_or_create(
+        puzzle=puzzle, user=request.user.profile
+    )
+
+    rtrn = render(
         request,
         'ihunt/puzzle.html',
-        {'admin': admin, 'puzzle': puzzle}
+        {
+            'admin': admin,
+            'title': puzzle.title,
+            'clue': runtime_eval[puzzle.runtime](
+                puzzle.content,
+                {
+                    'team_data': team_data,
+                    'user_data': user_data,
+                }
+            )
+        }
     )
+
+    team_data.save()
+    user_data.save()
+
+    return rtrn
 
 
 @login_required

@@ -5,7 +5,7 @@ from nested_admin import NestedModelAdmin, NestedStackedInline, NestedTabularInl
 
 class AnswerInline(NestedTabularInline):
     model = models.Answer
-    fields = ('answer',)
+    fields = ('answer', 'runtime')
     extra = 0
 
 
@@ -43,6 +43,16 @@ class EpisodeAdmin(admin.ModelAdmin):
     pass
 
 
+class TeamPuzzleDataAdmin(admin.ModelAdmin):
+    pass
+
+
+class UserPuzzleDataAdmin(admin.ModelAdmin):
+    pass
+
+
 admin.site.register(models.Guess, GuessAdmin)
 admin.site.register(models.Puzzle, PuzzleAdmin)
 admin.site.register(models.Episode, EpisodeAdmin)
+admin.site.register(models.TeamPuzzleData, TeamPuzzleDataAdmin)
+admin.site.register(models.UserPuzzleData, UserPuzzleDataAdmin)

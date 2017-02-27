@@ -5,8 +5,8 @@
 {% if correct %}
 CORRECT!
 {% endif %}
-<h1>{{ clue.title }}</h1>
-{{ clue.content | safe }} 
+<h1>{{ title }}</h1>
+{{ clue | safe }} 
 <!-- CLUE ENDS HERE -->
 <hr />
 <form method="POST" class="form-inline">

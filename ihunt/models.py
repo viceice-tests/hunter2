@@ -3,14 +3,15 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from sortedm2m.fields import SortedManyToManyField
 from time import strftime
+from .runtime import *
 
 import events
 import teams
 
-
 @python_2_unicode_compatible
 class Puzzle(models.Model):
-    title = models.TextField(unique=True)
+    title = models.CharField(max_length=255, unique=True)
+    runtime = models.CharField(max_length=1, choices=RUNTIMES, default=STATIC)
     content = models.TextField()
 
     def __str__(self):
@@ -55,10 +56,18 @@ class UnlockGuess(models.Model):
 @python_2_unicode_compatible
 class Answer(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, related_name='answers')
-    answer = models.TextField()
+    runtime = models.CharField(max_length=1, choices=RUNTIMES, default=STATIC)
+    answer = models.TextField(max_length=255)
 
     def __str__(self):
         return '<Answer: {}>'.format(self.answer)
+
+    def validate_guess(self, guess):
+        validate = {
+            STATIC: lambda answer, args: answer == args["guess"],
+            LUA: lambda answer, args: lua_runtime_eval(answer, args),
+        }
+        return validate[self.runtime](self.answer, { 'guess': guess })
 
 
 @python_2_unicode_compatible
@@ -77,19 +86,35 @@ class Guess(models.Model):
         )
 
     def is_right(self):
-        for answer in self.for_puzzle.Answer_set:
-            if answer == self.guess:
+        for answer in self.for_puzzle.answers.all():
+            if answer.validate_guess(self.guess):
                 return True
         return False
 
 
 class TeamPuzzleData(models.Model):
-    puzzle = models.ForeignKey(Puzzle)
+    puzzle = models.ForeignKey(Puzzle, related_name='teamdata')
     team = models.ForeignKey(teams.models.Team)
-    data = JSONField()
+    data = JSONField(default={})
+
+    class Meta:
+        verbose_name_plural = 'Team puzzle data'
+
+    def __str__(self):
+        return '<TeamPuzzleData: {} - {}>'.format(
+            self.team, self.puzzle
+        )
 
 
 class UserPuzzleData(models.Model):
-    puzzle = models.ForeignKey(Puzzle)
+    puzzle = models.ForeignKey(Puzzle, related_name='userdata')
     user = models.ForeignKey(teams.models.UserProfile)
-    data = JSONField()
+    data = JSONField(default={})
+
+    class Meta:
+        verbose_name_plural = 'User puzzle data'
+
+    def __str__(self):
+        return '<UserPuzzleData: {} - {}>'.format(
+            self.user, self.puzzle
+        )
