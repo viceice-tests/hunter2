@@ -21,7 +21,8 @@ def current_puzzle(puzzlesets, team):
 
 
 def episode_puzzle(episode, puzzle_number):
-    return episode.puzzles.all()[int(puzzle_number) - 1:1].get()
+    n = int(puzzle_number)
+    return episode.puzzles.all()[n - 1:n].get()
 
 
 def event_episode(event, episode_number):

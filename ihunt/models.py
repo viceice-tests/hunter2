@@ -13,6 +13,8 @@ class Puzzle(models.Model):
     title = models.CharField(max_length=255, unique=True)
     runtime = models.CharField(max_length=1, choices=RUNTIMES, default=STATIC)
     content = models.TextField()
+    cb_runtime = models.CharField(max_length=1, choices=RUNTIMES, default=STATIC)
+    cb_content = models.TextField(blank=True, default='')
 
     def __str__(self):
         return '<Puzzle: {}>'.format(self.title)

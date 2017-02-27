@@ -64,7 +64,7 @@ def puzzle(request, episode_number, puzzle_number):
         puzzle=puzzle, user=request.user.profile
     )
 
-    rtrn = render(
+    response = render(
         request,
         'ihunt/puzzle.html',
         {
@@ -83,7 +83,36 @@ def puzzle(request, episode_number, puzzle_number):
     team_data.save()
     user_data.save()
 
-    return rtrn
+    return response
+
+
+@login_required
+def callback(request, episode_number, puzzle_number):
+    episode = event_episode(request.event, episode_number)
+    puzzle = episode_puzzle(episode, puzzle_number)
+    admin = rules.is_admin_for_puzzle(request.user, puzzle)
+
+    team_data, created = TeamPuzzleData.objects.get_or_create(
+        puzzle=puzzle, team=request.team
+    )
+    user_data, created = UserPuzzleData.objects.get_or_create(
+        puzzle=puzzle, user=request.user.profile
+    )
+
+    response = HttpResponse(
+        runtime_eval[puzzle.cb_runtime](
+            puzzle.cb_content,
+            {
+                'team_data': team_data,
+                'user_data': user_data,
+            }
+        )
+    )
+
+    team_data.save()
+    user_data.save()
+
+    return response
 
 
 @login_required

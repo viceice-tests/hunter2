@@ -26,6 +26,6 @@ def lua_runtime_eval(ld, args = {}):
 
 
 runtime_eval = {
-    STATIC: lambda x: x,
+    STATIC: lambda x, *args: x,
     LUA: lua_runtime_eval,
 }

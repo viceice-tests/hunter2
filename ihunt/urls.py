@@ -17,6 +17,11 @@ eventpatterns = [
         name='puzzle'
     ),
     url(
+        r'^ep/(?P<episode_number>[1-9]\d*)/pz/(?P<puzzle_number>[1-9]\d*)/cb$',
+        ihunt.views.callback,
+        name='callback'
+    ),
+    url(
         r'^$',
         TemplateView.as_view(template_name='ihunt/index.html'),
         name='index'
