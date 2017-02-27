@@ -6,6 +6,7 @@ from time import strftime
 from .runtime import *
 
 import events
+import re
 import teams
 
 @python_2_unicode_compatible
@@ -66,8 +67,9 @@ class Answer(models.Model):
 
     def validate_guess(self, guess):
         validate = {
-            STATIC: lambda answer, args: answer == args["guess"],
+            STATIC: lambda answer, args: answer == args['guess'],
             LUA: lambda answer, args: lua_runtime_eval(answer, args),
+            REGEX: lambda answer, args: re.fullmatch(answer, args['guess'])
         }
         return validate[self.runtime](self.answer, { 'guess': guess })
 

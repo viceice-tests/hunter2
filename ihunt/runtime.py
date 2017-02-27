@@ -2,10 +2,12 @@ from lupa import LuaRuntime
 
 STATIC = 'S'
 LUA = 'L'
+REGEX = 'R'
 
 RUNTIMES = (
     (STATIC, 'Static Runtime'),
     (LUA, 'Lua Runtime'),
+    (REGEX, 'Regex Runtime'),
 )
 
 lua = LuaRuntime()
