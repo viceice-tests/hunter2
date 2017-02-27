@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('ihunt', '0006_auto_20161128_0743'),
+        ('teams', '0001_initial'),
     ]
 
     operations = [
