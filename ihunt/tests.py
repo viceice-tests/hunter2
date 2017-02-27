@@ -5,7 +5,7 @@ from .models import Answer, Guess, Puzzle
 from . import runtime
 
 
-class AnswerValidationTests(TestCase):
+class StaticAnswerValidationTests(TestCase):
     def setUp(self):
         test_name = self.__class__.__name__
         puzzle = Puzzle.objects.create(title=test_name, content=test_name)
