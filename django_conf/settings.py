@@ -126,7 +126,7 @@ EMAIL_PORT = 25
 STATIC_URL = '/static/'
 STATIC_ROOT = 'static'
 
-LOGIN_URL = '/login'
+LOGIN_URL = '/login/'
 
 LOGGING = {
     'version': 1,
