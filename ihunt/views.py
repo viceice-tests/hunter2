@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotAllowed
 from django.shortcuts import render
 from django.utils import timezone
 from .models import *
@@ -88,6 +88,13 @@ def puzzle(request, episode_number, puzzle_number):
 
 @login_required
 def callback(request, episode_number, puzzle_number):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+    if request.content_type != 'application/json':
+        return HttpResponse(status=415)
+    if not 'application/json' in request.META['HTTP_ACCEPT']:
+        return HttpResponse(status=406)
+
     episode = event_episode(request.event, episode_number)
     puzzle = episode_puzzle(episode, puzzle_number)
     admin = rules.is_admin_for_puzzle(request.user, puzzle)
