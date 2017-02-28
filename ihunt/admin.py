@@ -1,6 +1,9 @@
 from django.contrib import admin
 from ihunt import models
-from nested_admin import NestedModelAdmin, NestedStackedInline, NestedTabularInline
+from nested_admin import \
+    NestedModelAdmin, \
+    NestedStackedInline, \
+    NestedTabularInline
 
 
 class AnswerInline(NestedTabularInline):

@@ -11,7 +11,9 @@ class StaticAnswerValidationTests(TestCase):
         puzzle = Puzzle.objects.create(title=test_name, content=test_name)
         user = User.objects.create()
         profile = UserProfile.objects.create(user=user)
-        Answer.objects.create(for_puzzle=puzzle, runtime=runtime.STATIC, answer='correct')
+        Answer.objects.create(
+            for_puzzle=puzzle, runtime=runtime.STATIC, answer='correct'
+        )
         Guess.objects.create(for_puzzle=puzzle, by=profile, guess='correct')
         Guess.objects.create(for_puzzle=puzzle, by=profile, guess='correctnot')
         Guess.objects.create(for_puzzle=puzzle, by=profile, guess='incorrect')
@@ -36,7 +38,9 @@ class RegexAnswerValidationTests(TestCase):
         puzzle = Puzzle.objects.create(title=test_name, content=test_name)
         user = User.objects.create()
         profile = UserProfile.objects.create(user=user)
-        Answer.objects.create(for_puzzle=puzzle, runtime=runtime.REGEX, answer='cor+ect')
+        Answer.objects.create(
+            for_puzzle=puzzle, runtime=runtime.REGEX, answer='cor+ect'
+        )
         Guess.objects.create(for_puzzle=puzzle, by=profile, guess='correct')
         Guess.objects.create(for_puzzle=puzzle, by=profile, guess='correctnot')
         Guess.objects.create(for_puzzle=puzzle, by=profile, guess='incorrect')
@@ -61,7 +65,11 @@ class LuaAnswerValidationTests(TestCase):
         puzzle = Puzzle.objects.create(title=test_name, content=test_name)
         user = User.objects.create()
         profile = UserProfile.objects.create(user=user)
-        Answer.objects.create(for_puzzle=puzzle, runtime=runtime.LUA, answer='return guess == "correct"')
+        Answer.objects.create(
+            for_puzzle=puzzle,
+            runtime=runtime.LUA,
+            answer='return guess == "correct"'
+        )
         Guess.objects.create(for_puzzle=puzzle, by=profile, guess='correct')
         Guess.objects.create(for_puzzle=puzzle, by=profile, guess='correctnot')
         Guess.objects.create(for_puzzle=puzzle, by=profile, guess='incorrect')

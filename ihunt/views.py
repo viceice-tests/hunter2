@@ -1,19 +1,17 @@
 from django.contrib.auth import get_user
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseNotAllowed
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
-from .models import *
-from .runtime import *
-from .utils import *
+from .models import Guess, TeamPuzzleData, UserPuzzleData
 from . import rules
-
-import logging
+from . import runtime
+from . import utils
 
 
 @login_required
 def episode(request, episode_number):
-    episode = event_episode(request.event, episode_number)
+    episode = utils.event_episode(request.event, episode_number)
     admin = rules.is_admin_for_episode(request.user, episode)
 
     # TODO: Head starts
@@ -41,8 +39,8 @@ def episode(request, episode_number):
 
 @login_required
 def puzzle(request, episode_number, puzzle_number):
-    episode = event_episode(request.event, episode_number)
-    puzzle = episode_puzzle(episode, puzzle_number)
+    episode = utils.event_episode(request.event, episode_number)
+    puzzle = utils.episode_puzzle(episode, puzzle_number)
     admin = rules.is_admin_for_puzzle(request.user, puzzle)
 
     # TODO: May need caching of progress to avoid DB load
@@ -70,7 +68,7 @@ def puzzle(request, episode_number, puzzle_number):
         {
             'admin': admin,
             'title': puzzle.title,
-            'clue': runtime_eval[puzzle.runtime](
+            'clue': runtime.runtime_eval[puzzle.runtime](
                 puzzle.content,
                 {
                     'team_data': team_data,
@@ -92,12 +90,11 @@ def callback(request, episode_number, puzzle_number):
         return HttpResponseNotAllowed(['POST'])
     if request.content_type != 'application/json':
         return HttpResponse(status=415)
-    if not 'application/json' in request.META['HTTP_ACCEPT']:
+    if 'application/json' not in request.META['HTTP_ACCEPT']:
         return HttpResponse(status=406)
 
-    episode = event_episode(request.event, episode_number)
-    puzzle = episode_puzzle(episode, puzzle_number)
-    admin = rules.is_admin_for_puzzle(request.user, puzzle)
+    episode = utils.event_episode(request.event, episode_number)
+    puzzle = utils.episode_puzzle(episode, puzzle_number)
 
     team_data, created = TeamPuzzleData.objects.get_or_create(
         puzzle=puzzle, team=request.team
@@ -107,7 +104,7 @@ def callback(request, episode_number, puzzle_number):
     )
 
     response = HttpResponse(
-        runtime_eval[puzzle.cb_runtime](
+        runtime.runtime_eval[puzzle.cb_runtime](
             puzzle.cb_content,
             {
                 'team_data': team_data,
@@ -132,7 +129,7 @@ def hunt(request):
     episodes = list(
         event.episodes.filter(start_date__lt=now).order_by('start_date')
     )
-    puzzle = current_puzzle(episodes, team)
+    puzzle = utils.current_puzzle(episodes, team)
 
     if puzzle is not None:
         if request.method == 'POST':
@@ -143,8 +140,8 @@ def hunt(request):
                 by=get_user(request).profile
             )
             guess.save()
-            if answered(puzzle, team):
-                puzzle = current_puzzle(episodes, team)
+            if utils.answered(puzzle, team):
+                puzzle = utils.current_puzzle(episodes, team)
                 if puzzle is None:
                     return render(
                         request,

@@ -2,19 +2,23 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from sortedm2m.fields import SortedManyToManyField
-from time import strftime
-from .runtime import *
+from . import runtime
 
 import events
 import re
 import teams
 
+
 @python_2_unicode_compatible
 class Puzzle(models.Model):
     title = models.CharField(max_length=255, unique=True)
-    runtime = models.CharField(max_length=1, choices=RUNTIMES, default=STATIC)
+    runtime = models.CharField(
+        max_length=1, choices=runtime.RUNTIMES, default=runtime.STATIC
+    )
     content = models.TextField()
-    cb_runtime = models.CharField(max_length=1, choices=RUNTIMES, default=STATIC)
+    cb_runtime = models.CharField(
+        max_length=1, choices=runtime.RUNTIMES, default=runtime.STATIC
+    )
     cb_content = models.TextField(blank=True, default='')
 
     def __str__(self):
@@ -23,7 +27,9 @@ class Puzzle(models.Model):
 
 @python_2_unicode_compatible
 class Episode(models.Model):
-    puzzles = SortedManyToManyField(Puzzle, blank=True, related_name='episodes')
+    puzzles = SortedManyToManyField(
+        Puzzle, blank=True, related_name='episodes'
+    )
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
     event = models.ForeignKey(events.models.Event, related_name='episodes')
@@ -59,7 +65,9 @@ class UnlockGuess(models.Model):
 @python_2_unicode_compatible
 class Answer(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, related_name='answers')
-    runtime = models.CharField(max_length=1, choices=RUNTIMES, default=STATIC)
+    runtime = models.CharField(
+        max_length=1, choices=runtime.RUNTIMES, default=runtime.STATIC
+    )
     answer = models.TextField(max_length=255)
 
     def __str__(self):
@@ -67,11 +75,13 @@ class Answer(models.Model):
 
     def validate_guess(self, guess):
         validate = {
-            STATIC: lambda answer, args: answer == args['guess'],
-            LUA: lambda answer, args: lua_runtime_eval(answer, args),
-            REGEX: lambda answer, args: re.fullmatch(answer, args['guess'])
+            runtime.STATIC: lambda answer, args: answer == args['guess'],
+            runtime.LUA:
+                lambda answer, args: runtime.lua_runtime_eval(answer, args),
+            runtime.REGEX:
+                lambda answer, args: re.fullmatch(answer, args['guess'])
         }
-        return validate[self.runtime](self.answer, { 'guess': guess })
+        return validate[self.runtime](self.answer, {'guess': guess})
 
 
 @python_2_unicode_compatible
@@ -96,6 +106,7 @@ class Guess(models.Model):
         return False
 
 
+@python_2_unicode_compatible
 class TeamPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, related_name='teamdata')
     team = models.ForeignKey(teams.models.Team)
@@ -110,6 +121,7 @@ class TeamPuzzleData(models.Model):
         )
 
 
+@python_2_unicode_compatible
 class UserPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, related_name='userdata')
     user = models.ForeignKey(teams.models.UserProfile)

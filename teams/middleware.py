@@ -1,7 +1,6 @@
-import logging
-
 from events.models import Event
 from .models import Team, UserProfile
+
 
 class TeamMiddleware(object):
     def __init__(self, get_response):
@@ -33,6 +32,6 @@ class TeamMiddleware(object):
             request.team = user.teams.get(at_event=request.event)
         except Team.DoesNotExist:
             request.team = None
-            # TODO: User is not on a team for this event. Redirect to team creation?
+            # TODO: User has no team for this event. Redirect to team creation?
             pass
         return
