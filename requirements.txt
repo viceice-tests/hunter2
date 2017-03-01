@@ -1,5 +1,4 @@
 Django
-PyExecJS
 lupa
 psycopg2
 rules
