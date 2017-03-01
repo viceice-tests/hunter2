@@ -121,7 +121,7 @@ class TeamPuzzleData(models.Model):
 
     def __str__(self):
         return '<TeamPuzzleData: {} - {}>'.format(
-            self.team, self.puzzle
+            self.team.name, self.puzzle.title
         )
 
 
@@ -136,5 +136,5 @@ class UserPuzzleData(models.Model):
 
     def __str__(self):
         return '<UserPuzzleData: {} - {}>'.format(
-            self.user, self.puzzle
+            self.user.name, self.puzzle.title
         )
