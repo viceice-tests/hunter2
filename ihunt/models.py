@@ -2,7 +2,7 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from sortedm2m.fields import SortedManyToManyField
-from . import runtime
+from . import runtime as rt
 
 import events
 import re
@@ -13,11 +13,11 @@ import teams
 class Puzzle(models.Model):
     title = models.CharField(max_length=255, unique=True)
     runtime = models.CharField(
-        max_length=1, choices=runtime.RUNTIMES, default=runtime.STATIC
+        max_length=1, choices=rt.RUNTIMES, default=rt.STATIC
     )
     content = models.TextField()
     cb_runtime = models.CharField(
-        max_length=1, choices=runtime.RUNTIMES, default=runtime.STATIC
+        max_length=1, choices=rt.RUNTIMES, default=rt.STATIC
     )
     cb_content = models.TextField(blank=True, default='')
 
@@ -78,7 +78,7 @@ class UnlockGuess(models.Model):
 class Answer(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, related_name='answers')
     runtime = models.CharField(
-        max_length=1, choices=runtime.RUNTIMES, default=runtime.STATIC
+        max_length=1, choices=rt.RUNTIMES, default=rt.STATIC
     )
     answer = models.TextField(max_length=255)
 
@@ -87,10 +87,10 @@ class Answer(models.Model):
 
     def validate_guess(self, guess):
         validate = {
-            runtime.STATIC: lambda answer, args: answer == args['guess'],
-            runtime.LUA:
-                lambda answer, args: runtime.lua_runtime_eval(answer, args),
-            runtime.REGEX:
+            rt.STATIC: lambda answer, args: answer == args['guess'],
+            rt.LUA:
+                lambda answer, args: rt.lua_runtime_eval(answer, args),
+            rt.REGEX:
                 lambda answer, args: re.fullmatch(answer, args['guess'])
         }
         return validate[self.runtime](self.answer, {'guess': guess})

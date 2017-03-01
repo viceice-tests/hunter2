@@ -43,7 +43,6 @@ def puzzle(request, episode_number, puzzle_number):
     puzzle = episode.get_puzzle(puzzle_number)
     admin = rules.is_admin_for_puzzle(request.user, puzzle)
 
-    # TODO: May need caching of progress to avoid DB load
     # If episode has not started redirect to episode holding page
     if episode.start_date > timezone.now() and not admin:
         if request.event:
@@ -54,6 +53,9 @@ def puzzle(request, episode_number, puzzle_number):
             )
         else:
             return redirect('episode', episode_number=episode_number)
+
+    # TODO: May need caching of progress to avoid DB load
+    # TODO: Check puzzle is unlocked
 
     team_data, created = TeamPuzzleData.objects.get_or_create(
         puzzle=puzzle, team=request.team
