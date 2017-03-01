@@ -140,7 +140,7 @@ def hunt(request):
                 by=get_user(request).profile
             )
             guess.save()
-            if utils.answered(puzzle, team):
+            if puzzle.answered(team):
                 puzzle = utils.current_puzzle(episodes, team)
                 if puzzle is None:
                     return render(

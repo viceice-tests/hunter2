@@ -24,6 +24,14 @@ class Puzzle(models.Model):
     def __str__(self):
         return '<Puzzle: {}>'.format(self.title)
 
+    def answered(self, team):
+        guesses = Guess.objects.filter(
+            by__in=team.users.all()
+        ).filter(
+            for_puzzle=self
+        )
+        return any([guess.is_right() for guess in guesses])
+
 
 @python_2_unicode_compatible
 class Episode(models.Model):
