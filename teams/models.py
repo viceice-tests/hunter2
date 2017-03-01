@@ -7,12 +7,12 @@ import events
 
 @python_2_unicode_compatible
 class Team(models.Model):
-    class Meta:
-        unique_together = (('name', 'at_event'), )
-
     name = models.CharField(max_length=100)
     at_event = models.ForeignKey(events.models.Event, related_name='teams')
     is_admin = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = (('name', 'at_event'), )
 
     def __str__(self):
         return '<Team: {} @{}>'.format(self.name, self.at_event.name)
