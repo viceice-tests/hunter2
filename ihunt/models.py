@@ -40,6 +40,10 @@ class Episode(models.Model):
     def __str__(self):
         return '<Episode: {} - {}>'.format(self.event.name, self.name)
 
+    def get_puzzle(self, puzzle_number):
+        n = int(puzzle_number)
+        return self.puzzles.all()[n - 1:n].get()
+
 
 class Clue(models.Model):
     puzzle = models.ForeignKey(Puzzle)

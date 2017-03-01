@@ -40,7 +40,7 @@ def episode(request, episode_number):
 @login_required
 def puzzle(request, episode_number, puzzle_number):
     episode = utils.event_episode(request.event, episode_number)
-    puzzle = utils.episode_puzzle(episode, puzzle_number)
+    puzzle = episode.get_puzzle(puzzle_number)
     admin = rules.is_admin_for_puzzle(request.user, puzzle)
 
     # TODO: May need caching of progress to avoid DB load

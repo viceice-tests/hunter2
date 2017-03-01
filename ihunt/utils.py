@@ -20,11 +20,6 @@ def current_puzzle(puzzlesets, team):
     return None
 
 
-def episode_puzzle(episode, puzzle_number):
-    n = int(puzzle_number)
-    return episode.puzzles.all()[n - 1:n].get()
-
-
 def event_episode(event, episode_number):
     episodes = event.episodes.order_by('start_date')
     ep_int = int(episode_number)
