@@ -57,6 +57,17 @@ def puzzle(request, episode_number, puzzle_number):
     # TODO: May need caching of progress to avoid DB load
     # TODO: Check puzzle is unlocked
 
+    if request.method == 'POST':
+        given_answer = request.POST['answer']
+        guess = Guess(
+            guess=given_answer,
+            for_puzzle=puzzle,
+            by=request.user.profile
+        )
+        guess.save()
+
+    answered = puzzle.answered_by(request.team)
+
     team_data, created = TeamPuzzleData.objects.get_or_create(
         puzzle=puzzle, team=request.team
     )
@@ -68,6 +79,7 @@ def puzzle(request, episode_number, puzzle_number):
         request,
         'ihunt/puzzle.html',
         {
+            'answered': answered,
             'admin': admin,
             'title': puzzle.title,
             'clue': runtime.runtime_eval[puzzle.runtime](
@@ -142,7 +154,7 @@ def hunt(request):
                 by=get_user(request).profile
             )
             guess.save()
-            if puzzle.answered(team):
+            if puzzle.answered_by(team):
                 puzzle = utils.current_puzzle(episodes, team)
                 if puzzle is None:
                     return render(

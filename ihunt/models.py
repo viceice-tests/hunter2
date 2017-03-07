@@ -24,7 +24,7 @@ class Puzzle(models.Model):
     def __str__(self):
         return '<Puzzle: {}>'.format(self.title)
 
-    def answered(self, team):
+    def answered_by(self, team):
         guesses = Guess.objects.filter(
             by__in=team.users.all()
         ).filter(
