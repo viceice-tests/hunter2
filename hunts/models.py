@@ -4,7 +4,6 @@ from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from . import runtime as rt
 
-import re
 import teams
 
 
@@ -90,7 +89,15 @@ class Unlock(Clue):
 
 class UnlockGuess(models.Model):
     unlock = models.ForeignKey(Unlock, related_name='guess')
+    runtime = models.CharField(
+        max_length=1, choices=rt.RUNTIMES, default=rt.STATIC
+    )
     guess = models.TextField()
+
+    def validate_guess(self, guess):
+        return rt.runtime_validate[self.runtime](
+            self.answer, {'guess': guess}
+        )
 
 
 class Answer(models.Model):
@@ -98,20 +105,15 @@ class Answer(models.Model):
     runtime = models.CharField(
         max_length=1, choices=rt.RUNTIMES, default=rt.STATIC
     )
-    answer = models.TextField(max_length=255)
+    answer = models.TextField()
 
     def __str__(self):
         return '<Answer: {}>'.format(self.answer)
 
     def validate_guess(self, guess):
-        validate = {
-            rt.STATIC: lambda answer, args: answer == args['guess'],
-            rt.LUA:
-                lambda answer, args: rt.lua_runtime_eval(answer, args),
-            rt.REGEX:
-                lambda answer, args: re.fullmatch(answer, args['guess'])
-        }
-        return validate[self.runtime](self.answer, {'guess': guess})
+        return rt.runtime_validate[self.runtime](
+            self.answer, {'guess': guess}
+        )
 
 
 class Guess(models.Model):

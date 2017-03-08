@@ -54,3 +54,9 @@ runtime_eval = {
     STATIC: lambda x, *args: x,
     LUA: lua_runtime_eval,
 }
+
+runtime_validate = {
+    STATIC: lambda validator, args: answer == args['guess'],
+    LUA: lambda validator, args: lua_runtime_eval(answer, args),
+    REGEX: lambda validator, args: re.fullmatch(answer, args['guess'])
+}
