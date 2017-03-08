@@ -1,6 +1,5 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from . import runtime as rt
@@ -9,7 +8,6 @@ import re
 import teams
 
 
-@python_2_unicode_compatible
 class Puzzle(models.Model):
     title = models.CharField(max_length=255, unique=True)
     runtime = models.CharField(
@@ -38,7 +36,6 @@ class Puzzle(models.Model):
         return any([guess.is_right() for guess in guesses])
 
 
-@python_2_unicode_compatible
 class Episode(models.Model):
     puzzles = SortedManyToManyField(
         Puzzle, blank=True, related_name='episodes'
@@ -96,7 +93,6 @@ class UnlockGuess(models.Model):
     guess = models.TextField()
 
 
-@python_2_unicode_compatible
 class Answer(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, related_name='answers')
     runtime = models.CharField(
@@ -118,7 +114,6 @@ class Answer(models.Model):
         return validate[self.runtime](self.answer, {'guess': guess})
 
 
-@python_2_unicode_compatible
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle)
     by = models.ForeignKey(teams.models.UserProfile)
@@ -140,7 +135,6 @@ class Guess(models.Model):
         return False
 
 
-@python_2_unicode_compatible
 class TeamPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, related_name='teamdata')
     team = models.ForeignKey(teams.models.Team)
@@ -155,7 +149,6 @@ class TeamPuzzleData(models.Model):
         )
 
 
-@python_2_unicode_compatible
 class UserPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, related_name='userdata')
     user = models.ForeignKey(teams.models.UserProfile)

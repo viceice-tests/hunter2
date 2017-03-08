@@ -1,11 +1,9 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 import events
 
 
-@python_2_unicode_compatible
 class Team(models.Model):
     name = models.CharField(max_length=100)
     at_event = models.ForeignKey(events.models.Event, related_name='teams')
@@ -35,7 +33,6 @@ class Team(models.Model):
             raise ValidationError('There can only be one admin team per event')
 
 
-@python_2_unicode_compatible
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name='profile')
     teams = models.ManyToManyField(Team, blank=True, related_name='users')

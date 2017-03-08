@@ -1,9 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 
 
-@python_2_unicode_compatible
 class Theme(models.Model):
     name = models.CharField(max_length=255, unique=True)
     script = models.TextField(blank=True)
@@ -13,7 +11,6 @@ class Theme(models.Model):
         return '<Theme: {}>'.format(self.name)
 
 
-@python_2_unicode_compatible
 class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)
     theme = models.ForeignKey(Theme, related_name='theme')
