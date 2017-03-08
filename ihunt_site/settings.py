@@ -30,6 +30,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
+            'ihunt_site/templates',
         ],
         'APP_DIRS': True,
         'OPTIONS': {
