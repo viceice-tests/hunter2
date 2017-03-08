@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseNotAllowed
+from django.http import Http404, HttpResponse, HttpResponseNotAllowed
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
-from .models import Guess, TeamPuzzleData, UserPuzzleData
+from .models import Guess, Puzzle, TeamPuzzleData, UserPuzzleData
 from . import rules
 from . import runtime
 from . import utils
@@ -41,7 +41,10 @@ def episode(request, episode_number):
 @login_required
 def puzzle(request, episode_number, puzzle_number):
     episode = utils.event_episode(request.event, episode_number)
-    puzzle = episode.get_puzzle(puzzle_number)
+    try:
+        puzzle = episode.get_puzzle(puzzle_number)
+    except Puzzle.DoesNotExist as e:
+        raise Http404 from e
     admin = rules.is_admin_for_puzzle(request.user, puzzle)
 
     # If episode has not started redirect to episode holding page
