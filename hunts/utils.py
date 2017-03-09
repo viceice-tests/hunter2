@@ -16,3 +16,21 @@ def event_episode(event, episode_number):
         return episodes[ep_int - 1:ep_int].get()
     except Episode.DoesNotExist as e:
         raise Http404 from e
+
+def event_episode_puzzle(event, episode_number, puzzle_number):
+    episode = event_episode(event, episode_number)
+    try:
+        return episode, episode.puzzle(puzzle_number)
+    except Puzzle.DoesNotExit as e:
+        raise Http404 from e
+
+def puzzle_data(puzzle, team, user):
+    t_data, created = TeamData.objects.get_or_create(team=team)
+    u_data, created = UserData.objects.get_or_create(user=user)
+    tp_data, created = TeamPuzzleData.objects.get_or_create(
+        puzzle=puzzle, team=team
+    )
+    up_data, created = UserPuzzleData.objects.get_or_create(
+        puzzle=puzzle, user=user
+    )
+    return t_data, tp_data, up_data

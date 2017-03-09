@@ -4,6 +4,7 @@ from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from . import runtime as rt
 
+import events
 import teams
 
 
@@ -135,6 +136,33 @@ class Guess(models.Model):
             if answer.validate_guess(self.guess):
                 return True
         return False
+
+
+class TeamData(models.Model):
+    team = models.ForeignKey(teams.models.Team)
+    data = JSONField(default={})
+
+    class Meta:
+        verbose_name_plural = 'Team puzzle data'
+
+    def __str__(self):
+        return '<TeamPuzzleData: {} - {}>'.format(
+            self.team.name, self.puzzle.title
+        )
+
+
+class UserData(models.Model):
+    event = models.ForeignKey(events.models.Event)
+    user = models.ForeignKey(teams.models.UserProfile)
+    data = JSONField(default={})
+
+    class Meta:
+        verbose_name_plural = 'User puzzle data'
+
+    def __str__(self):
+        return '<UserPuzzleData: {} - {}>'.format(
+            self.user.name, self.puzzle.title
+        )
 
 
 class TeamPuzzleData(models.Model):

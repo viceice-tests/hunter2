@@ -4,32 +4,29 @@ from . import views
 
 import django.contrib.auth.urls
 
+puzzlepatterns = [
+    url('^$', views.puzzle, name='puzzle'),
+    url('^an$', views.answer, name='answer'),
+    url('^cb$', views.callback, name='callback'),
+]
+
+episodepatterns = [
+    url('^$', views.episode, name='episode'),
+    url('^pz/(?P<puzzle_number>[1-9]\d*)/', include(puzzlepatterns)),
+]
+
 eventpatterns = [
-    url(r'^hunt$', views.hunt, name='hunt'),
-    url(
-        r'^ep/(?P<episode_number>[1-9]\d*)$',
-        views.episode,
-        name='episode'
-    ),
-    url(
-        r'^ep/(?P<episode_number>[1-9]\d*)/pz/(?P<puzzle_number>[1-9]\d*)$',
-        views.puzzle,
-        name='puzzle'
-    ),
-    url(
-        r'^ep/(?P<episode_number>[1-9]\d*)/pz/(?P<puzzle_number>[1-9]\d*)/cb$',
-        views.callback,
-        name='callback'
-    ),
     url(
         r'^$',
         TemplateView.as_view(template_name='hunts/index.html'),
         name='index'
     ),
+    url(r'^ep/(?P<episode_number>[1-9]\d*)/', include(episodepatterns)),
 ]
 
 urlpatterns = [
-    url(r'^', include(django.contrib.auth.urls)),
+    url(r'', include(django.contrib.auth.urls)),
+    url(r'', include(eventpatterns)),
     url(r'^event/(?P<event_id>[1-9]\d*)/', include(eventpatterns)),
     url(
         r'^faq$',
@@ -41,5 +38,4 @@ urlpatterns = [
         TemplateView.as_view(template_name='hunts/help.html'),
         name='help'
     ),
-    url(r'^', include(eventpatterns)),
 ]
