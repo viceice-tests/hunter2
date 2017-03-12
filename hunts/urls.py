@@ -5,13 +5,13 @@ from . import views
 import django.contrib.auth.urls
 
 puzzlepatterns = [
-    url('^$', views.puzzle, name='puzzle'),
-    url('^an$', views.answer, name='answer'),
-    url('^cb$', views.callback, name='callback'),
+    url('^$', views.Puzzle.as_view(), name='puzzle'),
+    url('^an$', views.Answer.as_view(), name='answer'),
+    url('^cb$', views.Callback.as_view(), name='callback'),
 ]
 
 episodepatterns = [
-    url('^$', views.episode, name='episode'),
+    url('^$', views.Episode.as_view(), name='episode'),
     url('^pz/(?P<puzzle_number>[1-9]\d*)/', include(puzzlepatterns)),
 ]
 

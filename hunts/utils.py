@@ -1,5 +1,7 @@
 from django.http import Http404
-from .models import Episode
+from .models import \
+    Episode, Puzzle, TeamData, UserData, TeamPuzzleData, UserPuzzleData
+
 
 def current_puzzle(puzzlesets, team):
     for cs in puzzlesets:
