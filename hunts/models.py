@@ -146,7 +146,7 @@ class TeamData(models.Model):
         verbose_name_plural = 'Team puzzle data'
 
     def __str__(self):
-        return '<TeamPuzzleData: {} - {}>'.format(
+        return '<TeamData: {} - {}>'.format(
             self.team.name, self.puzzle.title
         )
 
@@ -160,7 +160,7 @@ class UserData(models.Model):
         verbose_name_plural = 'User puzzle data'
 
     def __str__(self):
-        return '<UserPuzzleData: {} - {}>'.format(
+        return '<UserData: {} - {}>'.format(
             self.user.name, self.puzzle.title
         )
 

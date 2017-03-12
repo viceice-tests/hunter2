@@ -17,12 +17,14 @@ def event_episode(event, episode_number):
     except Episode.DoesNotExist as e:
         raise Http404 from e
 
+
 def event_episode_puzzle(event, episode_number, puzzle_number):
     episode = event_episode(event, episode_number)
     try:
-        return episode, episode.puzzle(puzzle_number)
-    except Puzzle.DoesNotExit as e:
+        return episode, episode.get_puzzle(puzzle_number)
+    except Puzzle.DoesNotExist as e:
         raise Http404 from e
+
 
 def puzzle_data(puzzle, team, user):
     t_data, created = TeamData.objects.get_or_create(team=team)

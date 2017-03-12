@@ -1,4 +1,4 @@
-{% extends "ihunt/event.html" %}
+{% extends "base.html" %}
 {% block content %}
 <form class="form" id="formLoginPage" action="{% url 'login' %}" method="post">
 	{% csrf_token %}
