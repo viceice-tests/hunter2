@@ -10,6 +10,10 @@ COPY requirements.txt ./
 RUN pip install -r requirements.txt
 COPY . .
 
+RUN groupadd -g 500 -r django && useradd -g django -r -u 500 django
+RUN install -d -g django -o django /storage/media
+USER django
+
 VOLUME /storage
 
 EXPOSE 8000
