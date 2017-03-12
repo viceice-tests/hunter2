@@ -71,7 +71,7 @@ class Puzzle(View):
         answered = puzzle.answered_by(request.team)
 
         t_data, u_data, tp_data, up_data = utils.puzzle_data(
-            puzzle, request.team, request.user
+            puzzle, request.team, request.user.profile
         )
 
         response = TemplateResponse(

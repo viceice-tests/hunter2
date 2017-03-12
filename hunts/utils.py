@@ -30,11 +30,13 @@ def event_episode_puzzle(event, episode_number, puzzle_number):
 
 def puzzle_data(puzzle, team, user):
     t_data, created = TeamData.objects.get_or_create(team=team)
-    u_data, created = UserData.objects.get_or_create(user=user)
+    u_data, created = UserData.objects.get_or_create(
+        event=team.at_event, user=user
+    )
     tp_data, created = TeamPuzzleData.objects.get_or_create(
         puzzle=puzzle, team=team
     )
     up_data, created = UserPuzzleData.objects.get_or_create(
         puzzle=puzzle, user=user
     )
-    return t_data, tp_data, up_data
+    return t_data, u_data, tp_data, up_data
