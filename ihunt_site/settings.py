@@ -124,8 +124,11 @@ EMAIL_PORT = 25
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
+MEDIA_ROOT = '/storage/media/'
+MEDIA_URL = '/media/'
+
+STATIC_ROOT = '/storage/static/'
 STATIC_URL = '/static/'
-STATIC_ROOT = 'static'
 
 LOGIN_URL = '/login/'
 
