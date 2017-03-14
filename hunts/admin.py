@@ -12,6 +12,11 @@ class AnswerInline(NestedTabularInline):
     extra = 0
 
 
+class FileInline(NestedTabularInline):
+    model = models.PuzzleFile
+    extra = 0
+
+
 class HintInline(NestedTabularInline):
     model = models.Hint
     extra = 0
@@ -36,6 +41,7 @@ class GuessAdmin(admin.ModelAdmin):
 
 class PuzzleAdmin(NestedModelAdmin):
     inlines = [
+        FileInline,
         AnswerInline,
         HintInline,
         UnlockInline,

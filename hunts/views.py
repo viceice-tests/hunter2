@@ -5,6 +5,7 @@ from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
+from string import Template
 from .models import Guess
 from . import rules
 from . import runtime
@@ -74,6 +75,18 @@ class Puzzle(View):
             puzzle, request.team, request.user.profile
         )
 
+        files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
+
+        clue = Template(runtime.runtime_eval[puzzle.runtime](
+            puzzle.content,
+            {
+                't_data': t_data,
+                'u_data': u_data,
+                'tp_data': tp_data,
+                'up_data': up_data,
+            }
+        )).safe_substitute(**files)
+
         response = TemplateResponse(
             request,
             'hunts/puzzle.html',
@@ -81,15 +94,7 @@ class Puzzle(View):
                 'answered': answered,
                 'admin': admin,
                 'title': puzzle.title,
-                'clue': runtime.runtime_eval[puzzle.runtime](
-                    puzzle.content,
-                    {
-                        't_data': t_data,
-                        'u_data': u_data,
-                        'tp_data': tp_data,
-                        'up_data': up_data,
-                    }
-                )
+                'clue': clue
             }
         )
 

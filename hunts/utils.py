@@ -12,7 +12,7 @@ def current_puzzle(puzzlesets, team):
 
 
 def event_episode(event, episode_number):
-    episodes = event.episodes.order_by('start_date')
+    episodes = event.episode_set.order_by('start_date')
     ep_int = int(episode_number)
     try:
         return episodes[ep_int - 1:ep_int].get()

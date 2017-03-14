@@ -23,7 +23,7 @@ class Puzzle(models.Model):
         return '<Puzzle: {}>'.format(self.title)
 
     def unlocked_by(self, team):
-        episode = self.episodes.get(event=team.at_event)
+        episode = self.episode_set.get(event=team.at_event)
         return episode.unlocked_by(team) and \
             episode._puzzle_unlocked_by(self, team)
 
@@ -36,40 +36,10 @@ class Puzzle(models.Model):
         return any([guess.is_right() for guess in guesses])
 
 
-class Episode(models.Model):
-    puzzles = SortedManyToManyField(
-        Puzzle, blank=True, related_name='episodes'
-    )
-    name = models.CharField(max_length=255)
-    start_date = models.DateTimeField()
-    event = models.ForeignKey(Event, related_name='episodes')
-
-    class Meta:
-        unique_together = (('event', 'start_date'))
-
-    def __str__(self):
-        return '<Episode: {} - {}>'.format(self.event.name, self.name)
-
-    def get_puzzle(self, puzzle_number):
-        n = int(puzzle_number)
-        return self.puzzles.all()[n - 1:n].get()
-
-    def unlocked_by(self, team):
-        prequels = Episode.objects.filter(
-            event=self.event,
-            start_date__lt=self.start_date
-        )
-        return all([episode.finished_by(team) for episode in prequels])
-
-    def finished_by(self, team):
-        return all([puzzle.answered_by(team) for puzzle in self.puzzles])
-
-    def _puzzle_unlocked_by(self, puzzle, team):
-        for p in self.puzzles.all():
-            if p == puzzle:
-                return True
-            if not p.answered_by(team):
-                return False
+class PuzzleFile(models.Model):
+    puzzle = models.ForeignKey(Puzzle)
+    slug = models.SlugField()
+    file = models.FileField()
 
 
 class Clue(models.Model):
@@ -89,7 +59,7 @@ class Unlock(Clue):
 
 
 class UnlockGuess(models.Model):
-    unlock = models.ForeignKey(Unlock, related_name='guess')
+    unlock = models.ForeignKey(Unlock)
     runtime = models.CharField(
         max_length=1, choices=rt.RUNTIMES, default=rt.STATIC
     )
@@ -102,7 +72,7 @@ class UnlockGuess(models.Model):
 
 
 class Answer(models.Model):
-    for_puzzle = models.ForeignKey(Puzzle, related_name='answers')
+    for_puzzle = models.ForeignKey(Puzzle)
     runtime = models.CharField(
         max_length=1, choices=rt.RUNTIMES, default=rt.STATIC
     )
@@ -132,7 +102,7 @@ class Guess(models.Model):
         )
 
     def is_right(self):
-        for answer in self.for_puzzle.answers.all():
+        for answer in self.for_puzzle.answer_set.all():
             if answer.validate_guess(self.guess):
                 return True
         return False
@@ -166,7 +136,7 @@ class UserData(models.Model):
 
 
 class TeamPuzzleData(models.Model):
-    puzzle = models.ForeignKey(Puzzle, related_name='teamdata')
+    puzzle = models.ForeignKey(Puzzle)
     team = models.ForeignKey(teams.models.Team)
     data = JSONField(default={})
 
@@ -180,7 +150,7 @@ class TeamPuzzleData(models.Model):
 
 
 class UserPuzzleData(models.Model):
-    puzzle = models.ForeignKey(Puzzle, related_name='userdata')
+    puzzle = models.ForeignKey(Puzzle)
     user = models.ForeignKey(teams.models.UserProfile)
     data = JSONField(default={})
 
@@ -191,3 +161,37 @@ class UserPuzzleData(models.Model):
         return '<UserPuzzleData: {} - {}>'.format(
             self.user.name, self.puzzle.title
         )
+
+
+class Episode(models.Model):
+    puzzles = SortedManyToManyField(Puzzle, blank=True)
+    name = models.CharField(max_length=255)
+    start_date = models.DateTimeField()
+    event = models.ForeignKey(Event)
+
+    class Meta:
+        unique_together = (('event', 'start_date'))
+
+    def __str__(self):
+        return '<Episode: {} - {}>'.format(self.event.name, self.name)
+
+    def get_puzzle(self, puzzle_number):
+        n = int(puzzle_number)
+        return self.puzzles.all()[n - 1:n].get()
+
+    def unlocked_by(self, team):
+        prequels = Episode.objects.filter(
+            event=self.event,
+            start_date__lt=self.start_date
+        )
+        return all([episode.finished_by(team) for episode in prequels])
+
+    def finished_by(self, team):
+        return all([puzzle.answered_by(team) for puzzle in self.puzzles])
+
+    def _puzzle_unlocked_by(self, puzzle, team):
+        for p in self.puzzles.all():
+            if p == puzzle:
+                return True
+            if not p.answered_by(team):
+                return False

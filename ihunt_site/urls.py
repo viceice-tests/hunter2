@@ -14,7 +14,7 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^nested_admin/', include(nested_admin.urls)),
 ] \
-    + static(settings.MEDIA_URL, document_root=settings.MEDIA_URL) \
+    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) \
     + app_patterns
 
