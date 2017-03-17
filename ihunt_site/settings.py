@@ -64,30 +64,45 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.sites',
     'django.contrib.staticfiles',
     'debug_toolbar',
     'nested_admin',
     'rules.apps.AutodiscoverRulesConfig',
     'sortedm2m',
+    'subdomains',
     'events',
     'teams',
     'hunts',
 )
 
 MIDDLEWARE = (
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'subdomains.middleware.SubdomainURLRoutingMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
 
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+SITE_ID = 1
+
 ROOT_URLCONF = 'ihunt_site.urls'
+
+SUBDOMAIN_URLCONFS = {
+    'admin': 'ihunt_site.urls.admin',
+    'www': 'ihunt_site.urls.www',
+}
 
 WSGI_APPLICATION = 'ihunt_site.wsgi.application'
 

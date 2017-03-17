@@ -5,9 +5,10 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
   && rm -rf /var/lib/apt/lists/*
 
+COPY requirements.txt /usr/src/app/
+WORKDIR /usr
+RUN pip install -r /usr/src/app/requirements.txt
 WORKDIR /usr/src/app
-COPY requirements.txt ./
-RUN pip install -r requirements.txt
 COPY . .
 
 RUN groupadd -g 500 -r django && useradd -g django -r -u 500 django
@@ -17,4 +18,5 @@ USER django
 VOLUME /storage
 
 EXPOSE 8000
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+ENTRYPOINT ["python", "manage.py"]
+CMD ["runserver", "0.0.0.0:8000"]
