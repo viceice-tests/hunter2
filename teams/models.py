@@ -13,7 +13,7 @@ class Team(models.Model):
         unique_together = (('name', 'at_event'), )
 
     def __str__(self):
-        return '<Team: {} @{}>'.format(self.name, self.at_event.name)
+        return f'<Team: {self.name} @{self.at_event.name}>'
 
     def add_user(self, user):
         user.team = self
@@ -38,7 +38,7 @@ class UserProfile(models.Model):
     teams = models.ManyToManyField(Team, blank=True, related_name='users')
 
     def __str__(self):
-        return '<UserProfile: {}>'.format(self.user.username)
+        return f'<UserProfile: {self.user.username}>'
 
     def team_at(self, event):
         return self.teams.get(at_event=event)

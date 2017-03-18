@@ -8,7 +8,7 @@ class Theme(models.Model):
     style = models.TextField(blank=True)
 
     def __str__(self):
-        return '<Theme: {}>'.format(self.name)
+        return f'<Theme: {self.name}>'
 
 
 class Event(models.Model):
@@ -17,7 +17,7 @@ class Event(models.Model):
     current = models.BooleanField(default=False)
 
     def __str__(self):
-        return '<Event: {}>'.format(self.name)
+        return f'<Event: {self.name}>'
 
     def clean(self):
         if (

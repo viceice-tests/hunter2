@@ -20,7 +20,7 @@ class Puzzle(models.Model):
     cb_content = models.TextField(blank=True, default='')
 
     def __str__(self):
-        return '<Puzzle: {}>'.format(self.title)
+        return f'<Puzzle: {self.title}>'
 
     def unlocked_by(self, team):
         episode = self.episode_set.get(event=team.at_event)
@@ -79,7 +79,7 @@ class Answer(models.Model):
     answer = models.TextField()
 
     def __str__(self):
-        return '<Answer: {}>'.format(self.answer)
+        return f'<Answer: {self.answer}>'
 
     def validate_guess(self, guess):
         return rt.runtime_validate[self.runtime](
@@ -97,9 +97,7 @@ class Guess(models.Model):
         verbose_name_plural = 'Guesses'
 
     def __str__(self):
-        return '<Guess: {} by {}>'.format(
-            self.guess, self.by.user.username
-        )
+        return f'<Guess: {self.guess} by {self.username}>'
 
     def is_right(self):
         for answer in self.for_puzzle.answer_set.all():
@@ -116,9 +114,7 @@ class TeamData(models.Model):
         verbose_name_plural = 'Team puzzle data'
 
     def __str__(self):
-        return '<TeamData: {} - {}>'.format(
-            self.team.name, self.puzzle.title
-        )
+        return f'<TeamData: {self.team.name} - {self.puzzle.title}>'
 
 
 class UserData(models.Model):
@@ -130,9 +126,7 @@ class UserData(models.Model):
         verbose_name_plural = 'User puzzle data'
 
     def __str__(self):
-        return '<UserData: {} - {}>'.format(
-            self.user.name, self.puzzle.title
-        )
+        return f'<UserData: {self.user.name} - {self.puzzle.title}>'
 
 
 class TeamPuzzleData(models.Model):
@@ -144,9 +138,7 @@ class TeamPuzzleData(models.Model):
         verbose_name_plural = 'Team puzzle data'
 
     def __str__(self):
-        return '<TeamPuzzleData: {} - {}>'.format(
-            self.team.name, self.puzzle.title
-        )
+        return f'<TeamPuzzleData: {self.team.name} - {self.puzzle.title}>'
 
 
 class UserPuzzleData(models.Model):
@@ -158,9 +150,7 @@ class UserPuzzleData(models.Model):
         verbose_name_plural = 'User puzzle data'
 
     def __str__(self):
-        return '<UserPuzzleData: {} - {}>'.format(
-            self.user.name, self.puzzle.title
-        )
+        return f'<UserPuzzleData: {self.user.name} - {self.puzzle.title}>'
 
 
 class Episode(models.Model):
@@ -173,7 +163,7 @@ class Episode(models.Model):
         unique_together = (('event', 'start_date'))
 
     def __str__(self):
-        return '<Episode: {} - {}>'.format(self.event.name, self.name)
+        return f'<Episode: {self.event.name} - {self.name}>'
 
     def get_puzzle(self, puzzle_number):
         n = int(puzzle_number)

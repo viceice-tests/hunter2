@@ -11,9 +11,9 @@ def with_event(f):
     def view_func(request, event_id=None, *args, **kwargs):
         logging.debug(traceback.format_stack())
         if event_id is not None:
-            logging.debug('Event ID: {}'.format(event_id))
+            logging.debug(f'Event ID: {event_id}')
             event = get_object_or_404(Event, pk=event_id)
-            logging.debug('Event: {}'.format(event))
+            logging.debug(f'Event: {event}')
         else:
             try:
                 event = Event.objects.filter(current=True).get()
