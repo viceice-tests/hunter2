@@ -10,5 +10,6 @@ class TeamAdmin(admin.ModelAdmin):
 class UserProfileAdmin(admin.ModelAdmin):
     form = UserProfileForm
 
+
 admin.site.register(models.Team, TeamAdmin)
 admin.site.register(models.UserProfile, UserProfileAdmin)
