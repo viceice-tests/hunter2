@@ -1,10 +1,4 @@
 {% extends "base.html" %}
 {% block content %}
-<form class="form" id="formLoginPage" action="{% url 'login' %}" method="post">
-	{% csrf_token %}
-	<input name="next" id="next" value="/" type="hidden" />
-	<p><input name="username" id="usernamePage" placeholder="Username" type="text" /></p>
-	<p><input name="password" id="passwordPage" placeholder="Password" type="password" /></p>
-	<p><button type="submit" id="btnLoginPage">Login</button></p>
-</form>
+<a href="{% url 'social:begin' 'steam' %}?next={{ request.path }}">Login with Steam</a>
 {% endblock content %}

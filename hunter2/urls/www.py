@@ -8,6 +8,7 @@ from .. import settings
 import registration.backends.hmac.urls
 
 urlpatterns = [
+    url(r'', include('social_django.urls', namespace='social')),
     url(r'^accounts/', include(registration.backends.hmac.urls)),
 ] + app_patterns + static('/static/', document_root='static')
 

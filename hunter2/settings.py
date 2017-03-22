@@ -1,62 +1,30 @@
-"""
-Django settings for iHunt project.
+from .local import *
 
-For more information on this file, see
-https://docs.djangoproject.com/en/1.7/topics/settings/
-
-For the full list of settings and their values, see
-https://docs.djangoproject.com/en/1.7/ref/settings/
-"""
+import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'gqf223qekhjo3l#k@7hj=^w$k9$jow9yc193$%1co7tstt=s27'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-DEBUG_TOOLBAR_PATCH_SETTINGS = False
-
-INTERNAL_IPS = ('127.0.0.1', '172.17.0.1', '192.168.99.1')
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            'hunter2/templates',
-        ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.contrib.auth.context_processors.auth',
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.template.context_processors.static',
-                'django.contrib.messages.context_processors.messages',
-                'teams.context_processors.event_team',
-            ],
-        },
-    },
-]
-
-ALLOWED_HOSTS = ['*']
-
-
 # Application definition
-
 ACCOUNT_ACTIVATION_DAYS = 7
 
 AUTHENTICATION_BACKENDS = (
-    'rules.permissions.ObjectPermissionBackend',
+    'social_core.backends.steam.SteamOpenId',
     'django.contrib.auth.backends.ModelBackend',
+    'rules.permissions.ObjectPermissionBackend',
 )
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'HOST': 'db',
+        'PORT': 5432,
+    }
+}
+
+DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
 INSTALLED_APPS = (
     'django.contrib.admin',
@@ -77,77 +45,6 @@ INSTALLED_APPS = (
     'hunts',
 )
 
-MIDDLEWARE = (
-    'django.middleware.security.SecurityMiddleware',
-    'django.middleware.http.ConditionalGetMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'subdomains.middleware.SubdomainURLRoutingMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'events.middleware.EventMiddleware',
-    'teams.middleware.TeamMiddleware',
-)
-
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-
-SITE_ID = 1
-
-ROOT_URLCONF = 'hunter2.urls'
-
-SUBDOMAIN_URLCONFS = {
-    'admin': 'hunter2.urls.admin',
-    'www': 'hunter2.urls.www',
-}
-
-WSGI_APPLICATION = 'hunter2.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/1.7/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'HOST': 'db',
-        'PORT': 5432,
-    }
-}
-
-# Internationalization
-# https://docs.djangoproject.com/en/1.7/topics/i18n/
-
-LANGUAGE_CODE = 'en-gb'
-
-TIME_ZONE = 'Europe/London'
-
-USE_I18N = True
-
-USE_L10N = True
-
-USE_TZ = True
-
-EMAIL_HOST = 'mail01.ads.connon.me.uk'
-EMAIL_PORT = 25
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.7/howto/static-files/
-
-MEDIA_ROOT = '/storage/media/'
-MEDIA_URL = '/media/'
-
-STATIC_ROOT = '/storage/static/'
-STATIC_URL = '/static/'
-
-LOGIN_URL = '/login/'
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -165,3 +62,77 @@ LOGGING = {
         },
     },
 }
+
+LOGIN_URL = '/login/'
+
+MEDIA_ROOT = '/storage/media/'
+
+MEDIA_URL = '/media/'
+
+MIDDLEWARE = (
+    'django.middleware.security.SecurityMiddleware',
+    'django.middleware.http.ConditionalGetMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'subdomains.middleware.SubdomainURLRoutingMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'events.middleware.EventMiddleware',
+    'teams.middleware.TeamMiddleware',
+)
+
+ROOT_URLCONF = 'hunter2.urls'
+
+STATIC_ROOT = '/storage/static/'
+
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = (
+    'hunter2/static',
+)
+
+TEMPLATES = [
+    {
+        'APP_DIRS': True,
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            'hunter2/templates',
+        ],
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.template.context_processors.static',
+                'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
+                'teams.context_processors.event_team',
+            ],
+        },
+    },
+]
+
+SECURE_BROWSER_XSS_FILTER = True
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+SITE_ID = 1
+
+SUBDOMAIN_URLCONFS = {
+    'admin': 'hunter2.urls.admin',
+    'www': 'hunter2.urls.www',
+}
+
+USE_I18N = True
+
+USE_L10N = True
+
+USE_TZ = True
+
+WSGI_APPLICATION = 'hunter2.wsgi.application'
+
+X_FRAME_OPTIONS = 'DENY'
