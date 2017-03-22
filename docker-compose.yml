@@ -1,12 +1,12 @@
 db:
   image: postgres:9.6
   volumes:
-    - ihuntsite_db:/var/lib/postgresql/data
+    - hunter2_db:/var/lib/postgresql/data
 web:
   build: .
   volumes:
     - .:/usr/src/app
-    - ihuntsite_storage:/storage
+    - hunter2_storage:/storage
   ports:
     - "8000:8000"
   links:

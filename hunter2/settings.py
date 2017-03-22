@@ -30,7 +30,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            'ihunt_site/templates',
+            'hunter2/templates',
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -69,6 +69,7 @@ INSTALLED_APPS = (
     'debug_toolbar',
     'nested_admin',
     'rules.apps.AutodiscoverRulesConfig',
+    'social_django',
     'sortedm2m',
     'subdomains',
     'events',
@@ -97,14 +98,14 @@ X_FRAME_OPTIONS = 'DENY'
 
 SITE_ID = 1
 
-ROOT_URLCONF = 'ihunt_site.urls'
+ROOT_URLCONF = 'hunter2.urls'
 
 SUBDOMAIN_URLCONFS = {
-    'admin': 'ihunt_site.urls.admin',
-    'www': 'ihunt_site.urls.www',
+    'admin': 'hunter2.urls.admin',
+    'www': 'hunter2.urls.www',
 }
 
-WSGI_APPLICATION = 'ihunt_site.wsgi.application'
+WSGI_APPLICATION = 'hunter2.wsgi.application'
 
 
 # Database
