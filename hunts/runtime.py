@@ -1,4 +1,5 @@
 from lupa import LuaRuntime
+import re
 
 STATIC = 'S'
 LUA = 'L'
