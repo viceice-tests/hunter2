@@ -9,8 +9,10 @@ import registration.backends.hmac.urls
 
 urlpatterns = [
     url(r'', include('social_django.urls', namespace='social')),
-    url(r'^accounts/', include(registration.backends.hmac.urls)),
-] + app_patterns + static('/static/', document_root='static')
+] \
+    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
+    + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) \
+    + app_patterns
 
 if settings.DEBUG:
     import debug_toolbar
