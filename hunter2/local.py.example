@@ -1,16 +1,24 @@
 ALLOWED_HOSTS = ['*']
 
-EMAIL_HOST = 'localhost'
-EMAIL_PORT = 25
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'HOST': 'db',
+        'PORT': 5432,
+    }
+}
 
 DEBUG = True
+
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
 
 INTERNAL_IPS = ('127.0.0.1')
 
 LANGUAGE_CODE = 'en-gb'
 
 SECRET_KEY = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-
-SOCIAL_AUTH_STEAM_API_KEY = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 
 TIME_ZONE = 'Europe/London'
