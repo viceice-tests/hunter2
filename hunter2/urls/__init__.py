@@ -1,4 +1,4 @@
-from .settings import DEBUG
+from ..settings import DEBUG
 
 if DEBUG:
     from .admin import urlpatterns as admin_patterns
