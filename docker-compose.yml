@@ -1,13 +1,18 @@
-db:
-  image: postgres:9.6
-  volumes:
-    - hunter2_db:/var/lib/postgresql/data
-web:
-  build: .
-  volumes:
-    - .:/usr/src/app
-    - hunter2_storage:/storage
-  ports:
-    - "8000:8000"
-  links:
-    - db
+version: '3'
+services:
+  db:
+    image: postgres:9.6
+    volumes:
+      - db:/var/lib/postgresql/data
+  web:
+    build: .
+    volumes:
+      - .:/usr/src/app
+      - storage:/storage
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+volumes:
+  db: {}
+  storage: {}
