@@ -10,7 +10,7 @@ ACCOUNT_ACTIVATION_DAYS = 7
 
 ACCOUNT_EMAIL_REQUIRED = True
 
-ACCOUNT_EMAIL_VERIFICATION = False
+ACCOUNT_EMAIL_VERIFICATION = 'none'
 
 AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
