@@ -1,5 +1,20 @@
-from .local import *
-
+# Attempt to load the local configuration file and fail if it is not present
+try:
+    from .local import *
+except ImportError:
+    # TODO: Replace this with a proper solution, it is not final.
+    ALLOWED_HOSTS = ['*']
+    SECRET_KEY = "SECRET_KEY_NOT_DEFINED"
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'postgres',
+            'USER': 'postgres',
+            'HOST': 'db',
+            'PORT': 5432,
+        }
+    }
+    DEBUG = True
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
