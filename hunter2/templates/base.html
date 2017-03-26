@@ -47,7 +47,7 @@
 								<div class="container-fluid">
 									<h3>Sign in with OpenID</h3>
 									{% load socialaccount %}
-									<p><a href="{% provider_login_url "openid" openid="http://steamcommunity.com/openid" next=request.path %}"><img src="https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_01.png" alt="Sign in through Steam" /></a></p>
+									<p><a href="{% provider_login_url 'openid' openid='http://steamcommunity.com/openid' next=request.path %}"><img src="https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_01.png" alt="Sign in through Steam" /></a></p>
 									<h3>Sign in with Username/Password</h3>
 									<form class="form" id="formLogin" action="{% url 'account_login' %}" method="post">
 										{% csrf_token %}
