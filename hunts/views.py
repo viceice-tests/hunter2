@@ -77,7 +77,7 @@ class Puzzle(View):
 
         files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
 
-        clue = Template(runtime.runtime_eval[puzzle.runtime](
+        text = Template(runtime.runtime_eval[puzzle.runtime](
             puzzle.content,
             {
                 't_data': t_data,
@@ -94,7 +94,7 @@ class Puzzle(View):
                 'answered': answered,
                 'admin': admin,
                 'title': puzzle.title,
-                'clue': clue
+                'text': text
             }
         )
 
