@@ -26,5 +26,4 @@ test:
   stage: test
   script:
     - docker-compose pull
-    - docker-compose up -d
     - docker-compose run $SERVICE test

@@ -1,4 +1,5 @@
 version: '3'
+
 services:
   db:
     image: postgres:9.6
@@ -8,12 +9,13 @@ services:
     image: ${IMAGE_TAG:-hunter2}
     build: .
     volumes:
-      - .:/usr/src/app
+      - ${PWD:-.}:/usr/src/app
       - storage:/storage
     ports:
       - "8000:8000"
     depends_on:
       - db
+
 volumes:
   db: {}
   storage: {}

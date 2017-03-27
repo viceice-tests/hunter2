@@ -1,9 +1,15 @@
 FROM python:3.6
 
 RUN apt-get update && apt-get install -y \
-    liblua5.2-dev \
-    postgresql-client \
-  && rm -rf /var/lib/apt/lists/*
+liblua5.2-dev \
+postgresql-client \
+wget \
+&& rm -rf /var/lib/apt/lists/*
+
+ENV DOCKERIZE_VERSION v0.3.0
+RUN wget -q https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+&& tar -C /usr/local/bin -xzf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+&& rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
 COPY requirements.txt /usr/src/app/
 WORKDIR /usr
@@ -18,5 +24,5 @@ USER django
 VOLUME /storage
 
 EXPOSE 8000
-ENTRYPOINT ["python", "manage.py"]
+ENTRYPOINT ["dockerize", "-wait", "tcp://db:5432", "python", "manage.py"]
 CMD ["runserver", "0.0.0.0:8000"]
