@@ -1,5 +1,10 @@
 image: docker:latest
 
+variables:
+  DOCKER_DRIVER: overlay
+  TEST_IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+
 services:
   - docker:dind
 
@@ -7,18 +12,13 @@ stages:
   - build
   - test
 
-variables:
-  DOCKER_DRIVER: overlay
-  TEST_IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-  RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
-
 before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 
 build:
   stage: build
   script:
-    - docker build --pull -t $TEST_IMAGE_TAG
+    - docker build --pull -t $TEST_IMAGE_TAG .
     - docker push $TEST_IMAGE_TAG
 
 test:
