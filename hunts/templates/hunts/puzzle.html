@@ -1,13 +1,17 @@
 {% extends "events/event.html" %}
 
 {% block content %}
-<!-- CLUE STARTS HERE -->
 {% if correct %}
 CORRECT!
 {% endif %}
+<!-- CLUE STARTS HERE -->
 <h1>{{ title }}</h1>
 {{ text | safe }}
 <!-- CLUE ENDS HERE -->
+<h2>Clues</h2>
+{% for clue in clues %}
+<p>{{clue}}</p>
+{% endfor %}
 <hr />
 <form method="POST" class="form-inline">
 	{% csrf_token %}

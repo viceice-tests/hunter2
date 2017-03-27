@@ -87,12 +87,15 @@ class Puzzle(View):
             }
         )).safe_substitute(**files)
 
+        clues = [c.text for c in puzzle.clue_set.all()]
+
         response = TemplateResponse(
             request,
             'hunts/puzzle.html',
             context={
                 'answered': answered,
                 'admin': admin,
+                'clues': clues,
                 'title': puzzle.title,
                 'text': text
             }
