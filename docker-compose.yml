@@ -11,6 +11,7 @@ services:
     volumes:
       - ${PWD:-.}:/usr/src/app
       - storage:/storage
+      - config:/config
     ports:
       - "8000:8000"
     depends_on:
@@ -19,3 +20,4 @@ services:
 volumes:
   db: {}
   storage: {}
+  config: {}
