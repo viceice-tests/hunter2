@@ -19,12 +19,16 @@ before_script:
 
 build:
   stage: build
+  variables:
+    IMAGE_TAG: $TEST_IMAGE_TAG
   script:
-    - IMAGE_TAG=$TEST_IMAGE_TAG docker-compose build --pull
+    - docker-compose build --pull
     - docker-compose push
 
 test:
   stage: test
+  variables:
+    IMAGE_TAG: $TEST_IMAGE_TAG
   script:
     - docker-compose pull
     - docker-compose run $SERVICE test
