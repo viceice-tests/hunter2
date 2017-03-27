@@ -34,18 +34,22 @@
 						<li class="dropdown">
 							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navUser">{{ user.username }}<span class="caret"></span></a>
 							<ul class="dropdown-menu">
-								<li><a href="{% url 'logout' %}?next={{ request.path }}">Logout</a></li>
+								<li><a href="{% url 'account_logout' %}?next={{ request.path }}">Logout</a></li>
 							</ul>
 						</li>
 						{% else %}
 						<li>
-							<a href="#">Register</a>
+							<a href="{% url 'account_signup' %}">Register</a>
 						</li>
 						<li class="dropdown">
 							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navLogin">Login<span class="caret"></span></a>
 							<div class="dropdown-menu">
 								<div class="container-fluid">
-									<form class="form" id="formLogin" action="{% url 'login' %}" method="post">
+									<h3>Sign in with OpenID</h3>
+									{% load socialaccount %}
+									<p><a href="{% provider_login_url "openid" openid="http://steamcommunity.com/openid" next=request.path %}"><img src="https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_01.png" alt="Sign in through Steam" /></a></p>
+									<h3>Sign in with Username/Password</h3>
+									<form class="form" id="formLogin" action="{% url 'account_login' %}" method="post">
 										{% csrf_token %}
 										<input name="next" id="next" value="{{ request.path }}" type="hidden" />
 										<input name="username" id="username" placeholder="Username" type="text" />
