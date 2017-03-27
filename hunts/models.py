@@ -135,6 +135,7 @@ class UserData(models.Model):
 class TeamPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle)
     team = models.ForeignKey(teams.models.Team)
+    start_time = models.DateTimeField(null=True)
     data = JSONField(default={})
 
     class Meta:

@@ -75,6 +75,9 @@ class Puzzle(View):
             puzzle, request.team, request.user.profile
         )
 
+        if not tp_data.start_time:
+            tp_data.start_time = timezone.now()
+
         files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
 
         text = Template(runtime.runtime_eval[puzzle.runtime](
