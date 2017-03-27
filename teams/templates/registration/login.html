@@ -1,4 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
-<a href="{% url 'social:begin' 'steam' %}?next={{ request.path }}">Login with Steam</a>
+<div class="container">
+	<div class="row">
+		<div class="col-md-4">
+			<h3>Login with OpenID</h3>
+			<a href="#"><img src="https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_01.png" alt="Sign in through Steam" /></a>
+		</div>
+		<div class="col-md-4">
+			<h3>Login with Username/Password</h3>
+			<form class="form" id="formLogin" action="{% url 'login' %}" method="post">
+				{% csrf_token %}
+				<input name="next" id="next" value="{{ request.path }}" type="hidden" />
+				<p><input name="username" id="username" placeholder="Username" type="text" /></p>
+				<p><input name="password" id="password" placeholder="Password" type="password" /></p>
+				<p><button type="submit" id="btnLogin" class="btn">Login</button></p>
+			</form>
+		</div>
+	</div>
+</div>
 {% endblock content %}

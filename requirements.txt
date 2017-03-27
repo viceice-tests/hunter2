@@ -2,9 +2,9 @@ Django
 lupa
 psycopg2
 rules
+django-allauth
 django-debug-toolbar
 django-sortedm2m
 django-nested-admin
 django-registration
-social-auth-app-django
 -e git+https://github.com/huwshimi/django-subdomains.git@63405c239148308bf214f950c0cff50d7f29b23d#egg=django-subdomains

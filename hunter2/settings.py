@@ -23,8 +23,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # Application definition
 ACCOUNT_ACTIVATION_DAYS = 7
 
+ACCOUNT_EMAIL_REQUIRED = True
+
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
 AUTHENTICATION_BACKENDS = (
-    'social_core.backends.steam.SteamOpenId',
+    'allauth.account.auth_backends.AuthenticationBackend',
     'django.contrib.auth.backends.ModelBackend',
     'rules.permissions.ObjectPermissionBackend',
 )
@@ -39,10 +43,13 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.openid',
     'debug_toolbar',
     'nested_admin',
     'rules.apps.AutodiscoverRulesConfig',
-    'social_django',
     'sortedm2m',
     'subdomains',
     'events',
@@ -91,6 +98,18 @@ MIDDLEWARE = (
 
 ROOT_URLCONF = 'hunter2.urls'
 
+SOCIALACCOUNT_AUTO_SIGNUP = False
+
+SOCIALACCOUNT_PROVIDERS = {
+    'openid': {
+        'SERVERS': [{
+            'id': 'steam',
+            'name': 'Steam',
+            'openid_url': 'http://steamcommunity.com/openid',
+        }]
+    }
+}
+
 STATIC_ROOT = '/storage/static/'
 
 STATIC_URL = '/static/'
@@ -113,8 +132,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.template.context_processors.static',
                 'django.contrib.messages.context_processors.messages',
-                'social_django.context_processors.backends',
-                'social_django.context_processors.login_redirect',
                 'teams.context_processors.event_team',
             ],
         },

@@ -1,17 +1,17 @@
 {% load staticfiles %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	<head>
 		<title>The iHunt</title>
 		<meta charset="UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-		<script src="https://code.jquery.com/jquery-2.2.1.min.js" integrity="sha384-8C+3bW/ArbXinsJduAjm9O7WNnuOcO+Bok/VScRYikawtvz4ZPrpXtGfKIewM9dK" crossorigin="anonymous"></script>
+		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
 
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous" />
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous" />
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous" />
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
 		<link rel="stylesheet" href="{% static 'hunter2/css/base.css' %}" type="text/css" />
 		<script src="{% static 'hunter2/js/base.js' %}"></script>
@@ -19,10 +19,10 @@
 		{% block style %}{% endblock %}
 		{% block script %}{% endblock %}
 	</head>
-	<noscript>
-		You do not have JavaScript Enabled. JavaScript is required to access and take part in the iHunt.
-	</noscript>
 	<body>
+		<noscript>
+			You do not have JavaScript Enabled. JavaScript is required to access and take part in the iHunt.
+		</noscript>
 		<nav class="navbar navbar-inverse">
 			<div class="container-fluid">
 				<div class="collapse navbar-collapse" id="site-navbar-collapse-1">
@@ -32,20 +32,24 @@
 					<ul class="nav navbar-nav navbar-right">
 						{% if user.is_authenticated %}
 						<li class="dropdown">
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navUser">{{ user.username }}<span class="caret" /></a>
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navUser">{{ user.username }}<span class="caret"></span></a>
 							<ul class="dropdown-menu">
-								<li><a href="{% url 'logout' %}?next={{ request.path }}">Logout</a></li>
+								<li><a href="{% url 'account_logout' %}?next={{ request.path }}">Logout</a></li>
 							</ul>
 						</li>
 						{% else %}
 						<li>
-							<a href="#">Register</a>
+							<a href="{% url 'account_signup' %}">Register</a>
 						</li>
 						<li class="dropdown">
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navLogin">Login<span class="caret" /></a>
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navLogin">Login<span class="caret"></span></a>
 							<div class="dropdown-menu">
 								<div class="container-fluid">
-									<form class="form" id="formLogin" action="{% url 'login' %}" method="post">
+									<h3>Sign in with OpenID</h3>
+									{% load socialaccount %}
+									<p><a href="{% provider_login_url "openid" openid="http://steamcommunity.com/openid" next=request.path %}"><img src="https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_01.png" alt="Sign in through Steam" /></a></p>
+									<h3>Sign in with Username/Password</h3>
+									<form class="form" id="formLogin" action="{% url 'account_login' %}" method="post">
 										{% csrf_token %}
 										<input name="next" id="next" value="{{ request.path }}" type="hidden" />
 										<input name="username" id="username" placeholder="Username" type="text" />

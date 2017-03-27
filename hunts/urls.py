@@ -2,8 +2,6 @@ from django.conf.urls import include, url
 from django.views.generic import TemplateView
 from . import views
 
-import django.contrib.auth.urls
-
 puzzlepatterns = [
     url('^$', views.Puzzle.as_view(), name='puzzle'),
     url('^an$', views.Answer.as_view(), name='answer'),
@@ -25,7 +23,6 @@ eventpatterns = [
 ]
 
 urlpatterns = [
-    url(r'', include(django.contrib.auth.urls)),
     url(r'', include(eventpatterns)),
     url(r'^event/(?P<event_id>[1-9]\d*)/', include(eventpatterns)),
     url(
