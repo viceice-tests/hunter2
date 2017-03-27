@@ -1,9 +1,11 @@
-image: docker:latest
+# TODO: Replace with an official image when available
+image: registry.gitlab.com/citygro/docker-and-compose
 
 variables:
   DOCKER_DRIVER: overlay
   TEST_IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
   RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+  SERVICE: web
 
 services:
   - docker:dind
@@ -18,11 +20,11 @@ before_script:
 build:
   stage: build
   script:
-    - docker build --pull -t $TEST_IMAGE_TAG .
-    - docker push $TEST_IMAGE_TAG
+    - IMAGE_TAG=$TEST_IMAGE_TAG docker-compose build --pull
+    - docker-compose push
 
 test:
   stage: test
   script:
-    - docker pull $TEST_IMAGE_TAG
-    - docker run $TEST_IMAGE_TAG test
+    - docker-compose pull
+    - docker-compose run $SERVICE test

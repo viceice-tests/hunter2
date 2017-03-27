@@ -5,6 +5,7 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
   web:
+    image: ${IMAGE_TAG:-hunter2}
     build: .
     volumes:
       - .:/usr/src/app
