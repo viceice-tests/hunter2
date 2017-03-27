@@ -32,7 +32,10 @@ class Puzzle(models.Model):
             by__in=team.users.all()
         ).filter(
             for_puzzle=self
+        ).order_by(
+            '-given'
         )
+
         return any([guess.is_right() for guess in guesses])
 
 
