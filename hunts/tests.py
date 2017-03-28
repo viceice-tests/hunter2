@@ -61,7 +61,8 @@ class PuzzleStartTimeTests(TestCase):
         self.assertEquals(response.status_code, 200)
         first_time = TeamPuzzleData.objects.get().start_time
         self.assertIsNot(first_time, None)
-        self.client.get('/ep/1/pz/1')
+        response = self.client.get('/ep/1/pz/1/')
+        self.assertEquals(response.status_code, 200)
         second_time = TeamPuzzleData.objects.get().start_time
         self.assertEqual(first_time, second_time)
 
