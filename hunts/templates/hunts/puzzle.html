@@ -1,8 +1,8 @@
 {% extends "events/event.html" %}
 
 {% block content %}
-{% if correct %}
-CORRECT!
+{% if answered %}
+<h2>Already Answered</h2>
 {% endif %}
 <!-- CLUE STARTS HERE -->
 <h1>{{ title }}</h1>
@@ -18,7 +18,7 @@ CORRECT!
 <p>{{unlock}}</p>
 {% endfor %}
 <hr />
-<form method="POST" class="form-inline">
+<form class="form-inline" action="an" method="POST">
 	{% csrf_token %}
 	<input name="answer" class="form-control"></input>
 	<button type="submit" class="btn btn-default">Guess!</button>

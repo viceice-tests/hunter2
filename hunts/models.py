@@ -4,6 +4,7 @@ from django.utils import timezone
 from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from . import runtime as rt
+from . import utils
 
 import logging
 
@@ -30,7 +31,9 @@ class Puzzle(models.Model):
         return episode.unlocked_by(team) and \
             episode._puzzle_unlocked_by(self, team)
 
-    def answered_by(self, team):
+    def answered_by(self, team, data=None):
+        if data is None:
+            data = PuzzleData(self, team)
         guesses = Guess.objects.filter(
             by__in=team.users.all()
         ).filter(
@@ -39,7 +42,7 @@ class Puzzle(models.Model):
             '-given'
         )
 
-        return any([guess.is_right() for guess in guesses])
+        return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
 
 
 class PuzzleFile(models.Model):
@@ -59,15 +62,18 @@ class Clue(models.Model):
 class Hint(Clue):
     time = models.DurationField()
 
-    def unlocked_by(self, team, tp_data):
-        logging.debug(tp_data.start_time + self.time)
-        logging.debug(timezone.now())
-        return tp_data.start_time + self.time < timezone.now()
+    def unlocked_by(self, team, data):
+        return data.tp_data.start_time + self.time < timezone.now()
 
 
 class Unlock(Clue):
-    def unlocked_by(self, team):
-        return True
+    def unlocked_by(self, team, data):
+        guesses = Guess.objects.filter(
+            by__in=team.users.all()
+        ).filter(
+            for_puzzle=self.puzzle
+        )
+        return [g for g in guesses if any([u.validate_guess(g, data) for u in self.unlockguess_set.all()])]
 
 
 class UnlockGuess(models.Model):
@@ -77,9 +83,14 @@ class UnlockGuess(models.Model):
     )
     guess = models.TextField()
 
-    def validate_guess(self, guess):
+    def validate_guess(self, guess, data):
+        logging.debug(f'{guess} ??? {self.guess}')
         return rt.runtime_validate[self.runtime](
-            self.answer, {'guess': guess}
+            self.guess, {
+                'guess': guess.guess,
+                't_data': data.t_data,
+                'tp_data': data.tp_data,
+            }
         )
 
 
@@ -93,9 +104,13 @@ class Answer(models.Model):
     def __str__(self):
         return f'<Answer: {self.answer}>'
 
-    def validate_guess(self, guess):
+    def validate_guess(self, guess, data):
         return rt.runtime_validate[self.runtime](
-            self.answer, {'guess': guess}
+            self.answer, {
+                'guess': guess.guess,
+                't_data': data.t_data,
+                'tp_data': data.tp_data,
+            }
         )
 
 
@@ -109,7 +124,7 @@ class Guess(models.Model):
         verbose_name_plural = 'Guesses'
 
     def __str__(self):
-        return f'<Guess: {self.guess} by {self.username}>'
+        return f'<Guess: {self.guess} by {self.by}>'
 
     def is_right(self):
         for answer in self.for_puzzle.answer_set.all():
@@ -166,6 +181,32 @@ class UserPuzzleData(models.Model):
         return f'<UserPuzzleData: {self.user.name} - {self.puzzle.title}>'
 
 
+# Convenience class for using all the above data objects together
+class PuzzleData:
+    from .models import TeamData, UserData, TeamPuzzleData, UserPuzzleData
+
+    def __init__(self, puzzle, team, user=None):
+        self.t_data, created = TeamData.objects.get_or_create(team=team)
+        self.tp_data, created = TeamPuzzleData.objects.get_or_create(
+            puzzle=puzzle, team=team
+        )
+        if user:
+            self.u_data, created = UserData.objects.get_or_create(
+                event=team.at_event, user=user
+            )
+            self.up_data, created = UserPuzzleData.objects.get_or_create(
+                puzzle=puzzle, user=user
+            )
+
+    def save(self):
+        self.t_data.save()
+        self.tp_data.save()
+        if self.u_data:
+            self.u_data.save()
+        if self.up_data:
+            self.up_data.save()
+
+
 class Episode(models.Model):
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     name = models.CharField(max_length=255)
@@ -190,7 +231,7 @@ class Episode(models.Model):
         return all([episode.finished_by(team) for episode in prequels])
 
     def finished_by(self, team):
-        return all([puzzle.answered_by(team) for puzzle in self.puzzles])
+        return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
 
     def _puzzle_unlocked_by(self, puzzle, team):
         for p in self.puzzles.all():

@@ -25,8 +25,14 @@ class Episode(View):
                 'hunts/episodenotstarted.html',
                 context={
                     'episode': episode.name,
-                    'startdate': episode.start_date
+                    'startdate': episode.start_date,
                 }
+            )
+
+        # TODO: May need caching of progress to avoid DB load
+        if not episode.unlocked_by(request.team):
+            return TemplateResponse(
+                request, 'hunts/episodelocked.html', status=403
             )
 
         puzzles = list(episode.puzzles.all())
@@ -58,7 +64,7 @@ class Puzzle(View):
                 return redirect(
                     'episode',
                     event_id=request.event.pk,
-                    episode_number=episode_number
+                    episode_number=episode_number,
                 )
             else:
                 return redirect('episode', episode_number=episode_number)
@@ -69,29 +75,26 @@ class Puzzle(View):
                 request, 'hunts/puzzlelocked.html', status=403
             )
 
-        answered = puzzle.answered_by(request.team)
+        data = utils.PuzzleData(puzzle, request.team, request.user.profile)
 
-        t_data, u_data, tp_data, up_data = utils.puzzle_data(
-            puzzle, request.team, request.user.profile
-        )
+        if not data.tp_data.start_time:
+            data.tp_data.start_time = timezone.now()
 
-        if not tp_data.start_time:
-            tp_data.start_time = timezone.now()
+        answered = puzzle.answered_by(request.team, data)
+        hints = [h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)]
+        unlocks = [u for u in puzzle.unlock_set.all() if u.unlocked_by(request.team, data)]
 
         files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
 
         text = Template(runtime.runtime_eval[puzzle.runtime](
             puzzle.content,
             {
-                't_data': t_data,
-                'u_data': u_data,
-                'tp_data': tp_data,
-                'up_data': up_data,
+                't_data': data.t_data,
+                'u_data': data.u_data,
+                'tp_data': data.tp_data,
+                'up_data': data.up_data,
             }
         )).safe_substitute(**files)
-
-        hints = [h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, tp_data)]
-        unlocks = [u for u in puzzle.unlock_set.all() if u.unlocked_by(request.team)]
 
         response = TemplateResponse(
             request,
@@ -106,10 +109,7 @@ class Puzzle(View):
             }
         )
 
-        t_data.save()
-        u_data.save()
-        tp_data.save()
-        up_data.save()
+        data.save()
 
         return response
 
@@ -121,10 +121,6 @@ class Answer(View):
             request.event, episode_number, puzzle_number
         )
 
-        t_data, u_data, tp_data, up_data = utils.puzzle_data(
-            puzzle, request.team, request.user
-        )
-
         given_answer = request.POST['answer']
         guess = Guess(
             guess=given_answer,
@@ -133,10 +129,19 @@ class Answer(View):
         )
         guess.save()
 
-        t_data.save()
-        u_data.save()
-        tp_data.save()
-        up_data.save()
+        if request.event:
+            return redirect(
+                'puzzle',
+                event_id=request.event.pk,
+                episode_number=episode_number,
+                puzzle_number=puzzle_number,
+            )
+        else:
+            return redirect(
+                'episode',
+                episode_number=episode_number,
+                puzzle_number=puzzle_number,
+            )
 
 
 @method_decorator(login_required, name='dispatch')
@@ -151,25 +156,20 @@ class Callback(View):
             request.event, episode_number, puzzle_number
         )
 
-        t_data, u_data, tp_data, up_data = utils.puzzle_data(
-            puzzle, request.team, request.user
-        )
+        data = utils.PuzzleData(puzzle, request.team, request.user)
 
         response = HttpResponse(
             runtime.runtime_eval[puzzle.cb_runtime](
                 puzzle.cb_content,
                 {
-                    't_data': t_data,
-                    'u_data': u_data,
-                    'tp_data': tp_data,
-                    'up_data': up_data,
+                    't_data': data.t_data,
+                    'u_data': data.u_data,
+                    'tp_data': data.tp_data,
+                    'up_data': data.up_data,
                 }
             )
         )
 
-        t_data.save()
-        u_data.save()
-        tp_data.save()
-        up_data.save()
+        data.save()
 
         return response
