@@ -6,16 +6,18 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
   web:
-    image: ${IMAGE_TAG:-hunter2}
     build: .
+    depends_on:
+      - db
+    environment:
+      - H2_DEBUG
+    image: ${IMAGE_TAG:-hunter2}
+    ports:
+      - "8000:8000"
     volumes:
       - ${PWD:-.}:/usr/src/app
       - storage:/storage
       - config:/config
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
 
 volumes:
   db: {}
