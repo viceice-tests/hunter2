@@ -87,7 +87,7 @@ LOGIN_REDIRECT_URL = '/'
 
 LOGIN_URL = '/login/'
 
-MEDIA_ROOT = '/storage/media/'
+MEDIA_ROOT = '/uploads/'
 
 MEDIA_URL = '/media/'
 
@@ -120,7 +120,7 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-STATIC_ROOT = '/storage/static/'
+STATIC_ROOT = '/static/'
 
 STATIC_URL = '/static/'
 

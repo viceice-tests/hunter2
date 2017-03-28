@@ -16,10 +16,14 @@ services:
       - "8000:8000"
     volumes:
       - ${PWD:-.}:/usr/src/app
-      - storage:/storage
       - config:/config
+      - static:/static
+      - uploads_events:/uploads/events
+      - uploads_puzzles:/uploads/puzzles
 
 volumes:
   db: {}
-  storage: {}
   config: {}
+  static: {}
+  uploads_events: {}
+  uploads_puzzles: {}
