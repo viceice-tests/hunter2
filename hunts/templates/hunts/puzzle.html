@@ -9,8 +9,13 @@ CORRECT!
 {{ text | safe }}
 <!-- CLUE ENDS HERE -->
 <h2>Clues</h2>
-{% for clue in clues %}
-<p>{{clue}}</p>
+<h3>Hints</h3>
+{% for hint in hints %}
+<p>{{hint}}</p>
+{% endfor %}
+<h3>Unlocks</h3>
+{% for unlock in unlocks %}
+<p>{{unlock}}</p>
 {% endfor %}
 <hr />
 <form method="POST" class="form-inline">

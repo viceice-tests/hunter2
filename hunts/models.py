@@ -1,8 +1,11 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.utils import timezone
 from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from . import runtime as rt
+
+import logging
 
 import events
 import teams
@@ -56,9 +59,15 @@ class Clue(models.Model):
 class Hint(Clue):
     time = models.DurationField()
 
+    def unlocked_by(self, team, tp_data):
+        logging.debug(tp_data.start_time + self.time)
+        logging.debug(timezone.now())
+        return tp_data.start_time + self.time < timezone.now()
+
 
 class Unlock(Clue):
-    pass
+    def unlocked_by(self, team):
+        return True
 
 
 class UnlockGuess(models.Model):

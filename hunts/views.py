@@ -90,7 +90,8 @@ class Puzzle(View):
             }
         )).safe_substitute(**files)
 
-        clues = [c.text for c in puzzle.clue_set.all()]
+        hints = [h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, tp_data)]
+        unlocks = [u for u in puzzle.unlock_set.all() if u.unlocked_by(request.team)]
 
         response = TemplateResponse(
             request,
@@ -98,9 +99,10 @@ class Puzzle(View):
             context={
                 'answered': answered,
                 'admin': admin,
-                'clues': clues,
+                'hints': hints,
                 'title': puzzle.title,
-                'text': text
+                'text': text,
+                'unlocks': unlocks,
             }
         )
 
