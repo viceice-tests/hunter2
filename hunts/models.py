@@ -42,7 +42,7 @@ class Puzzle(models.Model):
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle)
     slug = models.SlugField()
-    file = models.FileField()
+    file = models.FileField(upload_to='puzzles/')
 
 
 class Clue(models.Model):

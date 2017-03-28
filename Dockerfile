@@ -12,12 +12,10 @@ WORKDIR /usr/src/app
 COPY . .
 
 RUN groupadd -g 500 -r django && useradd -g django -r -u 500 django
-RUN install -d -g django -o django /config
-RUN install -d -g django -o django /storage/media
+RUN install -d -g django -o django /config /static /uploads/events /uploads/puzzles
 USER django
 
-VOLUME /config
-VOLUME /storage
+VOLUME ["/config", "/static", "/uploads/events", "/uploads/puzzles"]
 
 EXPOSE 8000
 ENTRYPOINT ["python", "manage.py"]

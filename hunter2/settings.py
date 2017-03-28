@@ -14,7 +14,7 @@ ALLOWED_HOSTS = env.list      ('H2_ALLOWED_HOSTS', default=['*'])
 INTERNAL_IPS  = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
 EMAIL_CONFIG  = env.email_url ('H2_EMAIL_URL',     default='smtp://localhost:25')
 DATABASES = {
-    'default': env.db('H2_DATABASE_URL', default="postgres://postgres:postgres@db:5432")
+    'default': env.db('H2_DATABASE_URL', default="postgres://postgres:postgres@db:5432/postgres")
 }
 CACHES = {
     'default': env.cache_url('H2_CACHE_URL', default="dummycache://" )
@@ -87,7 +87,7 @@ LOGIN_REDIRECT_URL = '/'
 
 LOGIN_URL = '/login/'
 
-MEDIA_ROOT = '/storage/media/'
+MEDIA_ROOT = '/uploads/'
 
 MEDIA_URL = '/media/'
 
@@ -120,7 +120,7 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-STATIC_ROOT = '/storage/static/'
+STATIC_ROOT = '/static/'
 
 STATIC_URL = '/static/'
 

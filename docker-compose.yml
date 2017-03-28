@@ -6,18 +6,24 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
   web:
-    image: ${IMAGE_TAG:-hunter2}
     build: .
-    volumes:
-      - ${PWD:-.}:/usr/src/app
-      - storage:/storage
-      - config:/config
-    ports:
-      - "8000:8000"
     depends_on:
       - db
+    environment:
+      - H2_DEBUG
+    image: ${IMAGE_TAG:-hunter2}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ${PWD:-.}:/usr/src/app
+      - config:/config
+      - static:/static
+      - uploads_events:/uploads/events
+      - uploads_puzzles:/uploads/puzzles
 
 volumes:
   db: {}
-  storage: {}
   config: {}
+  static: {}
+  uploads_events: {}
+  uploads_puzzles: {}
