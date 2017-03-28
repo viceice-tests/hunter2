@@ -63,7 +63,10 @@ class Hint(Clue):
     time = models.DurationField()
 
     def unlocked_by(self, team, data):
-        return data.tp_data.start_time + self.time < timezone.now()
+        if data.tp_data.start_time:
+            return data.tp_data.start_time + self.time < timezone.now()
+        else:
+            return False
 
 
 class Unlock(Clue):
@@ -125,12 +128,6 @@ class Guess(models.Model):
 
     def __str__(self):
         return f'<Guess: {self.guess} by {self.by}>'
-
-    def is_right(self):
-        for answer in self.for_puzzle.answer_set.all():
-            if answer.validate_guess(self.guess):
-                return True
-        return False
 
 
 class TeamData(models.Model):

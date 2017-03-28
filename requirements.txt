@@ -1,6 +1,9 @@
 Django
+PyYAML
 lupa
 psycopg2
+# pytz will not need to be specified with Django 1.11
+pytz
 rules
 wait
 django-allauth
@@ -9,4 +12,5 @@ django-sortedm2m
 django-nested-admin
 django-registration
 django-environ
+# django-subdomains doesn't work with Django 1.10 so we're using a commit from a pull request
 -e git+https://github.com/huwshimi/django-subdomains.git@63405c239148308bf214f950c0cff50d7f29b23d#egg=django-subdomains

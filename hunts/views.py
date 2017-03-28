@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from string import Template
-from .models import Guess
+from .models import Guess, PuzzleData
 from . import rules
 from . import runtime
 from . import utils
@@ -75,7 +75,7 @@ class Puzzle(View):
                 request, 'hunts/puzzlelocked.html', status=403
             )
 
-        data = utils.PuzzleData(puzzle, request.team, request.user.profile)
+        data = PuzzleData(puzzle, request.team, request.user.profile)
 
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
@@ -156,7 +156,7 @@ class Callback(View):
             request.event, episode_number, puzzle_number
         )
 
-        data = utils.PuzzleData(puzzle, request.team, request.user)
+        data = PuzzleData(puzzle, request.team, request.user)
 
         response = HttpResponse(
             runtime.runtime_eval[puzzle.cb_runtime](
