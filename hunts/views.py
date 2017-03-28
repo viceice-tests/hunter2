@@ -82,6 +82,7 @@ class Puzzle(View):
 
         answered = puzzle.answered_by(request.team, data)
         hints = [h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)]
+        # TODO: Process the guess(es) which unlocked the unlock and pass them to the template
         unlocks = [u for u in puzzle.unlock_set.all() if u.unlocked_by(request.team, data)]
 
         files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}

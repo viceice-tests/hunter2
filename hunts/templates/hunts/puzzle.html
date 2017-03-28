@@ -11,11 +11,11 @@
 <h2>Clues</h2>
 <h3>Hints</h3>
 {% for hint in hints %}
-<p>{{hint}}</p>
+<p>{{hint.time}}: {{hint.text}}</p>
 {% endfor %}
 <h3>Unlocks</h3>
 {% for unlock in unlocks %}
-<p>{{unlock}}</p>
+<p>{{unlock.text}}</p>
 {% endfor %}
 <hr />
 <form class="form-inline" action="an" method="POST">
