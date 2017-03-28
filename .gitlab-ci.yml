@@ -1,19 +1,29 @@
-image: docker:latest
+# TODO: Replace with an official image when available
+image: registry.gitlab.com/citygro/docker-and-compose
+
+variables:
+  DOCKER_DRIVER: overlay
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  SERVICE: web
 
 services:
   - docker:dind
 
+stages:
+  - build
+  - test
+
 before_script:
-  - export IMAGE_TAG=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
-  - docker login -u "gitlab-ci-token" -p "$CI_JOB_TOKEN" $CI_REGISTRY
+  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 
 build:
   stage: build
   script:
-    - docker build --pull -t "$CI_REGISTRY_IMAGE:$IMAGE_TAG" .
-    - docker push "$CI_REGISTRY_IMAGE:$IMAGE_TAG"
+    - docker-compose build --pull
+    - docker-compose push
 
 test:
   stage: test
   script:
-    - docker run "$CI_REGISTRY_IMAGE:$IMAGE_TAG" test
+    - docker-compose pull
+    - docker-compose run $SERVICE test -v 2

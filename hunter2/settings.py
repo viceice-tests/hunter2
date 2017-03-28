@@ -1,9 +1,32 @@
-from .local import *
+from .utils import load_or_create_secret_key
+import environ
 
-import os
+# Load the current environment profile
+root = environ.Path(__file__) - 2
+env = environ.Env()
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+# Default settings which should be overridden by environment variables
+DEBUG         = env.bool      ('H2_DEBUG',         default=False)
+LOG_LEVEL     = env.str       ('H2_LOG_LEVEL',     default='WARNING')
+LANGUAGE_CODE = env.str       ('H2_LANGUAGE_CODE', default='en-gb')
+TIME_ZONE     = env.str       ('H2_TIME_ZONE',     default='Europe/London')
+ALLOWED_HOSTS = env.list      ('H2_ALLOWED_HOSTS', default=['*'])
+INTERNAL_IPS  = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
+EMAIL_CONFIG  = env.email_url ('H2_EMAIL_URL',     default='smtp://localhost:25')
+DATABASES = {
+    'default': env.db('H2_DATABASE_URL', default="postgres://postgres:postgres@db:5432")
+}
+CACHES = {
+    'default': env.cache_url('H2_CACHE_URL', default="dummycache://" )
+}
+
+# Generate a secret key and store it the first time it is accessed
+SECRET_KEY = load_or_create_secret_key("/config/secrets.ini")
+
+# Load the email configuration
+vars().update(EMAIL_CONFIG)
+
+BASE_DIR = root()
 
 # Application definition
 ACCOUNT_ACTIVATION_DAYS = 7
@@ -53,7 +76,7 @@ LOGGING = {
     'loggers': {
         '': {
             'handlers': ['console'],
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
+            'level': LOG_LEVEL,
         },
         'django.db': {
         },

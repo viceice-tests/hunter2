@@ -1,9 +1,9 @@
 FROM python:3.6
 
 RUN apt-get update && apt-get install -y \
-    liblua5.2-dev \
-    postgresql-client \
-  && rm -rf /var/lib/apt/lists/*
+liblua5.2-dev \
+postgresql-client \
+&& rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /usr/src/app/
 WORKDIR /usr
@@ -12,9 +12,11 @@ WORKDIR /usr/src/app
 COPY . .
 
 RUN groupadd -g 500 -r django && useradd -g django -r -u 500 django
+RUN install -d -g django -o django /config
 RUN install -d -g django -o django /storage/media
 USER django
 
+VOLUME /config
 VOLUME /storage
 
 EXPOSE 8000
