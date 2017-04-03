@@ -3,9 +3,7 @@ from unittest import TestCase, expectedFailure
 
 from parameterized import parameterized
 
-from .. import (
-    RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError,
-)
+from .. import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError
 from . import LuaRuntime
 
 

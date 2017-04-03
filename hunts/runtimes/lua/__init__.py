@@ -3,10 +3,7 @@ import os
 
 import lupa
 
-from .. import (
-    AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExceededError,
-    RuntimeMemoryExceededError,
-)
+from .. import AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError
 
 
 class LuaRuntime(AbstractRuntime):
