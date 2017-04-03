@@ -1,5 +1,5 @@
 # vim: set fileencoding=utf-8 :
-from hunts.runtimes import AbstractRuntime
+from . import AbstractRuntime
 
 
 class StaticRuntime(AbstractRuntime):
