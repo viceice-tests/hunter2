@@ -1,7 +1,34 @@
--- Safe functions taken from http://lua-users.org/wiki/SandBoxes
--- Updated to include functions from Lua 5.2
+-- vim: set fileencoding=utf-8 :
 local sandbox = {}
 
+-- Sandbox library functions
+sandbox.lib = {}
+
+-- Prevents access to the strings metatable
+function sandbox.lib.getmetatable(object)
+  if object == "" then _G.error("getmetatable can not be used to retrieve the strings metatable") end
+  return _G.getmetatable(object)
+end
+
+-- Prevents access to the strings metatable
+function sandbox.lib.setmetatable(table, metatable)
+  if object == "" then _G.error("getmetatable can not be used to retrieve the strings metatable") end
+  return _G.setmetatable(table, metatable)
+end
+
+-- Prevents direct access to the stdout
+function sandbox.lib.print(...)
+  -- TODO: Log to the internal state of the sandbox for recovery
+end
+
+-- Restrict to allowed modules
+function sandbox.lib.require(modname)
+  -- TODO: Implement to allow loading of allowed modules
+end
+
+-- Main library functions import
+-- Safe functions taken from http://lua-users.org/wiki/SandBoxes
+-- Updated to include functions from Lua 5.2
 sandbox.env = {
   _VERSION     = _G._VERSION,
 
@@ -9,27 +36,21 @@ sandbox.env = {
   -- collectgarbage
   -- dofile
   error        = _G.error,
-  getmetatable = function(object)
-    if object == "" then _G.error("getmetatable can not be used to retrieve the strings metatable") end
-    return _G.getmetatable(object)
-  end,
+  getmetatable = sandbox.lib.getmetatable,
   ipairs       = _G.ipairs,
   -- load
   -- loadfile
   next         = _G.next,
   pairs        = _G.pairs,
   pcall        = _G.pcall,
-  print        = _G.print,
+  print        = sandbox.lib.print,
   rawequal     = _G.rawequal,
   rawget       = _G.rawget,
   rawlen       = _G.rawlen,
   rawset       = _G.rawset,
-  -- require -- TODO: Can restrict to provided libraries in the sandbox
+  require      = sandbox.lib.require,
   select       = _G.select,
-  setmetatable = function (table, metatable)
-    if object == "" then _G.error("getmetatable can not be used to retrieve the strings metatable") end
-    return _G.setmetatable(table, metatable)
-  end,
+  setmetatable = sandbox.lib.setmetatable,
   tonumber     = _G.tonumber,
   tostring     = _G.tostring,
   type         = _G.type,
@@ -50,15 +71,7 @@ sandbox.env = {
     rshift  = _G.bit32.rshift,
   },
 
-  coroutine = {
-    create  = _G.coroutine.create,
-    resume  = _G.coroutine.resume,
-    running = _G.coroutine.running,
-    status  = _G.coroutine.status,
-    wrap    = _G.coroutine.wrap,
-    yield   = _G.coroutine.yeild,
-  },
-
+  -- coroutine = {}
   -- debug = {}
   -- io = {} -- TODO: Implement in restricted sandbox
 
@@ -96,7 +109,7 @@ sandbox.env = {
 
   os = {
     clock     = _G.os.clock,
-    date      = DISABLED, -- TODO: Replace with a safer version
+    -- date      = _G.os.date -- TODO: Replace with a safer version
     difftime  = _G.os.difftime,
     -- execute   = _G.os.execute,
     -- exit      = _G.os.exit,
@@ -137,6 +150,15 @@ sandbox.env = {
   },
 }
 
+function sandbox.enable_limits(instruction_limit, memory_limit)
+  sandbox.cpu_count = 0
+  debug.sethook(function()
+    sandbox.cpu_count = sandbox.cpu_count + 1
+    local kilobytes, _ = collectgarbage('count')
+    if kilobytes > memory_limit then error("ERROR_MEMORY_LIMIT_EXCEEDED") end
+    if sandbox.cpu_count > instruction_limit then error("ERROR_INSTRUCTION_LIMIT_EXCEEDED") end
+  end, '', 10)
+end
 
 function sandbox.run(sandboxed_code, mem_limit, instruction_limit)
   -- Replace string metatable with sandboxed version
@@ -146,17 +168,17 @@ function sandbox.run(sandboxed_code, mem_limit, instruction_limit)
   end
   debug.setmetatable('', metatable)
 
-  -- Disable metatables on primative tupes
+  -- Disable metatables on primative types
   debug.setmetatable(1, nil)
   debug.setmetatable(function() end, nil)
   debug.setmetatable(true, nil)
 
-  -- Set memory and CPU limits
-  -- TODO: Enable CPU and memory limiting
+  -- Enable default memory and instrution limits
+  sandbox.enable_limits(10000, 100)
 
   local sandboxed_function, message = load(sandboxed_code, nil, 't', sandbox.env)
   if not sandboxed_function then return nil, message end
   return pcall(sandboxed_function)
 end
 
-return "LOL"
+return sandbox

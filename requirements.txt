@@ -3,6 +3,7 @@ lupa
 psycopg2
 rules
 wait
+parameterized
 django-allauth
 django-debug-toolbar
 django-sortedm2m
