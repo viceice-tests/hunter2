@@ -21,7 +21,7 @@ class LuaRuntime(AbstractRuntime):
         return return_values[0]
 
     def validate_guess(self, validator, guess, team_puzzle_data, team_data):
-        return_values = self._sandbox_run(validator)
+        return_values = self._sandbox_run(validator, {"guess": guess})
         # TODO: Make checking for number of return parameters more robust
         if len(return_values) == 0:
             raise RuntimeExecutionError("Lua script did not return a value")
@@ -50,11 +50,19 @@ class LuaRuntime(AbstractRuntime):
         lua.globals().package.path = os.path.join(os.path.dirname(__file__), "?.lua")
         return lua
 
-    def _sandbox_run(self, lua_script):
+    def _sandbox_run(self, lua_script, parameters=None):
         lua = self._create_lua_runtime()
 
         # Load the sandbox Lua module
         sandbox = lua.require('sandbox')
+
+        # Load parameters into the sandbox
+        if parameters is not None:
+            for key, value in parameters.items():
+                if sandbox.env[key] is not None:
+                    raise RuntimeExecutionError("Passed parameter '{}' overrides sandbox environment".format(key))
+                else:
+                    sandbox.env[key] = value
 
         # The 'result' object here can be either a bool or a tuple depending on
         # the result of the Lua function, the following results are possible:

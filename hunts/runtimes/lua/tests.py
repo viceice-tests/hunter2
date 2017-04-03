@@ -21,10 +21,9 @@ class LuaRuntimeTestCase(TestCase):
             lua_runtime.evaluate(lua_script, None, None, None, None)
 
     # TODO: Implement passing of the guess object into the runtime
-    @expectedFailure
     def test_validate_guess(self):
         lua_runtime = LuaRuntime()
-        lua_script = '''return (guess == 100 + 100)'''
+        lua_script = '''return (tonumber(guess) == 100 + 100)'''
         guess = "200"
         result = lua_runtime.validate_guess(lua_script, guess, None, None)
         self.assertTrue(result, "Guess was correct, but did not return true")
@@ -80,7 +79,7 @@ class LuaSandboxTestCase(TestCase):
 
     def test_lua_sandbox_instruction_limit(self):
         lua_runtime = LuaRuntime()
-        lua_script = '''for i=1,100000 do print("Hello!") end'''
+        lua_script = '''for i=1,100000 do i=i end'''
         with self.assertRaises(RuntimeExecutionTimeExceededError):
             lua_runtime._sandbox_run(lua_script)
 
@@ -89,3 +88,16 @@ class LuaSandboxTestCase(TestCase):
         lua_script = '''t = {} for i=1,10000 do t[i] = i end'''
         with self.assertRaises(RuntimeMemoryExceededError):
             lua_runtime._sandbox_run(lua_script)
+
+    def test_lua_sandbox_python_isolation(self):
+        lua_runtime = LuaRuntime()
+        lua_script = '''return python == nil'''
+        result = lua_runtime._sandbox_run(lua_script)[0]
+        self.assertTrue(result, "Python environment is accessible in Lua sandbox")
+
+    def test_lua_sandbox_protected_environment(self):
+        lua_runtime = LuaRuntime()
+        lua_script = '''return true'''
+        with self.assertRaises(RuntimeExecutionError):
+            lua_runtime._sandbox_run(lua_script, {"print": None})
+
