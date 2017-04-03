@@ -1,4 +1,5 @@
 # vim: set fileencoding=utf-8 :
+import copy
 import os
 
 import lupa
@@ -14,17 +15,28 @@ class LuaRuntime(AbstractRuntime):
         pass
 
     def evaluate(self, script, team_puzzle_data, user_puzzle_data, team_data, user_data):
-        return_values = self._sandbox_run(script)
-        # TODO: Make checking for number of return parameters more robust
+        return_values = self._sandbox_run(script, {
+            "team_puzzle_data": team_puzzle_data,
+            "user_puzzle_data": user_puzzle_data,
+            "team_data":        team_data,
+            "user_data":        user_data,
+        })
+
         if len(return_values) == 0:
             raise RuntimeExecutionError("Lua script did not return a value")
+
         return return_values[0]
 
     def validate_guess(self, validator, guess, team_puzzle_data, team_data):
-        return_values = self._sandbox_run(validator, {"guess": guess})
-        # TODO: Make checking for number of return parameters more robust
+        return_values = self._sandbox_run(validator, {
+            "guess":            guess,
+            "team_puzzle_data": team_puzzle_data,
+            "team_data":        team_data,
+        })
+
         if len(return_values) == 0:
             raise RuntimeExecutionError("Lua script did not return a value")
+
         return return_values[0]
 
     @staticmethod
@@ -46,6 +58,8 @@ class LuaRuntime(AbstractRuntime):
                     self._python_attribute_setter
                 )
         )
+
+        # Ensure the local is consistent and ignore system Lua paths
         lua.execute("assert(os.setlocale('C'))")
         lua.globals().package.path = os.path.join(os.path.dirname(__file__), "?.lua")
         return lua
