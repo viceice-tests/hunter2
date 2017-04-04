@@ -1,5 +1,6 @@
 Django
 PyYAML
+coverage
 lupa
 psycopg2
 # pytz will not need to be specified with Django 1.11
