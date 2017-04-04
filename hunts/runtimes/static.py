@@ -7,4 +7,4 @@ class StaticRuntime(AbstractRuntime):
         return script
 
     def validate_guess(self, validator, guess, team_puzzle_data, team_data):
-        return validator == guess
+        return validator.lower() == guess.lower()
