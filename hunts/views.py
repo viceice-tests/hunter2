@@ -8,7 +8,7 @@ from django.views import View
 from string import Template
 from .models import Guess, PuzzleData
 from . import rules
-from . import runtime
+from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
 
 
@@ -87,14 +87,13 @@ class Puzzle(View):
 
         files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
 
-        text = Template(runtime.runtime_eval[puzzle.runtime](
-            puzzle.content,
-            {
-                't_data': data.t_data,
-                'u_data': data.u_data,
-                'tp_data': data.tp_data,
-                'up_data': data.up_data,
-            }
+        text = Template(rr.evaluate(
+            runtime=puzzle.cb_runtime,
+            script=puzzle.content,
+            team_puzzle_data=data.tp_data,
+            user_puzzle_data=data.up_data,
+            team_data=data.t_data,
+            user_data=data.u_data,
         )).safe_substitute(**files)
 
         response = TemplateResponse(
@@ -160,14 +159,13 @@ class Callback(View):
         data = PuzzleData(puzzle, request.team, request.user)
 
         response = HttpResponse(
-            runtime.runtime_eval[puzzle.cb_runtime](
-                puzzle.cb_content,
-                {
-                    't_data': data.t_data,
-                    'u_data': data.u_data,
-                    'tp_data': data.tp_data,
-                    'up_data': data.up_data,
-                }
+            rr.evaluate(
+                runtime=puzzle.cb_runtime,
+                script=puzzle.content,
+                team_puzzle_data=data.tp_data,
+                user_puzzle_data=data.up_data,
+                team_data=data.t_data,
+                user_data=data.u_data,
             )
         )
 
