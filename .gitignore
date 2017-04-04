@@ -1,2 +1,2 @@
-hunter2/local.py
+# Ignore python bytecode files
 *.pyc

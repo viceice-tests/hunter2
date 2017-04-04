@@ -3,7 +3,7 @@ from django.db import models
 from django.utils import timezone
 from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
-from . import runtime as rt
+from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
 
 import logging
@@ -15,11 +15,11 @@ import teams
 class Puzzle(models.Model):
     title = models.CharField(max_length=255, unique=True)
     runtime = models.CharField(
-        max_length=1, choices=rt.RUNTIMES, default=rt.STATIC
+        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
     content = models.TextField()
     cb_runtime = models.CharField(
-        max_length=1, choices=rt.RUNTIMES, default=rt.STATIC
+        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
     cb_content = models.TextField(blank=True, default='')
 
@@ -82,25 +82,24 @@ class Unlock(Clue):
 class UnlockGuess(models.Model):
     unlock = models.ForeignKey(Unlock)
     runtime = models.CharField(
-        max_length=1, choices=rt.RUNTIMES, default=rt.STATIC
+        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
     guess = models.TextField()
 
     def validate_guess(self, guess, data):
-        logging.debug(f'{guess} ??? {self.guess}')
-        return rt.runtime_validate[self.runtime](
-            self.guess, {
-                'guess': guess.guess,
-                't_data': data.t_data,
-                'tp_data': data.tp_data,
-            }
+        return rr.validate_guess(
+            self.runtime,
+            self.guess,
+            guess.guess,
+            data.tp_data,
+            data.t_data,
         )
 
 
 class Answer(models.Model):
     for_puzzle = models.ForeignKey(Puzzle)
     runtime = models.CharField(
-        max_length=1, choices=rt.RUNTIMES, default=rt.STATIC
+        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
     answer = models.TextField()
 
@@ -108,12 +107,12 @@ class Answer(models.Model):
         return f'<Answer: {self.answer}>'
 
     def validate_guess(self, guess, data):
-        return rt.runtime_validate[self.runtime](
-            self.answer, {
-                'guess': guess.guess,
-                't_data': data.t_data,
-                'tp_data': data.tp_data,
-            }
+        return rr.validate_guess(
+            self.runtime,
+            self.answer,
+            guess.guess,
+            data.tp_data,
+            data.t_data,
         )
 
 

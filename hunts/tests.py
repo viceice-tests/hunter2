@@ -1,11 +1,8 @@
-from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
 from django.test import TestCase
 from django.utils import timezone
-from events.models import Event, Theme
 from teams.models import Team, UserProfile
-from .models import Guess, Puzzle, Hint, Unlock, Answer, TeamPuzzleData, PuzzleData, Episode
-from . import runtime
+from .models import Guess, Puzzle, Hint, Unlock, Answer, TeamPuzzleData, PuzzleData
+from .runtimes.registry import RuntimesRegistry as rr
 
 import datetime
 
@@ -19,7 +16,7 @@ class AnswerValidationTests(TestCase):
         self.data = PuzzleData(self.puzzle, self.team)
 
     def test_static_answers(self):
-        answer = Answer.objects.get(runtime=runtime.STATIC)
+        answer = Answer.objects.get(runtime=rr.STATIC)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
         self.assertTrue(answer.validate_guess(guess, self.data))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
@@ -30,7 +27,7 @@ class AnswerValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess, self.data))
 
     def test_regex_answers(self):
-        answer = Answer.objects.get(runtime=runtime.REGEX)
+        answer = Answer.objects.get(runtime=rr.REGEX)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
         self.assertTrue(answer.validate_guess(guess, self.data))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
@@ -41,7 +38,7 @@ class AnswerValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess, self.data))
 
     def test_lua_answers(self):
-        answer = Answer.objects.get(runtime=runtime.LUA)
+        answer = Answer.objects.get(runtime=rr.LUA)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
         self.assertTrue(answer.validate_guess(guess, self.data))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
