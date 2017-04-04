@@ -26,4 +26,6 @@ test:
   stage: test
   script:
     - docker-compose pull
-    - docker-compose run $SERVICE test -v 2
+    - docker-compose run --entrypoint 'coverage run --source . manage.py' $SERVICE test -v 2
+    - docker-compose run --entrypoint 'coverage' $SERVICE report
+  coverage: /\d+\%\s*$/
