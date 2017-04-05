@@ -24,6 +24,7 @@ build:
     - docker-compose build --pull
     - docker save -o $IMAGE_FILE $IMAGE_TAG
   artifacts:
+    name: docker-image
     paths:
       - $IMAGE_FILE
 
@@ -37,6 +38,7 @@ test:
     - docker-compose run --entrypoint 'coverage' $SERVICE html
     - docker-compose run --entrypoint 'coverage' $SERVICE report
   artifacts:
+    name: coverage
     paths:
       - .coverage
       - htmlcov/
@@ -45,7 +47,7 @@ test:
 release:
   stage: release
   dependencies:
-    - test
+    - build
   script:
     - docker load -i $IMAGE_FILE
     - docker-compose push
