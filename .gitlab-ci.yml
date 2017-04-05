@@ -22,7 +22,7 @@ build:
   stage: build
   script:
     - docker-compose build --pull
-    - docker save -o $IMAGE_FILE
+    - docker save -o $IMAGE_FILE $IMAGE_TAG
   artifacts:
     paths:
       - $IMAGE_FILE
