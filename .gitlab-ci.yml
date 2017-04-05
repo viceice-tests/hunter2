@@ -13,7 +13,7 @@ services:
 stages:
   - build
   - test
-  - coverage
+  - release
 
 before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
@@ -41,3 +41,13 @@ test:
       - .coverage
       - htmlcov/
   coverage: /\d+\%\s*$/
+
+release:
+  stage: release
+  dependencies:
+    - test
+  script:
+    - docker load -i $IMAGE_FILE
+    - docker-compose push
+  only:
+    - tags
