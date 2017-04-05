@@ -12,6 +12,7 @@ services:
 stages:
   - build
   - test
+  - coverage
 
 before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
@@ -35,7 +36,7 @@ test:
     - .coverage
 
 coverage:
-  stage: test
+  stage: coverage
   dependencies:
     - test
   script:
