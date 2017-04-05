@@ -27,5 +27,23 @@ test:
   script:
     - docker-compose pull
     - docker-compose run --entrypoint 'coverage run --source . manage.py' $SERVICE test -v 2
+    - docker-compose run --entrypoint 'coverage' $SERVICE html
+    - docker-compose run --entrypoint 'coverage' $SERVICE report
+    - mv htmlcov public
+  artifacts:
+    paths:
+    - .coverage
+
+coverage:
+  stage: test
+  dependencies:
+    - test
+  script:
+    - docker-compose pull
+    - docker-compose run --entrypoint 'coverage' $SERVICE html
     - docker-compose run --entrypoint 'coverage' $SERVICE report
   coverage: /\d+\%\s*$/
+  artifacts:
+    paths:
+      - .coverage
+      - htmlcov/
