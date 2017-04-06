@@ -1,9 +1,15 @@
+from django.conf.urls import include, url
+
 from ..settings import DEBUG
 
 if DEBUG:
-    from .admin import urlpatterns as admin_patterns
-    from .www import urlpatterns as www_patterns
+    from .admin import admin_patterns
+    from .www import www_patterns
 
-    urlpatterns = admin_patterns + www_patterns
+    import debug_toolbar
+
+    urlpatterns = admin_patterns + www_patterns + [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ]
 else:
     urlpatterns = []

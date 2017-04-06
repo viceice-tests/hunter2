@@ -5,9 +5,7 @@ from hunts.urls import urlpatterns as app_patterns
 
 from .. import settings
 
-import registration.backends.hmac.urls
-
-urlpatterns = [
+www_patterns = [
     url(r'^accounts/', include('allauth.urls')),
 ] \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
@@ -16,6 +14,8 @@ urlpatterns = [
 
 if settings.DEBUG:
     import debug_toolbar
-    urlpatterns += [
+    urlpatterns = www_patterns + [
         url(r'^__debug__/', include(debug_toolbar.urls)),
     ]
+else:
+    urlpatterns = www_patterns
