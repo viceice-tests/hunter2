@@ -20,8 +20,8 @@ RUN apk add --no-cache -t builddeps \
 WORKDIR /usr/src/app
 COPY . .
 
-RUN addgroup -g 500 -S django
- && adduser -s /sbin/nologin -G django -S -D -H -u 500 django
+RUN addgroup -g 500 -S django \
+ && adduser -s /sbin/nologin -G django -S -D -H -u 500 django \
  && install -d -g django -o django /config /static /uploads/events /uploads/puzzles
 USER django
 
