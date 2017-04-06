@@ -3,14 +3,14 @@ from django.views.generic import TemplateView
 from . import views
 
 puzzlepatterns = [
-    url('^$', views.Puzzle.as_view(), name='puzzle'),
-    url('^an$', views.Answer.as_view(), name='answer'),
-    url('^cb$', views.Callback.as_view(), name='callback'),
+    url(r'^$', views.Puzzle.as_view(), name='puzzle'),
+    url(r'^an$', views.Answer.as_view(), name='answer'),
+    url(r'^cb$', views.Callback.as_view(), name='callback'),
 ]
 
 episodepatterns = [
-    url('^$', views.Episode.as_view(), name='episode'),
-    url('^pz/(?P<puzzle_number>[1-9]\d*)/', include(puzzlepatterns)),
+    url(r'^$', views.Episode.as_view(), name='episode'),
+    url(r'^pz/(?P<puzzle_number>[1-9]\d*)/', include(puzzlepatterns)),
 ]
 
 eventpatterns = [

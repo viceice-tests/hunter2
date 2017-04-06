@@ -26,13 +26,13 @@ class StaticRuntimeTestCase(TestCase):
 class RegexRuntimeTestCase(TestCase):
     def test_evaluate(self):
         regex_runtime = RegexRuntime()
-        regex_script = '''.*'''
+        regex_script = r'.*'
         with self.assertRaises(NotImplementedError):
             regex_runtime.evaluate(regex_script, None, None, None, None)
 
     def test_validate_guess(self):
         regex_runtime = RegexRuntime()
-        regex_script = '''Hello \w*!'''
+        regex_script = r'Hello \w*!'
         guess1 = "Hello Planet!"
         result = regex_runtime.validate_guess(regex_script, guess1, None, None)
         self.assertTrue(result)
@@ -42,6 +42,6 @@ class RegexRuntimeTestCase(TestCase):
 
     def test_evaluate_syntax_error_fails(self):
         regex_runtime = RegexRuntime()
-        regex_script = '''[]'''
+        regex_script = r'[]'
         with self.assertRaises(SyntaxError):
             regex_runtime.validate_guess(regex_script, "", None, None)

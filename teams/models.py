@@ -6,7 +6,7 @@ import events
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
-    at_event = models.ForeignKey(events.models.Event, related_name='teams')
+    at_event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='teams')
     is_admin = models.BooleanField(default=False)
 
     class Meta:
@@ -34,7 +34,7 @@ class Team(models.Model):
 
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, related_name='profile')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     teams = models.ManyToManyField(Team, blank=True, related_name='users')
 
     def __str__(self):
