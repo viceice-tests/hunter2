@@ -46,13 +46,13 @@ class Puzzle(models.Model):
 
 
 class PuzzleFile(models.Model):
-    puzzle = models.ForeignKey(Puzzle)
+    puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     slug = models.SlugField()
     file = models.FileField(upload_to='puzzles/')
 
 
 class Clue(models.Model):
-    puzzle = models.ForeignKey(Puzzle)
+    puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     text = models.TextField()
 
     class Meta:
@@ -80,7 +80,7 @@ class Unlock(Clue):
 
 
 class UnlockGuess(models.Model):
-    unlock = models.ForeignKey(Unlock)
+    unlock = models.ForeignKey(Unlock, on_delete=models.CASCADE)
     runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
@@ -97,7 +97,7 @@ class UnlockGuess(models.Model):
 
 
 class Answer(models.Model):
-    for_puzzle = models.ForeignKey(Puzzle)
+    for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
@@ -117,8 +117,8 @@ class Answer(models.Model):
 
 
 class Guess(models.Model):
-    for_puzzle = models.ForeignKey(Puzzle)
-    by = models.ForeignKey(teams.models.UserProfile)
+    for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
+    by = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
 
@@ -130,7 +130,7 @@ class Guess(models.Model):
 
 
 class TeamData(models.Model):
-    team = models.ForeignKey(teams.models.Team)
+    team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
     data = JSONField(default={})
 
     class Meta:
@@ -141,8 +141,8 @@ class TeamData(models.Model):
 
 
 class UserData(models.Model):
-    event = models.ForeignKey(events.models.Event)
-    user = models.ForeignKey(teams.models.UserProfile)
+    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
+    user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
     data = JSONField(default={})
 
     class Meta:
@@ -153,8 +153,8 @@ class UserData(models.Model):
 
 
 class TeamPuzzleData(models.Model):
-    puzzle = models.ForeignKey(Puzzle)
-    team = models.ForeignKey(teams.models.Team)
+    puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
+    team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
     start_time = models.DateTimeField(null=True)
     data = JSONField(default={})
 
@@ -166,8 +166,8 @@ class TeamPuzzleData(models.Model):
 
 
 class UserPuzzleData(models.Model):
-    puzzle = models.ForeignKey(Puzzle)
-    user = models.ForeignKey(teams.models.UserProfile)
+    puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
+    user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
     data = JSONField(default={})
 
     class Meta:
@@ -207,7 +207,7 @@ class Episode(models.Model):
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
-    event = models.ForeignKey(Event)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (('event', 'start_date'))

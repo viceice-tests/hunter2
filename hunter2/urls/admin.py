@@ -6,7 +6,7 @@ from .. import settings
 
 admin_patterns = [
     url(r'^accounts/', include('allauth.urls')),
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', admin.site.urls),
     url(r'^nested_admin/', include('nested_admin.urls')),
 ] \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
