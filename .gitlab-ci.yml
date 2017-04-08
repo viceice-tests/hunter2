@@ -3,8 +3,9 @@ image: registry.gitlab.com/citygro/docker-and-compose
 
 variables:
   DOCKER_DRIVER: overlay
-  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
   SERVICE: web
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
 
 services:
   - docker:dind
@@ -12,6 +13,7 @@ services:
 stages:
   - build
   - test
+  - release
 
 before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
@@ -20,12 +22,34 @@ build:
   stage: build
   script:
     - docker-compose build --pull
-    - docker-compose push
+    - docker save -o $IMAGE_FILE $IMAGE_TAG
+  artifacts:
+    name: docker-image
+    paths:
+      - $IMAGE_FILE
 
 test:
   stage: test
+  dependencies:
+    - build
   script:
-    - docker-compose pull
+    - docker load -i $IMAGE_FILE
     - docker-compose run --entrypoint 'coverage run --source . manage.py' $SERVICE test -v 2
+    - docker-compose run --entrypoint 'coverage' $SERVICE html
     - docker-compose run --entrypoint 'coverage' $SERVICE report
+  artifacts:
+    name: coverage
+    paths:
+      - .coverage
+      - htmlcov/
   coverage: /\d+\%\s*$/
+
+release:
+  stage: release
+  dependencies:
+    - build
+  script:
+    - docker load -i $IMAGE_FILE
+    - docker-compose push
+  only:
+    - tags

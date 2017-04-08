@@ -173,9 +173,6 @@ function sandbox.run(sandboxed_code, mem_limit, instruction_limit)
   debug.setmetatable(function() end, nil)
   debug.setmetatable(true, nil)
 
-  -- Enable default memory and instrution limits
-  sandbox.enable_limits(10000, 100)
-
   local sandboxed_function, message = load(sandboxed_code, nil, 't', sandbox.env)
   if not sandboxed_function then return nil, message end
   return pcall(sandboxed_function)

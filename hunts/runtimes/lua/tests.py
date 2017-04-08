@@ -20,7 +20,6 @@ class LuaRuntimeTestCase(TestCase):
         with self.assertRaises(RuntimeExecutionError):
             lua_runtime.evaluate(lua_script, None, None, None, None)
 
-    # TODO: Implement passing of the guess object into the runtime
     def test_validate_guess(self):
         lua_runtime = LuaRuntime()
         lua_script = '''return (tonumber(guess) == 100 + 100)'''
@@ -45,7 +44,7 @@ class LuaRuntimeTestCase(TestCase):
         lua_script = '''error("error_message")'''
         with self.assertRaises(RuntimeExecutionError) as context:
             lua_runtime.evaluate(lua_script, None, None, None, None)
-            self.assertEqual(context.exception.message, "error_message")
+        self.assertRegex(context.exception.message, ".*error_message$")
 
 
 class LuaSandboxTestCase(TestCase):
@@ -81,13 +80,13 @@ class LuaSandboxTestCase(TestCase):
         lua_runtime = LuaRuntime()
         lua_script = '''for i=1,100000 do i=i end'''
         with self.assertRaises(RuntimeExecutionTimeExceededError):
-            lua_runtime._sandbox_run(lua_script)
+            lua_runtime._sandbox_run(lua_script, instruction_limit=100)
 
     def test_lua_sandbox_memory_limit(self):
         lua_runtime = LuaRuntime()
         lua_script = '''t = {} for i=1,10000 do t[i] = i end'''
         with self.assertRaises(RuntimeMemoryExceededError):
-            lua_runtime._sandbox_run(lua_script)
+            lua_runtime._sandbox_run(lua_script, memory_limit=100)
 
     def test_lua_sandbox_python_isolation(self):
         lua_runtime = LuaRuntime()
@@ -101,3 +100,9 @@ class LuaSandboxTestCase(TestCase):
         with self.assertRaises(RuntimeExecutionError):
             lua_runtime._sandbox_run(lua_script, {"print": None})
 
+    def test_lua_sandbox_error_catching(self):
+        lua_runtime = LuaRuntime()
+        lua_script = '''return true'''
+        with self.assertRaises(RuntimeExecutionError):
+            # Restrict the sandbox so we fail in setup
+            lua_runtime._sandbox_run(lua_script, instruction_limit=10, memory_limit=10)

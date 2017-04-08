@@ -7,6 +7,9 @@ from .. import AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExcee
 
 
 class LuaRuntime(AbstractRuntime):
+    DEFAULT_INSTRUCTION_LIMIT = 1e6 # Instructions
+    DEFAULT_MEMORY_LIMIT      = 100 # KB
+
     ERROR_INSTRUCTION_LIMIT_EXCEEDED = "ERROR_INSTRUCTION_LIMIT_EXCEEDED"
     ERROR_MEMORY_LIMIT_EXCEEDED      = "ERROR_MEMORY_LIMIT_EXCEEDED"
 
@@ -38,24 +41,12 @@ class LuaRuntime(AbstractRuntime):
 
         return return_values[0]
 
-    @staticmethod
-    def _python_attribute_getter(obj, attr_name):
-        raise AttributeError("Attribute access disabled in sandbox")
-
-    @staticmethod
-    def _python_attribute_setter(attr_name, value):
-        raise AttributeError("Attribute access disabled in sandbox")
-
     def _create_lua_runtime(self):
         # noinspection PyArgumentList
         lua = lupa.LuaRuntime(
                 register_eval=False,
                 register_builtins=False,
                 unpack_returned_tuples=True,
-                attribute_handlers=(
-                    self._python_attribute_getter,
-                    self._python_attribute_setter
-                )
         )
 
         # Ensure the local is consistent and ignore system Lua paths
@@ -63,7 +54,12 @@ class LuaRuntime(AbstractRuntime):
         lua.globals().package.path = os.path.join(os.path.dirname(__file__), "?.lua")
         return lua
 
-    def _sandbox_run(self, lua_script, parameters=None):
+    def _sandbox_run(
+            self,
+            lua_script,
+            parameters=None,
+            instruction_limit=DEFAULT_INSTRUCTION_LIMIT,
+            memory_limit=DEFAULT_MEMORY_LIMIT):
         lua = self._create_lua_runtime()
 
         # Load the sandbox Lua module
@@ -76,6 +72,9 @@ class LuaRuntime(AbstractRuntime):
                     raise RuntimeExecutionError("Passed parameter '{}' overrides sandbox environment".format(key))
                 else:
                     sandbox.env[key] = value
+
+        # Enable instruction and memory limits
+        sandbox.enable_limits(instruction_limit, memory_limit)
 
         # The 'result' object here can be either a bool or a tuple depending on
         # the result of the Lua function, the following results are possible:
