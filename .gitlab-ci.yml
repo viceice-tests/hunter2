@@ -2,7 +2,7 @@
 image: registry.gitlab.com/citygro/docker-and-compose
 
 variables:
-  DOCKER_DRIVER: overlay
+  DOCKER_DRIVER: overlay2
   SERVICE: web
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
   IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
@@ -17,6 +17,7 @@ stages:
 
 before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  - chmod -R g-w,o-w .
 
 build:
   stage: build
@@ -35,6 +36,7 @@ test:
     - build
   script:
     - docker load -i $IMAGE_FILE
+    - install -d -m 777 coverage
     - docker-compose run --entrypoint 'coverage run --source . manage.py' $SERVICE test -v 2
     - docker-compose run --entrypoint 'coverage' $SERVICE html
     - docker-compose run --entrypoint 'coverage' $SERVICE report
@@ -42,8 +44,7 @@ test:
     expire_in: 180 days
     name: coverage
     paths:
-      - .coverage
-      - htmlcov/
+      - coverage/
   coverage: /\d+\%\s*$/
 
 release:
