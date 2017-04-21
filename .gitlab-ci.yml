@@ -24,6 +24,7 @@ build:
     - docker-compose build --pull
     - docker save -o $IMAGE_FILE $IMAGE_TAG
   artifacts:
+    expire_in: 90 days
     name: docker-image
     paths:
       - $IMAGE_FILE
@@ -38,6 +39,7 @@ test:
     - docker-compose run --entrypoint 'coverage' $SERVICE html
     - docker-compose run --entrypoint 'coverage' $SERVICE report
   artifacts:
+    expire_in: 180 days
     name: coverage
     paths:
       - .coverage
