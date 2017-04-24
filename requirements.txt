@@ -1,6 +1,7 @@
 Django
 PyYAML
 coverage
+colour-runner
 lupa
 psycopg2
 rules

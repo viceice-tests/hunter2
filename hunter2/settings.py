@@ -29,6 +29,8 @@ vars().update(EMAIL_CONFIG)
 BASE_DIR = root()
 
 # Application definition
+TEST_RUNNER = 'hunter2.tests.TestRunner'
+
 ACCOUNT_ACTIVATION_DAYS = 7
 
 ACCOUNT_EMAIL_REQUIRED = True
