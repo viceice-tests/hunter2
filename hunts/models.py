@@ -4,9 +4,6 @@ from django.utils import timezone
 from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
-from . import utils
-
-import logging
 
 import events
 import teams
@@ -210,7 +207,7 @@ class Episode(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('event', 'start_date'))
+        unique_together = (('event', 'start_date'),)
 
     def __str__(self):
         return f'<Episode: {self.event.name} - {self.name}>'
