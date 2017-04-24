@@ -1,6 +1,6 @@
 # Ignore python bytecode files
 *.pyc
-
 # Ignore generated coverage files
-.coverage
-htmlcov/
+coverage
+# Ignore environment file
+.env

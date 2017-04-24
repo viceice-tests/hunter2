@@ -1,10 +1,17 @@
 # vim: set fileencoding=utf-8 :
+from django.test import TestCase
 from io import StringIO
 from django.core.management import call_command
 from django.test import TestCase, override_settings
+from django.test.runner import DiscoverRunner
+from colour_runner.django_runner import ColourRunnerMixin
 from .utils import generate_secret_key, load_or_create_secret_key
 import tempfile
 import os
+
+
+class TestRunner(ColourRunnerMixin, DiscoverRunner):
+    pass
 
 
 class MigrationsTests(TestCase):

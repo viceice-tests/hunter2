@@ -1,2 +1,4 @@
-# Ignore dotfiles in the top level dir (eg. .git)
+# Ignore dotfiles in the top level dir (eg. .coverage or .git)
 .*
+# Ignore coverage report folder
+coverage

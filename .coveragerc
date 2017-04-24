@@ -1,0 +1,6 @@
+[run]
+data_file = coverage/data
+
+[html]
+directory = coverage/html
+
