@@ -2,4 +2,22 @@
 
 {% block content %}
 <h1>{{ team }}</h1>
+<h2>Members</h2>
+<ul>
+{% for u in members %}
+<li>{{ u.user.username }}</li>
+{% endfor -%}
+</ul>
+<h2>Invites</h2>
+<ul>
+{% for u in invites %}
+<li>{{ u.user.username }}</li>
+{% endfor -%}
+</ul>
+<h2>Requests</h2>
+<ul>
+{% for u in requests %}
+<li>{{ u.user.username }}</li>
+{% endfor -%}
+</ul>
 {% endblock %}

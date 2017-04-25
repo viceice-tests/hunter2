@@ -16,6 +16,9 @@ class Team(View):
             request,
             'teams/team.html',
             context={
-                'team': team,
+                'team': team.name,
+                'members': team.members.all(),
+                'invites': team.invites.all(),
+                'requests': team.requests.all(),
             }
         )
