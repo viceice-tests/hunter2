@@ -9,10 +9,10 @@
   fields: {name: Test Event, theme: 1, current: true}
 - model: teams.team
   pk: 1
-  fields: {name: Test Team, at_event: 1, is_admin: false}
+  fields: {name: Test Team, at_event: 1, members: [1], is_admin: false}
 - model: teams.team
   pk: 2
-  fields: {name: Failure Team, at_event: 1, is_admin: false}
+  fields: {name: Failure Team, at_event: 1, members: [2], is_admin: false}
 - model: hunts.puzzle
   pk: 1
   fields: {title: Test Puzzle, runtime: S, content: Test Content, cb_runtime: S,
@@ -88,9 +88,7 @@
   pk: 1
   fields:
     user: 1
-    teams: [1]
 - model: teams.userprofile
   pk: 2
   fields:
     user: 2
-    teams: [2]
