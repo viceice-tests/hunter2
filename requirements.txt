@@ -8,6 +8,7 @@ rules
 wait
 parameterized
 django-allauth
+django-autocomplete-light
 django-debug-toolbar
 django-sortedm2m
 django-nested-admin
