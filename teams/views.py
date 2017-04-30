@@ -185,7 +185,7 @@ class Request(View):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'Already a member of a team for this event',
-            }, status=403)
+            }, status=400)
         if user in team.requests.all():
             return JsonResponse({
                 'result': 'Bad Request',
