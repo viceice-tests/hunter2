@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.generic import CreateView
 from . import forms, models
 
 import json
@@ -14,7 +15,7 @@ import json
 @method_decorator(login_required, name='dispatch')
 class UserProfileAutoComplete(autocomplete.Select2QuerySetView):
     def get_queryset(self):
-        qs = models.UserProfile.objects.all()
+        qs = models.UserProfile.objects.exclude(pk=self.request.user.profile.pk)
 
         if self.q:
             qs = qs.filter(
@@ -23,6 +24,18 @@ class UserProfileAutoComplete(autocomplete.Select2QuerySetView):
             )
 
         return qs
+
+
+@method_decorator(login_required, name='dispatch')
+class TeamCreateView(CreateView):
+    form_class = forms.TeamForm
+    template_name = 'teams/team_form.html'
+
+    def get_form_kwargs(self):
+        kwargs = super(TeamCreateView, self).get_form_kwargs()
+        kwargs['event'] = self.request.event
+        kwargs['user'] = self.request.user.profile
+        return kwargs
 
 
 @method_decorator(login_required, name='dispatch')

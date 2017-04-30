@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 import events
 
 
@@ -34,3 +35,6 @@ class Team(models.Model):
             Team.objects.exclude(id=self.id).filter(at_event=self.at_event).filter(is_admin=True).count() > 0
         ):
             raise ValidationError('There can only be one admin team per event')
+
+    def get_absolute_url(self):
+        return reverse('team', args=[self.pk])

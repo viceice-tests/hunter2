@@ -1,5 +1,6 @@
 from django.conf.urls import include, url
-from . import views
+from django.views.generic import CreateView
+from . import forms, models, views
 
 teampatterns = [
     url(r'^$', views.Team.as_view(), name='team'),
@@ -14,6 +15,7 @@ teampatterns = [
 ]
 
 urlpatterns = [
-    url(r'^team/(?P<team_id>[1-9]\d*)/', include(teampatterns)),
+    url(r'^create_team$', views.TeamCreateView.as_view(), name='create_team'),
+    url(r'^team/(?P<team_id>[1-9]\d*)/', include(teampatterns), name='team'),
     url(r'^userprofile_autocomplete/$', views.UserProfileAutoComplete.as_view(), name='userprofile_autocomplete'),
 ]
