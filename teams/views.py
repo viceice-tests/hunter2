@@ -1,10 +1,9 @@
 from dal import autocomplete
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
-from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import CreateView
 from . import forms, models
@@ -12,8 +11,9 @@ from . import forms, models
 import json
 
 
-@method_decorator(login_required, name='dispatch')
-class UserProfileAutoComplete(autocomplete.Select2QuerySetView):
+class UserProfileAutoComplete(LoginRequiredMixin, autocomplete.Select2QuerySetView):
+    raise_exception = True
+
     def get_queryset(self):
         qs = models.UserProfile.objects.exclude(pk=self.request.user.profile.pk)
 
@@ -26,8 +26,7 @@ class UserProfileAutoComplete(autocomplete.Select2QuerySetView):
         return qs
 
 
-@method_decorator(login_required, name='dispatch')
-class TeamCreateView(CreateView):
+class TeamCreateView(LoginRequiredMixin, CreateView):
     form_class = forms.TeamForm
     template_name = 'teams/team_form.html'
 
@@ -38,8 +37,7 @@ class TeamCreateView(CreateView):
         return kwargs
 
 
-@method_decorator(login_required, name='dispatch')
-class Team(View):
+class Team(LoginRequiredMixin, View):
     def get(self, request, team_id):
         team = get_object_or_404(
             models.Team, at_event=request.event, pk=team_id
@@ -66,13 +64,14 @@ class Team(View):
                     'members': team.members.all(),
                     'invited': request.user.profile in team.invites.all(),
                     'requested': request.user.profile in team.requests.all(),
-                    'requestable' : request.team is None,
+                    'requestable': request.team is None,
                 }
             )
 
 
-@method_decorator(login_required, name='dispatch')
-class Invite(View):
+class Invite(LoginRequiredMixin, View):
+    raise_exception = True
+
     def post(self, request, team_id):
         data = json.loads(request.body)
         team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
@@ -107,8 +106,9 @@ class Invite(View):
         })
 
 
-@method_decorator(login_required, name='dispatch')
-class CancelInvite(View):
+class CancelInvite(LoginRequiredMixin, View):
+    raise_exception = True
+
     def post(self, request, team_id):
         data = json.loads(request.body)
         team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
@@ -136,8 +136,9 @@ class CancelInvite(View):
         })
 
 
-@method_decorator(login_required, name='dispatch')
-class AcceptInvite(View):
+class AcceptInvite(LoginRequiredMixin, View):
+    raise_exception = True
+
     def post(self, request, team_id):
         team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
         user = request.user.profile
@@ -159,8 +160,9 @@ class AcceptInvite(View):
         })
 
 
-@method_decorator(login_required, name='dispatch')
-class DenyInvite(View):
+class DenyInvite(LoginRequiredMixin, View):
+    raise_exception = True
+
     def post(self, request, team_id):
         team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
         user = request.user.profile
@@ -176,8 +178,9 @@ class DenyInvite(View):
         })
 
 
-@method_decorator(login_required, name='dispatch')
-class Request(View):
+class Request(LoginRequiredMixin, View):
+    raise_exception = True
+
     def post(self, request, team_id):
         team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
         user = request.user.profile
@@ -198,8 +201,9 @@ class Request(View):
         })
 
 
-@method_decorator(login_required, name='dispatch')
-class CancelRequest(View):
+class CancelRequest(LoginRequiredMixin, View):
+    raise_exception = True
+
     def post(self, request, team_id):
         team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
         user = request.user.profile
@@ -215,8 +219,9 @@ class CancelRequest(View):
         })
 
 
-@method_decorator(login_required, name='dispatch')
-class AcceptRequest(View):
+class AcceptRequest(LoginRequiredMixin, View):
+    raise_exception = True
+
     def post(self, request, team_id):
         data = json.loads(request.body)
         team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
@@ -251,8 +256,9 @@ class AcceptRequest(View):
         })
 
 
-@method_decorator(login_required, name='dispatch')
-class DenyRequest(View):
+class DenyRequest(LoginRequiredMixin, View):
+    raise_exception = True
+
     def post(self, request, team_id):
         data = json.loads(request.body)
         team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
