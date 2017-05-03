@@ -2,6 +2,7 @@ from dal import autocomplete
 from django import forms
 from . import models
 
+
 class InviteForm(forms.Form):
     user = forms.ModelChoiceField(
         queryset=models.UserProfile.objects.all(),
@@ -12,6 +13,7 @@ class InviteForm(forms.Form):
             },
         ),
     )
+
 
 class TeamForm(forms.ModelForm):
     def __init__(self, *args, event, user, **kwargs):
@@ -38,5 +40,6 @@ class TeamForm(forms.ModelForm):
         if commit:
             instance.save()
             instance.members.add(self.user)
+            instance.invites.add(*models.UserProfile.objects.filter(pk__in=self.cleaned_data['invites']))
 
         return instance
