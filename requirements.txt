@@ -7,7 +7,8 @@ psycopg2
 rules
 wait
 parameterized
-django-allauth
+# django-allauth bug with Django 1.11+
+-e git+https://github.com/irconan/django-allauth.git@cc83e911a225bb6ea4b5032e859651e6b81901e6#egg=django-allauth
 django-autocomplete-light
 django-debug-toolbar
 django-sortedm2m
