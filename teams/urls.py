@@ -1,6 +1,5 @@
 from django.conf.urls import include, url
-from django.views.generic import CreateView
-from . import forms, models, views
+from . import views
 
 teampatterns = [
     url(r'^$', views.Team.as_view(), name='team'),
