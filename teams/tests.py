@@ -4,14 +4,19 @@ from .models import Team, UserProfile
 import json
 
 
-class TeamInviteTests(TestCase):
-    fixtures = ['test']
-
-    def setUp(self):
-        pass
+class TeamJoinTests(TestCase):
+    fixtures = ['teams_test']
 
     def test_invites(self):
-        self.assertTrue(self.client.login(user='test_a', password='hunter2'))
+        response = self.client.post(
+            '/team/1/invite',
+            json.dumps({
+                'user': 1
+            }),
+            'application/json',
+            HTTP_HOST='www.testserver',
+        )
+        self.assertTrue(self.client.login(username='test_a', password='hunter2'))
         response = self.client.post(
             '/team/1/invite',
             json.dumps({
@@ -58,7 +63,7 @@ class TeamInviteTests(TestCase):
             HTTP_HOST='www.testserver',
         )
         self.assertEqual(response.status_code, 403)
-        self.assertTrue(self.client.login(user='test_a', password='hunter2'))
+        self.assertTrue(self.client.login(username='test_a', password='hunter2'))
         response = self.client.post(
             '/team/1/request',
             json.dumps({}),
@@ -66,16 +71,16 @@ class TeamInviteTests(TestCase):
             HTTP_HOST='www.testserver',
         )
         self.assertEqual(response.status_code, 400)
-        self.assertTrue(self.client.login(user='test_c', password='hunter2'))
+        self.assertTrue(self.client.login(username='test_c', password='hunter2'))
         response = self.client.post(
-            '/team/1/invite',
+            '/team/1/request',
             json.dumps({}),
             'application/json',
             HTTP_HOST='www.testserver',
         )
         self.assertEqual(response.status_code, 200)
         response = self.client.post(
-            '/team/1/invite',
+            '/team/1/request',
             json.dumps({}),
             'application/json',
             HTTP_HOST='www.testserver',
