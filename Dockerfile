@@ -11,6 +11,7 @@ WORKDIR /usr
 RUN apk add --no-cache -t builddeps \
     gcc \
     git \
+    linux-headers \
     lua5.2-dev \
     musl-dev \
     postgresql-dev \
@@ -27,6 +28,5 @@ USER django
 
 VOLUME ["/config", "/static", "/uploads/events", "/uploads/puzzles"]
 
-EXPOSE 8000
-ENTRYPOINT ["python", "manage.py"]
-CMD ["runserver", "0.0.0.0:8000"]
+EXPOSE 3031
+CMD ["uwsgi", "--ini", "/usr/src/app/uwsgi.ini"]

@@ -3,6 +3,7 @@ import re
 
 from . import AbstractRuntime
 
+
 class RegexRuntime(AbstractRuntime):
     def evaluate(self, script, team_puzzle_data, user_puzzle_data, team_data, user_data):
         raise NotImplementedError("RegexRuntime can not be used for static evaluation")

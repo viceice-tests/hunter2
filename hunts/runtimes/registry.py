@@ -3,6 +3,7 @@ from hunts.runtimes.lua import LuaRuntime
 from hunts.runtimes.regex import RegexRuntime
 from hunts.runtimes.static import StaticRuntime
 
+
 class RuntimesRegistry(object):
     STATIC = 'S'
     LUA    = 'L'

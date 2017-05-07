@@ -7,8 +7,8 @@ from .. import AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExcee
 
 
 class LuaRuntime(AbstractRuntime):
-    DEFAULT_INSTRUCTION_LIMIT = 1e6 # Instructions
-    DEFAULT_MEMORY_LIMIT      = 100 # KB
+    DEFAULT_INSTRUCTION_LIMIT = 1e6  # Instructions
+    DEFAULT_MEMORY_LIMIT      = 100  # KB
 
     ERROR_INSTRUCTION_LIMIT_EXCEEDED = "ERROR_INSTRUCTION_LIMIT_EXCEEDED"
     ERROR_MEMORY_LIMIT_EXCEEDED      = "ERROR_MEMORY_LIMIT_EXCEEDED"
@@ -44,9 +44,9 @@ class LuaRuntime(AbstractRuntime):
     def _create_lua_runtime(self):
         # noinspection PyArgumentList
         lua = lupa.LuaRuntime(
-                register_eval=False,
-                register_builtins=False,
-                unpack_returned_tuples=True,
+            register_eval=False,
+            register_builtins=False,
+            unpack_returned_tuples=True,
         )
 
         # Ensure the local is consistent and ignore system Lua paths

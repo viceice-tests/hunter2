@@ -1,4 +1,9 @@
 # Ignore dotfiles in the top level dir (eg. .coverage or .git)
 .*
+# Ignore docker-related files
+Dockerfile
+docker-compose.yml
 # Ignore coverage report folder
 coverage
+# Ignore nginx folder
+nginx

@@ -1,5 +1,6 @@
 from django.http import Http404
 
+
 def current_puzzle(puzzlesets, team):
     for cs in puzzlesets:
         for c in cs.puzzles.all():
