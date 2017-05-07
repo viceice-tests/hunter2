@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:9.6-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - H2_DEBUG
+    image: ${IMAGE_TAG:-hunter2_app}
+    ports:
+      - "8080:8000"
+    volumes:
+      - ${PWD:-.}:/usr/src/app
+      - config:/config
+      - static:/static
+      - uploads_events:/uploads/events
+      - uploads_puzzles:/uploads/puzzles
+
+volumes:
+  db: {}
+  config: {}
+  static: {}
+  uploads_events: {}
+  uploads_puzzles: {}

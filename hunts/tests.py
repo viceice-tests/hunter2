@@ -1,10 +1,12 @@
+# vim: set fileencoding=utf-8 :
+import datetime
+
 from django.test import TestCase
 from django.utils import timezone
-from teams.models import Team, UserProfile
-from .models import Guess, Puzzle, Hint, Unlock, Answer, TeamPuzzleData, PuzzleData
-from .runtimes.registry import RuntimesRegistry as rr
 
-import datetime
+from teams.models import Team, UserProfile
+from .models import Answer, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock
+from .runtimes.registry import RuntimesRegistry as rr
 
 
 class AnswerValidationTests(TestCase):
@@ -80,7 +82,6 @@ class ClueDisplayTests(TestCase):
         self.assertFalse(hint.unlocked_by(self.team, self.data))
         self.data.tp_data.start_time = timezone.now() + datetime.timedelta(minutes=-10)
         self.assertTrue(hint.unlocked_by(self.team, self.data))
-
 
     def test_unlock_display(self):
         unlock = Unlock.objects.get()

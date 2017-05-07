@@ -67,6 +67,7 @@ INSTALLED_APPS = (
     'events',
     'teams',
     'hunts',
+    'hunter2',
 )
 
 LOGGING = {

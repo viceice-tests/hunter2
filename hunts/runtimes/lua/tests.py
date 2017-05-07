@@ -1,5 +1,5 @@
 # vim: set fileencoding=utf-8 :
-from unittest import TestCase, expectedFailure
+from unittest import TestCase
 
 from parameterized import parameterized
 

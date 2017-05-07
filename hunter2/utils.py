@@ -1,8 +1,10 @@
 import random
 import configparser
 
+
 def generate_secret_key():
     return ''.join([random.SystemRandom().choice('abcdefghijklmnopqrstuvwxyz0123456789_') for i in range(50)])
+
 
 def load_or_create_secret_key(secrets_file):
     config = configparser.ConfigParser()
