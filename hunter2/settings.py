@@ -65,6 +65,7 @@ INSTALLED_APPS = (
     'events',
     'teams',
     'hunts',
+    'hunter2',
 )
 
 LOGGING = {
@@ -87,7 +88,7 @@ LOGGING = {
 
 LOGIN_REDIRECT_URL = '/'
 
-LOGIN_URL = '/login/'
+LOGIN_URL = '/accounts/login/'
 
 MEDIA_ROOT = '/uploads/'
 

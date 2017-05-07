@@ -3,14 +3,12 @@ image: registry.gitlab.com/citygro/docker-and-compose
 
 variables:
   DOCKER_DRIVER: overlay2
-  SERVICE: web
-  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-  IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
 
 services:
   - docker:dind
 
 stages:
+  - check
   - build
   - test
   - release
@@ -18,28 +16,62 @@ stages:
 before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   - chmod -R g-w,o-w .
+  - ln -s docker-compose.prod.yml docker-compose.yml
 
-build:
-  stage: build
+flake8:
+  stage: check
+  image: python:3.6-alpine
+  services: []
+  before_script:
+    - pip install flake8
   script:
-    - docker-compose build --pull
+    - flake8 -v
+
+build:app:
+  stage: build
+  variables:
+    SERVICE: app
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_REF_NAME
+    IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
+  script:
+    - docker-compose build $SERVICE
     - docker save -o $IMAGE_FILE $IMAGE_TAG
   artifacts:
     expire_in: 90 days
-    name: docker-image
+    name: app-container
+    paths:
+      - $IMAGE_FILE
+
+build:web:
+  stage: build
+  variables:
+    SERVICE: web
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_REF_NAME
+    IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
+  script:
+    - docker-compose build $SERVICE
+    - docker save -o $IMAGE_FILE $IMAGE_TAG
+  artifacts:
+    expire_in: 90 days
+    name: web-container
     paths:
       - $IMAGE_FILE
 
 test:
   stage: test
   dependencies:
-    - build
+    - build:app
+  variables:
+    SERVICE: app
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_REF_NAME
+    IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
   script:
+    - ln -fs docker-compose.dev.yml docker-compose.yml
     - docker load -i $IMAGE_FILE
     - install -d -m 777 coverage
-    - docker-compose run --entrypoint 'coverage run --source . manage.py' $SERVICE test -v 2
-    - docker-compose run --entrypoint 'coverage' $SERVICE html
-    - docker-compose run --entrypoint 'coverage' $SERVICE report
+    - docker-compose run $SERVICE coverage run --source . manage.py test -v 2
+    - docker-compose run $SERVICE coverage html
+    - docker-compose run $SERVICE coverage report
   artifacts:
     expire_in: 180 days
     name: coverage
@@ -47,10 +79,28 @@ test:
       - coverage/
   coverage: /\d+\%\s*$/
 
-release:
+release:app:
   stage: release
   dependencies:
-    - build
+    - build:app
+  variables:
+    SERVICE: app
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_REF_NAME
+    IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
+  script:
+    - docker load -i $IMAGE_FILE
+    - docker-compose push
+  only:
+    - tags
+
+release:web:
+  stage: release
+  dependencies:
+    - build:web
+  variables:
+    SERVICE: web
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_REF_NAME
+    IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
   script:
     - docker load -i $IMAGE_FILE
     - docker-compose push

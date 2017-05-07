@@ -1,17 +1,59 @@
 # vim: set fileencoding=utf-8 :
-from django.test import TestCase
+import os
+import tempfile
 from io import StringIO
-from django.core.management import call_command
+
+import builtins
+from colour_runner.django_runner import ColourRunnerMixin
+from django.contrib.sites.models import Site
+from django.core.management import CommandError, call_command
 from django.test import TestCase, override_settings
 from django.test.runner import DiscoverRunner
-from colour_runner.django_runner import ColourRunnerMixin
+
+from hunter2.management.commands import setupsite
 from .utils import generate_secret_key, load_or_create_secret_key
-import tempfile
-import os
 
 
 class TestRunner(ColourRunnerMixin, DiscoverRunner):
     pass
+
+
+# Adapted from:
+# https://github.com/django/django/blob/7588d7e439a5deb7f534bdeb2abe407b937e3c1a/tests/auth_tests/test_management.py
+def mock_inputs(inputs):
+    """
+    Decorator to temporarily replace input/getpass to allow interactive
+    createsuperuser.
+    """
+
+    def inner(test_function):
+        def wrap_input(*args):
+            def mock_input(prompt):
+                for key, value in inputs.items():
+                    if key in prompt.lower():
+                        return value
+                return ""
+
+            old_input = builtins.input
+            builtins.input = mock_input
+            try:
+                test_function(*args)
+            finally:
+                builtins.input = old_input
+
+        return wrap_input
+
+    return inner
+
+
+class MockTTY:
+    """
+    A fake stdin object that pretends to be a TTY to be used in conjunction
+    with mock_inputs.
+    """
+
+    def isatty(self):
+        return True
 
 
 class MigrationsTests(TestCase):
@@ -60,3 +102,92 @@ class SecretKeyGenerationTests(TestCase):
             self.assertTrue(os.path.exists(secrets_file))
             secret_key2 = load_or_create_secret_key(secrets_file)
             self.assertEqual(secret_key1, secret_key2)
+
+
+class SetupSiteManagementCommandTests(TestCase):
+    TEST_SITE_NAME   = "Test Site"
+    TEST_SITE_DOMAIN = "test-domain.local"
+
+    def test_no_site_name_argument(self):
+        output = StringIO()
+        with self.assertRaisesMessage(CommandError, "You must use --name and --domain with --noinput."):
+            call_command('setupsite', interactive=False, site_domain="custom-domain.local", stdout=output)
+
+    def test_no_site_domain_argument(self):
+        output = StringIO()
+        with self.assertRaisesMessage(CommandError, "You must use --name and --domain with --noinput."):
+            call_command('setupsite', interactive=False, site_name="Custom Site", stdout=output)
+
+    def test_non_interactive_usage(self):
+        output = StringIO()
+        call_command(
+            'setupsite',
+            interactive=False,
+            site_name=self.TEST_SITE_NAME,
+            site_domain=self.TEST_SITE_DOMAIN,
+            stdout=output
+        )
+        command_output = output.getvalue().strip()
+        self.assertEqual(command_output, "Set site name as \"{}\" with domain \"{}\"".format(
+            self.TEST_SITE_NAME,
+            self.TEST_SITE_DOMAIN
+        ))
+
+        site = Site.objects.get()
+        self.assertEqual(site.name,   self.TEST_SITE_NAME)
+        self.assertEqual(site.domain, self.TEST_SITE_DOMAIN)
+
+    @mock_inputs({
+        'site name':   TEST_SITE_NAME,
+        'site domain': TEST_SITE_DOMAIN
+    })
+    def test_interactive_usage(self):
+        output = StringIO()
+        call_command(
+            'setupsite',
+            interactive=True,
+            stdout=output,
+            stdin=MockTTY(),
+        )
+        command_output = output.getvalue().strip()
+        self.assertEqual(command_output, "Set site name as \"{}\" with domain \"{}\"".format(
+            self.TEST_SITE_NAME,
+            self.TEST_SITE_DOMAIN
+        ))
+        site = Site.objects.get()
+        self.assertEqual(site.name,   self.TEST_SITE_NAME)
+        self.assertEqual(site.domain, self.TEST_SITE_DOMAIN)
+
+    @mock_inputs({
+        'site name':   "",
+        'site domain': "",
+    })
+    def test_interactive_defaults_usage(self):
+        output = StringIO()
+        call_command(
+            'setupsite',
+            interactive=True,
+            stdout=output,
+            stdin=MockTTY(),
+        )
+        command_output = output.getvalue().strip()
+        self.assertEqual(command_output, "Set site name as \"{}\" with domain \"{}\"".format(
+            setupsite.Command.DEFAULT_SITE_NAME,
+            setupsite.Command.DEFAULT_SITE_DOMAIN
+        ))
+
+        site = Site.objects.get()
+        self.assertEqual(site.name,   setupsite.Command.DEFAULT_SITE_NAME)
+        self.assertEqual(site.domain, setupsite.Command.DEFAULT_SITE_DOMAIN)
+
+    def test_domain_validation(self):
+        output = StringIO()
+        test_domain = "+.,|!"
+        with self.assertRaisesMessage(CommandError, "Domain name \"{}\" is not a valid domain name.".format(test_domain)):
+            call_command(
+                'setupsite',
+                interactive=False,
+                site_name=self.TEST_SITE_NAME,
+                site_domain=test_domain,
+                stdout=output
+            )
