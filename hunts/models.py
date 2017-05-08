@@ -228,8 +228,11 @@ class Episode(models.Model):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
 
     def _puzzle_unlocked_by(self, puzzle, team):
-        for p in self.puzzles.all():
-            if p == puzzle:
-                return True
-            if not p.answered_by(team):
-                return False
+        if parallel:
+            return puzzle in self.puzzles.all()
+        else:
+            for p in self.puzzles.all():
+                if p == puzzle:
+                    return True
+                if not p.answered_by(team):
+                    return False
