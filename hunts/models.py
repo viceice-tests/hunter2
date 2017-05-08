@@ -205,6 +205,7 @@ class Episode(models.Model):
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    parallel = models.BooleanField(default=False)
 
     class Meta:
         unique_together = (('event', 'start_date'),)
