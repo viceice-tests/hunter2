@@ -1,10 +1,10 @@
-image: docker:17.06
+image: registry.gitlab.com/rconan/docker-and-compose:0.0.1
 
 variables:
   DOCKER_DRIVER: overlay2
 
 services:
-  - docker:17.06-dind
+  - docker:17.06.0-ce-dind
 
 stages:
   - check
