@@ -1,11 +1,10 @@
-# TODO: Replace with an official image when available
-image: registry.gitlab.com/citygro/docker-and-compose
+image: docker:17.06
 
 variables:
   DOCKER_DRIVER: overlay2
 
 services:
-  - docker:dind
+  - docker:17.06-dind
 
 stages:
   - check
