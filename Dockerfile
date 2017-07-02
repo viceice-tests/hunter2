@@ -10,7 +10,6 @@ WORKDIR /usr
 
 RUN apk add --no-cache -t builddeps \
     gcc \
-    git \
     linux-headers \
     lua5.2-dev \
     musl-dev \
