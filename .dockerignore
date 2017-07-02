@@ -7,3 +7,5 @@ docker-compose.yml
 coverage
 # Ignore nginx folder
 nginx
+# Ignore requirements folder
+requirements

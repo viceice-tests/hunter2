@@ -5,7 +5,7 @@ RUN apk add --no-cache \
     postgresql-client \
     postgresql-libs
 
-COPY requirements.txt /usr/src/app/
+COPY requirements/frozen.txt /usr/src/app/requirements.txt
 WORKDIR /usr
 
 RUN apk add --no-cache -t builddeps \
@@ -14,7 +14,7 @@ RUN apk add --no-cache -t builddeps \
     lua5.2-dev \
     musl-dev \
     postgresql-dev \
- && pip install -r /usr/src/app/requirements.txt \
+ && pip install -r /usr/src/app/requirements.txt --no-deps \
  && apk del --no-cache builddeps
 
 WORKDIR /usr/src/app
