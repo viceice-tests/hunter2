@@ -1,21 +1,20 @@
-FROM python:3.6-alpine
+FROM python:3.6.1-alpine3.6
 
 RUN apk add --no-cache \
     lua5.2 \
     postgresql-client \
     postgresql-libs
 
-COPY requirements.txt /usr/src/app/
+COPY requirements/frozen.txt /usr/src/app/requirements.txt
 WORKDIR /usr
 
 RUN apk add --no-cache -t builddeps \
     gcc \
-    git \
     linux-headers \
     lua5.2-dev \
     musl-dev \
     postgresql-dev \
- && pip install -r /usr/src/app/requirements.txt \
+ && pip install -r /usr/src/app/requirements.txt --no-deps \
  && apk del --no-cache builddeps
 
 WORKDIR /usr/src/app
