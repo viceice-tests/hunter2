@@ -1,20 +1,23 @@
 FROM python:3.6.1
 
-RUN apt-get update
+ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get -y install \
-    lua5.2 \
-    postgresql-client 
+RUN apt-get update \
+ && apt-get -y install \
+    liblua5.2-0 \
+    postgresql-client \
+ && rm -rf /var/lib/apt/lists/*
 
 COPY requirements/frozen.txt /usr/src/app/requirements.txt
 WORKDIR /usr
 
-RUN apt-get -y install \
-    gcc \
-    lua5.2-dev \
-    musl-dev \
-    postgresql-server-dev-9.4 \
- && pip install -r /usr/src/app/requirements.txt --no-deps 
+ARG build_deps="gcc lua5.2-dev"
+RUN apt-get update \
+ && apt-get -y install ${build_deps} \
+ && pip install -r /usr/src/app/requirements.txt --no-deps \
+ && apt-get -y purge ${build_deps} \
+ && apt-get -y --purge autoremove \
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
 COPY . .
