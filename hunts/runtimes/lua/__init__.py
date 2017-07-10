@@ -53,12 +53,12 @@ class LuaRuntime(AbstractRuntime):
         lua.execute("assert(os.setlocale('C'))")
         lua.globals().package.path  = ';'.join([
             os.path.join(os.path.dirname(__file__), "?.lua"),
-            '/usr/share/lua/5.1/?.lua'
+            "/opt/hunter2/share/lua/5.2/?.lua",
         ])
 
         # TODO: Support cross platform libraries
         lua.globals().package.cpath = ';'.join([
-            '/usr/lib/lua/5.1/?.so'
+            "/opt/hunter2/lib/lua/5.2/?.so",
         ]);
 
         return lua

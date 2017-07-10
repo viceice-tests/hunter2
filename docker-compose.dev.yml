@@ -9,14 +9,14 @@ services:
       - db:/var/lib/postgresql/data
   app:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:3031
     depends_on:
       - db
     environment:
       - H2_DEBUG
     image: ${IMAGE_TAG:-hunter2_app}
     ports:
-      - "8080:8000"
+      - "8080:3031"
     volumes:
       - ${PWD:-.}:/usr/src/app
       - config:/config
