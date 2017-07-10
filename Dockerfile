@@ -10,12 +10,13 @@ RUN apt-get update \
     liblua5.2-0 \
     postgresql-client \
     libimlib2 \
+    libjson-c2 \
  && rm -rf /var/lib/apt/lists/*
 
 COPY requirements/frozen.txt /usr/src/app/requirements.txt
 WORKDIR /usr
 
-ARG build_deps="gcc lua5.2 lua5.2-dev unzip libimlib2-dev"
+ARG build_deps="gcc lua5.2 lua5.2-dev unzip libimlib2-dev libjson-c-dev"
 RUN apt-get update \
  && apt-get -y install ${build_deps} \
  && pip install -r /usr/src/app/requirements.txt --no-deps \
@@ -32,8 +33,8 @@ RUN apt-get update \
     --force-config \
  && make install \
  && cd - \
- && luarocks install \
-    lua-imlib2 \
+ && luarocks install lua-imlib2 \
+ && luarocks install lua-cjson \
  && apt-get -y purge ${build_deps} \
  && apt-get -y --purge autoremove \
  && rm -rf /var/lib/apt/lists/* ${LUAROCKS_TMP_LOC} ${LUAROCKS_INSTALL}.tar.gz

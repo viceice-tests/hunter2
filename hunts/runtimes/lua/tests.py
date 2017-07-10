@@ -110,6 +110,7 @@ class LuaSandboxTestCase(TestCase):
 class LuaSandboxLibrariesTestCase(TestCase):
     # Functions that we do not want to expose to our sandbox
     SUPPORTED_LIBRARIES = [
+        'cjson',
         'imlib2',
     ]
 

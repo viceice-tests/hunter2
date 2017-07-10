@@ -3,6 +3,7 @@ local sandbox = {}
 
 -- Allowed sandbox libraries
 sandbox.allowed_libs = {
+  "cjson",
   "imlib2",
 }
 
