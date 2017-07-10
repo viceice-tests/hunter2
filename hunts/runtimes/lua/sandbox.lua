@@ -1,6 +1,11 @@
 -- vim: set fileencoding=utf-8 :
 local sandbox = {}
 
+-- Allowed sandbox libraries
+sandbox.allowed_libs = {
+  "imlib2",
+}
+
 -- Sandbox library functions
 sandbox.lib = {}
 
@@ -23,7 +28,11 @@ end
 
 -- Restrict to allowed modules
 function sandbox.lib.require(modname)
-  -- TODO: Implement to allow loading of allowed modules
+  for _, library in ipairs(sandbox.allowed_libs) do
+    if library == modname then
+      require(modname)
+    end
+  end
 end
 
 -- Main library functions import

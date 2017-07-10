@@ -51,7 +51,16 @@ class LuaRuntime(AbstractRuntime):
 
         # Ensure the local is consistent and ignore system Lua paths
         lua.execute("assert(os.setlocale('C'))")
-        lua.globals().package.path = os.path.join(os.path.dirname(__file__), "?.lua")
+        lua.globals().package.path  = ';'.join([
+            os.path.join(os.path.dirname(__file__), "?.lua"),
+            '/usr/share/lua/5.1/?.lua'
+        ])
+
+        # TODO: Support cross platform libraries
+        lua.globals().package.cpath = ';'.join([
+            '/usr/lib/lua/5.1/?.so'
+        ]);
+
         return lua
 
     def _sandbox_run(

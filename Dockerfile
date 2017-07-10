@@ -2,6 +2,7 @@ FROM python:3.6.1-alpine3.6
 
 RUN apk add --no-cache \
     lua5.2 \
+    imlib2 \
     postgresql-client \
     postgresql-libs
 
@@ -12,10 +13,14 @@ RUN apk add --no-cache -t builddeps \
     gcc \
     linux-headers \
     lua5.2-dev \
+    luarocks5.2 \
     musl-dev \
     postgresql-dev \
  && pip install -r /usr/src/app/requirements.txt --no-deps \
  && apk del --no-cache builddeps
+
+RUN luarocks-5.2 --tree /usr/src/app/hunts/runtimes/lua install \
+    lua-imlib2 \
 
 WORKDIR /usr/src/app
 COPY . .
