@@ -36,7 +36,7 @@ RUN apt-get update \
     lua-imlib2 \
  && apt-get -y purge ${build_deps} \
  && apt-get -y --purge autoremove \
- && rm -rf /var/lib/apt/lists/* ${LUAROCKS_TMP_LOC}
+ && rm -rf /var/lib/apt/lists/* ${LUAROCKS_TMP_LOC} ${LUAROCKS_INSTALL}.tar.gz
 
 WORKDIR /usr/src/app
 COPY . .
