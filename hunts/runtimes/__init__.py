@@ -16,6 +16,9 @@ class RuntimeExecutionTimeExceededError(Exception):
     def __init__(self, message="Runtime time limit exceeded"):
         self.message = message
 
+class RuntimeSandboxViolationError(Exception):
+    def __init__(self, message="Runtime sandbox violation"):
+        self.message = message
 
 class AbstractRuntime(metaclass=ABCMeta):
     @abstractmethod

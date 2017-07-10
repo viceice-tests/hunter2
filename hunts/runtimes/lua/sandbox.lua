@@ -31,9 +31,10 @@ end
 function sandbox.lib.require(modname)
   for _, library in ipairs(sandbox.allowed_libs) do
     if library == modname then
-      require(modname)
+      return require(modname)
     end
   end
+  error("Requested library '"..modname.."' which is not whitelisted ERROR_SANDBOX_VIOLATION")
 end
 
 -- Main library functions import

@@ -3,7 +3,7 @@ import os
 
 import lupa
 
-from .. import AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError
+from .. import AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
 
 
 class LuaRuntime(AbstractRuntime):
@@ -12,6 +12,7 @@ class LuaRuntime(AbstractRuntime):
 
     ERROR_INSTRUCTION_LIMIT_EXCEEDED = "ERROR_INSTRUCTION_LIMIT_EXCEEDED"
     ERROR_MEMORY_LIMIT_EXCEEDED      = "ERROR_MEMORY_LIMIT_EXCEEDED"
+    ERROR_SANDBOX_VIOLATION          = "ERROR_SANDBOX_VIOLATION"
 
     def __init__(self):
         pass
@@ -109,6 +110,8 @@ class LuaRuntime(AbstractRuntime):
                         raise RuntimeExecutionTimeExceededError()
                     elif str(error).endswith(self.ERROR_MEMORY_LIMIT_EXCEEDED):
                         raise RuntimeMemoryExceededError()
+                    elif str(error).endswith(self.ERROR_SANDBOX_VIOLATION):
+                        raise RuntimeSandboxViolationError(str(error).replace(" " + self.ERROR_SANDBOX_VIOLATION, ""))
                     else:
                         raise RuntimeExecutionError(error)
             else:
