@@ -109,7 +109,7 @@ class LuaSandboxTestCase(TestCase):
 
     def test_lua_sandbox_library_whitelist(self):
         lua_runtime = LuaRuntime()
-        lua_script = '''require('invalid_library')'''
+        lua_script = '''require('unwhitelisted_module')'''
         with self.assertRaises(RuntimeSandboxViolationError):
             lua_runtime._sandbox_run(lua_script)
 
