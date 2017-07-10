@@ -60,7 +60,7 @@ class LuaRuntime(AbstractRuntime):
         # TODO: Support cross platform libraries
         lua.globals().package.cpath = ';'.join([
             "/opt/hunter2/lib/lua/5.2/?.so",
-        ]);
+        ])
 
         return lua
 

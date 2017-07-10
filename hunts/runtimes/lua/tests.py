@@ -113,6 +113,7 @@ class LuaSandboxTestCase(TestCase):
         with self.assertRaises(RuntimeSandboxViolationError):
             lua_runtime._sandbox_run(lua_script)
 
+
 class LuaSandboxLibrariesTestCase(TestCase):
     # Functions that we do not want to expose to our sandbox
     SUPPORTED_LIBRARIES = [
@@ -126,3 +127,4 @@ class LuaSandboxLibrariesTestCase(TestCase):
         lua_script = '''require('{}')'''.format(library)
         result = lua_runtime._sandbox_run(lua_script)[0]
         self.assertTrue(result, "Lua library {} can not be loaded in the sandbox".format(library))
+
