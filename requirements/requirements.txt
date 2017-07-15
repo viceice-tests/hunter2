@@ -3,6 +3,7 @@ PyYAML
 colour-runner
 coverage
 django-allauth
+django-autocomplete-light
 django-debug-toolbar
 django-environ
 django-nested-admin
