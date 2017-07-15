@@ -14,6 +14,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 COPY requirements/frozen.txt /usr/src/app/requirements.txt
+COPY hunts/runtimes/lua/luarocks/config.lua /opt/hunter2/luarocks/config-5.2.lua
 WORKDIR /usr
 
 ARG build_deps="gcc lua5.2 lua5.2-dev unzip libimlib2-dev libjson-c-dev"
@@ -28,7 +29,7 @@ RUN apt-get update \
  && ./configure \
     --lua-suffix=5.2 \
     --lua-version=5.2 \
-    --sysconfdir=/opt/hunter2 \
+    --sysconfdir=/opt/hunter2/luarocks \
     --rocks-tree=/opt/hunter2 \
     --force-config \
  && make install \

@@ -124,7 +124,6 @@ class LuaSandboxLibrariesTestCase(TestCase):
     @parameterized.expand(SUPPORTED_LIBRARIES)
     def test_lua_sandbox_load_library(self, library):
         lua_runtime = LuaRuntime()
-        lua_script = '''require('{}')'''.format(library)
+        lua_script = '''return require('{}')'''.format(library)
         result = lua_runtime._sandbox_run(lua_script)[0]
         self.assertTrue(result, "Lua library {} can not be loaded in the sandbox".format(library))
-

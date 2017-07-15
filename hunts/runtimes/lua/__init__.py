@@ -1,9 +1,17 @@
 # vim: set fileencoding=utf-8 :
 import os
-
-import lupa
+import sys
 
 from .. import AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
+
+# TODO: Replace this with proper DLFCN support in the docker python version
+orig_dlflags = sys.getdlopenflags()
+sys.setdlopenflags(258)
+try:
+    import lupa
+except:
+    raise
+sys.setdlopenflags(orig_dlflags)
 
 
 class LuaRuntime(AbstractRuntime):
