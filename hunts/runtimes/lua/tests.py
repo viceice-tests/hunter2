@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from parameterized import parameterized
 
-from .. import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError
+from .. import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
 from . import LuaRuntime
 
 
@@ -106,3 +106,24 @@ class LuaSandboxTestCase(TestCase):
         with self.assertRaises(RuntimeExecutionError):
             # Restrict the sandbox so we fail in setup
             lua_runtime._sandbox_run(lua_script, instruction_limit=10, memory_limit=10)
+
+    def test_lua_sandbox_library_whitelist(self):
+        lua_runtime = LuaRuntime()
+        lua_script = '''require('unwhitelisted_module')'''
+        with self.assertRaises(RuntimeSandboxViolationError):
+            lua_runtime._sandbox_run(lua_script)
+
+
+class LuaSandboxLibrariesTestCase(TestCase):
+    # Functions that we do not want to expose to our sandbox
+    SUPPORTED_LIBRARIES = [
+        'cjson',
+        'imlib2',
+    ]
+
+    @parameterized.expand(SUPPORTED_LIBRARIES)
+    def test_lua_sandbox_load_library(self, library):
+        lua_runtime = LuaRuntime()
+        lua_script = '''return require('{}')'''.format(library)
+        result = lua_runtime._sandbox_run(lua_script)[0]
+        self.assertTrue(result, "Lua library {} can not be loaded in the sandbox".format(library))
