@@ -28,7 +28,7 @@ eventpatterns = [
 urlpatterns = [
     url(
         r'^$',
-        TemplateView.as_view(template_name='hunts/index.html'),
+        views.Index.as_view(),
         name='index'
     ),
     url(

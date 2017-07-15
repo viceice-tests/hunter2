@@ -11,6 +11,17 @@ from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
 
+class Index(View):
+    def get(self, request):
+        event = models.Event.objects.filter(current=True).get()
+
+        return TemplateResponse(
+            request,
+            'hunts/index.html',
+            context = {
+                'current_event': event
+            }
+        )
 
 @method_decorator(login_required, name='dispatch')
 class Episode(View):
@@ -160,7 +171,7 @@ class Answer(View):
         )
 
         given_answer = request.POST['answer']
-        guess = Guess(
+        guess = models.Guess(
             guess=given_answer,
             for_puzzle=puzzle,
             by=request.user.profile
