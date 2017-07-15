@@ -38,7 +38,7 @@ RUN apt-get update \
  && luarocks install lua-cjson \
  && apt-get -y purge ${build_deps} \
  && apt-get -y --purge autoremove \
- && rm -rf /var/lib/apt/lists/* ${LUAROCKS_TMP_LOC} ${LUAROCKS_INSTALL}.tar.gz
+ && rm -rf /var/lib/apt/lists/* ${LUAROCKS_TMP_LOC}
 
 WORKDIR /usr/src/app
 COPY . .

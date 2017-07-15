@@ -7,10 +7,7 @@ from .. import AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExcee
 # TODO: Replace this with proper DLFCN support in the docker python version
 orig_dlflags = sys.getdlopenflags()
 sys.setdlopenflags(258)
-try:
-    import lupa
-except:
-    raise
+import lupa  # noqa
 sys.setdlopenflags(orig_dlflags)
 
 
