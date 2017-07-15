@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from string import Template
-from .models import Guess, PuzzleData
+from . import models
 from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
@@ -51,6 +51,44 @@ class Episode(View):
 
 
 @method_decorator(login_required, name='dispatch')
+class EventDirect(View):
+    def get(self, request):
+        event = models.Event.objects.filter(current=True).get()
+
+        return redirect(
+            'event',
+            event_id=event.id,
+        )
+
+
+@method_decorator(login_required, name='dispatch')
+class EventIndex(View):
+    def get(self, request):
+
+        event = request.event
+
+        episodes = models.Episode.objects \
+                                 .filter(event=event.id) \
+                                 .filter(start_date__lte=timezone.now()) \
+
+        return TemplateResponse(
+            request,
+            'events/index.html',
+            context = {
+                'event_title':  event.name,
+                'event_id':     event.id,
+                'episodes':     list(episodes),
+            }
+        )
+
+
+
+
+
+
+
+
+@method_decorator(login_required, name='dispatch')
 class Puzzle(View):
     def get(self, request, episode_number, puzzle_number):
         episode, puzzle = utils.event_episode_puzzle(
@@ -75,7 +113,7 @@ class Puzzle(View):
                 request, 'hunts/puzzlelocked.html', status=403
             )
 
-        data = PuzzleData(puzzle, request.team, request.user.profile)
+        data = models.PuzzleData(puzzle, request.team, request.user.profile)
 
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
@@ -156,7 +194,7 @@ class Callback(View):
             request.event, episode_number, puzzle_number
         )
 
-        data = PuzzleData(puzzle, request.team, request.user)
+        data = models.PuzzleData(puzzle, request.team, request.user)
 
         response = HttpResponse(
             rr.evaluate(
