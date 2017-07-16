@@ -4,6 +4,7 @@ from django.utils import timezone
 from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
+from datetime import timedelta
 
 import events
 import teams
@@ -20,6 +21,7 @@ class Puzzle(models.Model):
     )
     cb_content = models.TextField(blank=True, default='')
     start_date = models.DateTimeField(blank=True, default=timezone.now)
+    headstart_granted = models.DurationField(default=timedelta())
 
     def __str__(self):
         return f'<Puzzle: {self.title}>'
@@ -227,6 +229,13 @@ class Episode(models.Model):
 
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
+
+    def headstart_applied(self, team):
+        return timedelta(0)
+
+    def headstart_granted(self, team):
+        seconds = sum([p.headstart_granted.total_seconds() for p in self.puzzles.all() if p.answered_by(team)])
+        return timedelta(seconds=seconds)
 
     def _puzzle_unlocked_by(self, puzzle, team):
         started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())
