@@ -19,6 +19,7 @@ class Puzzle(models.Model):
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
     cb_content = models.TextField(blank=True, default='')
+    start_date = models.DateTimeField(blank=True, default=timezone.now)
 
     def __str__(self):
         return f'<Puzzle: {self.title}>'
@@ -228,10 +229,11 @@ class Episode(models.Model):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
 
     def _puzzle_unlocked_by(self, puzzle, team):
+        started_puzzles = self.puzzles.filter(start_date__lt = timezone.now())
         if self.parallel:
-            return puzzle in self.puzzles.all()
+            return puzzle in started_puzzles
         else:
-            for p in self.puzzles.all():
+            for p in started_puzzles:
                 if p == puzzle:
                     return True
                 if not p.answered_by(team):
