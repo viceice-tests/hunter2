@@ -216,6 +216,13 @@ class Episode(models.Model):
         n = int(puzzle_number)
         return self.puzzles.all()[n - 1:n].get()
 
+    def get_relative_id(self):
+        episodes = self.event.episode_set.order_by('start_date')
+        for index, e in enumerate(episodes):
+            if e == self:
+                return index + 1
+        return -1
+
     def unlocked_by(self, team):
         prequels = Episode.objects.filter(
             event=self.event,

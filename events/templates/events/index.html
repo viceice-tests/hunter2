@@ -5,7 +5,7 @@
 {% if episodes|length > 0 %}
 <ul>
 {% for episode in episodes %}
-<li><a href='{% url 'episode' event_id episode.id %}'>{{episode.name}}</a></li>
+<li><a href='{% url 'episode' event_id episode.get_relative_id %}'>{{episode.name}}</a></li>
 {% endfor %}
 </ul>
 {% else %}

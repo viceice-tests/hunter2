@@ -9,7 +9,6 @@ from string import Template
 from . import models
 from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
-from . import utils
 
 
 class Index(View):
@@ -28,7 +27,7 @@ class Index(View):
 @method_decorator(login_required, name='dispatch')
 class Episode(View):
     def get(self, request, episode_number):
-        episode = utils.event_episode(request.event, episode_number)
+        episode = request.event.get_episode_from_relative_id(episode_number)
         admin = rules.is_admin_for_episode(request.user, episode)
 
         # TODO: Head starts
@@ -98,8 +97,8 @@ class EventIndex(View):
 @method_decorator(login_required, name='dispatch')
 class Puzzle(View):
     def get(self, request, episode_number, puzzle_number):
-        episode, puzzle = utils.event_episode_puzzle(
-            request.event, episode_number, puzzle_number
+        episode, puzzle = request.event.get_episode_and_puzzle_from_relative_id(
+            episode_number, puzzle_number
         )
         admin = rules.is_admin_for_puzzle(request.user, puzzle)
 
@@ -170,8 +169,8 @@ class Puzzle(View):
 @method_decorator(login_required, name='dispatch')
 class Answer(View):
     def post(self, request, episode_number, puzzle_number):
-        episode, puzzle = utils.event_episode_puzzle(
-            request.event, episode_number, puzzle_number
+        episode, puzzle = request.event.get_episode_and_puzzle_from_relative_id(
+            episode_number, puzzle_number
         )
 
         given_answer = request.POST['answer']
@@ -205,8 +204,8 @@ class Callback(View):
         if 'application/json' not in request.META['HTTP_ACCEPT']:
             return HttpResponse(status=406)
 
-        episode, puzzle = utils.event_episode_puzzle(
-            request.event, episode_number, puzzle_number
+        episode, puzzle = request.event.get_episode_and_puzzle_from_relative_id(
+            episode_number, puzzle_number
         )
 
         data = models.PuzzleData(puzzle, request.team, request.user)
