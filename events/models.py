@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from events.fields import SingleTrueBooleanField
+from .fields import SingleTrueBooleanField
 
 
 class Theme(models.Model):
