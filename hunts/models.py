@@ -229,7 +229,7 @@ class Episode(models.Model):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
 
     def _puzzle_unlocked_by(self, puzzle, team):
-        started_puzzles = self.puzzles.filter(start_date__lt = timezone.now())
+        started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())
         if self.parallel:
             return puzzle in started_puzzles
         else:
