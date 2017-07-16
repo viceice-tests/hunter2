@@ -14,7 +14,7 @@ episodepatterns = [
 ]
 
 eventpatterns = [
-    url(r'^$',views.EventDirect.as_view()),
+    url(r'^$', views.EventDirect.as_view()),
     url(
         r'^(?P<event_id>[1-9]\d*)/$',
         views.EventIndex.as_view(),

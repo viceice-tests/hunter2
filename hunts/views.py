@@ -11,6 +11,7 @@ from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
 
+
 class Index(View):
     def get(self, request):
         event = models.Event.objects.filter(current=True).get()
@@ -18,10 +19,11 @@ class Index(View):
         return TemplateResponse(
             request,
             'hunts/index.html',
-            context = {
+            context={
                 'current_event': event
             }
         )
+
 
 @method_decorator(login_required, name='dispatch')
 class Episode(View):
@@ -85,18 +87,12 @@ class EventIndex(View):
         return TemplateResponse(
             request,
             'events/index.html',
-            context = {
+            context={
                 'event_title':  event.name,
                 'event_id':     event.id,
                 'episodes':     list(episodes),
             }
         )
-
-
-
-
-
-
 
 
 @method_decorator(login_required, name='dispatch')
@@ -130,8 +126,16 @@ class Puzzle(View):
             data.tp_data.start_time = timezone.now()
 
         answered = puzzle.answered_by(request.team, data)
-        hints = [h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)]
-        unlocks = [{'guesses': u.unlocked_by(request.team, data), 'text': u.text} for u in puzzle.unlock_set.all()]
+        hints = [
+            h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
+        ]
+        unlocks = [
+            {
+                'guesses': u.unlocked_by(request.team, data),
+                'text': u.text
+            }
+            for u in puzzle.unlock_set.all()
+        ]
         unlocks = [u for u in unlocks if len(u['guesses'])]
 
         files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
