@@ -30,6 +30,7 @@ class Puzzle(models.Model):
             episode._puzzle_unlocked_by(self, team)
 
     def answered_by(self, team, data=None):
+        """Return a list of correct guesses for this puzzle by the given team."""
         if data is None:
             data = PuzzleData(self, team)
         guesses = Guess.objects.filter(
@@ -41,6 +42,24 @@ class Puzzle(models.Model):
         )
 
         return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
+
+    def finished_teams(self, event):
+        """Return a list of teams who have completed this puzzle at the given event in order of completion."""
+        all_teams = teams.models.Team.objects.filter(at_event=event)
+        team_guesses = {}
+        for t in all_teams:
+            correct_answers = self.answered_by(t)
+            if correct_answers:
+                team_guesses[t] = correct_answers[0]
+
+        return sorted(team_guesses.keys(), key=lambda t: team_guesses[t].given)
+
+    def position(self, team):
+        """Returns the position in which the given team finished this puzzle: 0 = first, None = not yet finished."""
+        try:
+            return self.finished_teams(team.at_event).index(team)
+        except ValueError:
+            return None
 
 
 class PuzzleFile(models.Model):
@@ -227,6 +246,17 @@ class Episode(models.Model):
 
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
+
+    def finished(self):
+        """Get a list of teams who have finished this episode in order of finishing."""
+        if not self.puzzles:
+            return []
+
+        if self.parallel:
+            raise NotImplementedError
+        else:
+            last_puzzle = self.puzzles.last()
+            return last_puzzle.finished_teams(self.event)
 
     def _puzzle_unlocked_by(self, puzzle, team):
         started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())
