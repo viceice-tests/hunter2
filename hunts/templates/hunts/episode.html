@@ -1,7 +1,10 @@
-{% extends "events/event.html" %}
+{% extends "events/base.html" %}
+
+{% block page_header %}
+<h1>{{ episode }}</h1>
+{% endblock %}
 
 {% block content %}
-<h1>{{ episode }}</h1>
 <ol>
 {% for puzzle in puzzles %}
 	<li>

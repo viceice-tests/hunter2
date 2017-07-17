@@ -1,6 +1,6 @@
 from django.conf.urls import include, url
-from django.views.generic import TemplateView
 from . import views
+from django.views.generic import TemplateView
 
 puzzlepatterns = [
     url(r'^$', views.Puzzle.as_view(), name='puzzle'),
