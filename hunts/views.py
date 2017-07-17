@@ -18,8 +18,7 @@ class Episode(View):
         episode = utils.event_episode(request.event, episode_number)
         admin = rules.is_admin_for_episode(request.user, episode)
 
-        # TODO: Head starts
-        if episode.start_date > timezone.now() and not admin:
+        if not episode.started(request.team) and not admin:
             return TemplateResponse(
                 request,
                 'hunts/episodenotstarted.html',
