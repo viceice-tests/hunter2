@@ -24,7 +24,8 @@ class Episode(View):
                 'hunts/episodenotstarted.html',
                 context={
                     'episode': episode.name,
-                    'startdate': episode.start_date,
+                    'startdate': episode.start_date - episode.headstart_applied(request.team),
+                    'headstart': episode.headstart_applied(request.team),
                 }
             )
 
