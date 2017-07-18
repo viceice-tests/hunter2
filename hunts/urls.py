@@ -14,17 +14,23 @@ episodepatterns = [
 ]
 
 eventpatterns = [
+    url(r'^$', views.EventDirect.as_view()),
     url(
-        r'^$',
-        TemplateView.as_view(template_name='hunts/index.html'),
-        name='index'
+        r'^(?P<event_id>[1-9]\d*)/$',
+        views.EventIndex.as_view(),
+        name='event'),
+    url(
+        r'^(?P<event_id>[1-9]\d*)/ep/(?P<episode_number>[1-9]\d*)/',
+        include(episodepatterns)
     ),
-    url(r'^ep/(?P<episode_number>[1-9]\d*)/', include(episodepatterns)),
 ]
 
 urlpatterns = [
-    url(r'', include(eventpatterns)),
-    url(r'^event/(?P<event_id>[1-9]\d*)/', include(eventpatterns)),
+    url(
+        r'^$',
+        views.Index.as_view(),
+        name='index'
+    ),
     url(
         r'^faq$',
         TemplateView.as_view(template_name='hunts/faq.html'),
@@ -35,4 +41,5 @@ urlpatterns = [
         TemplateView.as_view(template_name='hunts/help.html'),
         name='help'
     ),
+    url(r'^event/', include(eventpatterns)),
 ]
