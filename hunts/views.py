@@ -14,14 +14,10 @@ from . import utils
 
 class Index(View):
     def get(self, request):
-        event = models.Event.objects.filter(current=True).get()
 
         return TemplateResponse(
             request,
             'hunts/index.html',
-            context={
-                'current_event': event
-            }
         )
 
 

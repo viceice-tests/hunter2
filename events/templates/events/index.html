@@ -1,7 +1,10 @@
-{% extends "events/event.html" %}
+{% extends "events/base.html" %}
+
+{% block page_header %}
+<h1>{{event_title}}</h1>
+{% endblock %}
 
 {% block content %}
-<p id="page_title">{{event_title}}</p>
 {% if episodes|length > 0 %}
 <ul>
 {% for episode in episodes %}
