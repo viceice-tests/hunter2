@@ -42,6 +42,7 @@ class Puzzle(models.Model):
             '-given'
         )
 
+        # TODO: Should return bool
         return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
 
 
