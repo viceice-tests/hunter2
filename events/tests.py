@@ -88,3 +88,35 @@ class CreateDefaultEventManagementCommandTests(TestCase):
         self.assertIsNotNone(theme)
         event = Event.objects.get(name=createdefaultevent.Command.DEFAULT_EVENT_NAME, theme=theme.id, current=True)
         self.assertIsNotNone(event)
+
+    def test_only_one_current_event(self):
+        output = StringIO()
+        call_command(
+            'createdefaultevent',
+            interactive=False,
+            event_name=self.TEST_EVENT_NAME + "1",
+            theme_name=self.TEST_THEME_NAME + "1",
+            stdout=output
+        )
+        command_output = output.getvalue().strip()
+        self.assertEqual(command_output, "Created current event \"{}\" and theme \"{}\"".format(
+            self.TEST_EVENT_NAME + "1",
+            self.TEST_THEME_NAME + "1"
+        ))
+
+        output = StringIO()
+        call_command(
+            'createdefaultevent',
+            interactive=False,
+            event_name=self.TEST_EVENT_NAME + "2",
+            theme_name=self.TEST_THEME_NAME + "2",
+            stdout=output
+        )
+        command_output = output.getvalue().strip()
+        self.assertEqual(command_output, "Created current event \"{}\" and theme \"{}\"".format(
+            self.TEST_EVENT_NAME + "2",
+            self.TEST_THEME_NAME + "2"
+        ))
+
+        self.assertGreater(Event.objects.all().count(), 1)
+        self.assertEqual(Event.objects.filter(current=True).count(), 1, "More than a single event with current set as True")

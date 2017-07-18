@@ -28,6 +28,9 @@
 				<div class="collapse navbar-collapse" id="site-navbar-collapse-1">
 					<ul class="nav navbar-nav">
 						{% block topbar %}{% endblock %}
+						<li class="button"><a href="{% url 'index' %}">Home</a></li>
+						<li class="button"><a href="{% url 'help' %}">Help</a></li>
+						<li class="button"><a href="{% url 'faq' %}">FAQ</a></li>
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
 						{% if user.is_authenticated %}
@@ -65,38 +68,26 @@
 			</div>
 		</nav>
 		{% block debug %}{% endblock %}
-		<div id="banner_top">
-		</div>
-		<div id="arrows">
-			<div id="content">
-				<div id="banner_bottom">
-					<div id="inumber-1" style="background-image:url(/static/images/summer/5.png)"></div>
-					<div id="inumber-2" style="background-image:url(/static/images/summer/2.png)"></div>
-				</div>
-				<div id="nav_user2">
-					<ul id='menu'>
-						<li class="button"><a href="{% url 'index' %}">Home</a></li>
-						<li class="button"><a href="{% url 'help' %}">Help</a></li>
-						<li class="button"><a href="{% url 'faq' %}">FAQ</a></li>
-					</ul>
-				</div>
-				<div id="content_main">
-				{% block content %}
-					If you're seeing this, it's all gone wrong!
-				{% endblock content %}
-				</div>
-			</div>
-			<div id="footer">
-				<div style="float: left; width: 25%;font-size: 10px;text-align: left;padding-left: 15px;color: #646464;">
-					Riddlers Online: 0 <br />
-					Teams Online: 0
-				</div>
-				<div style="float: left; width: 47%;">
-					Copyright &copy; 2016 <br />
-					<a href="https://www.theihunt.uk">https://www.theihunt.uk</a>
-					<br /><br />
-				</div>
-			</div>
-		</div>  
+    <div class="container">
+      <div class="page-header">
+        {% block page_header %}{% endblock page_header%}
+      </div>
+      {% block content %}
+        If you're seeing this, it's all gone wrong!
+      {% endblock content %}
+    </div>
+    <footer class="footer">
+      <div class="container">
+        <div style="float: left; width: 33%;font-size: 10px;text-align: left;padding-left: 15px;color: #646464;">
+          Riddlers Online: 0 <br />
+          Teams Online: 0
+        </div>
+        <div style="float: left; width: 33%; text-align: center;">
+          Copyright &copy; 2016 <br />
+          <a href="https://www.theihunt.uk">https://www.theihunt.uk</a>
+        </div>
+      </div>
+    </footer>
+
 	</body>
 </html>

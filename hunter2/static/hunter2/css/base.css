@@ -8,23 +8,19 @@ body {
 }
 
 a:link {
-	color: #b4b4a4;
 	text-decoration: none;
 }
 
 a:visited {
 	text-decoration: none;
-	color: #b4b4a4;
 }
 
 a:hover {
 	text-decoration: underline;
-	color: #ffffff;
 }
 
 a:active {
 	text-decoration: none;
-	color: #b4b4a4;
 }
 
 .submit_butt {
@@ -40,14 +36,6 @@ a:active {
 	margin-bottom: 50px;
 	margin-right: auto;
 	margin-left: auto;
-}
-
-#banner_top {
-	width: 900px;
-	margin-right: auto;
-	margin-left: 37px;
-	height: 158px;
-	padding: 0px;
 }
 
 #inumber-1 {
@@ -76,14 +64,6 @@ a:active {
 	margin: auto;
 }
 
-#content {
-	width: 900px;
-	margin-top: 0px;
-	margin-right: auto;
-	margin-bottom: 0px;
-	margin-left: auto;
-	border-radius: 25px;
-}
 
 #banner_bottom {
 	height: 165px;
@@ -103,54 +83,6 @@ a:active {
 #signup {
 }
 
-#nav_user2 {
-	height: 35px;
-	background-color: #2D2C2C;
-}
-
-#footer {
-	background-color: #2D2C2C;
-	height: 50px;
-	border-radius: 0px 0px 25px 25px;
-	width: 900px;
-	margin: auto;
-	border-top: 1px solid #000000;
-	text-align: center;
-	padding-top: 15px;
-	color: #B4B4B4;
-}
-
-#content_main {
-	background-color: #363636;
-	margin: 0px;
-	padding: 10px 20px;
-	height: 100%;
-	color:#B4B4B4;
-	font-size: 12px;
-	text-align:justify;
-}
-
-p#page_title {
-	font-size: 24px;
-	font-weight: bold;
-	margin-top: 0px;
-	padding-bottom: 8px;
-	border-bottom:1px solid #000;
-	
-}
-
-p#page_title a:hover {
-	cursor: pointer;
-	text-decoration: none;
-}
-
-p.page_title {
-	font-size: 24px;
-	font-weight: bold;
-	margin-top: 0px;
-	padding-bottom: 8px;
-	border-bottom:1px solid #000;
-}
 
 .align_right {
 	text-align: right;
@@ -647,3 +579,27 @@ font-weight: normal;
 float: left;
 vertical-align:middle;
 }
+
+/* New Stuff: */
+
+body {
+  margin-bottom: 60px;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 60px;
+  background-color: #f5f5f5;
+  padding: 15px;
+  background-color: #222;
+  border-color: #080808;
+  color: #9d9d9d;
+}
+html {
+  position: relative;
+  min-height: 100%;
+}
+

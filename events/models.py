@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from .fields import SingleTrueBooleanField
+
 
 class Theme(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -14,7 +16,7 @@ class Theme(models.Model):
 class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)
     theme = models.ForeignKey(Theme, on_delete=models.CASCADE, related_name='theme')
-    current = models.BooleanField(default=False)
+    current = SingleTrueBooleanField()
 
     def __str__(self):
         return f'<Event: {self.name}>'
