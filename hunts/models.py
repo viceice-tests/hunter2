@@ -33,7 +33,7 @@ class Puzzle(models.Model):
         if data is None:
             data = PuzzleData(self, team)
         guesses = Guess.objects.filter(
-            by__in=team.users.all()
+            by__in=team.members.all()
         ).filter(
             for_puzzle=self
         ).order_by(
@@ -70,7 +70,7 @@ class Hint(Clue):
 class Unlock(Clue):
     def unlocked_by(self, team, data):
         guesses = Guess.objects.filter(
-            by__in=team.users.all()
+            by__in=team.members.all()
         ).filter(
             for_puzzle=self.puzzle
         )

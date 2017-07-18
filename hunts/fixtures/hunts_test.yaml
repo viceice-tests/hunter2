@@ -7,12 +7,50 @@
 - model: events.event
   pk: 1
   fields: {name: Test Event, theme: 1, current: true}
+- model: auth.user
+  pk: 1
+  fields:
+    password: pbkdf2_sha256$30000$DvSklD707hH9$WEdu5GgBAdfmBbZma8DhzcdtF6NmFQHz/9Sh5GMwZLo=
+    last_login: null
+    is_superuser: false
+    username: test
+    first_name: ''
+    last_name: ''
+    email: ''
+    is_staff: false
+    is_active: true
+    date_joined: '1970-01-01T00:00:00Z'
+    groups: []
+    user_permissions: []
+- model: auth.user
+  pk: 2
+  fields:
+    password: pbkdf2_sha256$30000$DvSklD707hH9$WEdu5GgBAdfmBbZma8DhzcdtF6NmFQHz/9Sh5GMwZLo=
+    last_login: null
+    is_superuser: false
+    username: failure
+    first_name: ''
+    last_name: ''
+    email: ''
+    is_staff: false
+    is_active: true
+    date_joined: '1970-01-01T00:00:00Z'
+    groups: []
+    user_permissions: []
+- model: teams.userprofile
+  pk: 1
+  fields:
+    user: 1
+- model: teams.userprofile
+  pk: 2
+  fields:
+    user: 2
 - model: teams.team
   pk: 1
-  fields: {name: Test Team, at_event: 1, is_admin: false}
+  fields: {name: Test Team, at_event: 1, members: [1], is_admin: false}
 - model: teams.team
   pk: 2
-  fields: {name: Failure Team, at_event: 1, is_admin: false}
+  fields: {name: Failure Team, at_event: 1, members: [2], is_admin: false}
 - model: hunts.puzzle
   pk: 1
   fields: {title: Test Puzzle, runtime: S, content: Test Content, cb_runtime: S,
@@ -54,43 +92,3 @@
     start_date: '1970-01-01T00:00:00Z'
     event: 1
     puzzles: [1]
-- model: auth.user
-  pk: 1
-  fields:
-    password: pbkdf2_sha256$30000$DvSklD707hH9$WEdu5GgBAdfmBbZma8DhzcdtF6NmFQHz/9Sh5GMwZLo=
-    last_login: null
-    is_superuser: false
-    username: test
-    first_name: ''
-    last_name: ''
-    email: ''
-    is_staff: false
-    is_active: true
-    date_joined: '1970-01-01T00:00:00Z'
-    groups: []
-    user_permissions: []
-- model: auth.user
-  pk: 2
-  fields:
-    password: pbkdf2_sha256$30000$DvSklD707hH9$WEdu5GgBAdfmBbZma8DhzcdtF6NmFQHz/9Sh5GMwZLo=
-    last_login: null
-    is_superuser: false
-    username: failure
-    first_name: ''
-    last_name: ''
-    email: ''
-    is_staff: false
-    is_active: true
-    date_joined: '1970-01-01T00:00:00Z'
-    groups: []
-    user_permissions: []
-- model: teams.userprofile
-  pk: 1
-  fields:
-    user: 1
-    teams: [1]
-- model: teams.userprofile
-  pk: 2
-  fields:
-    user: 2
-    teams: [2]
