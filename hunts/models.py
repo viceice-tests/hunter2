@@ -30,7 +30,7 @@ class Puzzle(models.Model):
             episode._puzzle_unlocked_by(self, team)
 
     def answered_by(self, team, data=None):
-        """Return a list of correct guesses for this puzzle by the given team."""
+        """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
         if data is None:
             data = PuzzleData(self, team)
         guesses = Guess.objects.filter(
@@ -43,14 +43,19 @@ class Puzzle(models.Model):
 
         return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
 
-    def finished_teams(self, event):
-        """Return a list of teams who have completed this puzzle at the given event in order of completion."""
+    def best_guesses(self, event):
         all_teams = teams.models.Team.objects.filter(at_event=event)
         team_guesses = {}
         for t in all_teams:
             correct_answers = self.answered_by(t)
             if correct_answers:
                 team_guesses[t] = correct_answers[0]
+
+        return team_guesses
+
+    def finished_teams(self, event):
+        """Return a list of teams who have completed this puzzle at the given event in order of completion."""
+        team_guesses = self.best_guesses(event)
 
         return sorted(team_guesses.keys(), key=lambda t: team_guesses[t].given)
 
@@ -253,7 +258,23 @@ class Episode(models.Model):
             return []
 
         if self.parallel:
-            raise NotImplementedError
+            # The position is determined by when the latest of a team's first successful guesses came in, over
+            # all puzzles in the episode. Teams which haven't answered all questions are discarded.
+            last_team_guesses = {team: None for team in teams.models.Team.objects.filter(at_event=self.event)}
+
+            for p in self.puzzles.all():
+                team_guesses = p.best_guesses(self.event)
+                for team in last_team_guesses:
+                    if team not in team_guesses:
+                        del last_team_guesses[team]
+                        continue
+                    if not last_team_guesses[team]:
+                        last_team_guesses[team] = team_guesses[team]
+                    elif team_guesses[team].given > last_team_guesses[team].given:
+                        last_team_guesses[team] = team_guesses[team]
+
+            return sorted(last_team_guesses.keys(), key=lambda t: last_team_guesses[t].given)
+
         else:
             last_puzzle = self.puzzles.last()
             return last_puzzle.finished_teams(self.event)
