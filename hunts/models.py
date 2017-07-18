@@ -25,6 +25,8 @@ class Puzzle(models.Model):
         return f'<Puzzle: {self.title}>'
 
     def unlocked_by(self, team):
+        # Is this puzzle playable?
+        # TODO: Make it not depend on a team. So single player puzzles work.
         episode = self.episode_set.get(event=team.at_event)
         return episode.unlocked_by(team) and \
             episode._puzzle_unlocked_by(self, team)
