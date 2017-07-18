@@ -141,7 +141,7 @@ class Puzzle(View):
         files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
 
         text = Template(rr.evaluate(
-            runtime=puzzle.cb_runtime,
+            runtime=puzzle.runtime,
             script=puzzle.content,
             team_puzzle_data=data.tp_data,
             user_puzzle_data=data.up_data,
@@ -214,7 +214,7 @@ class Callback(View):
         response = HttpResponse(
             rr.evaluate(
                 runtime=puzzle.cb_runtime,
-                script=puzzle.content,
+                script=puzzle.cb_content,
                 team_puzzle_data=data.tp_data,
                 user_puzzle_data=data.up_data,
                 team_data=data.t_data,
