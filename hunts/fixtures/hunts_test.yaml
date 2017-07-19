@@ -37,6 +37,21 @@
     date_joined: '1970-01-01T00:00:00Z'
     groups: []
     user_permissions: []
+- model: auth.user
+  pk: 3
+  fields:
+    password: pbkdf2_sha256$30000$DvSklD707hH9$WEdu5GgBAdfmBbZma8DhzcdtF6NmFQHz/9Sh5GMwZLo=
+    last_login: null
+    is_superuser: true
+    username: admin
+    first_name: ''
+    last_name: ''
+    email: ''
+    is_staff: true
+    is_active: true
+    date_joined: '1970-01-01T00:00:00Z'
+    groups: []
+    user_permissions: []
 - model: teams.userprofile
   pk: 1
   fields:
@@ -54,6 +69,14 @@
 - model: hunts.puzzle
   pk: 1
   fields: {title: Test Puzzle, runtime: S, content: Test Content, cb_runtime: S,
+    cb_content: ''}
+- model: hunts.puzzle
+  pk: 5
+  fields: {title: Test Puzzle 2, runtime: S, content: Test Content, cb_runtime: S,
+    cb_content: ''}
+- model: hunts.puzzle
+  pk: 6
+  fields: {title: Test Puzzle 3, runtime: S, content: Test Content, cb_runtime: S,
     cb_content: ''}
 - model: hunts.hint
   pk: 1
@@ -73,6 +96,12 @@
 - model: hunts.answer
   pk: 3
   fields: {for_puzzle: 1, runtime: L, answer: return guess == "correct"}
+- model: hunts.answer
+  pk: 7
+  fields: {for_puzzle: 5, runtime: S, answer: correct}
+- model: hunts.answer
+  pk: 8
+  fields: {for_puzzle: 6, runtime: S, answer: correctish}
 - model: hunts.guess
   pk: 1
   fields: {for_puzzle: 1, by: 1, guess: correct, given: '1970-01-01T00:00:00Z'}
@@ -91,4 +120,51 @@
     name: Test Episode
     start_date: '1970-01-01T00:00:00Z'
     event: 1
-    puzzles: [1]
+    puzzles: [1, 5, 6]
+- model: hunts.puzzle
+  pk: 2
+  fields: {title: "1 + 1", runtime: S, content: "What is 1 + 1?", cb_runtime: S,
+    cb_content: ''}
+- model: hunts.unlock
+  pk: 2
+  fields: {puzzle: 2, text: Close}
+- model: hunts.unlockguess
+  pk: 2
+  fields: {unlock: 2, guess: 3}
+- model: hunts.answer
+  pk: 4
+  fields: {for_puzzle: 2, runtime: S, answer: 2}
+- model: hunts.puzzle
+  pk: 3
+  fields: {title: "2 + 2", runtime: S, content: "What is 2 + 2?", cb_runtime: S,
+    cb_content: ''}
+- model: hunts.unlock
+  pk: 3
+  fields: {puzzle: 3, text: Close}
+- model: hunts.unlockguess
+  pk: 3
+  fields: {unlock: 3, guess: 4}
+- model: hunts.answer
+  pk: 5
+  fields: {for_puzzle: 3, runtime: S, answer: 4}
+- model: hunts.puzzle
+  pk: 4
+  fields: {title: "3 + 3", runtime: S, content: "What is 3 + 3?", cb_runtime: S,
+    cb_content: ''}
+- model: hunts.unlock
+  pk: 4
+  fields: {puzzle: 4, text: Close}
+- model: hunts.unlockguess
+  pk: 4
+  fields: {unlock: 4, guess: 5}
+- model: hunts.answer
+  pk: 6
+  fields: {for_puzzle: 4, runtime: S, answer: 6}
+- model: hunts.episode
+  pk: 2
+  fields:
+    name: Non-Linear Episode
+    start_date: '1970-01-02T00:00:00Z'
+    event: 1
+    parallel: true
+    puzzles: [2,3,4]

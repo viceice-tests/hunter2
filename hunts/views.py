@@ -44,7 +44,11 @@ class Episode(View):
                 request, 'hunts/episodelocked.html', status=403
             )
 
-        puzzles = list(episode.puzzles.all())
+        all_puzzles = episode.puzzles.all()
+        puzzles = []
+        for p in all_puzzles:
+            if p.unlocked_by(request.team):
+                puzzles.append(p)
 
         return TemplateResponse(
             request,

@@ -20,13 +20,19 @@ Either environment can be launched using the following commands:
 echo 'H2_DEBUG=True' > .env
 docker-compose up -d
 docker-compose run --rm app python manage.py migrate
-docker-compose run --rm app python manage.py createsuperuser
 ```
 
-Many site features assume the existence of an event with the current flag. This can be easily created:
+If you want minimal data, you can run:
 ```
+docker-compose run --rm app python manage.py createsuperuser
 $ docker-compose run --rm app python manage.py createdefaultevent
 ```
+
+If you want all the data that's used in the CI tests:
+```
+docker-compose run --rm app python manage.py loaddata hunts/fixtures/hunts_test.yaml
+```
+
 
 In a production environment (with `DEBUG` disabled) we also need to setup the `Site` object:
 ```

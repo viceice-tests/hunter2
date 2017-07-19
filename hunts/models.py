@@ -19,11 +19,14 @@ class Puzzle(models.Model):
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
     cb_content = models.TextField(blank=True, default='')
+    start_date = models.DateTimeField(blank=True, default=timezone.now)
 
     def __str__(self):
         return f'<Puzzle: {self.title}>'
 
     def unlocked_by(self, team):
+        # Is this puzzle playable?
+        # TODO: Make it not depend on a team. So single player puzzles work.
         episode = self.episode_set.get(event=team.at_event)
         return episode.unlocked_by(team) and \
             episode._puzzle_unlocked_by(self, team)
@@ -39,6 +42,7 @@ class Puzzle(models.Model):
             '-given'
         )
 
+        # TODO: Should return bool
         return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
 
 
@@ -205,6 +209,7 @@ class Episode(models.Model):
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    parallel = models.BooleanField(default=False)
 
     class Meta:
         unique_together = (('event', 'start_date'),)
@@ -234,8 +239,12 @@ class Episode(models.Model):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
 
     def _puzzle_unlocked_by(self, puzzle, team):
-        for p in self.puzzles.all():
-            if p == puzzle:
-                return True
-            if not p.answered_by(team):
-                return False
+        started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())
+        if self.parallel:
+            return puzzle in started_puzzles
+        else:
+            for p in started_puzzles:
+                if p == puzzle:
+                    return True
+                if not p.answered_by(team):
+                    return False
