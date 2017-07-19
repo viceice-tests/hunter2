@@ -69,11 +69,11 @@
 - model: hunts.puzzle
   pk: 1
   fields: {title: Test Puzzle, runtime: S, content: Test Content, cb_runtime: S,
-    cb_content: ''}
+  cb_content: '', headstart_granted: '00:10:00'}
 - model: hunts.puzzle
   pk: 5
   fields: {title: Test Puzzle 2, runtime: S, content: Test Content, cb_runtime: S,
-    cb_content: ''}
+  cb_content: '', headstart_granted: '00:05:00'}
 - model: hunts.puzzle
   pk: 6
   fields: {title: Test Puzzle 3, runtime: S, content: Test Content, cb_runtime: S,
@@ -167,4 +167,5 @@
     start_date: '1970-01-02T00:00:00Z'
     event: 1
     parallel: true
+    headstart_from: [1]
     puzzles: [2,3,4]

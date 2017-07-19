@@ -4,6 +4,7 @@ from django.utils import timezone
 from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
+from datetime import timedelta
 
 import events
 import teams
@@ -20,6 +21,10 @@ class Puzzle(models.Model):
     )
     cb_content = models.TextField(blank=True, default='')
     start_date = models.DateTimeField(blank=True, default=timezone.now)
+    headstart_granted = models.DurationField(
+        default=timedelta(),
+        help_text='How much headstart this puzzle gives to later episodes which gain headstart from this episode'
+    )
 
     def __str__(self):
         return f'<Puzzle: {self.title}>'
@@ -210,6 +215,10 @@ class Episode(models.Model):
     start_date = models.DateTimeField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     parallel = models.BooleanField(default=False)
+    headstart_from = models.ManyToManyField(
+        "self", blank=True,
+        help_text='Episodes which should grant a headstart for this episode'
+    )
 
     class Meta:
         unique_together = (('event', 'start_date'),)
@@ -220,6 +229,13 @@ class Episode(models.Model):
     def get_puzzle(self, puzzle_number):
         n = int(puzzle_number)
         return self.puzzles.all()[n - 1:n].get()
+
+    def started(self, team=None):
+        date = self.start_date
+        if team:
+            date -= self.headstart_applied(team)
+
+        return date < timezone.now()
 
     def get_relative_id(self):
         episodes = self.event.episode_set.order_by('start_date')
@@ -237,6 +253,16 @@ class Episode(models.Model):
 
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
+
+    def headstart_applied(self, team):
+        """The headstart that the team has acquired that will be applied to this episode"""
+        seconds = sum([e.headstart_granted(team).total_seconds() for e in self.headstart_from.all()])
+        return timedelta(seconds=seconds)
+
+    def headstart_granted(self, team):
+        """The headstart that the team has acquired by completing puzzles in this episode"""
+        seconds = sum([p.headstart_granted.total_seconds() for p in self.puzzles.all() if p.answered_by(team)])
+        return timedelta(seconds=seconds)
 
     def _puzzle_unlocked_by(self, puzzle, team):
         started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())

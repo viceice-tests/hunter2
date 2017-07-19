@@ -101,6 +101,15 @@ class EpisodeBehaviourTest(TestCase):
         for puzzle in self.parallel_episode.puzzles.all():
             self.assertTrue(puzzle.unlocked_by(self.team), msg=puzzle)
 
+    def test_headstarts(self):
+        self.assertEqual(self.linear_episode.headstart_granted(self.team),
+                         self.parallel_episode.headstart_applied(self.team))
+        self.assertEqual(self.linear_episode.headstart_granted(self.team), datetime.timedelta(minutes=10))
+        Guess(for_puzzle=self.linear_episode.get_puzzle(2), by=self.user, guess="correct").save()
+        self.assertEqual(self.linear_episode.headstart_granted(self.team),
+                         self.parallel_episode.headstart_applied(self.team))
+        self.assertEqual(self.linear_episode.headstart_granted(self.team), datetime.timedelta(minutes=15))
+
 
 class ClueDisplayTests(TestCase):
     fixtures = ['hunts_test']
