@@ -12,4 +12,4 @@ class IFrameRuntime():
         return f'<iframe src="{url}"></iframe>'
 
     def validate_guess(self, validator, guess, team_puzzle_data, team_data):
-        return False
+        raise NotImplementedError("IFrameRuntime can not be used for guess validation")
