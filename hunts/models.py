@@ -252,7 +252,7 @@ class Episode(models.Model):
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
 
-    def finished(self):
+    def finished_positions(self):
         """Get a list of teams who have finished this episode in order of finishing."""
         if not self.puzzles:
             return []
