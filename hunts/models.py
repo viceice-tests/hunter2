@@ -291,7 +291,7 @@ class Episode(models.Model):
 
             for p in self.puzzles.all():
                 team_guesses = p.best_guesses(self.event)
-                for team in last_team_guesses:
+                for team in list(last_team_guesses.keys()):
                     if team not in team_guesses:
                         del last_team_guesses[team]
                         continue
