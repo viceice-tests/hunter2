@@ -4,6 +4,7 @@ from django.utils import timezone
 from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
+from datetime import timedelta
 
 import events
 import teams
@@ -20,11 +21,17 @@ class Puzzle(models.Model):
     )
     cb_content = models.TextField(blank=True, default='')
     start_date = models.DateTimeField(blank=True, default=timezone.now)
+    headstart_granted = models.DurationField(
+        default=timedelta(),
+        help_text='How much headstart this puzzle gives to later episodes which gain headstart from this episode'
+    )
 
     def __str__(self):
         return f'<Puzzle: {self.title}>'
 
     def unlocked_by(self, team):
+        # Is this puzzle playable?
+        # TODO: Make it not depend on a team. So single player puzzles work.
         episode = self.episode_set.get(event=team.at_event)
         return episode.unlocked_by(team) and \
             episode._puzzle_unlocked_by(self, team)
@@ -34,13 +41,14 @@ class Puzzle(models.Model):
         if data is None:
             data = PuzzleData(self, team)
         guesses = Guess.objects.filter(
-            by__in=team.users.all()
+            by__in=team.members.all()
         ).filter(
             for_puzzle=self
         ).order_by(
             '-given'
         )
 
+        # TODO: Should return bool
         return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
 
     def best_guesses(self, event):
@@ -95,7 +103,7 @@ class Hint(Clue):
 class Unlock(Clue):
     def unlocked_by(self, team, data):
         guesses = Guess.objects.filter(
-            by__in=team.users.all()
+            by__in=team.members.all()
         ).filter(
             for_puzzle=self.puzzle
         )
@@ -232,6 +240,10 @@ class Episode(models.Model):
     start_date = models.DateTimeField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     parallel = models.BooleanField(default=False)
+    headstart_from = models.ManyToManyField(
+        "self", blank=True,
+        help_text='Episodes which should grant a headstart for this episode'
+    )
 
     class Meta:
         unique_together = (('event', 'start_date'),)
@@ -242,6 +254,20 @@ class Episode(models.Model):
     def get_puzzle(self, puzzle_number):
         n = int(puzzle_number)
         return self.puzzles.all()[n - 1:n].get()
+
+    def started(self, team=None):
+        date = self.start_date
+        if team:
+            date -= self.headstart_applied(team)
+
+        return date < timezone.now()
+
+    def get_relative_id(self):
+        episodes = self.event.episode_set.order_by('start_date')
+        for index, e in enumerate(episodes):
+            if e == self:
+                return index + 1
+        return -1
 
     def unlocked_by(self, team):
         prequels = Episode.objects.filter(
@@ -279,6 +305,16 @@ class Episode(models.Model):
         else:
             last_puzzle = self.puzzles.last()
             return last_puzzle.finished_teams(self.event)
+
+    def headstart_applied(self, team):
+        """The headstart that the team has acquired that will be applied to this episode"""
+        seconds = sum([e.headstart_granted(team).total_seconds() for e in self.headstart_from.all()])
+        return timedelta(seconds=seconds)
+
+    def headstart_granted(self, team):
+        """The headstart that the team has acquired by completing puzzles in this episode"""
+        seconds = sum([p.headstart_granted.total_seconds() for p in self.puzzles.all() if p.answered_by(team)])
+        return timedelta(seconds=seconds)
 
     def _puzzle_unlocked_by(self, puzzle, team):
         started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())

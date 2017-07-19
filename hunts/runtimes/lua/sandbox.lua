@@ -1,6 +1,12 @@
 -- vim: set fileencoding=utf-8 :
 local sandbox = {}
 
+-- Allowed sandbox modules
+sandbox.allowed_modules = {
+  "cjson",
+  "imlib2",
+}
+
 -- Sandbox library functions
 sandbox.lib = {}
 
@@ -23,7 +29,12 @@ end
 
 -- Restrict to allowed modules
 function sandbox.lib.require(modname)
-  -- TODO: Implement to allow loading of allowed modules
+  for _, module in ipairs(sandbox.allowed_modules) do
+    if module == modname then
+      return require(modname)
+    end
+  end
+  error("Requested module '"..modname.."' which is not whitelisted ERROR_SANDBOX_VIOLATION")
 end
 
 -- Main library functions import

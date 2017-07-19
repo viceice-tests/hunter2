@@ -1,0 +1,18 @@
+{% extends "events/base.html" %}
+
+{% block page_header %}
+<h1>{{event_title}}</h1>
+{% endblock %}
+
+{% block content %}
+{% if episodes|length > 0 %}
+<ul>
+{% for episode in episodes %}
+<li><a href='{% url 'episode' event_id episode.get_relative_id %}'>{{episode.name}}</a></li>
+{% endfor %}
+</ul>
+{% else %}
+<p>No episodes are available.<p> 
+{% endif %}
+
+{% endblock %}

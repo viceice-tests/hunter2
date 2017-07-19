@@ -1,6 +1,5 @@
 from django.contrib import admin
 from . import models
-from .forms import UserProfileForm
 
 
 class TeamAdmin(admin.ModelAdmin):
@@ -8,7 +7,7 @@ class TeamAdmin(admin.ModelAdmin):
 
 
 class UserProfileAdmin(admin.ModelAdmin):
-    form = UserProfileForm
+    pass
 
 
 admin.site.register(models.Team, TeamAdmin)

@@ -1,10 +1,13 @@
-{% extends "events/event.html" %}
+{% extends "events/base.html" %}
 
-{% block content %}
+{% block page_header %}
 <h1>{{ episode }}</h1>
 {% if position %}
 <p>You came {{ position }} in this episode!</p>
 {% endif %}
+{% endblock %}
+
+{% block content %}
 <ol>
 {% for puzzle in puzzles %}
 	<li>

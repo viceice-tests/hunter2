@@ -1,0 +1,8 @@
+version: '2.1'
+
+services:
+  flake8:
+    command: --verbose
+    image: registry.gitlab.com/rconan/docker-flake8:0.0.3
+    volumes:
+      - ${PWD:-.}:/code
