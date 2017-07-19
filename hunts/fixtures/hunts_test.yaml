@@ -70,6 +70,14 @@
   pk: 1
   fields: {title: Test Puzzle, runtime: S, content: Test Content, cb_runtime: S,
     cb_content: ''}
+- model: hunts.puzzle
+  pk: 5
+  fields: {title: Test Puzzle 2, runtime: S, content: Test Content, cb_runtime: S,
+    cb_content: ''}
+- model: hunts.puzzle
+  pk: 6
+  fields: {title: Test Puzzle 3, runtime: S, content: Test Content, cb_runtime: S,
+    cb_content: ''}
 - model: hunts.hint
   pk: 1
   fields: {puzzle: 1, text: Test Hint, time: '00:10:00'}
@@ -88,6 +96,12 @@
 - model: hunts.answer
   pk: 3
   fields: {for_puzzle: 1, runtime: L, answer: return guess == "correct"}
+- model: hunts.answer
+  pk: 7
+  fields: {for_puzzle: 5, runtime: S, answer: correct}
+- model: hunts.answer
+  pk: 8
+  fields: {for_puzzle: 6, runtime: S, answer: correctish}
 - model: hunts.guess
   pk: 1
   fields: {for_puzzle: 1, by: 1, guess: correct, given: '1970-01-01T00:00:00Z'}
@@ -106,7 +120,7 @@
     name: Test Episode
     start_date: '1970-01-01T00:00:00Z'
     event: 1
-    puzzles: [1]
+    puzzles: [1, 5, 6]
 - model: hunts.puzzle
   pk: 2
   fields: {title: "1 + 1", runtime: S, content: "What is 1 + 1?", cb_runtime: S,
@@ -152,4 +166,5 @@
     name: Non-Linear Episode
     start_date: '1970-01-02T00:00:00Z'
     event: 1
+    parallel: true
     puzzles: [2,3,4]

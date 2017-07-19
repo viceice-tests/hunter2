@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from teams.models import Team, UserProfile
-from .models import Answer, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock
+from .models import Answer, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, Episode
 from .runtimes.registry import RuntimesRegistry as rr
 
 
@@ -64,6 +64,42 @@ class PuzzleStartTimeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         second_time = TeamPuzzleData.objects.get().start_time
         self.assertEqual(first_time, second_time)
+
+
+class EpisodeBehaviourTest(TestCase):
+    fixtures = ['hunts_test']
+
+    def setUp(self):
+        self.linear_episode = Episode.objects.get(pk=1)
+        self.parallel_episode = Episode.objects.get(pk=2)
+        self.team = Team.objects.get(pk=1)
+        self.user = self.team.members.get(pk=1)
+
+    def test_episode_behaviour(self):
+        self.linear_episodes_are_linear()
+        self.can_see_all_parallel_puzzles()
+
+    def linear_episodes_are_linear(self):
+        self.assertTrue(self.linear_episode.unlocked_by(self.team))
+        self.assertFalse(self.linear_episode.parallel)
+        self.assertTrue(self.linear_episode.get_puzzle(1).unlocked_by(self.team))
+        self.assertTrue(self.linear_episode.get_puzzle(2).unlocked_by(self.team))
+        self.assertFalse(self.linear_episode.get_puzzle(3).unlocked_by(self.team))
+        self.assertFalse(self.linear_episode.get_puzzle(2).answered_by(self.team))
+
+        Guess(for_puzzle=self.linear_episode.get_puzzle(2), by=self.user, guess="correct").save()
+        self.assertTrue(self.linear_episode.get_puzzle(2).answered_by(self.team))
+        self.assertTrue(self.linear_episode.get_puzzle(3).unlocked_by(self.team))
+        self.assertFalse(self.linear_episode.get_puzzle(3).answered_by(self.team))
+
+        Guess(for_puzzle=self.linear_episode.get_puzzle(3), by=self.user, guess="correctish").save()
+        self.assertTrue(self.linear_episode.get_puzzle(3).answered_by(self.team))
+
+    def can_see_all_parallel_puzzles(self):
+        self.assertTrue(self.parallel_episode.unlocked_by(self.team))
+        self.assertTrue(self.parallel_episode.parallel)
+        for puzzle in self.parallel_episode.puzzles.all():
+            self.assertTrue(puzzle.unlocked_by(self.team), msg=puzzle)
 
 
 class ClueDisplayTests(TestCase):
