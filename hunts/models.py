@@ -212,8 +212,10 @@ class Episode(models.Model):
     start_date = models.DateTimeField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     parallel = models.BooleanField(default=False)
-    headstart_from = models.ManyToManyField("self", blank=True,
-        help_text='Episodes which should grant a headstart for this episode')
+    headstart_from = models.ManyToManyField(
+        "self", blank=True,
+        help_text='Episodes which should grant a headstart for this episode'
+    )
 
     class Meta:
         unique_together = (('event', 'start_date'),)
