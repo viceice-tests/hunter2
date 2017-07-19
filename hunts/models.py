@@ -281,7 +281,7 @@ class Episode(models.Model):
 
     def finished_positions(self):
         """Get a list of teams who have finished this episode in order of finishing."""
-        if not self.puzzles:
+        if not self.puzzles.all():
             return []
 
         if self.parallel:
@@ -303,7 +303,7 @@ class Episode(models.Model):
             return sorted(last_team_guesses.keys(), key=lambda t: last_team_guesses[t].given)
 
         else:
-            last_puzzle = self.puzzles.last()
+            last_puzzle = self.puzzles.all().last()
             return last_puzzle.finished_teams(self.event)
 
     def headstart_applied(self, team):
