@@ -1,7 +1,6 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
-from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
 
@@ -204,7 +203,7 @@ class Episode(models.Model):
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (('event', 'start_date'),)

@@ -11,10 +11,12 @@ from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
 
+import events
+
 
 class Index(View):
     def get(self, request):
-        event = models.Event.objects.filter(current=True).get()
+        event = events.models.Event.objects.filter(current=True).get()
 
         return TemplateResponse(
             request,
@@ -66,7 +68,7 @@ class Episode(View):
 @method_decorator(login_required, name='dispatch')
 class EventDirect(View):
     def get(self, request):
-        event = models.Event.objects.filter(current=True).get()
+        event = events.models.Event.objects.filter(current=True).get()
 
         return redirect(
             'event',
