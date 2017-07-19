@@ -1,9 +1,14 @@
 # vim: set fileencoding=utf-8 :
 import os
+import sys
 
-import lupa
+from .. import AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
 
-from .. import AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError
+# TODO: Replace this with proper DLFCN support in the docker python version
+orig_dlflags = sys.getdlopenflags()
+sys.setdlopenflags(258)
+import lupa  # noqa: E402
+sys.setdlopenflags(orig_dlflags)
 
 
 class LuaRuntime(AbstractRuntime):
@@ -12,6 +17,7 @@ class LuaRuntime(AbstractRuntime):
 
     ERROR_INSTRUCTION_LIMIT_EXCEEDED = "ERROR_INSTRUCTION_LIMIT_EXCEEDED"
     ERROR_MEMORY_LIMIT_EXCEEDED      = "ERROR_MEMORY_LIMIT_EXCEEDED"
+    ERROR_SANDBOX_VIOLATION          = "ERROR_SANDBOX_VIOLATION"
 
     def __init__(self):
         pass
@@ -51,7 +57,16 @@ class LuaRuntime(AbstractRuntime):
 
         # Ensure the local is consistent and ignore system Lua paths
         lua.execute("assert(os.setlocale('C'))")
-        lua.globals().package.path = os.path.join(os.path.dirname(__file__), "?.lua")
+        lua.globals().package.path  = ';'.join([
+            os.path.join(os.path.dirname(__file__), "?.lua"),
+            "/opt/hunter2/share/lua/5.2/?.lua",
+        ])
+
+        # TODO: Support cross platform libraries
+        lua.globals().package.cpath = ';'.join([
+            "/opt/hunter2/lib/lua/5.2/?.so",
+        ])
+
         return lua
 
     def _sandbox_run(
@@ -100,6 +115,8 @@ class LuaRuntime(AbstractRuntime):
                         raise RuntimeExecutionTimeExceededError()
                     elif str(error).endswith(self.ERROR_MEMORY_LIMIT_EXCEEDED):
                         raise RuntimeMemoryExceededError()
+                    elif str(error).endswith(self.ERROR_SANDBOX_VIOLATION):
+                        raise RuntimeSandboxViolationError(str(error).replace(" " + self.ERROR_SANDBOX_VIOLATION, ""))
                     else:
                         raise RuntimeExecutionError(error)
             else:

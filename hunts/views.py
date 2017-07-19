@@ -6,10 +6,19 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from string import Template
-from .models import Guess, PuzzleData
+from . import models
 from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
+
+
+class Index(View):
+    def get(self, request):
+
+        return TemplateResponse(
+            request,
+            'hunts/index.html',
+        )
 
 
 @method_decorator(login_required, name='dispatch')
@@ -35,7 +44,11 @@ class Episode(View):
                 request, 'hunts/episodelocked.html', status=403
             )
 
-        puzzles = list(episode.puzzles.all())
+        all_puzzles = episode.puzzles.all()
+        puzzles = []
+        for p in all_puzzles:
+            if p.unlocked_by(request.team):
+                puzzles.append(p)
 
         return TemplateResponse(
             request,
@@ -46,6 +59,38 @@ class Episode(View):
                 'episode_number': episode_number,
                 'event_id': request.event.pk,
                 'puzzles': puzzles,
+            }
+        )
+
+
+@method_decorator(login_required, name='dispatch')
+class EventDirect(View):
+    def get(self, request):
+        event = models.Event.objects.filter(current=True).get()
+
+        return redirect(
+            'event',
+            event_id=event.id,
+        )
+
+
+@method_decorator(login_required, name='dispatch')
+class EventIndex(View):
+    def get(self, request):
+
+        event = request.event
+
+        episodes = models.Episode.objects \
+                                 .filter(event=event.id) \
+                                 .filter(start_date__lte=timezone.now()) \
+
+        return TemplateResponse(
+            request,
+            'events/index.html',
+            context={
+                'event_title':  event.name,
+                'event_id':     event.id,
+                'episodes':     list(episodes),
             }
         )
 
@@ -75,14 +120,22 @@ class Puzzle(View):
                 request, 'hunts/puzzlelocked.html', status=403
             )
 
-        data = PuzzleData(puzzle, request.team, request.user.profile)
+        data = models.PuzzleData(puzzle, request.team, request.user.profile)
 
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
 
         answered = puzzle.answered_by(request.team, data)
-        hints = [h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)]
-        unlocks = [{'guesses': u.unlocked_by(request.team, data), 'text': u.text} for u in puzzle.unlock_set.all()]
+        hints = [
+            h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
+        ]
+        unlocks = [
+            {
+                'guesses': u.unlocked_by(request.team, data),
+                'text': u.text
+            }
+            for u in puzzle.unlock_set.all()
+        ]
         unlocks = [u for u in unlocks if len(u['guesses'])]
 
         files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
@@ -122,7 +175,7 @@ class Answer(View):
         )
 
         given_answer = request.POST['answer']
-        guess = Guess(
+        guess = models.Guess(
             guess=given_answer,
             for_puzzle=puzzle,
             by=request.user.profile
@@ -156,7 +209,7 @@ class Callback(View):
             request.event, episode_number, puzzle_number
         )
 
-        data = PuzzleData(puzzle, request.team, request.user)
+        data = models.PuzzleData(puzzle, request.team, request.user)
 
         response = HttpResponse(
             rr.evaluate(

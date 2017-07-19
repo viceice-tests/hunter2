@@ -1,28 +1,50 @@
-FROM python:3.6-alpine
+FROM python:3.6.1
 
-RUN apk add --no-cache \
-    lua5.2 \
+ARG DEBIAN_FRONTEND=noninteractive
+ARG LUAROCKS_VERSION=2.4.2
+ARG LUAROCKS_INSTALL=luarocks-$LUAROCKS_VERSION
+ARG LUAROCKS_TMP_LOC=/tmp/luarocks
+
+RUN apt-get update \
+ && apt-get -y install \
+    liblua5.2-0 \
     postgresql-client \
-    postgresql-libs
+    libimlib2 \
+    libjson-c2 \
+ && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt /usr/src/app/
+COPY requirements/frozen.txt /usr/src/app/requirements.txt
+COPY hunts/runtimes/lua/luarocks/config.lua /opt/hunter2/luarocks/config-5.2.lua
 WORKDIR /usr
 
-RUN apk add --no-cache -t builddeps \
-    gcc \
-    git \
-    linux-headers \
-    lua5.2-dev \
-    musl-dev \
-    postgresql-dev \
- && pip install -r /usr/src/app/requirements.txt \
- && apk del --no-cache builddeps
+ARG build_deps="gcc lua5.2 lua5.2-dev unzip libimlib2-dev libjson-c-dev"
+RUN apt-get update \
+ && apt-get -y install ${build_deps} \
+ && pip install -r /usr/src/app/requirements.txt --no-deps \
+ && curl -OL https://luarocks.org/releases/${LUAROCKS_INSTALL}.tar.gz \
+ && tar xzf $LUAROCKS_INSTALL.tar.gz \
+ && mv $LUAROCKS_INSTALL $LUAROCKS_TMP_LOC \
+ && rm $LUAROCKS_INSTALL.tar.gz \
+ && cd ${LUAROCKS_TMP_LOC} \
+ && ./configure \
+    --lua-suffix=5.2 \
+    --lua-version=5.2 \
+    --sysconfdir=/opt/hunter2/luarocks \
+    --rocks-tree=/opt/hunter2 \
+    --force-config \
+ && make install \
+ && cd - \
+ && luarocks install lua-imlib2 \
+ && luarocks install lua-cjson \
+ && apt-get -y purge ${build_deps} \
+ && apt-get -y --purge autoremove \
+ && rm -rf /var/lib/apt/lists/* ${LUAROCKS_TMP_LOC}
 
 WORKDIR /usr/src/app
 COPY . .
 
-RUN addgroup -g 500 -S django \
- && adduser -s /sbin/nologin -G django -S -D -H -u 500 django \
+RUN addgroup --gid 500 --system django \
+ && adduser --system --shell /sbin/nologin --gid 500 --system --uid 500 django \
  && install -d -g django -o django /config /static /uploads/events /uploads/puzzles
 USER django
 

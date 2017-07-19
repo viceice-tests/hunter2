@@ -17,6 +17,11 @@ class RuntimeExecutionTimeExceededError(Exception):
         self.message = message
 
 
+class RuntimeSandboxViolationError(Exception):
+    def __init__(self, message="Runtime sandbox violation"):
+        self.message = message
+
+
 class AbstractRuntime(metaclass=ABCMeta):
     @abstractmethod
     def evaluate(self, script, team_puzzle_data, user_puzzle_data, team_data, user_data):

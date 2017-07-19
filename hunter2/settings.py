@@ -29,8 +29,6 @@ vars().update(EMAIL_CONFIG)
 BASE_DIR = root()
 
 # Application definition
-TEST_RUNNER = 'hunter2.tests.TestRunner'
-
 ACCOUNT_ACTIVATION_DAYS = 7
 
 ACCOUNT_EMAIL_REQUIRED = True
@@ -43,9 +41,13 @@ AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
 )
 
+DATABASES['default']['ATOMIC_REQUESTS'] = True
+
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
 INSTALLED_APPS = (
+    'dal',
+    'dal_select2',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -131,6 +133,17 @@ STATICFILES_DIRS = (
     'hunter2/static',
 )
 
+SECURE_BROWSER_XSS_FILTER = True
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+SITE_ID = 1
+
+SUBDOMAIN_URLCONFS = {
+    'admin': 'hunter2.urls.admin',
+    'www': 'hunter2.urls.www',
+}
+
 TEMPLATES = [
     {
         'APP_DIRS': True,
@@ -151,16 +164,7 @@ TEMPLATES = [
     },
 ]
 
-SECURE_BROWSER_XSS_FILTER = True
-
-SECURE_CONTENT_TYPE_NOSNIFF = True
-
-SITE_ID = 1
-
-SUBDOMAIN_URLCONFS = {
-    'admin': 'hunter2.urls.admin',
-    'www': 'hunter2.urls.www',
-}
+TEST_RUNNER = 'hunter2.tests.TestRunner'
 
 USE_I18N = True
 

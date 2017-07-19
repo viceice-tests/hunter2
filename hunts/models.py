@@ -30,6 +30,8 @@ class Puzzle(models.Model):
         return f'<Puzzle: {self.title}>'
 
     def unlocked_by(self, team):
+        # Is this puzzle playable?
+        # TODO: Make it not depend on a team. So single player puzzles work.
         episode = self.episode_set.get(event=team.at_event)
         return episode.unlocked_by(team) and \
             episode._puzzle_unlocked_by(self, team)
@@ -38,13 +40,14 @@ class Puzzle(models.Model):
         if data is None:
             data = PuzzleData(self, team)
         guesses = Guess.objects.filter(
-            by__in=team.users.all()
+            by__in=team.members.all()
         ).filter(
             for_puzzle=self
         ).order_by(
             '-given'
         )
 
+        # TODO: Should return bool
         return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
 
 
@@ -75,7 +78,7 @@ class Hint(Clue):
 class Unlock(Clue):
     def unlocked_by(self, team, data):
         guesses = Guess.objects.filter(
-            by__in=team.users.all()
+            by__in=team.members.all()
         ).filter(
             for_puzzle=self.puzzle
         )
@@ -233,6 +236,13 @@ class Episode(models.Model):
             date -= self.headstart_applied(team)
 
         return date < timezone.now()
+
+    def get_relative_id(self):
+        episodes = self.event.episode_set.order_by('start_date')
+        for index, e in enumerate(episodes):
+            if e == self:
+                return index + 1
+        return -1
 
     def unlocked_by(self, team):
         prequels = Episode.objects.filter(
