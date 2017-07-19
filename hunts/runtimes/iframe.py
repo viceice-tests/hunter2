@@ -1,5 +1,5 @@
 # vim: set fileencoding=utf-8 :
-from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 
 class IFrameRuntime():
