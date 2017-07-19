@@ -1,14 +1,14 @@
 # vim: set fileencoding=utf-8 :
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 
 class IFrameRuntime():
     def evaluate(self, url, team_puzzle_data, user_puzzle_data, team_data, user_data):
-        parsed_url = urlparse(url)
-        query_params = parse_qs(parsed_url.query)
+        url_parts = urlparse(url)
+        query_params = parse_qs(url_parts.query)
         query_params['token'] = user_puzzle_data.token
-        parsed_url.query = query_params
-        url = urlencode(parsed_url, doseq=True)
+        url_parts = url_parts._replace(query=urlencode(query_params, doseq=True))
+        url = url_parts.geturl()
         return f'<iframe src="{url}"></iframe>'
 
     def validate_guess(self, validator, guess, team_puzzle_data, team_data):
