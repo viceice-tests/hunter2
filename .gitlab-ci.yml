@@ -19,7 +19,6 @@ before_script:
 
 flake8:
   stage: check
-  services: []
   script:
     - docker-compose -f docker-compose.check.yml run --rm flake8
 
