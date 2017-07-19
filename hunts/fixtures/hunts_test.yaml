@@ -118,7 +118,7 @@
   pk: 2
   fields: {unlock: 2, guess: 3}
 - model: hunts.answer
-  pk: 2
+  pk: 4
   fields: {for_puzzle: 2, runtime: S, answer: 2}
 - model: hunts.puzzle
   pk: 3
@@ -131,7 +131,7 @@
   pk: 3
   fields: {unlock: 3, guess: 4}
 - model: hunts.answer
-  pk: 3
+  pk: 5
   fields: {for_puzzle: 3, runtime: S, answer: 4}
 - model: hunts.puzzle
   pk: 4
@@ -144,7 +144,7 @@
   pk: 4
   fields: {unlock: 4, guess: 5}
 - model: hunts.answer
-  pk: 4
+  pk: 6
   fields: {for_puzzle: 4, runtime: S, answer: 6}
 - model: hunts.episode
   pk: 2

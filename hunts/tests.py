@@ -13,12 +13,12 @@ class AnswerValidationTests(TestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):
-        self.puzzle = Puzzle.objects.get()
+        self.puzzle = Puzzle.objects.get(pk=1)
         self.team = Team.objects.get(pk=1)
         self.data = PuzzleData(self.puzzle, self.team)
 
     def test_static_answers(self):
-        answer = Answer.objects.get(runtime=rr.STATIC)
+        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.STATIC)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
         self.assertTrue(answer.validate_guess(guess, self.data))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
@@ -29,7 +29,7 @@ class AnswerValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess, self.data))
 
     def test_regex_answers(self):
-        answer = Answer.objects.get(runtime=rr.REGEX)
+        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.REGEX)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
         self.assertTrue(answer.validate_guess(guess, self.data))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
@@ -40,7 +40,7 @@ class AnswerValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess, self.data))
 
     def test_lua_answers(self):
-        answer = Answer.objects.get(runtime=rr.LUA)
+        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.LUA)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
         self.assertTrue(answer.validate_guess(guess, self.data))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
@@ -71,7 +71,7 @@ class ClueDisplayTests(TestCase):
 
     def setUp(self):
         user = UserProfile.objects.get(pk=1)
-        self.puzzle = Puzzle.objects.get()
+        self.puzzle = Puzzle.objects.get(pk=1)
         self.team = Team.objects.get(pk=1)
         self.data = PuzzleData(self.puzzle, self.team, user)
 
@@ -84,7 +84,7 @@ class ClueDisplayTests(TestCase):
         self.assertTrue(hint.unlocked_by(self.team, self.data))
 
     def test_unlock_display(self):
-        unlock = Unlock.objects.get()
+        unlock = Unlock.objects.get(pk=1)
         self.assertTrue(unlock.unlocked_by(self.team, self.data))
         fail_team = Team.objects.get(pk=2)
         fail_user = UserProfile.objects.get(pk=2)
