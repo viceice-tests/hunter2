@@ -37,12 +37,24 @@ class Episode(View):
 
         puzzles = list(episode.puzzles.all())
 
+        positions = episode.finished_positions()
+        if request.team in positions:
+            position = positions.index(request.team)
+            if position < 3:
+                position = {0: 'first', 1: 'second', 2: 'third'}[position]
+            else:
+                position += 1
+                position = f'in position {position}'
+        else:
+            position = None
+
         return TemplateResponse(
             request,
             'hunts/episode.html',
             context={
                 'admin': admin,
                 'episode': episode.name,
+                'position': position,
                 'episode_number': episode_number,
                 'event_id': request.event.pk,
                 'puzzles': puzzles,
