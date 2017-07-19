@@ -6,6 +6,7 @@ from .runtimes.registry import RuntimesRegistry as rr
 
 import events
 import teams
+import uuid
 
 
 class Puzzle(models.Model):
@@ -164,6 +165,7 @@ class TeamPuzzleData(models.Model):
 class UserPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, editable=False)
     data = JSONField(default={})
 
     class Meta:
