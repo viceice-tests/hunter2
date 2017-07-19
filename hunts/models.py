@@ -44,6 +44,7 @@ class Puzzle(models.Model):
         return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
 
     def best_guesses(self, event):
+        """Returns a dictionary of teams to guesses, where the guess is that team's earliest valid guess for this puzzle"""
         all_teams = teams.models.Team.objects.filter(at_event=event)
         team_guesses = {}
         for t in all_teams:
