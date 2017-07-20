@@ -45,7 +45,7 @@ class Puzzle(models.Model):
         ).filter(
             for_puzzle=self
         ).order_by(
-            '-given'
+            'given'
         )
 
         # TODO: Should return bool

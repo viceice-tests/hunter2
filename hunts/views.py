@@ -137,7 +137,7 @@ class Puzzle(View):
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
 
-        answered = puzzle.answered_by(request.team, data)
+        answered = puzzle.answered_by(request.team, data).reverse()
         hints = [
             h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
         ]
