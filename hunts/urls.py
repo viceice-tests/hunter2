@@ -42,4 +42,5 @@ urlpatterns = [
         name='help'
     ),
     url(r'^event/', include(eventpatterns)),
+    url(r'^puzzle_info$', views.PuzzleInfo.as_view(), name='puzzle_info'),
 ]

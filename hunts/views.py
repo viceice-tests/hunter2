@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from django.shortcuts import redirect
+from django.core.exceptions import ValidationError
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -227,3 +228,32 @@ class Callback(View):
         data.save()
 
         return response
+
+class PuzzleInfo(View):
+    """View for translating a UUID "token" into information about a user's puzzle attempt"""
+    def get(self, request):
+        token = request.GET.get('token')
+        if token is None:
+            return JsonResponse({
+                'result': 'Bad Request',
+                'message': 'Must provide token',
+            }, status=400)
+        try:
+            up_data = models.UserPuzzleData.objects.get(token=token)
+        except ValidationError:
+            return JsonResponse({
+                'result': 'Bad Request',
+                'message': 'Token must be a UUID',
+            }, status=400)
+        except models.UserPuzzleData.DoesNotExist:
+            return JsonResponse({
+                'result': 'Not Found',
+                'message': 'No such token',
+            }, status=404)
+        user = up_data.user
+        team = up_data.team()
+        return JsonResponse({
+            'result': 'Success',
+            'team_id': team.pk,
+            'user_id': user.pk,
+        })

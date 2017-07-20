@@ -172,7 +172,12 @@ class UserPuzzleData(models.Model):
         verbose_name_plural = 'User puzzle data'
 
     def __str__(self):
-        return f'<UserPuzzleData: {self.user.name} - {self.puzzle.title}>'
+        return f'<UserPuzzleData: {self.user.user.username} - {self.puzzle.title}>'
+
+    def team(self):
+        """Helper method to fetch the team associated with this user and puzzle"""
+        event = self.puzzle.episode_set.get().event
+        return self.user.team_at(event)
 
 
 # Convenience class for using all the above data objects together
