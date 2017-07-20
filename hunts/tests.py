@@ -235,4 +235,3 @@ class ProgressionTests(TestCase):
 
         # Ensure that the first correct guess is correctly returned
         self.assertEqual(puzzle1.first_correct_guesses(self.event)[self.team1], first_correct_guess)
-
