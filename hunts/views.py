@@ -229,6 +229,7 @@ class Callback(View):
 
         return response
 
+
 class PuzzleInfo(View):
     """View for translating a UUID "token" into information about a user's puzzle attempt"""
     def get(self, request):
