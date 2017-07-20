@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -59,6 +60,42 @@ class Episode(View):
                 'episode_number': episode_number,
                 'event_id': request.event.pk,
                 'puzzles': puzzles,
+            }
+        )
+
+
+@method_decorator(login_required, name='dispatch')
+class Guesses(View):
+    def get(self, request, episode_number):
+        episode = utils.event_episode(request.event, episode_number)
+        admin = rules.is_admin_for_episode(request.user, episode)
+
+        if not admin:
+            return HttpResponse(status=403)
+
+        puzzles = episode.puzzles.all()
+        all_guesses = models.Guess.objects.filter(
+            for_puzzle__in=puzzles
+        ).order_by(
+            '-given'
+        )
+
+        guess_pages = Paginator(all_guesses, 50)
+        page = request.GET.get('page')
+        try:
+            guesses = guess_pages.page(page)
+        except PageNotAnInteger:
+            guesses = guess_pages.page(1)
+        except EmptyPage:
+            guesses = guess_pages.page(guess_pages.num_pages)
+
+        return TemplateResponse(
+            request,
+            'hunts/guesses.html',
+            context={
+                'episode': episode,
+                'event_id': request.event.pk,
+                'guesses': guesses,
             }
         )
 

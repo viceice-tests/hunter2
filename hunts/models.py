@@ -1,6 +1,7 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
+from django.utils.html import format_html
 from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
@@ -133,6 +134,20 @@ class Guess(models.Model):
 
     def __str__(self):
         return f'<Guess: {self.guess} by {self.by}>'
+
+    def as_tr(self):
+        event = self.for_puzzle.episode_set.get().event
+        team_name = teams.models.Team.objects.filter(at_event=event, members=self.by).get().name
+        return format_html("""<tr class="guess-viewer-guess">
+    <td><a href="{}">{}</a></td>
+    <td>{} ({})</td>
+    <td>{}</td>
+</tr>""",
+                           '',
+                           self.for_puzzle.title,
+                           self.by.user.username,
+                           team_name,
+                           self.guess)
 
 
 class TeamData(models.Model):
