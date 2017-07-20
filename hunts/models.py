@@ -37,6 +37,7 @@ class Puzzle(models.Model):
             episode._puzzle_unlocked_by(self, team)
 
     def answered_by(self, team, data=None):
+        """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
         if data is None:
             data = PuzzleData(self, team)
         guesses = Guess.objects.filter(
@@ -44,11 +45,35 @@ class Puzzle(models.Model):
         ).filter(
             for_puzzle=self
         ).order_by(
-            '-given'
+            'given'
         )
 
         # TODO: Should return bool
         return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
+
+    def first_correct_guesses(self, event):
+        """Returns a dictionary of teams to guesses, where the guess is that team's earliest correct, validated guess for this puzzle"""
+        all_teams = teams.models.Team.objects.filter(at_event=event)
+        team_guesses = {}
+        for t in all_teams:
+            correct_answers = self.answered_by(t)
+            if correct_answers:
+                team_guesses[t] = correct_answers[0]
+
+        return team_guesses
+
+    def finished_teams(self, event):
+        """Return a list of teams who have completed this puzzle at the given event in order of completion."""
+        team_guesses = self.first_correct_guesses(event)
+
+        return sorted(team_guesses.keys(), key=lambda t: team_guesses[t].given)
+
+    def position(self, team):
+        """Returns the position in which the given team finished this puzzle: 0 = first, None = not yet finished."""
+        try:
+            return self.finished_teams(team.at_event).index(team)
+        except ValueError:
+            return None
 
 
 class PuzzleFile(models.Model):
@@ -253,6 +278,33 @@ class Episode(models.Model):
 
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
+
+    def finished_positions(self):
+        """Get a list of teams who have finished this episode in order of finishing."""
+        if not self.puzzles.all():
+            return []
+
+        if self.parallel:
+            # The position is determined by when the latest of a team's first successful guesses came in, over
+            # all puzzles in the episode. Teams which haven't answered all questions are discarded.
+            last_team_guesses = {team: None for team in teams.models.Team.objects.filter(at_event=self.event)}
+
+            for p in self.puzzles.all():
+                team_guesses = p.first_correct_guesses(self.event)
+                for team in list(last_team_guesses.keys()):
+                    if team not in team_guesses:
+                        del last_team_guesses[team]
+                        continue
+                    if not last_team_guesses[team]:
+                        last_team_guesses[team] = team_guesses[team]
+                    elif team_guesses[team].given > last_team_guesses[team].given:
+                        last_team_guesses[team] = team_guesses[team]
+
+            return sorted(last_team_guesses.keys(), key=lambda t: last_team_guesses[t].given)
+
+        else:
+            last_puzzle = self.puzzles.all().last()
+            return last_puzzle.finished_teams(self.event)
 
     def headstart_applied(self, team):
         """The headstart that the team has acquired that will be applied to this episode"""
