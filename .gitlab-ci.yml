@@ -19,12 +19,8 @@ before_script:
 
 flake8:
   stage: check
-  image: python:3.6-alpine
-  services: []
-  before_script:
-    - pip install flake8
   script:
-    - flake8 -v
+    - docker-compose -f docker-compose.check.yml run --rm flake8
 
 build:app:
   stage: build

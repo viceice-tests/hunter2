@@ -1,10 +1,12 @@
-{% extends "events/event.html" %}
+{% extends "events/base.html" %}
+
+{% block page_header %}
+<h1>Home</h1>
+{% endblock %}
 
 {% block content %}
-<p id="page_title">Home</p>
-<div style="text-align:center;"></div>
-{% if current_event %}
-<h1>Current Event: <a href='{% url 'event' current_event.id%}'>{{current_event.name}}</a></h1>
+{% if event %}
+<div class="alert alert-success" role="alert"><h2>Current Event: <a href='{% url 'event' event.id%}'>{{event.name}}</a></h2></div>
 {% endif %}
 <h2>What is the iHunt?</h2>
 The iHunt is an online &amp; offline <a href="http://en.wikipedia.org/wiki/Puzzle_hunt">puzzle hunt</a> at the i-Series. Teams race to find clues hidden around the venue, interact with strange physical devices, solve cool challenges and be crowned iHunt champions; <b>winning four free tickets to the next i-series in the process!</b><br /><br />

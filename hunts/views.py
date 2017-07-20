@@ -17,14 +17,9 @@ import events
 
 class Index(View):
     def get(self, request):
-        event = events.models.Event.objects.filter(current=True).get()
-
         return TemplateResponse(
             request,
             'hunts/index.html',
-            context={
-                'current_event': event
-            }
         )
 
 
@@ -34,14 +29,14 @@ class Episode(View):
         episode = utils.event_episode(request.event, episode_number)
         admin = rules.is_admin_for_episode(request.user, episode)
 
-        # TODO: Head starts
-        if episode.start_date > timezone.now() and not admin:
+        if not episode.started(request.team) and not admin:
             return TemplateResponse(
                 request,
                 'hunts/episodenotstarted.html',
                 context={
                     'episode': episode.name,
-                    'startdate': episode.start_date,
+                    'startdate': episode.start_date - episode.headstart_applied(request.team),
+                    'headstart': episode.headstart_applied(request.team),
                 }
             )
 
@@ -51,7 +46,11 @@ class Episode(View):
                 request, 'hunts/episodelocked.html', status=403
             )
 
-        puzzles = list(episode.puzzles.all())
+        all_puzzles = episode.puzzles.all()
+        puzzles = []
+        for p in all_puzzles:
+            if p.unlocked_by(request.team):
+                puzzles.append(p)
 
         return TemplateResponse(
             request,
