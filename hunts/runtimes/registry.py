@@ -14,7 +14,7 @@ class RuntimesRegistry(object):
     RUNTIME_CHOICES = (
         (IFRAME, 'IFrame Runtime'),
         (LUA,    'Lua Runtime'),
-        (REGEX,  'Regex Run'),
+        (REGEX,  'Regex Runtime'),
         (STATIC, 'Static Runtime'),
     )
 
