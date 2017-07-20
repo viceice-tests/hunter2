@@ -1,0 +1,37 @@
+{% extends "events/base.html" %}
+
+{% block page_header %}
+<h1>Guesses: {{ episode.name }}</h1>
+{% endblock %}
+
+{% block content %}
+<table>
+<tr class="guess-viewer-header">
+	<th>Puzzle</th>
+	<th>User &amp; Team</th>
+	<th>Guess</th>
+	<th>Time given</th>
+	<th>Time on puzzle</th>
+</tr>
+{% for guess in guesses %}
+{{ guess.as_tr }}
+{% endfor %}
+</table>
+
+<div class="pagination">
+	<span class="step-links">
+        {% if guesses.has_previous %}
+            <a href="?page={{ guesses.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ guesses.number }} of {{ guesses.paginator.num_pages }}.
+        </span>
+
+        {% if guesses.has_next %}
+            <a href="?page={{ guesses.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
+{% endblock %}
+

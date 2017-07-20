@@ -137,17 +137,30 @@ class Guess(models.Model):
 
     def as_tr(self):
         event = self.for_puzzle.episode_set.get().event
-        team_name = teams.models.Team.objects.filter(at_event=event, members=self.by).get().name
+        team = teams.models.Team.objects.filter(at_event=event, members=self.by).get()
+        data = TeamPuzzleData.objects.filter(
+            puzzle=self.for_puzzle,
+            team=team
+        ).get()
+        time_active = self.given - data.start_time
+        hours, seconds = divmod(time_active.total_seconds(), 3600)
+        minutes, seconds = divmod(seconds, 60)
+        time_active = '%02d:%02d:%02d' % (hours, minutes, seconds)
+
         return format_html("""<tr class="guess-viewer-guess">
     <td><a href="{}">{}</a></td>
     <td>{} ({})</td>
+    <td>{}</td>
+    <td>{}</td>
     <td>{}</td>
 </tr>""",
                            '',
                            self.for_puzzle.title,
                            self.by.user.username,
-                           team_name,
-                           self.guess)
+                           team.name,
+                           self.guess,
+                           self.given.strftime('%Y-%m-%d %H:%M:%S'),
+                           time_active)
 
 
 class TeamData(models.Model):
