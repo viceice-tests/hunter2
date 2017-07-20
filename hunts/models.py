@@ -210,7 +210,10 @@ class PuzzleData:
 
 
 class Episode(models.Model):
-    prequels = models.ManyToManyField('self', related_name='sequels', help_text='Set of episodes which must be completed before starting this one')
+    prequels = models.ManyToManyField(
+        'self', blank=True,
+        help_text='Set of episodes which must be completed before starting this one', related_name='sequels'
+    )
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
