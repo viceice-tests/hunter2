@@ -210,6 +210,7 @@ class PuzzleData:
 
 
 class Episode(models.Model):
+    prequels = models.ManyToManyField('self', related_name='sequels', help_text='Set of episodes which must be completed before starting this one')
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
@@ -245,11 +246,7 @@ class Episode(models.Model):
         return -1
 
     def unlocked_by(self, team):
-        prequels = Episode.objects.filter(
-            event=self.event,
-            start_date__lt=self.start_date
-        )
-        return all([episode.finished_by(team) for episode in prequels])
+        return all([episode.finished_by(team) for episode in self.prequels.all()])
 
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
