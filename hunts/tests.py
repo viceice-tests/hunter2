@@ -3,6 +3,7 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
+from django.core.urlresolvers import reverse
 
 from teams.models import Team, UserProfile
 from .models import Answer, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, Episode
@@ -135,3 +136,13 @@ class ClueDisplayTests(TestCase):
         fail_user = UserProfile.objects.get(pk=2)
         fail_data = PuzzleData(self.puzzle, fail_team, fail_user)
         self.assertFalse(unlock.unlocked_by(fail_team, fail_data))
+
+
+class AdminTeamTests(TestCase):
+    fixtures = ['hunts_test']
+
+    def test_can_view_episode(self):
+        self.assertTrue(self.client.login(username='admin', password='hunter2'))
+
+        response = self.client.get(reverse('episode', kwargs={'event_id': 1, 'episode_number': 1}))
+        self.assertEqual(response.status_code, 200)
