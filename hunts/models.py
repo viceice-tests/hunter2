@@ -51,8 +51,8 @@ class Puzzle(models.Model):
         # TODO: Should return bool
         return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
 
-    def best_guesses(self, event):
-        """Returns a dictionary of teams to guesses, where the guess is that team's earliest valid guess for this puzzle"""
+    def first_correct_guesses(self, event):
+        """Returns a dictionary of teams to guesses, where the guess is that team's earliest correct, validated guess for this puzzle"""
         all_teams = teams.models.Team.objects.filter(at_event=event)
         team_guesses = {}
         for t in all_teams:
@@ -64,7 +64,7 @@ class Puzzle(models.Model):
 
     def finished_teams(self, event):
         """Return a list of teams who have completed this puzzle at the given event in order of completion."""
-        team_guesses = self.best_guesses(event)
+        team_guesses = self.first_correct_guesses(event)
 
         return sorted(team_guesses.keys(), key=lambda t: team_guesses[t].given)
 
@@ -290,7 +290,7 @@ class Episode(models.Model):
             last_team_guesses = {team: None for team in teams.models.Team.objects.filter(at_event=self.event)}
 
             for p in self.puzzles.all():
-                team_guesses = p.best_guesses(self.event)
+                team_guesses = p.first_correct_guesses(self.event)
                 for team in list(last_team_guesses.keys()):
                     if team not in team_guesses:
                         del last_team_guesses[team]
