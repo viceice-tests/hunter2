@@ -1,6 +1,8 @@
 # vim: set fileencoding=utf-8 :
 import datetime
 
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
 
@@ -109,6 +111,31 @@ class EpisodeBehaviourTest(TestCase):
         self.assertEqual(self.linear_episode.headstart_granted(self.team),
                          self.parallel_episode.headstart_applied(self.team))
         self.assertEqual(self.linear_episode.headstart_granted(self.team), datetime.timedelta(minutes=15))
+
+
+class EpisodeSequenceTests(TestCase):
+    fixtures = ['hunts_episodesequence']
+
+    def setUp(self):
+        self.episode1 = Episode.objects.get(pk=1)
+        self.episode2 = Episode.objects.get(pk=2)
+        self.team = Team.objects.get(pk=1)
+        self.user = self.team.members.get(pk=1)
+
+    def test_episode_prequel_validation(self):
+        self.episode2.prequels.add(self.episode1)
+        # Because we intentionally throw exceptions we need to use transaction.atomic() to avoid a TransactionManagementError
+        with self.assertRaises(ValidationError), transaction.atomic():
+            self.episode1.prequels.add(self.episode1)
+        with self.assertRaises(ValidationError), transaction.atomic():
+            self.episode1.prequels.add(self.episode2)
+
+    def test_episode_unlocking(self):
+        self.episode2.prequels.add(self.episode1)
+        self.assertTrue(self.episode1.unlocked_by(self.team))
+        self.assertFalse(self.episode2.unlocked_by(self.team))
+        Guess(for_puzzle=self.episode1.get_puzzle(1), by=self.user, guess="correct").save()
+        self.assertTrue(self.episode2.unlocked_by(self.team))
 
 
 class ClueDisplayTests(TestCase):
