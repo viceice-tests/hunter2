@@ -1,3 +1,4 @@
+# vim: set fileencoding=utf-8 :
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
@@ -229,6 +230,12 @@ class Episode(models.Model):
 
     def __str__(self):
         return f'<Episode: {self.event.name} - {self.name}>'
+
+    def follows(self, episode):
+        if episode in self.prequels.all():
+            return True
+        else:
+            return not any([p.depends(episode) for p in self.prequels.all()])
 
     def get_puzzle(self, puzzle_number):
         n = int(puzzle_number)
