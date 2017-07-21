@@ -1,6 +1,7 @@
 # vim: set fileencoding=utf-8 :
 import datetime
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -75,6 +76,11 @@ class EpisodeBehaviourTest(TestCase):
         self.parallel_episode = Episode.objects.get(pk=2)
         self.team = Team.objects.get(pk=1)
         self.user = self.team.members.get(pk=1)
+
+    def test_reuse_puzzle(self):
+        puzzle = Puzzle.objects.get(pk=2)
+        with self.assertRaises(ValidationError):
+            self.linear_episode.puzzles.add(2)
 
     def test_episode_behaviour(self):
         self.linear_episodes_are_linear()
