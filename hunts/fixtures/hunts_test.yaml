@@ -84,7 +84,7 @@
 - model: hunts.unlock
   pk: 1
   fields: {puzzle: 1, text: Test Unlock}
-- model: hunts.unlockguess
+- model: hunts.unlockanswer
   pk: 1
   fields: {unlock: 1, guess: wrong}
 - model: hunts.answer
@@ -128,7 +128,7 @@
 - model: hunts.unlock
   pk: 2
   fields: {puzzle: 2, text: Close}
-- model: hunts.unlockguess
+- model: hunts.unlockanswer
   pk: 2
   fields: {unlock: 2, guess: 3}
 - model: hunts.answer
@@ -144,7 +144,7 @@
 - model: hunts.unlock
   pk: 3
   fields: {puzzle: 3, text: Close}
-- model: hunts.unlockguess
+- model: hunts.unlockanswer
   pk: 3
   fields: {unlock: 3, guess: 4}
 - model: hunts.answer
@@ -157,7 +157,7 @@
 - model: hunts.unlock
   pk: 4
   fields: {puzzle: 4, text: Close}
-- model: hunts.unlockguess
+- model: hunts.unlockanswer
   pk: 4
   fields: {unlock: 4, guess: 5}
 - model: hunts.answer
