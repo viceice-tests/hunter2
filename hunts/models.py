@@ -107,7 +107,7 @@ class Unlock(Clue):
         ).filter(
             for_puzzle=self.puzzle
         )
-        return [g for g in guesses if any([u.validate_guess(g, data) for u in self.unlockanswers_set.all()])]
+        return [g for g in guesses if any([u.validate_guess(g, data) for u in self.unlockanswer_set.all()])]
 
 
 class UnlockAnswer(models.Model):
