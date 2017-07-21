@@ -233,6 +233,7 @@ class Episode(models.Model):
         return f'<Episode: {self.event.name} - {self.name}>'
 
     def follows(self, episode):
+        """Does this episode follow the provied episode by one or more prequel relationships?"""
         if episode in self.prequels.all():
             return True
         else:
