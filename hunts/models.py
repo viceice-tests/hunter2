@@ -242,7 +242,8 @@ class Episode(models.Model):
     parallel = models.BooleanField(default=False)
     headstart_from = models.ManyToManyField(
         "self", blank=True,
-        help_text='Episodes which should grant a headstart for this episode'
+        help_text='Episodes which should grant a headstart for this episode',
+        symmetrical=False,
     )
 
     class Meta:
