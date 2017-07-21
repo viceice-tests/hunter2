@@ -80,7 +80,7 @@ class EpisodeBehaviourTest(TestCase):
     def test_reuse_puzzle(self):
         puzzle = Puzzle.objects.get(pk=2)
         with self.assertRaises(ValidationError):
-            self.linear_episode.puzzles.add(2)
+            self.linear_episode.puzzles.add(puzzle)
 
     def test_episode_behaviour(self):
         self.linear_episodes_are_linear()
