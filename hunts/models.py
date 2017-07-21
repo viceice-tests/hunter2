@@ -213,7 +213,8 @@ class PuzzleData:
 class Episode(models.Model):
     prequels = models.ManyToManyField(
         'self', blank=True,
-        help_text='Set of episodes which must be completed before starting this one', related_name='sequels'
+        help_text='Set of episodes which must be completed before starting this one', related_name='sequels',
+        symmetrical=False,
     )
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     name = models.CharField(max_length=255)
@@ -235,7 +236,7 @@ class Episode(models.Model):
         if episode in self.prequels.all():
             return True
         else:
-            return not any([p.depends(episode) for p in self.prequels.all()])
+            return any([p.follows(episode) for p in self.prequels.all()])
 
     def get_puzzle(self, puzzle_number):
         n = int(puzzle_number)
