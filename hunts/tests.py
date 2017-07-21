@@ -110,6 +110,8 @@ class EpisodeBehaviourTest(TestCase):
         self.assertEqual(self.linear_episode.headstart_granted(self.team),
                          self.parallel_episode.headstart_applied(self.team))
         self.assertEqual(self.linear_episode.headstart_granted(self.team), datetime.timedelta(minutes=15))
+        # Test that headstart does not apply in the wrong direction
+        self.assertEqual(self.linear_episode.headstart_applied(self.team), datetime.timedelta(minutes=0))
 
 
 class ClueDisplayTests(TestCase):

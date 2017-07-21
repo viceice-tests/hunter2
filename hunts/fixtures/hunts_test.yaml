@@ -124,7 +124,7 @@
 - model: hunts.puzzle
   pk: 2
   fields: {title: "1 + 1", runtime: S, content: "What is 1 + 1?", cb_runtime: S,
-    cb_content: ''}
+    cb_content: '', headstart_granted: '00:05:00'}
 - model: hunts.unlock
   pk: 2
   fields: {puzzle: 2, text: Close}
@@ -134,6 +134,9 @@
 - model: hunts.answer
   pk: 4
   fields: {for_puzzle: 2, runtime: S, answer: 2}
+- model: hunts.guess
+  pk: 5
+  fields: {for_puzzle: 2, by: 1, guess: 2, given: '1970-01-01T00:00:00Z'}
 - model: hunts.puzzle
   pk: 3
   fields: {title: "2 + 2", runtime: S, content: "What is 2 + 2?", cb_runtime: S,
