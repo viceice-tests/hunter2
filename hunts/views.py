@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from string import Template
 from . import models
+import teams
 from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
@@ -72,12 +73,25 @@ class Guesses(View):
         if not admin:
             return HttpResponse(status=403)
 
+        episode = request.GET.get('episode')
+        puzzle = request.GET.get('puzzle')
+        team = request.GET.get('team')
+
         puzzles = models.Puzzle.objects.filter(episode__event=request.event)
+        if puzzle:
+            puzzles = puzzles.filter(id=puzzle)
+        if episode:
+            puzzles = puzzles.filter(episode=episode)
+
         all_guesses = models.Guess.objects.filter(
             for_puzzle__in=puzzles
         ).order_by(
             '-given'
         )
+
+        if team:
+            team = teams.models.Team.objects.get(id=team)
+            all_guesses = all_guesses.filter(by__in=team.members.all())
 
         guess_pages = Paginator(all_guesses, 50)
         page = request.GET.get('page')
