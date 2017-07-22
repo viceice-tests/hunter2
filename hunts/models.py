@@ -1,3 +1,4 @@
+# vim: set fileencoding=utf-8 :
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
@@ -235,6 +236,11 @@ class PuzzleData:
 
 
 class Episode(models.Model):
+    prequels = models.ManyToManyField(
+        'self', blank=True,
+        help_text='Set of episodes which must be completed before starting this one', related_name='sequels',
+        symmetrical=False,
+    )
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
@@ -251,6 +257,13 @@ class Episode(models.Model):
 
     def __str__(self):
         return f'<Episode: {self.event.name} - {self.name}>'
+
+    def follows(self, episode):
+        """Does this episode follow the provied episode by one or more prequel relationships?"""
+        if episode in self.prequels.all():
+            return True
+        else:
+            return any([p.follows(episode) for p in self.prequels.all()])
 
     def get_puzzle(self, puzzle_number):
         n = int(puzzle_number)
@@ -271,11 +284,7 @@ class Episode(models.Model):
         return -1
 
     def unlocked_by(self, team):
-        prequels = Episode.objects.filter(
-            event=self.event,
-            start_date__lt=self.start_date
-        )
-        return all([episode.finished_by(team) for episode in prequels])
+        return all([episode.finished_by(team) for episode in self.prequels.all()])
 
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
