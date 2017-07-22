@@ -1,12 +1,13 @@
 {% extends "events/base.html" %}
 
 {% block page_header %}
-<h1>Guesses: {{ episode.name }}</h1>
+<h1>Guesses</h1>
 {% endblock %}
 
 {% block content %}
 <table>
 <tr class="guess-viewer-header">
+	<th>Episode</th>
 	<th>Puzzle</th>
 	<th>User &amp; Team</th>
 	<th>Guess</th>
@@ -15,9 +16,10 @@
 </tr>
 {% for guess in guesses %}
 <tr class="guess-viewer-guess">
-	<td><a href="">{{ guess.for_puzzle.title }}</a></td>
-	<td>{{ guess.by.user.username }} ({{ guess.by_team.name }})</td>
-	<td>{{ guess.guess }}</td>
+	<td><a href="?episode={{ guess.for_puzzle.episode_set.get.id }}">{{ guess.for_puzzle.episode_set.get.name }}</a></td>
+	<td><a href="?puzzle={{ guess.for_puzzle.id }}">{{ guess.for_puzzle.title }}</a></td>
+	<td><span class="user">{{ guess.by.user.username }}</span> <span class="team">({{ guess.by_team.name }})</span></td>
+	<td><span class="guess"{{ guess.guess }}</span></td>
 	<td>{{ guess.given }}</td>
 	<td>{{ guess.time_on_puzzle }}</td>
 </tr>

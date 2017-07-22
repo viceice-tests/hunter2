@@ -66,14 +66,13 @@ class Episode(View):
 
 @method_decorator(login_required, name='dispatch')
 class Guesses(View):
-    def get(self, request, episode_number):
-        episode = utils.event_episode(request.event, episode_number)
-        admin = rules.is_admin_for_episode(request.user, episode)
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
 
         if not admin:
             return HttpResponse(status=403)
 
-        puzzles = episode.puzzles.all()
+        puzzles = models.Puzzle.objects.filter(episode__event=request.event)
         all_guesses = models.Guess.objects.filter(
             for_puzzle__in=puzzles
         ).order_by(
@@ -93,7 +92,6 @@ class Guesses(View):
             request,
             'hunts/guesses.html',
             context={
-                'episode': episode,
                 'event_id': request.event.pk,
                 'guesses': guesses,
             }
