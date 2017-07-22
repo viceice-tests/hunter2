@@ -284,7 +284,7 @@ class Episode(models.Model):
         if self.parallel:
             unlocked = None
             for i, puzzle in enumerate(self.puzzles.all()):
-                if not puzzle.unlocked_by(team):
+                if not puzzle.answered_by(team):
                     if unlocked is None:
                         unlocked = i + 1
                     else:
@@ -292,7 +292,7 @@ class Episode(models.Model):
             return unlocked
         else:
             for i, puzzle in enumerate(self.puzzles.all()):
-                if not puzzle.unlocked_by(team):
+                if not puzzle.answered_by(team):
                     return i + 1
 
         return None

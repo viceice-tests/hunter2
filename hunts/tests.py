@@ -116,6 +116,18 @@ class EpisodeBehaviourTest(TestCase):
         # Test that headstart does not apply in the wrong direction
         self.assertEqual(self.linear_episode.headstart_applied(self.team), datetime.timedelta(minutes=0))
 
+    def test_next_puzzle(self):
+        self.assertEqual(self.linear_episode.next_puzzle(self.team), 2)
+        Guess(for_puzzle=self.linear_episode.get_puzzle(2), by=self.user, guess="correct").save()
+        self.assertEqual(self.linear_episode.next_puzzle(self.team), 3)
+        Guess(for_puzzle=self.linear_episode.get_puzzle(3), by=self.user, guess="correctish").save()
+        self.assertEqual(self.linear_episode.next_puzzle(self.team), None)
+
+        self.assertEqual(self.parallel_episode.next_puzzle(self.team), None)
+        Guess(for_puzzle=self.parallel_episode.get_puzzle(2), by=self.user, guess="4").save()
+        self.assertTrue(self.parallel_episode.get_puzzle(2).answered_by(self.team))
+        self.assertEqual(self.parallel_episode.next_puzzle(self.team), 3)
+
 
 class EpisodeSequenceTests(TestCase):
     fixtures = ['hunts_episodesequence']
