@@ -12,6 +12,7 @@ def episode_puzzles_changed(sender, instance, action, pk_set, **kwargs):
             if puzzle.episode_set.count() > 0:
                 raise ValidationError('Puzzle can only be used in one episode')
 
+
 @receiver(m2m_changed, sender=models.Episode.prequels.through)
 def episode_prequels_changed(sender, instance, action, pk_set, **kwargs):
     if action == 'pre_add':
