@@ -1,7 +1,6 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
-from django.utils.html import format_html
 from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
