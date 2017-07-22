@@ -1,11 +1,14 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from string import Template
+from datetime import timedelta
+import json
 from . import models
 from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
@@ -181,6 +184,25 @@ class Answer(View):
             by=request.user.profile
         )
         guess.save()
+
+        data = models.PuzzleData(puzzle, request.team)
+        correct = any([a.validate_guess(guess, data) for a in puzzle.answer_set.all()])
+
+        response = {}
+        if correct:
+            next = episode.next_puzzle(request.team)
+            if next:
+                response['url'] = reverse('puzzle', kwargs={'event_id': request.event.pk,
+                                                            'episode_number': episode_number,
+                                                            'puzzle_number': next})
+            else:
+                response['url'] = reverse('episode', kwargs={'event_id': request.event.pk,
+                                                             'episode_number': episode_number})
+        else:
+            response['timeout'] = str(timezone.now() + timedelta(seconds=5))
+        response['correct'] = str(correct).lower()
+
+        return HttpResponse(json.dumps(response))
 
         if request.event:
             return redirect(
