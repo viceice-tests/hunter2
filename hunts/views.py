@@ -1,4 +1,4 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -6,6 +6,9 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from string import Template
+
+from teams.mixins import TeamMixin
+
 from . import models
 from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
@@ -21,8 +24,7 @@ class Index(View):
         )
 
 
-@method_decorator(login_required, name='dispatch')
-class Episode(View):
+class Episode(LoginRequiredMixin, TeamMixin, View):
     def get(self, request, episode_number):
         episode = utils.event_episode(request.event, episode_number)
         admin = rules.is_admin_for_episode(request.user, episode)
@@ -75,8 +77,7 @@ class Episode(View):
         )
 
 
-@method_decorator(login_required, name='dispatch')
-class EventDirect(View):
+class EventDirect(LoginRequiredMixin, View):
     def get(self, request):
         event = models.Event.objects.filter(current=True).get()
 
@@ -86,8 +87,7 @@ class EventDirect(View):
         )
 
 
-@method_decorator(login_required, name='dispatch')
-class EventIndex(View):
+class EventIndex(LoginRequiredMixin, View):
     def get(self, request):
 
         event = request.event
@@ -107,8 +107,8 @@ class EventIndex(View):
         )
 
 
-@method_decorator(login_required, name='dispatch')
-class Puzzle(View):
+#class Puzzle(LoginRequiredMixin, TeamMixin, View):
+class Puzzle(LoginRequiredMixin, View):
     def get(self, request, episode_number, puzzle_number):
         episode, puzzle = utils.event_episode_puzzle(
             request.event, episode_number, puzzle_number
@@ -179,8 +179,7 @@ class Puzzle(View):
         return response
 
 
-@method_decorator(login_required, name='dispatch')
-class Answer(View):
+class Answer(LoginRequiredMixin, TeamMixin, View):
     def post(self, request, episode_number, puzzle_number):
         episode, puzzle = utils.event_episode_puzzle(
             request.event, episode_number, puzzle_number
@@ -209,8 +208,7 @@ class Answer(View):
             )
 
 
-@method_decorator(login_required, name='dispatch')
-class Callback(View):
+class Callback(LoginRequiredMixin, TeamMixin, View):
     def post(self, request, episode_number, puzzle_number):
         if request.content_type != 'application/json':
             return HttpResponse(status=415)
