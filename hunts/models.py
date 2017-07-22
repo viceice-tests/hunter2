@@ -2,13 +2,13 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
-from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
 
 import events
 import teams
+import uuid
 
 
 class Puzzle(models.Model):
@@ -200,13 +200,19 @@ class TeamPuzzleData(models.Model):
 class UserPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, editable=False)
     data = JSONField(default={})
 
     class Meta:
         verbose_name_plural = 'User puzzle data'
 
     def __str__(self):
-        return f'<UserPuzzleData: {self.user.name} - {self.puzzle.title}>'
+        return f'<UserPuzzleData: {self.user.user.username} - {self.puzzle.title}>'
+
+    def team(self):
+        """Helper method to fetch the team associated with this user and puzzle"""
+        event = self.puzzle.episode_set.get().event
+        return self.user.team_at(event)
 
 
 # Convenience class for using all the above data objects together
@@ -244,7 +250,7 @@ class Episode(models.Model):
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
     parallel = models.BooleanField(default=False)
     headstart_from = models.ManyToManyField(
         "self", blank=True,

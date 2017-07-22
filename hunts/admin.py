@@ -57,7 +57,7 @@ class TeamPuzzleDataAdmin(admin.ModelAdmin):
 
 
 class UserPuzzleDataAdmin(admin.ModelAdmin):
-    pass
+    readonly_fields = ('token', )
 
 
 admin.site.register(models.Guess, GuessAdmin)
