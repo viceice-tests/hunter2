@@ -146,3 +146,12 @@ class AdminTeamTests(TestCase):
 
         response = self.client.get(reverse('episode', kwargs={'event_id': 1, 'episode_number': 1}))
         self.assertEqual(response.status_code, 200)
+
+
+class AdminViewTests(TestCase):
+    fixtures = ['hunts_test']
+
+    def test_can_view_guesses(self):
+        self.assertTrue(self.client.login(username='admin', password='hunter2'))
+        response = self.client.get(reverse('guesses', kwargs={'event_id': 1}))
+        self.assertEqual(response.status_code, 200)
