@@ -107,10 +107,10 @@ class Unlock(Clue):
         ).filter(
             for_puzzle=self.puzzle
         )
-        return [g for g in guesses if any([u.validate_guess(g, data) for u in self.unlockguess_set.all()])]
+        return [g for g in guesses if any([u.validate_guess(g, data) for u in self.unlockanswer_set.all()])]
 
 
-class UnlockGuess(models.Model):
+class UnlockAnswer(models.Model):
     unlock = models.ForeignKey(Unlock, on_delete=models.CASCADE)
     runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
