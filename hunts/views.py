@@ -191,6 +191,12 @@ class Answer(View):
             request.event, episode_number, puzzle_number
         )
 
+        data = models.PuzzleData(puzzle, request.team)
+
+        # We want to check for *new* unlocks, so get a list of un-unlocked unlocks (lol)
+        unlocks = [u for u in models.Unlock.objects.filter(puzzle=puzzle) if not u.unlocked_by(request.team, data)]
+
+        # Put answer in DB
         given_answer = request.POST['answer']
         guess = models.Guess(
             guess=given_answer,
@@ -199,9 +205,9 @@ class Answer(View):
         )
         guess.save()
 
-        data = models.PuzzleData(puzzle, request.team)
         correct = any([a.validate_guess(guess, data) for a in puzzle.answer_set.all()])
 
+        # Build the response JSON depending on whether the answer was correct
         response = {}
         if correct:
             next = episode.next_puzzle(request.team)
@@ -213,7 +219,10 @@ class Answer(View):
                 response['url'] = reverse('episode', kwargs={'event_id': request.event.pk,
                                                              'episode_number': episode_number})
         else:
+            response['guess'] = given_answer
             response['timeout'] = str(timezone.now() + timedelta(seconds=5))
+            unlocks = [u for u in unlocks if any([a.validate_guess(guess, data) for a in u.unlockanswer_set.all()])]
+            response['new_unlocks'] = [u.text for u in unlocks]
         response['correct'] = str(correct).lower()
 
         return HttpResponse(json.dumps(response))
