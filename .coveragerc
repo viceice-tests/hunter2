@@ -1,5 +1,7 @@
 [run]
 data_file = coverage/data
+omit =
+    */migrations/*.py
 
 [html]
 directory = coverage/html

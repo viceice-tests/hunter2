@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ValidationError
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
@@ -14,10 +15,11 @@ from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
 
+import events
+
 
 class Index(View):
     def get(self, request):
-
         return TemplateResponse(
             request,
             'hunts/index.html',
@@ -53,12 +55,24 @@ class Episode(View):
             if p.unlocked_by(request.team):
                 puzzles.append(p)
 
+        positions = episode.finished_positions()
+        if request.team in positions:
+            position = positions.index(request.team)
+            if position < 3:
+                position = {0: 'first', 1: 'second', 2: 'third'}[position]
+            else:
+                position += 1
+                position = f'in position {position}'
+        else:
+            position = None
+
         return TemplateResponse(
             request,
             'hunts/episode.html',
             context={
                 'admin': admin,
                 'episode': episode.name,
+                'position': position,
                 'episode_number': episode_number,
                 'event_id': request.event.pk,
                 'puzzles': puzzles,
@@ -69,7 +83,7 @@ class Episode(View):
 @method_decorator(login_required, name='dispatch')
 class EventDirect(View):
     def get(self, request):
-        event = models.Event.objects.filter(current=True).get()
+        event = events.models.Event.objects.filter(current=True).get()
 
         return redirect(
             'event',
@@ -128,7 +142,7 @@ class Puzzle(View):
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
 
-        answered = puzzle.answered_by(request.team, data)
+        answered = puzzle.answered_by(request.team, data).reverse()
         hints = [
             h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
         ]
@@ -144,7 +158,7 @@ class Puzzle(View):
         files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
 
         text = Template(rr.evaluate(
-            runtime=puzzle.cb_runtime,
+            runtime=puzzle.runtime,
             script=puzzle.content,
             team_puzzle_data=data.tp_data,
             user_puzzle_data=data.up_data,
@@ -236,7 +250,7 @@ class Callback(View):
         response = HttpResponse(
             rr.evaluate(
                 runtime=puzzle.cb_runtime,
-                script=puzzle.content,
+                script=puzzle.cb_content,
                 team_puzzle_data=data.tp_data,
                 user_puzzle_data=data.up_data,
                 team_data=data.t_data,
@@ -247,3 +261,33 @@ class Callback(View):
         data.save()
 
         return response
+
+
+class PuzzleInfo(View):
+    """View for translating a UUID "token" into information about a user's puzzle attempt"""
+    def get(self, request):
+        token = request.GET.get('token')
+        if token is None:
+            return JsonResponse({
+                'result': 'Bad Request',
+                'message': 'Must provide token',
+            }, status=400)
+        try:
+            up_data = models.UserPuzzleData.objects.get(token=token)
+        except ValidationError:
+            return JsonResponse({
+                'result': 'Bad Request',
+                'message': 'Token must be a UUID',
+            }, status=400)
+        except models.UserPuzzleData.DoesNotExist:
+            return JsonResponse({
+                'result': 'Not Found',
+                'message': 'No such token',
+            }, status=404)
+        user = up_data.user
+        team = up_data.team()
+        return JsonResponse({
+            'result': 'Success',
+            'team_id': team.pk,
+            'user_id': user.pk,
+        })
