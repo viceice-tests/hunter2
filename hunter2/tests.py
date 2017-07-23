@@ -13,6 +13,8 @@ from django.test.runner import DiscoverRunner
 from hunter2.management.commands import setupsite
 from .utils import generate_secret_key, load_or_create_secret_key
 
+import time
+
 
 class TestRunner(ColourRunnerMixin, DiscoverRunner):
     pass
