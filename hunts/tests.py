@@ -3,7 +3,7 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
-from django.core.urlresolvers import reverse
+from subdomains.utils import reverse
 
 from teams.models import Team, UserProfile
 from .models import Answer, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, Episode
@@ -144,7 +144,7 @@ class AdminTeamTests(TestCase):
     def test_can_view_episode(self):
         self.assertTrue(self.client.login(username='admin', password='hunter2'))
 
-        response = self.client.get(reverse('episode', kwargs={'event_id': 1, 'episode_number': 1}))
+        response = self.client.get(reverse('episode', subdomain='www', kwargs={'event_id': 1, 'episode_number': 1}), HTTP_HOST='www.testserver')
         self.assertEqual(response.status_code, 200)
 
 
@@ -153,5 +153,5 @@ class AdminViewTests(TestCase):
 
     def test_can_view_guesses(self):
         self.assertTrue(self.client.login(username='admin', password='hunter2'))
-        response = self.client.get(reverse('guesses', kwargs={'event_id': 1}))
+        response = self.client.get(reverse('guesses', subdomain='www', kwargs={'event_id': 1}), HTTP_HOST='www.testserver')
         self.assertEqual(response.status_code, 200)
