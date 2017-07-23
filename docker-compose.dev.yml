@@ -18,7 +18,6 @@ services:
     ports:
       - "8080:3031"
     volumes:
-      - ${PWD:-.}:/usr/src/app
       - config:/config
       - static:/static
       - uploads_events:/uploads/events
