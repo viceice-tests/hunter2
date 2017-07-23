@@ -191,6 +191,19 @@ class Answer(View):
             request.event, episode_number, puzzle_number
         )
 
+        try:
+            latest_guess = models.Guess.objects.filter(
+                for_puzzle=puzzle,
+                by=request.user.profile
+            ).order_by(
+                '-given'
+            )[0]
+        except IndexError:
+            pass
+        else:
+            if latest_guess.given + timedelta(seconds=5) > timezone.now():
+                return HttpResponse(json.dumps({'error': 'too fast'}))
+
         data = models.PuzzleData(puzzle, request.team)
 
         # Gather together unlocks. Need to separate new and old ones for display.

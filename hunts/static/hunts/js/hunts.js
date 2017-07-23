@@ -27,8 +27,8 @@ function correct_answer(url) {
 	setTimeout(function () {window.location.href = url;}, 3000);
 }
 
-function message(status, error) {
-	var error_msg = $('<p class="submission-error" title="' + error + '">There was an error submitting the answer.</p>');
+function message(message, error) {
+	var error_msg = $('<p class="submission-error" title="' + error + '">' + message + '</p>');
 	error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(5000, function(){$(this).remove();})
 }
 
@@ -48,7 +48,9 @@ $(function() {
 			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
 			success: function(data) {
 				button.removeAttr('disabled');
-				if (data.correct == "true") {
+				if (data.error == "too fast") {
+					message("Slow down there, sparky! You're supposed to wait 5s between submissions.", "");
+				} else if (data.correct == "true") {
 					correct_answer(data.url);
 				} else {
 					incorrect_answer(data.guess, data.timeout, data.old_unlocks, data.new_unlocks);
@@ -56,7 +58,7 @@ $(function() {
 			},
 			error: function(xhr, status, error) {
 				button.removeAttr('disabled');
-				message(status, error);
+				message("There was an error submitting the answer.", error);
 			},
 			dataType: 'json'
 		});
