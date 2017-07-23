@@ -56,6 +56,11 @@ class MockTTY:
         return True
 
 
+class PrintRoutesTests(TestCase):
+    def test_print_routes(self):
+        call_command('show_urls')
+
+
 class MigrationsTests(TestCase):
     # Adapted for Python3 from:
     # http://tech.octopus.energy/news/2016/01/21/testing-for-missing-migrations-in-django.html
