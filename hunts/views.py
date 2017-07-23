@@ -191,7 +191,7 @@ class Answer(View):
             request.event, episode_number, puzzle_number
         )
 
-        minimum_time = timedelta(seconds=5) 
+        minimum_time = timedelta(seconds=5)
         try:
             latest_guess = models.Guess.objects.filter(
                 for_puzzle=puzzle,
@@ -246,7 +246,7 @@ class Answer(View):
                                                              'episode_number': episode_number})
         else:
             response['guess'] = given_answer
-            response['timeout'] = str(timezone.now() + minimum_time
+            response['timeout'] = str(timezone.now() + minimum_time)
             response['old_unlocks'] = unlocked_unlocks
             unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess, data) for a in u.unlockanswer_set.all()])]
             response['new_unlocks'] = [u.text for u in unlocks]
