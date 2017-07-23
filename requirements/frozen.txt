@@ -10,6 +10,7 @@ django-allauth==0.32.0
 django-autocomplete-light==3.2.9
 django-debug-toolbar==1.8
 django-environ==0.4.3
+django-extensions==1.8.1
 django-nested-admin==3.0.19
 django-registration==2.2
 django-sortedm2m==1.4.0
