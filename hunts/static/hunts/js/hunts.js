@@ -27,6 +27,11 @@ function correct_answer(url) {
 	setTimeout(function () {window.location.href = url;}, 3000);
 }
 
+function message(status, error) {
+	var error_msg = $('<p class="submission-error" title="' + error + '">There was an error submitting the answer.</p>');
+	error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(5000, function(){$(this).remove();})
+}
+
 $(function() {
 	$('.form-inline').submit(function(e) {
 		e.preventDefault();
@@ -46,7 +51,7 @@ $(function() {
 				}
 			},
 			error: function(xhr, status, error) {
-				alert(status);
+				message(status, error);
 			},
 			dataType: 'json'
 		});
