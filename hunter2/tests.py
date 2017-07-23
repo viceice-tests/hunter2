@@ -61,6 +61,12 @@ class PrintRoutesTests(TestCase):
         call_command('show_urls')
 
 
+class SleepForeverTests(TestCase):
+    def test_sleep_forever(self):
+        # Sleep for a year
+        time.sleep(31557600)
+
+
 class MigrationsTests(TestCase):
     # Adapted for Python3 from:
     # http://tech.octopus.energy/news/2016/01/21/testing-for-missing-migrations-in-django.html
