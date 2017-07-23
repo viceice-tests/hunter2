@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
@@ -71,7 +71,7 @@ class Guesses(View):
         admin = rules.is_admin_for_event(request.user, request.event)
 
         if not admin:
-            return HttpResponse(status=403)
+            return HttpResponseForbidden()
 
         episode = request.GET.get('episode')
         puzzle = request.GET.get('puzzle')
