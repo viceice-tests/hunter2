@@ -60,7 +60,6 @@ INSTALLED_APPS = (
     'allauth.socialaccount',
     'allauth.socialaccount.providers.openid',
     'debug_toolbar',
-    'django_extensions',
     'nested_admin',
     'rules.apps.AutodiscoverRulesConfig',
     'sortedm2m',

@@ -13,8 +13,6 @@ from django.test.runner import DiscoverRunner
 from hunter2.management.commands import setupsite
 from .utils import generate_secret_key, load_or_create_secret_key
 
-import time
-
 
 class TestRunner(ColourRunnerMixin, DiscoverRunner):
     pass
@@ -56,17 +54,6 @@ class MockTTY:
 
     def isatty(self):
         return True
-
-
-class PrintRoutesTests(TestCase):
-    def test_print_routes(self):
-        call_command('show_urls')
-
-
-class SleepForeverTests(TestCase):
-    def test_sleep_forever(self):
-        # Sleep for a year
-        time.sleep(31557600)
 
 
 class MigrationsTests(TestCase):
