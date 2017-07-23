@@ -35,8 +35,11 @@ function message(status, error) {
 $(function() {
 	$('.form-inline').submit(function(e) {
 		e.preventDefault();
+		var form = $(e.target);
+		var button = form.children('button');
+		button.attr('disabled', 'true');
 		var data = {
-			answer: $('.form-inline input[name=answer]')[0].value
+			answer: form.children('input[name=answer]')[0].value
 		};
 		$.ajax({
 			type: 'POST',
@@ -44,6 +47,7 @@ $(function() {
 			data: jQuery.param(data),
 			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
 			success: function(data) {
+				button.removeAttr('disabled');
 				if (data.correct == "true") {
 					correct_answer(data.url);
 				} else {
@@ -51,6 +55,7 @@ $(function() {
 				}
 			},
 			error: function(xhr, status, error) {
+				button.removeAttr('disabled');
 				message(status, error);
 			},
 			dataType: 'json'
