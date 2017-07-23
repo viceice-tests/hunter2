@@ -193,8 +193,20 @@ class Answer(View):
 
         data = models.PuzzleData(puzzle, request.team)
 
-        # We want to check for *new* unlocks, so get a list of un-unlocked unlocks (lol)
-        unlocks = [u for u in models.Unlock.objects.filter(puzzle=puzzle) if not u.unlocked_by(request.team, data)]
+        # Gather together unlocks. Need to separate new and old ones for display.
+        all_unlocks = models.Unlock.objects.filter(puzzle=puzzle)
+        locked_unlocks = []
+        unlocked_unlocks = []
+        for u in all_unlocks:
+            correct_guesses = u.unlocked_by(request.team, data)
+            if correct_guesses:
+                unlocked_unlocks.append(
+                    {
+                        'guesses': [g.guess for g in correct_guesses],
+                        'text': u.text
+                    })
+            else:
+                locked_unlocks.append(u)
 
         # Put answer in DB
         given_answer = request.POST['answer']
@@ -221,25 +233,12 @@ class Answer(View):
         else:
             response['guess'] = given_answer
             response['timeout'] = str(timezone.now() + timedelta(seconds=5))
-            unlocks = [u for u in unlocks if any([a.validate_guess(guess, data) for a in u.unlockanswer_set.all()])]
+            response['old_unlocks'] = unlocked_unlocks
+            unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess, data) for a in u.unlockanswer_set.all()])]
             response['new_unlocks'] = [u.text for u in unlocks]
         response['correct'] = str(correct).lower()
 
         return HttpResponse(json.dumps(response))
-
-        if request.event:
-            return redirect(
-                'puzzle',
-                event_id=request.event.pk,
-                episode_number=episode_number,
-                puzzle_number=puzzle_number,
-            )
-        else:
-            return redirect(
-                'episode',
-                episode_number=episode_number,
-                puzzle_number=puzzle_number,
-            )
 
 
 @method_decorator(login_required, name='dispatch')
