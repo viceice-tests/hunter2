@@ -60,12 +60,19 @@
   pk: 2
   fields:
     user: 2
+- model: teams.userprofile
+  pk: 3
+  fields:
+    user: 3
 - model: teams.team
   pk: 1
   fields: {name: Test Team, at_event: 1, members: [1], is_admin: false}
 - model: teams.team
   pk: 2
   fields: {name: Failure Team, at_event: 1, members: [2], is_admin: false}
+- model: teams.team
+  pk: 3
+  fields: {name: Admin Team, at_event: 1, members: [3], is_admin: true}
 - model: hunts.puzzle
   pk: 1
   fields: {title: Test Puzzle, runtime: S, content: Test Content, cb_runtime: S,

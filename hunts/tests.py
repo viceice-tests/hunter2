@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
+from subdomains.utils import reverse
 
 from events.models import Event
 from teams.models import Team, UserProfile
@@ -170,6 +171,16 @@ class ClueDisplayTests(TestCase):
         fail_user = UserProfile.objects.get(pk=2)
         fail_data = PuzzleData(self.puzzle, fail_team, fail_user)
         self.assertFalse(unlock.unlocked_by(fail_team, fail_data))
+
+
+class AdminTeamTests(TestCase):
+    fixtures = ['hunts_test']
+
+    def test_can_view_episode(self):
+        self.assertTrue(self.client.login(username='admin', password='hunter2'))
+
+        response = self.client.get(reverse('episode', subdomain='www', kwargs={'event_id': 1, 'episode_number': 1}), HTTP_HOST='www.testserver')
+        self.assertEqual(response.status_code, 200)
 
 
 class ProgressionTests(TestCase):
