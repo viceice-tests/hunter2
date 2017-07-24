@@ -2,6 +2,9 @@
 
 {% block page_header %}
 <h1>{{ episode }}</h1>
+{% if position %}
+<p>You came {{ position }} in this episode!</p>
+{% endif %}
 {% endblock %}
 
 {% block content %}

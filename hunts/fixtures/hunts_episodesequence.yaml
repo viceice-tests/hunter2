@@ -1,0 +1,56 @@
+- model: sites.site
+  pk: 1
+  fields: {domain: testserver, name: Test Site}
+- model: events.theme
+  pk: 1
+  fields: {name: Test Theme, script: '', style: ''}
+- model: events.event
+  pk: 1
+  fields: {name: Test Event, theme: 1, current: true}
+- model: auth.user
+  pk: 1
+  fields:
+    password: pbkdf2_sha256$30000$DvSklD707hH9$WEdu5GgBAdfmBbZma8DhzcdtF6NmFQHz/9Sh5GMwZLo=
+    last_login: null
+    is_superuser: false
+    username: test
+    first_name: ''
+    last_name: ''
+    email: ''
+    is_staff: false
+    is_active: true
+    date_joined: '1970-01-01T00:00:00Z'
+    groups: []
+    user_permissions: []
+- model: teams.userprofile
+  pk: 1
+  fields:
+    user: 1
+- model: teams.team
+  pk: 1
+  fields: {name: Test Team, at_event: 1, members: [1], is_admin: false}
+- model: hunts.puzzle
+  pk: 1
+  fields: {title: Test Puzzle 1, runtime: S, content: Test Content, cb_runtime: S,
+  cb_content: ''}
+- model: hunts.puzzle
+  pk: 2
+  fields: {title: Test Puzzle 2, runtime: S, content: Test Content, cb_runtime: S,
+  cb_content: ''}
+- model: hunts.answer
+  pk: 1
+  fields: {for_puzzle: 1, runtime: S, answer: correct}
+- model: hunts.episode
+  pk: 1
+  fields:
+    name: Test Episode 1
+    start_date: '1970-01-01T00:00:00Z'
+    event: 1
+    puzzles: [1]
+- model: hunts.episode
+  pk: 2
+  fields:
+    name: Test Episode 2
+    start_date: '1970-01-01T00:00:01Z'
+    event: 1
+    puzzles: [2]
