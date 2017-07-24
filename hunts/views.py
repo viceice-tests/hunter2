@@ -73,6 +73,20 @@ class Guesses(View):
         if not admin:
             return HttpResponseForbidden()
 
+        return TemplateResponse(
+            request,
+            'hunts/guesses.html',
+        )
+
+
+@method_decorator(login_required, name='dispatch')
+class GuessesContent(View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            return HttpResponseForbidden()
+
         episode = request.GET.get('episode')
         puzzle = request.GET.get('puzzle')
         team = request.GET.get('team')
@@ -104,7 +118,7 @@ class Guesses(View):
 
         return TemplateResponse(
             request,
-            'hunts/guesses.html',
+            'hunts/guesses_content.html',
             context={
                 'event_id': request.event.pk,
                 'guesses': guesses,
