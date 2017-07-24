@@ -9,6 +9,7 @@ services:
 stages:
   - check
   - build
+  - doc
   - test
   - release
 
@@ -54,7 +55,7 @@ build:web:
     paths:
       - $IMAGE_FILE
 
-build:graph:
+doc:graph:
   stage: build
   dependencies:
     - build:app
