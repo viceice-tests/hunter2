@@ -1,5 +1,5 @@
-function updateGuesses(ignore) {
-	if (ignore || $('#auto-update').prop('checked')) {
+function updateGuesses(force) {
+	if (force || $('#auto-update').prop('checked')) {
 		$('#fill-me-up-you-slut').load('guesses_content #guesses-container');
 		setTimeout(updateGuesses, 5000);
 	}
