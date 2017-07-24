@@ -56,7 +56,7 @@ build:web:
       - $IMAGE_FILE
 
 doc:graph:
-  stage: build
+  stage: doc
   dependencies:
     - build:app
   script:
