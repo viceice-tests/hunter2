@@ -1,6 +1,11 @@
 version: '2.1'
 
 services:
+  dot:
+    command: -Tsvg -o/files/models.svg /files/models.dot
+    image: registry.gitlab.com/rconan/docker-graphviz:0.0.1
+    volumes:
+      - ${PWD:-.}:/files
   flake8:
     command: --verbose
     image: registry.gitlab.com/rconan/docker-flake8:0.0.3
