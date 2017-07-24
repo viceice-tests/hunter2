@@ -1,6 +1,13 @@
 {% extends "events/base.html" %}
 {% load staticfiles %}
 
+{% block style %}
+<style type="text/css">
+	tr.correct {
+		background-color: #4d4;
+	}
+</style>
+{% endblock %}
 {% block script %}
 <script src="{% static 'hunts/js/guesses.js' %}"></script>
 {% endblock %}
