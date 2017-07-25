@@ -14,6 +14,7 @@ from . import utils
 
 import events
 
+
 class Index(View):
     def get(self, request):
         return TemplateResponse(
