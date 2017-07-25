@@ -1,6 +1,8 @@
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from .models import Team, UserProfile
 
+import events
 import json
 
 
@@ -23,6 +25,15 @@ class TeamCreateTests(TestCase):
         team = Team.objects.get(pk=2)
         self.assertTrue(creator in team.members.all())
         self.assertTrue(invitee in team.invites.all())
+
+    def test_team_name_uniqueness(self):
+        old_event = events.models.Event.objects.get(pk=1)
+        new_event = events.models.Event(name='New Event', theme=old_event.theme, current=False)
+        new_event.save()
+        # Check that the new event team does not raise a validation error
+        Team(name='Test A', at_event=new_event).save()
+        with self.assertRaises(ValidationError):
+            Team(name='Test A', at_event=old_event).save()
 
 
 class InviteTests(TestCase):
