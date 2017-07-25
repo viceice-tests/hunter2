@@ -153,6 +153,7 @@ class Guess(models.Model):
     by = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
+    validations = models.ManyToManyField(Answer, blank=True, through='GuessValidation')
 
     class Meta:
         verbose_name_plural = 'Guesses'
@@ -174,6 +175,12 @@ class Guess(models.Model):
         hours, seconds = divmod(time_active.total_seconds(), 3600)
         minutes, seconds = divmod(seconds, 60)
         return '%02d:%02d:%02d' % (hours, minutes, seconds)
+
+
+class GuessValidation(models.Model):
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
+    guess = models.ForeignKey(Guess, on_delete=models.CASCADE)
+    correct = models.BooleanField()
 
 
 class TeamData(models.Model):
