@@ -1,9 +1,18 @@
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.http import HttpResponse
+from django.views import View
+from django.test import RequestFactory, TestCase
+from .mixins import TeamMixin
 from .models import Team, UserProfile
 
 import events
 import json
+
+
+class EmptyTeamView(TeamMixin, View):
+    def get(self, request, *args, **kwargs):
+        return HttpResponse()
 
 
 class TeamCreateTests(TestCase):
@@ -22,7 +31,7 @@ class TeamCreateTests(TestCase):
         self.assertEqual(response.status_code, 302)
         creator = UserProfile.objects.get(pk=2)
         invitee = UserProfile.objects.get(pk=3)
-        team = Team.objects.get(pk=2)
+        team = Team.objects.get(name='Test Team')
         self.assertTrue(creator in team.members.all())
         self.assertTrue(invitee in team.invites.all())
 
@@ -34,6 +43,17 @@ class TeamCreateTests(TestCase):
         Team(name='Test A', at_event=new_event).save()
         with self.assertRaises(ValidationError):
             Team(name='Test A', at_event=old_event).save()
+
+    def test_automatic_creation(self):
+        factory = RequestFactory()
+        request = factory.get('/rand')
+        request.event = events.models.Event.objects.get(pk=1)
+        request.user = User.objects.get(pk=4)
+        view = EmptyTeamView.as_view()
+        response = view(request)
+        self.assertEqual(response.status_code, 200)
+        profile = UserProfile.objects.get(user=request.user)
+        Team.objects.get(members=profile)
 
 
 class InviteTests(TestCase):
