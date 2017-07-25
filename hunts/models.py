@@ -39,8 +39,6 @@ class Puzzle(models.Model):
 
     def answered_by(self, team, data=None):
         """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
-        if data is None:
-            data = PuzzleData(self, team)
         guesses = Guess.objects.filter(
             by__in=team.members.all()
         ).filter(
@@ -48,9 +46,8 @@ class Puzzle(models.Model):
         ).order_by(
             'given'
         )
-
         # TODO: Should return bool
-        return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
+        return [g for g in guesses if g.correct()]
 
     def first_correct_guesses(self, event):
         """Returns a dictionary of teams to guesses, where the guess is that team's earliest correct, validated guess for this puzzle"""
@@ -139,13 +136,15 @@ class Answer(models.Model):
         return f'<Answer: {self.answer}>'
 
     def validate_guess(self, guess, data):
-        return rr.validate_guess(
+        result = rr.validate_guess(
             self.runtime,
             self.answer,
             guess.guess,
             data.tp_data,
             data.t_data,
         )
+        GuessValidation(answer=self, guess=guess, correct=result).save()
+        return result
 
 
 class Guess(models.Model):
@@ -160,6 +159,17 @@ class Guess(models.Model):
 
     def __str__(self):
         return f'<Guess: {self.guess} by {self.by}>'
+
+    def correct(self):
+        if self.validations.filter(correct=True).exists():
+            return True
+        else:
+            candidates = Answer.objects.filter(puzzle=self.for_puzzle).exclude(guess_set=self)
+            if candidates.exists():
+                data = PuzzleData(self.for_puzzle, self.by_team())
+                return any([a.validate_guess(self, data) for a in candidates])
+            else:
+                return False
 
     def by_team(self):
         event = self.for_puzzle.episode_set.get().event
@@ -181,6 +191,9 @@ class GuessValidation(models.Model):
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
     guess = models.ForeignKey(Guess, on_delete=models.CASCADE)
     correct = models.BooleanField()
+
+    class Meta:
+        unique_together = (('answer', 'guess'),)
 
 
 class TeamData(models.Model):

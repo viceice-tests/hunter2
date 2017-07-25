@@ -130,12 +130,6 @@ class GuessesContent(View):
         except EmptyPage:
             guesses = guess_pages.page(guess_pages.num_pages)
 
-        for g in guesses:
-            g_data = models.PuzzleData(g.for_puzzle, g.by_team(), g.by)
-            answers = models.Answer.objects.filter(for_puzzle=g.for_puzzle)
-            correct = any([a.validate_guess(g, g_data) for a in answers])
-            g.correct = correct
-
         return TemplateResponse(
             request,
             'hunts/guesses_content.html',
