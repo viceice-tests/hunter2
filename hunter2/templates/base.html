@@ -69,6 +69,11 @@
 		</nav>
 		{% block debug %}{% endblock %}
     <div class="container">
+        {% for announcement in announcements %}
+        <div class="alert {{ announcement.css_type }} fade in">
+            <strong>{{ announcement.title }}</strong> {{ announcement.message }}
+        </div>
+        {% endfor %}
       <div class="page-header">
         {% block page_header %}{% endblock page_header%}
       </div>

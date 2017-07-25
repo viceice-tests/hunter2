@@ -14,7 +14,6 @@ from . import utils
 
 import events
 
-
 class Index(View):
     def get(self, request):
         return TemplateResponse(
@@ -116,6 +115,9 @@ class Puzzle(View):
             request.event, episode_number, puzzle_number
         )
         admin = rules.is_admin_for_puzzle(request.user, puzzle)
+
+        # Make the puzzle available on the request object
+        request.puzzle = puzzle
 
         # If episode has not started redirect to episode holding page
         if episode.start_date > timezone.now() and not admin:
