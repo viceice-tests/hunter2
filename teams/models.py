@@ -36,7 +36,7 @@ class Team(models.Model):
 
     def save(self):
         if self.name != '':
-            conflicts = Team.objects.filter(name=self.name) #, at_event=self.at_event)
+            conflicts = Team.objects.filter(name=self.name, at_event=self.at_event)
             conflicts = conflicts.exclude(pk=self.id)
             if conflicts.exists():
                 raise ValidationError('Cannot have multiple teams with the same non-empty name at an event')
