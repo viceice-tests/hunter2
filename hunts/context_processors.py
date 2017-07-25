@@ -7,7 +7,6 @@ from hunts.models import AnnoucmentType
 def announcements(request):
 
     # Get all announcements, including puzzle specific announcements if present
-
     has_puzzle = hasattr(request, 'puzzle') and request.puzzle is not None
 
     if has_puzzle:
