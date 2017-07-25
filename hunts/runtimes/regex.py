@@ -10,6 +10,6 @@ class RegexRuntime(AbstractRuntime):
 
     def validate_guess(self, validator, guess, team_puzzle_data, team_data):
         try:
-            return re.fullmatch(validator, guess)
+            return bool(re.fullmatch(validator, guess))
         except re.error as error:
             raise SyntaxError(error) from error

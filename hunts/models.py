@@ -161,10 +161,10 @@ class Guess(models.Model):
         return f'<Guess: {self.guess} by {self.by}>'
 
     def correct(self):
-        if self.validations.filter(correct=True).exists():
+        if GuessValidation.objects.filter(guess=self, correct=True).exists():
             return True
         else:
-            candidates = Answer.objects.filter(puzzle=self.for_puzzle).exclude(guess_set=self)
+            candidates = Answer.objects.filter(for_puzzle=self.for_puzzle).exclude(guess=self)
             if candidates.exists():
                 data = PuzzleData(self.for_puzzle, self.by_team())
                 return any([a.validate_guess(self, data) for a in candidates])
