@@ -1,8 +1,11 @@
 # vim: set fileencoding=utf-8 :
 import datetime
 
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
+from subdomains.utils import reverse
 
 from events.models import Event
 from teams.models import Team, UserProfile
@@ -76,6 +79,11 @@ class EpisodeBehaviourTest(TestCase):
         self.team = Team.objects.get(pk=1)
         self.user = self.team.members.get(pk=1)
 
+    def test_reuse_puzzle(self):
+        puzzle = Puzzle.objects.get(pk=2)
+        with self.assertRaises(ValidationError):
+            self.linear_episode.puzzles.add(puzzle)
+
     def test_episode_behaviour(self):
         self.linear_episodes_are_linear()
         self.can_see_all_parallel_puzzles()
@@ -114,6 +122,31 @@ class EpisodeBehaviourTest(TestCase):
         self.assertEqual(self.linear_episode.headstart_applied(self.team), datetime.timedelta(minutes=0))
 
 
+class EpisodeSequenceTests(TestCase):
+    fixtures = ['hunts_episodesequence']
+
+    def setUp(self):
+        self.episode1 = Episode.objects.get(pk=1)
+        self.episode2 = Episode.objects.get(pk=2)
+        self.team = Team.objects.get(pk=1)
+        self.user = self.team.members.get(pk=1)
+
+    def test_episode_prequel_validation(self):
+        self.episode2.prequels.add(self.episode1)
+        # Because we intentionally throw exceptions we need to use transaction.atomic() to avoid a TransactionManagementError
+        with self.assertRaises(ValidationError), transaction.atomic():
+            self.episode1.prequels.add(self.episode1)
+        with self.assertRaises(ValidationError), transaction.atomic():
+            self.episode1.prequels.add(self.episode2)
+
+    def test_episode_unlocking(self):
+        self.episode2.prequels.add(self.episode1)
+        self.assertTrue(self.episode1.unlocked_by(self.team))
+        self.assertFalse(self.episode2.unlocked_by(self.team))
+        Guess(for_puzzle=self.episode1.get_puzzle(1), by=self.user, guess="correct").save()
+        self.assertTrue(self.episode2.unlocked_by(self.team))
+
+
 class ClueDisplayTests(TestCase):
     fixtures = ['hunts_test']
 
@@ -138,6 +171,16 @@ class ClueDisplayTests(TestCase):
         fail_user = UserProfile.objects.get(pk=2)
         fail_data = PuzzleData(self.puzzle, fail_team, fail_user)
         self.assertFalse(unlock.unlocked_by(fail_team, fail_data))
+
+
+class AdminTeamTests(TestCase):
+    fixtures = ['hunts_test']
+
+    def test_can_view_episode(self):
+        self.assertTrue(self.client.login(username='admin', password='hunter2'))
+
+        response = self.client.get(reverse('episode', subdomain='www', kwargs={'event_id': 1, 'episode_number': 1}), HTTP_HOST='www.testserver')
+        self.assertEqual(response.status_code, 200)
 
 
 class ProgressionTests(TestCase):

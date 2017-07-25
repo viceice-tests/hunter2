@@ -1,5 +1,7 @@
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
+from django.core.exceptions import ValidationError
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
@@ -14,10 +16,11 @@ from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
 
+import events
+
 
 class Index(View):
     def get(self, request):
-
         return TemplateResponse(
             request,
             'hunts/index.html',
@@ -79,7 +82,7 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
 
 class EventDirect(LoginRequiredMixin, View):
     def get(self, request):
-        event = models.Event.objects.filter(current=True).get()
+        event = events.models.Event.objects.filter(current=True).get()
 
         return redirect(
             'event',
@@ -137,7 +140,7 @@ class Puzzle(LoginRequiredMixin, View):
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
 
-        answered = puzzle.answered_by(request.team, data).reverse()
+        answered = reversed(puzzle.answered_by(request.team, data))
         hints = [
             h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
         ]
@@ -153,7 +156,7 @@ class Puzzle(LoginRequiredMixin, View):
         files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
 
         text = Template(rr.evaluate(
-            runtime=puzzle.cb_runtime,
+            runtime=puzzle.runtime,
             script=puzzle.content,
             team_puzzle_data=data.tp_data,
             user_puzzle_data=data.up_data,
@@ -224,7 +227,7 @@ class Callback(LoginRequiredMixin, TeamMixin, View):
         response = HttpResponse(
             rr.evaluate(
                 runtime=puzzle.cb_runtime,
-                script=puzzle.content,
+                script=puzzle.cb_content,
                 team_puzzle_data=data.tp_data,
                 user_puzzle_data=data.up_data,
                 team_data=data.t_data,
@@ -235,3 +238,33 @@ class Callback(LoginRequiredMixin, TeamMixin, View):
         data.save()
 
         return response
+
+
+class PuzzleInfo(View):
+    """View for translating a UUID "token" into information about a user's puzzle attempt"""
+    def get(self, request):
+        token = request.GET.get('token')
+        if token is None:
+            return JsonResponse({
+                'result': 'Bad Request',
+                'message': 'Must provide token',
+            }, status=400)
+        try:
+            up_data = models.UserPuzzleData.objects.get(token=token)
+        except ValidationError:
+            return JsonResponse({
+                'result': 'Bad Request',
+                'message': 'Token must be a UUID',
+            }, status=400)
+        except models.UserPuzzleData.DoesNotExist:
+            return JsonResponse({
+                'result': 'Not Found',
+                'message': 'No such token',
+            }, status=404)
+        user = up_data.user
+        team = up_data.team()
+        return JsonResponse({
+            'result': 'Success',
+            'team_id': team.pk,
+            'user_id': user.pk,
+        })

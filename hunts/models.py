@@ -1,13 +1,14 @@
+# vim: set fileencoding=utf-8 :
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
-from events.models import Event
 from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
 
 import events
 import teams
+import uuid
 
 
 class Puzzle(models.Model):
@@ -107,10 +108,10 @@ class Unlock(Clue):
         ).filter(
             for_puzzle=self.puzzle
         )
-        return [g for g in guesses if any([u.validate_guess(g, data) for u in self.unlockguess_set.all()])]
+        return [g for g in guesses if any([u.validate_guess(g, data) for u in self.unlockanswer_set.all()])]
 
 
-class UnlockGuess(models.Model):
+class UnlockAnswer(models.Model):
     unlock = models.ForeignKey(Unlock, on_delete=models.CASCADE)
     runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
@@ -199,13 +200,19 @@ class TeamPuzzleData(models.Model):
 class UserPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, editable=False)
     data = JSONField(default={})
 
     class Meta:
         verbose_name_plural = 'User puzzle data'
 
     def __str__(self):
-        return f'<UserPuzzleData: {self.user.name} - {self.puzzle.title}>'
+        return f'<UserPuzzleData: {self.user.user.username} - {self.puzzle.title}>'
+
+    def team(self):
+        """Helper method to fetch the team associated with this user and puzzle"""
+        event = self.puzzle.episode_set.get().event
+        return self.user.team_at(event)
 
 
 # Convenience class for using all the above data objects together
@@ -235,10 +242,15 @@ class PuzzleData:
 
 
 class Episode(models.Model):
+    prequels = models.ManyToManyField(
+        'self', blank=True,
+        help_text='Set of episodes which must be completed before starting this one', related_name='sequels',
+        symmetrical=False,
+    )
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
     parallel = models.BooleanField(default=False)
     headstart_from = models.ManyToManyField(
         "self", blank=True,
@@ -251,6 +263,13 @@ class Episode(models.Model):
 
     def __str__(self):
         return f'<Episode: {self.event.name} - {self.name}>'
+
+    def follows(self, episode):
+        """Does this episode follow the provied episode by one or more prequel relationships?"""
+        if episode in self.prequels.all():
+            return True
+        else:
+            return any([p.follows(episode) for p in self.prequels.all()])
 
     def get_puzzle(self, puzzle_number):
         n = int(puzzle_number)
@@ -271,11 +290,7 @@ class Episode(models.Model):
         return -1
 
     def unlocked_by(self, team):
-        prequels = Episode.objects.filter(
-            event=self.event,
-            start_date__lt=self.start_date
-        )
-        return all([episode.finished_by(team) for episode in prequels])
+        return all([episode.finished_by(team) for episode in self.prequels.all()])
 
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])

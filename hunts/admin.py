@@ -22,15 +22,15 @@ class HintInline(NestedTabularInline):
     extra = 0
 
 
-class UnlockGuessInline(NestedStackedInline):
-    model = models.UnlockGuess
+class UnlockAnswerInline(NestedStackedInline):
+    model = models.UnlockAnswer
     extra = 0
 
 
 class UnlockInline(NestedStackedInline):
     model = models.Unlock
     inlines = [
-        UnlockGuessInline,
+        UnlockAnswerInline,
     ]
     extra = 0
 
@@ -57,7 +57,7 @@ class TeamPuzzleDataAdmin(admin.ModelAdmin):
 
 
 class UserPuzzleDataAdmin(admin.ModelAdmin):
-    pass
+    readonly_fields = ('token', )
 
 
 admin.site.register(models.Guess, GuessAdmin)
