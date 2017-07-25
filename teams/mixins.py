@@ -18,4 +18,4 @@ class TeamMixin():
             request.team = models.Team(name='', at_event=request.event)
             request.team.save()
             request.team.members.add(user)
-        super(TeamMixin, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)

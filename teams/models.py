@@ -34,12 +34,13 @@ class Team(models.Model):
         ):
             raise ValidationError('There can only be one admin team per event')
 
-#    def save(self):
-#        if self.name != '':
-#            conflicts = Team.objects.filter(name=self.name, at_event=self.at_event)
-#            conflicts = conflicts.exclude(pk=self.id)
-#            if conflicts.exists():
-#                raise ValidationError('Cannot have multiple teams with the same non-empty name at an event')
+    def save(self):
+        if self.name != '':
+            conflicts = Team.objects.filter(name=self.name) #, at_event=self.at_event)
+            conflicts = conflicts.exclude(pk=self.id)
+            if conflicts.exists():
+                raise ValidationError('Cannot have multiple teams with the same non-empty name at an event')
+        return super().save()
 
     def get_absolute_url(self):
         return reverse('team', args=[self.pk])
