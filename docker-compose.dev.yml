@@ -23,6 +23,7 @@ services:
       - static:/static
       - uploads_events:/uploads/events
       - uploads_puzzles:/uploads/puzzles
+    tty: true
 
 volumes:
   db: {}
