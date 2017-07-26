@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from string import Template
+from silk.profiling.profiler import silk_profile
 from . import models
 from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
@@ -25,6 +26,7 @@ class Index(View):
 
 @method_decorator(login_required, name='dispatch')
 class Episode(View):
+    #@silk_profile(name="Episode Get")
     def get(self, request, episode_number):
         episode = utils.event_episode(request.event, episode_number)
         admin = rules.is_admin_for_episode(request.user, episode)
@@ -46,11 +48,12 @@ class Episode(View):
                 request, 'hunts/episodelocked.html', status=403
             )
 
-        all_puzzles = episode.puzzles.all()
-        puzzles = []
-        for p in all_puzzles:
-            if p.unlocked_by(request.team):
-                puzzles.append(p)
+        #all_puzzles = episode.puzzles.all()
+        #puzzles = []
+        #for p in all_puzzles:
+        #    if p.unlocked_by(request.team):
+        #        puzzles.append(p)
+        puzzles = episode.unlocked_puzzles(request.team)
 
         positions = episode.finished_positions()
         if request.team in positions:

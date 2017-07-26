@@ -37,7 +37,7 @@ class Puzzle(models.Model):
         return episode.unlocked_by(team) and \
             episode._puzzle_unlocked_by(self, team)
 
-    def answered_by(self, team, data=None):
+    def answered_by(self, team, data=None, answers=None):
         """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
         if data is None:
             data = PuzzleData(self, team)
@@ -49,15 +49,19 @@ class Puzzle(models.Model):
             'given'
         )
 
+        if answers is None:
+            answers = self.answer_set.all()
         # TODO: Should return bool
-        return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
+        return [g for g in guesses if any([a.validate_guess(g, data) for a in answers])]
 
     def first_correct_guesses(self, event):
         """Returns a dictionary of teams to guesses, where the guess is that team's earliest correct, validated guess for this puzzle"""
         all_teams = teams.models.Team.objects.filter(at_event=event)
+        answers = self.answer_set.all()
+
         team_guesses = {}
         for t in all_teams:
-            correct_answers = self.answered_by(t)
+            correct_answers = self.answered_by(t, answers=answers)
             if correct_answers:
                 team_guesses[t] = correct_answers[0]
 
@@ -158,7 +162,7 @@ class Guess(models.Model):
         verbose_name_plural = 'Guesses'
 
     def __str__(self):
-        return f'<Guess: {self.guess} by {self.by}>'
+        return teams.models.Team.objects.filter(at_event=event, members=self.by).get()
 
 
 class TeamData(models.Model):
@@ -342,3 +346,16 @@ class Episode(models.Model):
                     return True
                 if not p.answered_by(team):
                     return False
+
+    def unlocked_puzzles(self, team):
+        started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())
+        if self.parallel:
+            return started_puzzles
+        else:
+            result = []
+            for p in started_puzzles:
+                result.append(p)
+                if not p.answered_by(team):
+                    break
+
+            return result
