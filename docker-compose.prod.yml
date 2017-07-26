@@ -6,7 +6,10 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
   app:
-    build: .
+    build:
+       context: .
+       args:
+          REQUIREMENTS_VERSION: "production"
     depends_on:
       - db
     environment:
