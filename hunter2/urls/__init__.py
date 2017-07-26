@@ -10,6 +10,7 @@ if DEBUG:
 
     urlpatterns = admin_patterns + www_patterns + [
         url(r'^__debug__/', include(debug_toolbar.urls)),
+        url(r'^silk/', include('silk.urls', namespace='silk')),
     ]
 else:
     urlpatterns = []

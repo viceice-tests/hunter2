@@ -59,6 +59,7 @@ INSTALLED_APPS = (
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.openid',
+    'silk',
     'debug_toolbar',
     'nested_admin',
     'rules.apps.AutodiscoverRulesConfig',
@@ -97,6 +98,7 @@ MEDIA_ROOT = '/uploads/'
 MEDIA_URL = '/media/'
 
 MIDDLEWARE = (
+    'silk.middleware.SilkyMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -175,3 +177,7 @@ USE_TZ = True
 WSGI_APPLICATION = 'hunter2.wsgi.application'
 
 X_FRAME_OPTIONS = 'DENY'
+
+SILKY_PYTHON_PROFILER = True
+SILKY_PYTHON_PROFILER_BINARY = True
+SILKY_PYTHON_PROFILER_RESULT_PATH = '/uploads/events/'
