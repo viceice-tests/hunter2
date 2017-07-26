@@ -161,6 +161,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.contrib.messages.context_processors.messages',
                 'teams.context_processors.event_team',
+                'hunts.context_processors.announcements',
             ],
         },
     },

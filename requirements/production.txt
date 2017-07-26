@@ -5,7 +5,9 @@ coverage
 django-allauth
 django-autocomplete-light
 django-debug-toolbar
+django-enumfields
 django-environ
+django-extensions
 django-nested-admin
 django-registration
 django-sortedm2m
@@ -17,4 +19,3 @@ subdomains
 uwsgi
 validators
 wait
-django-silk==1.0.0
