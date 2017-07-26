@@ -40,31 +40,45 @@ class Puzzle(models.Model):
 
     def answered_by(self, team, data=None, answers=None):
         """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
-        if data is None:
-            data = PuzzleData(self, team)
+        #if data is None:
+            #data = PuzzleData(self, team)
         guesses = Guess.objects.filter(
-            by__in=team.members.all()
-        ).filter(
-            for_puzzle=self
+            by__in=team.members.all(),
+            for_puzzle=self,
+            correct_for__isnull=False
         ).order_by(
             'given'
         )
 
-        if answers is None:
-            answers = self.answer_set.all()
+        #if answers is None:
+            #answers = self.answer_set.all()
         # TODO: Should return bool
-        return [g for g in guesses if any([a.validate_guess(g, data) for a in answers])]
+        return guesses
+        #return [g for g in guesses if any([a.validate_guess(g, data) for a in answers])]
 
     def first_correct_guesses(self, event):
         """Returns a dictionary of teams to guesses, where the guess is that team's earliest correct, validated guess for this puzzle"""
         all_teams = teams.models.Team.objects.filter(at_event=event)
-        answers = self.answer_set.all()
+        correct_guesses = Guess.objects.filter(
+            for_puzzle=self,
+            correct_for__isnull=False
+        ).order_by(
+            'given'
+        )
+        correct_guesses=list(correct_guesses)
+        #answers = self.answer_set.all()
 
         team_guesses = {}
         for t in all_teams:
-            correct_answers = self.answered_by(t, answers=answers)
-            if correct_answers:
-                team_guesses[t] = correct_answers[0]
+            members = t.members.values_list('pk', flat=True)
+            for g in correct_guesses[:]:
+                if g.by.pk in members:
+                    team_guesses[t] = g
+                    break
+            #correct_answers = [g for g in correct_guesses if g.by.pk in members]
+            #correct_answers = self.answered_by(t, answers=answers)
+            #if correct_answers:
+                #team_guesses[t] = correct_answers[0]
 
         return team_guesses
 
@@ -158,12 +172,28 @@ class Guess(models.Model):
     by = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
+    correct_for = models.ForeignKey(Answer, blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name_plural = 'Guesses'
 
     def __str__(self):
+        return f'<Guess: {self.guess} by {self.by}>'
+
+    def by_team(self):
+        event = self.for_puzzle.episode_set.get().event
         return teams.models.Team.objects.filter(at_event=event, members=self.by).get()
+
+    def evaluate_correctness(self):
+        data = PuzzleData(self.for_puzzle, self.by_team)
+        for answer in self.for_puzzle.answer_set.all():
+            if answer.validate_guess(self, data):
+                self.correct_for = answer
+                return
+
+    def save(self, *args, **kwargs):
+        self.evaluate_correctness()
+        super().save(*args, **kwargs)
 
 
 class TeamData(models.Model):
