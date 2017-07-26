@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -85,7 +85,7 @@ class Guesses(View):
         admin = rules.is_admin_for_event(request.user, request.event)
 
         if not admin:
-            return HttpResponseForbidden()
+            raise PermissionDenied
 
         return TemplateResponse(
             request,
