@@ -19,6 +19,7 @@ DATABASES = {
 CACHES = {
     'default': env.cache_url('H2_CACHE_URL', default="dummycache://" )
 }
+USE_SILK = DEBUG and env.bool('H2_SILK', default=False)
 
 # Generate a secret key and store it the first time it is accessed
 SECRET_KEY = load_or_create_secret_key("/config/secrets.ini")
@@ -69,6 +70,8 @@ INSTALLED_APPS = (
     'hunts',
     'hunter2',
 )
+if USE_SILK:
+    INSTALLED_APPS = INSTALLED_APPS + ('silk',)
 
 LOGGING = {
     'version': 1,
@@ -110,6 +113,8 @@ MIDDLEWARE = (
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
+if USE_SILK:
+    MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
 
 ROOT_URLCONF = 'hunter2.urls'
 
@@ -176,3 +181,9 @@ USE_TZ = True
 WSGI_APPLICATION = 'hunter2.wsgi.application'
 
 X_FRAME_OPTIONS = 'DENY'
+
+if USE_SILK:
+    SILKY_PYTHON_PROFILER = True
+    SILKY_PYTHON_PROFILER_BINARY = True
+    # Well, the following path is rubbish but I cba doing it properly for now
+    SILKY_PYTHON_PROFILER_RESULT_PATH = '/uploads/events/'

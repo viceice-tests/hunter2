@@ -6,11 +6,15 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
   app:
-    build: .
+    build:
+       context: .
+       args:
+          REQUIREMENTS_VERSION: "production"
     depends_on:
       - db
     environment:
       - H2_DEBUG
+      - H2_SILK
     image: ${IMAGE_TAG:-hunter2_app}
     volumes:
       - config:/config
