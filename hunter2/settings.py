@@ -19,6 +19,7 @@ DATABASES = {
 CACHES = {
     'default': env.cache_url('H2_CACHE_URL', default="dummycache://" )
 }
+USE_SILK = DEBUG and env.bool('H2_SILK', default=False)
 
 # Generate a secret key and store it the first time it is accessed
 SECRET_KEY = load_or_create_secret_key("/config/secrets.ini")
@@ -59,7 +60,6 @@ INSTALLED_APPS = (
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.openid',
-    'silk',
     'debug_toolbar',
     'nested_admin',
     'rules.apps.AutodiscoverRulesConfig',
@@ -70,6 +70,8 @@ INSTALLED_APPS = (
     'hunts',
     'hunter2',
 )
+if USE_SILK:
+    INSTALLED_APPS = INSTALLED_APPS + ('silk',)
 
 LOGGING = {
     'version': 1,
@@ -98,7 +100,6 @@ MEDIA_ROOT = '/uploads/'
 MEDIA_URL = '/media/'
 
 MIDDLEWARE = (
-    'silk.middleware.SilkyMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -112,6 +113,8 @@ MIDDLEWARE = (
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
+if USE_SILK:
+    MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
 
 ROOT_URLCONF = 'hunter2.urls'
 
@@ -179,6 +182,8 @@ WSGI_APPLICATION = 'hunter2.wsgi.application'
 
 X_FRAME_OPTIONS = 'DENY'
 
-SILKY_PYTHON_PROFILER = True
-SILKY_PYTHON_PROFILER_BINARY = True
-SILKY_PYTHON_PROFILER_RESULT_PATH = '/uploads/events/'
+if USE_SILK:
+    SILKY_PYTHON_PROFILER = True
+    SILKY_PYTHON_PROFILER_BINARY = True
+    # Well, the following path is rubbish but I cba doing it properly for now
+    SILKY_PYTHON_PROFILER_RESULT_PATH = '/uploads/events/'

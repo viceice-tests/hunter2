@@ -1,6 +1,6 @@
 from django.conf.urls import include, url
 
-from ..settings import DEBUG
+from ..settings import DEBUG, USE_SILK
 
 if DEBUG:
     from .admin import admin_patterns
@@ -10,7 +10,10 @@ if DEBUG:
 
     urlpatterns = admin_patterns + www_patterns + [
         url(r'^__debug__/', include(debug_toolbar.urls)),
-        url(r'^silk/', include('silk.urls', namespace='silk')),
     ]
+    if USE_SILK:
+        urlpatterns.append(
+            url(r'^silk/', include('silk.urls', namespace='silk')),
+        )
 else:
     urlpatterns = []

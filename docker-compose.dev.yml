@@ -8,12 +8,16 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
   app:
-    build: .
+    build:
+       context: .
+       args:
+          REQUIREMENTS_VERSION: "development"
     command: python manage.py runserver 0.0.0.0:3031
     depends_on:
       - db
     environment:
       - H2_DEBUG
+      - H2_SILK
     image: ${IMAGE_TAG:-hunter2_app}
     ports:
       - "8080:3031"
