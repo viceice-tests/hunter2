@@ -64,21 +64,14 @@ class Puzzle(models.Model):
             correct_for__isnull=False
         ).order_by(
             'given'
-        )
+        ).select_related('by_team')
         correct_guesses=list(correct_guesses)
         #answers = self.answer_set.all()
 
         team_guesses = {}
-        for t in all_teams:
-            members = t.members.values_list('pk', flat=True)
-            for g in correct_guesses[:]:
-                if g.by.pk in members:
-                    team_guesses[t] = g
-                    break
-            #correct_answers = [g for g in correct_guesses if g.by.pk in members]
-            #correct_answers = self.answered_by(t, answers=answers)
-            #if correct_answers:
-                #team_guesses[t] = correct_answers[0]
+        for g in correct_guesses:
+            if g.by_team not in team_guesses:
+                team_guesses[g.by_team] = g
 
         return team_guesses
 
@@ -86,7 +79,7 @@ class Puzzle(models.Model):
         """Return a list of teams who have completed this puzzle at the given event in order of completion."""
         team_guesses = self.first_correct_guesses(event)
 
-        return sorted(team_guesses.keys(), key=lambda t: team_guesses[t].given)
+        return sorted(team_guesses.keys(), key=lambda t: (team_guesses[t].given, team_guesses[t].pk))
 
     def position(self, team):
         """Returns the position in which the given team finished this puzzle: 0 = first, None = not yet finished."""
@@ -170,6 +163,7 @@ class Answer(models.Model):
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
+    by_team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
     correct_for = models.ForeignKey(Answer, blank=True, null=True, on_delete=models.SET_NULL)
@@ -180,7 +174,7 @@ class Guess(models.Model):
     def __str__(self):
         return f'<Guess: {self.guess} by {self.by}>'
 
-    def by_team(self):
+    def get_team(self):
         event = self.for_puzzle.episode_set.get().event
         return teams.models.Team.objects.filter(at_event=event, members=self.by).get()
 
@@ -192,6 +186,7 @@ class Guess(models.Model):
                 return
 
     def save(self, *args, **kwargs):
+        self.by_team = self.get_team()
         self.evaluate_correctness()
         super().save(*args, **kwargs)
 
