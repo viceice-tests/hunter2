@@ -9,6 +9,13 @@ def announcements(request):
     # Get all announcements, including puzzle specific announcements if present
     has_puzzle = hasattr(request, 'puzzle') and request.puzzle is not None
 
+    css_class = {
+        AnnoucmentType.INFO: 'alert-info',
+        AnnoucmentType.SUCCESSS: 'alet-success',
+        AnnoucmentType.WARNING: 'alert-warning',
+        AnnoucmentType.ERROR: 'alert-danger',
+    }
+
     if has_puzzle:
         current_announcements = models.Annoucement.objects.filter(
             (Q(event__isnull=True) | Q(event=request.event)) &
@@ -20,14 +27,7 @@ def announcements(request):
 
     # TODO: This is relatively closely linked to the CSS so perhaps should be further moved to the view / template
     for announcement in current_announcements:
-        if announcement.type == AnnoucmentType.INFO:
-            announcement.css_type = 'alert-info'
-        elif announcement.type == AnnoucmentType.SUCCESSS:
-            announcement.css_type = 'alert-success'
-        elif announcement.type == AnnoucmentType.WARNING:
-            announcement.css_type = 'alert-warning'
-        elif announcement.type == AnnoucmentType.ERROR:
-            announcement.css_type = 'alert-danger'
+        announcement.css_type = css_class[announcement.type]
 
     return {
         'announcements': current_announcements
