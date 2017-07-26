@@ -1,5 +1,6 @@
 from .utils import load_or_create_secret_key
 import environ
+import logging
 
 # Load the current environment profile
 root = environ.Path(__file__) - 2
@@ -20,6 +21,13 @@ CACHES = {
     'default': env.cache_url('H2_CACHE_URL', default="dummycache://" )
 }
 USE_SILK = DEBUG and env.bool('H2_SILK', default=False)
+
+if USE_SILK:
+    try:
+        import silk  # noqa: F401
+    except ImportError:
+        logging.error("Silk profiling enabled but not available. Check REQUIREMENTS_VERSION is set to development at build time.")
+        USE_SILK = False
 
 # Generate a secret key and store it the first time it is accessed
 SECRET_KEY = load_or_create_secret_key("/config/secrets.ini")
