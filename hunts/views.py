@@ -118,6 +118,9 @@ class Puzzle(View):
         )
         admin = rules.is_admin_for_puzzle(request.user, puzzle)
 
+        # Make the puzzle available on the request object
+        request.puzzle = puzzle
+
         # If episode has not started redirect to episode holding page
         if episode.start_date > timezone.now() and not admin:
             if request.event:
