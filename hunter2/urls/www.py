@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from teams.urls import urlpatterns as teams_patterns
-from hunts.urls import urlpatterns as hunts_patterns
+from hunts.urls.www import urlpatterns as hunts_patterns
 
 from .. import settings
 

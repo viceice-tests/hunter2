@@ -1,5 +1,5 @@
 from django.conf.urls import include, url
-from . import views
+from .. import views
 from django.views.generic import TemplateView
 
 puzzlepatterns = [
