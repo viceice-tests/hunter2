@@ -22,6 +22,12 @@ docker-compose up -d
 docker-compose run --rm app python manage.py migrate
 ```
 
+To get performance profiling with silk, do:
+```shell
+echo 'H2_SILK=True' >> .env
+docker-compose up -d
+```
+
 If you want minimal data, you can run:
 ```
 docker-compose run --rm app python manage.py createsuperuser
