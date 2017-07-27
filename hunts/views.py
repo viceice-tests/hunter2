@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from string import Template
-from datetime import timedelta
+from datetime import datetime, timedelta
 from . import models
 from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
@@ -192,6 +192,17 @@ class Answer(View):
 
         data = models.PuzzleData(puzzle, request.team)
 
+        last_updated = int(request.POST.get('last_updated')) // 1000
+        last_updated = datetime.fromtimestamp(last_updated, timezone.utc)
+        if last_updated:
+            new_hints = puzzle.hint_set.filter(
+                time__gt=(last_updated - data.tp_data.start_time),
+                time__lt=(timezone.now() - data.tp_data.start_time),
+            )
+            new_hints = [{'time': hint.time, 'text': hint.text} for hint in new_hints]
+        else:
+            new_hints = []
+
         # Gather together unlocks. Need to separate new and old ones for display.
         all_unlocks = models.Unlock.objects.filter(puzzle=puzzle)
         locked_unlocks = []
@@ -232,6 +243,7 @@ class Answer(View):
         else:
             response['guess'] = given_answer
             response['timeout'] = str(timezone.now() + timedelta(seconds=5))
+            response['new_hints'] = new_hints
             response['old_unlocks'] = unlocked_unlocks
             unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess, data) for a in u.unlockanswer_set.all()])]
             response['new_unlocks'] = [u.text for u in unlocks]
