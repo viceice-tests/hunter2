@@ -21,7 +21,10 @@ function incorrect_answer(guess, timeout, new_hints, old_unlocks, new_unlocks) {
 	var milliseconds = Date.parse(timeout) - Date.now();
 	var answer_button = $('#answer-button');
 	answer_button.after('<span id="answer-blocker"> You may guess again in 5 seconds.</span>');
-	setTimeout(function () {$('#answer-blocker').remove();}, milliseconds);
+	setTimeout(function () {
+		answer_button.removeAttr('disabled');
+		$('#answer-blocker').remove();
+	}, milliseconds);
 	answer_button.hide().delay(milliseconds).show(0);
 }
 
@@ -44,6 +47,9 @@ $(function() {
 		e.preventDefault();
 		var form = $(e.target);
 		var button = form.children('button');
+		if (button.attr('disabled') == 'true') {
+			return;
+		}
 		button.attr('disabled', 'true');
 		var data = {
 			last_updated: last_updated,
@@ -56,8 +62,8 @@ $(function() {
 			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
 			success: function(data) {
 				last_updated = Date.now();
-				button.removeAttr('disabled');
 				if (data.correct == "true") {
+					button.removeAttr('disabled');
 					correct_answer(data.url);
 				} else {
 					incorrect_answer(data.guess, data.timeout, data.new_hints, data.old_unlocks, data.new_unlocks);
