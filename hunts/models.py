@@ -219,6 +219,7 @@ class Guess(models.Model):
     def save(self, *args, update_team=True, **kwargs):
         if update_team:
             self.by_team = self.get_team()
+        self._evaluate_correctness()
         super().save(*args, **kwargs)
 
 
