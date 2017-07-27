@@ -9,7 +9,6 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from string import Template
 from datetime import timedelta
-import json
 from . import models
 from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
@@ -238,7 +237,7 @@ class Answer(View):
             response['new_unlocks'] = [u.text for u in unlocks]
         response['correct'] = str(correct).lower()
 
-        return HttpResponse(json.dumps(response))
+        return JsonResponse(response)
 
 
 @method_decorator(login_required, name='dispatch')
