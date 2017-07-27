@@ -9,7 +9,7 @@
 		<th>Time on puzzle</th>
 	</tr>
 	{% for guess in guesses %}
-	<tr class="guess-viewer-guess{% if guess.correct %} correct{% endif %}">
+	<tr class="guess-viewer-guess{% if guess.correct %} correct{% elif guess.unlocked %} unlocked{% endif %}">
 		<td><a href="?episode={{ guess.for_puzzle.episode_set.get.id }}">{{ guess.for_puzzle.episode_set.get.name }}</a></td>
 		<td><a href="?puzzle={{ guess.for_puzzle.id }}">{{ guess.for_puzzle.title }}</a></td>
 		<td><span class="user">{{ guess.by.user.username }}</span> <span class="team">(<a href="?team={{ guess.by_team.id }}">{{ guess.by_team.name }}</a>)</span></td>

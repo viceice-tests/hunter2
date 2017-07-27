@@ -133,8 +133,14 @@ class GuessesContent(View):
         for g in guesses:
             g_data = models.PuzzleData(g.for_puzzle, g.by_team(), g.by)
             answers = models.Answer.objects.filter(for_puzzle=g.for_puzzle)
-            correct = any([a.validate_guess(g, g_data) for a in answers])
-            g.correct = correct
+            if any([a.validate_guess(g, g_data) for a in answers]):
+                g.correct = True
+                continue
+
+            if request.GET.get('highlight_unlocks'):
+                unlockanswers = models.UnlockAnswer.objects.filter(unlock__puzzle=g.for_puzzle)
+                if any([a.validate_guess(g, g_data) for a in unlockanswers]):
+                    g.unlocked = True
 
         return TemplateResponse(
             request,
