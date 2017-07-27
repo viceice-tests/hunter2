@@ -131,7 +131,6 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (
     'hunter2/static',
-    'hunts/static',
 )
 
 SECURE_BROWSER_XSS_FILTER = True
