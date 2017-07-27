@@ -290,12 +290,10 @@ class CorrectnessCacheTests(TestCase):
         self.user2   = UserProfile.objects.get(pk=2)
         self.team1   = Team.objects.get(pk=1)
         self.team2   = Team.objects.get(pk=2)
-        self.event   = Event.objects.get(current=True)
         self.episode = Episode.objects.get(pk=1)
         self.puzzle1 = self.episode.get_puzzle(1)
         self.puzzle2 = self.episode.get_puzzle(2)
         self.answer1 = self.puzzle1.answer_set.get()
-        self.answer2 = self.puzzle2.answer_set.get()
 
     def test_changing_answers(self):
         # Check starting state
