@@ -294,6 +294,28 @@ class Episode(models.Model):
         n = int(puzzle_number)
         return self.puzzles.all()[n - 1:n].get()
 
+    def next_puzzle(self, team):
+        """return the relative id of the next puzzle the player should attempt, or None.
+
+        None is returned if the puzzle is parallel and there is not exactly
+        one unlocked puzzle, or if it is linear and all puzzles have been unlocked."""
+
+        if self.parallel:
+            unlocked = None
+            for i, puzzle in enumerate(self.puzzles.all()):
+                if not puzzle.answered_by(team):
+                    if unlocked is None:
+                        unlocked = i + 1
+                    else:
+                        return None
+            return unlocked
+        else:
+            for i, puzzle in enumerate(self.puzzles.all()):
+                if not puzzle.answered_by(team):
+                    return i + 1
+
+        return None
+
     def started(self, team=None):
         date = self.start_date
         if team:

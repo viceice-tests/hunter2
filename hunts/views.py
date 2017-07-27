@@ -7,7 +7,9 @@ from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
+from subdomains.utils import reverse
 from string import Template
+from datetime import datetime, timedelta
 from . import models
 import teams
 from . import rules
@@ -217,7 +219,7 @@ class Puzzle(View):
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
 
-        answered = reversed(puzzle.answered_by(request.team, data))
+        answered = bool(puzzle.answered_by(request.team, data))
         hints = [
             h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
         ]
@@ -266,6 +268,35 @@ class Answer(View):
             request.event, episode_number, puzzle_number
         )
 
+        data = models.PuzzleData(puzzle, request.team)
+
+        last_updated = request.POST.get('last_updated')
+        if last_updated:
+            last_updated = datetime.fromtimestamp(int(last_updated) // 1000, timezone.utc)
+            new_hints = puzzle.hint_set.filter(
+                time__gt=(last_updated - data.tp_data.start_time),
+                time__lt=(timezone.now() - data.tp_data.start_time),
+            )
+            new_hints = [{'time': str(hint.time), 'text': hint.text} for hint in new_hints]
+        else:
+            new_hints = []
+
+        # Gather together unlocks. Need to separate new and old ones for display.
+        all_unlocks = models.Unlock.objects.filter(puzzle=puzzle)
+        locked_unlocks = []
+        unlocked_unlocks = []
+        for u in all_unlocks:
+            correct_guesses = u.unlocked_by(request.team, data)
+            if correct_guesses:
+                unlocked_unlocks.append(
+                    {
+                        'guesses': [g.guess for g in correct_guesses],
+                        'text': u.text
+                    })
+            else:
+                locked_unlocks.append(u)
+
+        # Put answer in DB
         given_answer = request.POST['answer']
         guess = models.Guess(
             guess=given_answer,
@@ -274,19 +305,31 @@ class Answer(View):
         )
         guess.save()
 
-        if request.event:
-            return redirect(
-                'puzzle',
-                event_id=request.event.pk,
-                episode_number=episode_number,
-                puzzle_number=puzzle_number,
-            )
+        correct = any([a.validate_guess(guess, data) for a in puzzle.answer_set.all()])
+
+        # Build the response JSON depending on whether the answer was correct
+        response = {}
+        if correct:
+            next = episode.next_puzzle(request.team)
+            if next:
+                response['url'] = reverse('puzzle', subdomain=request.META['HTTP_HOST'],
+                                          kwargs={'event_id': request.event.pk,
+                                                  'episode_number': episode_number,
+                                                  'puzzle_number': next})
+            else:
+                response['url'] = reverse('episode', subdomain=request.META['HTTP_HOST'],
+                                          kwargs={'event_id': request.event.pk,
+                                                  'episode_number': episode_number}, )
         else:
-            return redirect(
-                'episode',
-                episode_number=episode_number,
-                puzzle_number=puzzle_number,
-            )
+            response['guess'] = given_answer
+            response['timeout'] = str(timezone.now() + timedelta(seconds=5))
+            response['new_hints'] = new_hints
+            response['old_unlocks'] = unlocked_unlocks
+            unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess, data) for a in u.unlockanswer_set.all()])]
+            response['new_unlocks'] = [u.text for u in unlocks]
+        response['correct'] = str(correct).lower()
+
+        return JsonResponse(response)
 
 
 @method_decorator(login_required, name='dispatch')
