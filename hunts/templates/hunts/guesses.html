@@ -1,0 +1,29 @@
+{% extends "events/base.html" %}
+{% load staticfiles %}
+
+{% block style %}
+<style type="text/css">
+	tr.correct {
+		background-color: #4d4;
+	}
+	tr.unlocked {
+		background-color: #ccf;
+	}
+</style>
+{% endblock %}
+{% block script %}
+<script src="{% static 'hunts/js/guesses.js' %}"></script>
+{% endblock %}
+
+{% block page_header %}
+<h1>Guesses</h1>
+{% endblock %}
+
+{% block content %}
+<p><a href="?">Clear filters</a></p>
+<p><input type="checkbox" checked="checked" id="auto-update"> <label for="auto-update">Update automatically</label></p>
+<div id="fill-me-up-you-slut">
+	Waiting for content...
+</div>
+{% endblock %}
+

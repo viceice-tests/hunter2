@@ -1,5 +1,5 @@
 from django.conf.urls import include, url
-from . import views
+from .. import views
 from django.views.generic import TemplateView
 
 puzzlepatterns = [
@@ -19,6 +19,8 @@ eventpatterns = [
         r'^(?P<event_id>[1-9]\d*)/$',
         views.EventIndex.as_view(),
         name='event'),
+    url(r'^(?P<event_id>[1-9]\d*)/guesses$', views.Guesses.as_view(), name='guesses'),
+    url(r'^(?P<event_id>[1-9]\d*)/guesses_content$', views.GuessesContent.as_view(), name='guesses_content'),
     url(
         r'^(?P<event_id>[1-9]\d*)/ep/(?P<episode_number>[1-9]\d*)/',
         include(episodepatterns)
