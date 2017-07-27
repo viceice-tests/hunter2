@@ -1,5 +1,6 @@
 from .utils import load_or_create_secret_key
 import environ
+import logging
 
 # Load the current environment profile
 root = environ.Path(__file__) - 2
@@ -19,6 +20,14 @@ DATABASES = {
 CACHES = {
     'default': env.cache_url('H2_CACHE_URL', default="dummycache://" )
 }
+USE_SILK = DEBUG and env.bool('H2_SILK', default=False)
+
+if USE_SILK:
+    try:
+        import silk  # noqa: F401
+    except ImportError:
+        logging.error("Silk profiling enabled but not available. Check REQUIREMENTS_VERSION is set to development at build time.")
+        USE_SILK = False
 
 # Generate a secret key and store it the first time it is accessed
 SECRET_KEY = load_or_create_secret_key("/config/secrets.ini")
@@ -69,6 +78,8 @@ INSTALLED_APPS = (
     'hunts',
     'hunter2',
 )
+if USE_SILK:
+    INSTALLED_APPS = INSTALLED_APPS + ('silk',)
 
 LOGGING = {
     'version': 1,
@@ -110,6 +121,8 @@ MIDDLEWARE = (
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
+if USE_SILK:
+    MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
 
 ROOT_URLCONF = 'hunter2.urls'
 
@@ -159,6 +172,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.contrib.messages.context_processors.messages',
                 'teams.context_processors.event_team',
+                'hunts.context_processors.announcements',
             ],
         },
     },
@@ -175,3 +189,9 @@ USE_TZ = True
 WSGI_APPLICATION = 'hunter2.wsgi.application'
 
 X_FRAME_OPTIONS = 'DENY'
+
+if USE_SILK:
+    SILKY_PYTHON_PROFILER = True
+    SILKY_PYTHON_PROFILER_BINARY = True
+    # Well, the following path is rubbish but I cba doing it properly for now
+    SILKY_PYTHON_PROFILER_RESULT_PATH = '/uploads/events/'

@@ -5,7 +5,9 @@ coverage
 django-allauth
 django-autocomplete-light
 django-debug-toolbar
+django-enumfields
 django-environ
+django-extensions
 django-nested-admin
 django-registration
 django-sortedm2m

@@ -1,6 +1,7 @@
 # vim: set fileencoding=utf-8 :
 import os
 import tempfile
+import logging
 from io import StringIO
 
 import builtins
@@ -15,7 +16,10 @@ from .utils import generate_secret_key, load_or_create_secret_key
 
 
 class TestRunner(ColourRunnerMixin, DiscoverRunner):
-    pass
+    def run_tests(self, test_labels, extra_tests=None, **kwargs):
+        # Disable non-critial logging for test runs
+        logging.disable(logging.CRITICAL)
+        return super(TestRunner, self).run_tests(test_labels, extra_tests, **kwargs)
 
 
 # Adapted from:
