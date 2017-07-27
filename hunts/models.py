@@ -53,13 +53,11 @@ class Puzzle(models.Model):
 
     def first_correct_guesses(self, event):
         """Returns a dictionary of teams to guesses, where the guess is that team's earliest correct, validated guess for this puzzle"""
-        all_teams = teams.models.Team.objects.filter(at_event=event)
         correct_guesses = Guess.objects.filter(
             for_puzzle=self,
         ).order_by(
             'given'
         ).select_related('correct_for', 'by_team')
-        correct_guesses=list(correct_guesses)
 
         team_guesses = {}
         for g in correct_guesses:
@@ -196,7 +194,6 @@ class Guess(models.Model):
             self.save(update_team=False)
 
         return self.correct_for
-
 
     def _evaluate_correctness(self, data=None, answers=None):
         """Re-evaluate self.correct_current and self.correct_for.

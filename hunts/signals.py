@@ -24,6 +24,7 @@ def episode_prequels_changed(sender, instance, action, pk_set, **kwargs):
             elif episode.follows(instance):
                 raise ValidationError('Circular dependency found in episodes')
 
+
 @receiver(m2m_changed, sender=teams.models.Team.members.through)
 def members_changed(sender, instance, action, pk_set, **kwargs):
     if action == 'post_add':
