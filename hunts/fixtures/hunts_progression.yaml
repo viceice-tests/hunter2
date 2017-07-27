@@ -91,12 +91,6 @@
   pk: 1
   fields: {for_puzzle: 1, runtime: S, answer: correct}
 - model: hunts.answer
-  pk: 2
-  fields: {for_puzzle: 1, runtime: R, answer: cor+ect}
-- model: hunts.answer
-  pk: 3
-  fields: {for_puzzle: 1, runtime: L, answer: return guess == "correct"}
-- model: hunts.answer
   pk: 7
   fields: {for_puzzle: 5, runtime: S, answer: correct}
 - model: hunts.answer
