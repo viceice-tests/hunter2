@@ -192,9 +192,9 @@ class Answer(View):
 
         data = models.PuzzleData(puzzle, request.team)
 
-        last_updated = int(request.POST.get('last_updated')) // 1000
-        last_updated = datetime.fromtimestamp(last_updated, timezone.utc)
+        last_updated = request.POST.get('last_updated')
         if last_updated:
+            last_updated = datetime.fromtimestamp(int(last_updated) // 1000, timezone.utc)
             new_hints = puzzle.hint_set.filter(
                 time__gt=(last_updated - data.tp_data.start_time),
                 time__lt=(timezone.now() - data.tp_data.start_time),
