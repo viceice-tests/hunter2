@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
-from django.http import HttpResponse, JsonResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
@@ -8,6 +9,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from string import Template
 from . import models
+import teams
 from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
@@ -73,6 +75,79 @@ class Episode(View):
                 'episode_number': episode_number,
                 'event_id': request.event.pk,
                 'puzzles': puzzles,
+            }
+        )
+
+
+@method_decorator(login_required, name='dispatch')
+class Guesses(View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            raise PermissionDenied
+
+        return TemplateResponse(
+            request,
+            'hunts/guesses.html',
+        )
+
+
+@method_decorator(login_required, name='dispatch')
+class GuessesContent(View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            return HttpResponseForbidden()
+
+        episode = request.GET.get('episode')
+        puzzle = request.GET.get('puzzle')
+        team = request.GET.get('team')
+
+        puzzles = models.Puzzle.objects.filter(episode__event=request.event)
+        if puzzle:
+            puzzles = puzzles.filter(id=puzzle)
+        if episode:
+            puzzles = puzzles.filter(episode=episode)
+
+        all_guesses = models.Guess.objects.filter(
+            for_puzzle__in=puzzles
+        ).order_by(
+            '-given'
+        )
+
+        if team:
+            team = teams.models.Team.objects.get(id=team)
+            all_guesses = all_guesses.filter(by__in=team.members.all())
+
+        guess_pages = Paginator(all_guesses, 50)
+        page = request.GET.get('page')
+        try:
+            guesses = guess_pages.page(page)
+        except PageNotAnInteger:
+            guesses = guess_pages.page(1)
+        except EmptyPage:
+            guesses = guess_pages.page(guess_pages.num_pages)
+
+        for g in guesses:
+            g_data = models.PuzzleData(g.for_puzzle, g.by_team(), g.by)
+            answers = models.Answer.objects.filter(for_puzzle=g.for_puzzle)
+            if any([a.validate_guess(g, g_data) for a in answers]):
+                g.correct = True
+                continue
+
+            if request.GET.get('highlight_unlocks'):
+                unlockanswers = models.UnlockAnswer.objects.filter(unlock__puzzle=g.for_puzzle)
+                if any([a.validate_guess(g, g_data) for a in unlockanswers]):
+                    g.unlocked = True
+
+        return TemplateResponse(
+            request,
+            'hunts/guesses_content.html',
+            context={
+                'event_id': request.event.pk,
+                'guesses': guesses,
             }
         )
 
