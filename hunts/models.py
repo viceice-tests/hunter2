@@ -5,6 +5,7 @@ from django.utils import timezone
 from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
+from enumfields import EnumField, Enum
 
 import events
 import teams
@@ -159,6 +160,24 @@ class Guess(models.Model):
 
     def __str__(self):
         return f'<Guess: {self.guess} by {self.by}>'
+
+    def by_team(self):
+        event = self.for_puzzle.episode_set.get().event
+        return teams.models.Team.objects.filter(at_event=event, members=self.by).get()
+
+    def time_on_puzzle(self):
+        team = self.by_team()
+        data = TeamPuzzleData.objects.filter(
+            puzzle=self.for_puzzle,
+            team=team
+        ).get()
+        if not data.start_time:
+            # This should never happen, but can do with sample data.
+            return '0'
+        time_active = self.given - data.start_time
+        hours, seconds = divmod(time_active.total_seconds(), 3600)
+        minutes, seconds = divmod(seconds, 60)
+        return '%02d:%02d:%02d' % (hours, minutes, seconds)
 
 
 class TeamData(models.Model):
@@ -364,3 +383,22 @@ class Episode(models.Model):
                     return True
                 if not p.answered_by(team):
                     return False
+
+
+class AnnoucmentType(Enum):
+    INFO = 'I'
+    SUCCESSS = 'S'
+    WARNING = 'W'
+    ERROR = 'E'
+
+
+class Annoucement(models.Model):
+    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='announcements')
+    puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE, related_name='announcements', null=True, blank=True)
+    title = models.CharField(max_length=255)
+    posted = models.DateTimeField(auto_now_add=True)
+    message = models.TextField(blank=True)
+    type = EnumField(AnnoucmentType, max_length=1, default=AnnoucmentType.INFO)
+
+    def __str__(self):
+        return f'<EventAnnoucement: {self.title}>'

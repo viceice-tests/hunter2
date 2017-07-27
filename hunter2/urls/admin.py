@@ -2,6 +2,8 @@ from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
 
+from hunts.urls.admin import urlpatterns as hunts_patterns
+
 from .. import settings
 
 admin_patterns = [
@@ -10,7 +12,8 @@ admin_patterns = [
     url(r'^nested_admin/', include('nested_admin.urls')),
 ] \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
-    + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) \
+    + hunts_patterns
 
 if settings.DEBUG:
     import debug_toolbar

@@ -79,6 +79,11 @@ class EpisodeBehaviourTest(TestCase):
         self.team = Team.objects.get(pk=1)
         self.user = self.team.members.get(pk=1)
 
+    def test_reuse_puzzle(self):
+        puzzle = Puzzle.objects.get(pk=2)
+        with self.assertRaises(ValidationError):
+            self.linear_episode.puzzles.add(puzzle)
+
     def test_episode_behaviour(self):
         self.linear_episodes_are_linear()
         self.can_see_all_parallel_puzzles()
@@ -187,6 +192,15 @@ class AdminTeamTests(TestCase):
         self.assertTrue(self.client.login(username='admin', password='hunter2'))
 
         response = self.client.get(reverse('episode', subdomain='www', kwargs={'event_id': 1, 'episode_number': 1}), HTTP_HOST='www.testserver')
+        self.assertEqual(response.status_code, 200)
+
+
+class AdminViewTests(TestCase):
+    fixtures = ['hunts_test']
+
+    def test_can_view_guesses(self):
+        self.assertTrue(self.client.login(username='admin', password='hunter2'))
+        response = self.client.get(reverse('guesses', subdomain='www', kwargs={'event_id': 1}), HTTP_HOST='www.testserver')
         self.assertEqual(response.status_code, 200)
 
 

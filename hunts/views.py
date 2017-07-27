@@ -1,16 +1,17 @@
 from django.contrib.auth.decorators import login_required
-from django.core.urlresolvers import reverse
-from django.core.exceptions import ValidationError
-from django.http import HttpResponse, JsonResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
+from subdomains.utils import reverse
 from string import Template
-from datetime import timedelta
-import json
+from datetime import datetime, timedelta
 from . import models
+import teams
 from . import rules
 from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
@@ -81,6 +82,79 @@ class Episode(View):
 
 
 @method_decorator(login_required, name='dispatch')
+class Guesses(View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            raise PermissionDenied
+
+        return TemplateResponse(
+            request,
+            'hunts/guesses.html',
+        )
+
+
+@method_decorator(login_required, name='dispatch')
+class GuessesContent(View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            return HttpResponseForbidden()
+
+        episode = request.GET.get('episode')
+        puzzle = request.GET.get('puzzle')
+        team = request.GET.get('team')
+
+        puzzles = models.Puzzle.objects.filter(episode__event=request.event)
+        if puzzle:
+            puzzles = puzzles.filter(id=puzzle)
+        if episode:
+            puzzles = puzzles.filter(episode=episode)
+
+        all_guesses = models.Guess.objects.filter(
+            for_puzzle__in=puzzles
+        ).order_by(
+            '-given'
+        )
+
+        if team:
+            team = teams.models.Team.objects.get(id=team)
+            all_guesses = all_guesses.filter(by__in=team.members.all())
+
+        guess_pages = Paginator(all_guesses, 50)
+        page = request.GET.get('page')
+        try:
+            guesses = guess_pages.page(page)
+        except PageNotAnInteger:
+            guesses = guess_pages.page(1)
+        except EmptyPage:
+            guesses = guess_pages.page(guess_pages.num_pages)
+
+        for g in guesses:
+            g_data = models.PuzzleData(g.for_puzzle, g.by_team(), g.by)
+            answers = models.Answer.objects.filter(for_puzzle=g.for_puzzle)
+            if any([a.validate_guess(g, g_data) for a in answers]):
+                g.correct = True
+                continue
+
+            if request.GET.get('highlight_unlocks'):
+                unlockanswers = models.UnlockAnswer.objects.filter(unlock__puzzle=g.for_puzzle)
+                if any([a.validate_guess(g, g_data) for a in unlockanswers]):
+                    g.unlocked = True
+
+        return TemplateResponse(
+            request,
+            'hunts/guesses_content.html',
+            context={
+                'event_id': request.event.pk,
+                'guesses': guesses,
+            }
+        )
+
+
+@method_decorator(login_required, name='dispatch')
 class EventDirect(View):
     def get(self, request):
         event = events.models.Event.objects.filter(current=True).get()
@@ -120,6 +194,9 @@ class Puzzle(View):
         )
         admin = rules.is_admin_for_puzzle(request.user, puzzle)
 
+        # Make the puzzle available on the request object
+        request.puzzle = puzzle
+
         # If episode has not started redirect to episode holding page
         if episode.start_date > timezone.now() and not admin:
             if request.event:
@@ -142,7 +219,7 @@ class Puzzle(View):
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
 
-        answered = puzzle.answered_by(request.team, data).reverse()
+        answered = bool(puzzle.answered_by(request.team, data))
         hints = [
             h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
         ]
@@ -203,9 +280,20 @@ class Answer(View):
             pass
         else:
             if latest_guess.given + minimum_time > timezone.now():
-                return HttpResponse(json.dumps({'error': 'too fast'}))
+                return JsonResponse({'error': 'too fast'})
 
         data = models.PuzzleData(puzzle, request.team)
+
+        last_updated = request.POST.get('last_updated')
+        if last_updated:
+            last_updated = datetime.fromtimestamp(int(last_updated) // 1000, timezone.utc)
+            new_hints = puzzle.hint_set.filter(
+                time__gt=(last_updated - data.tp_data.start_time),
+                time__lt=(timezone.now() - data.tp_data.start_time),
+            )
+            new_hints = [{'time': str(hint.time), 'text': hint.text} for hint in new_hints]
+        else:
+            new_hints = []
 
         # Gather together unlocks. Need to separate new and old ones for display.
         all_unlocks = models.Unlock.objects.filter(puzzle=puzzle)
@@ -238,21 +326,24 @@ class Answer(View):
         if correct:
             next = episode.next_puzzle(request.team)
             if next:
-                response['url'] = reverse('puzzle', kwargs={'event_id': request.event.pk,
-                                                            'episode_number': episode_number,
-                                                            'puzzle_number': next})
+                response['url'] = reverse('puzzle', subdomain=request.META['HTTP_HOST'],
+                                          kwargs={'event_id': request.event.pk,
+                                                  'episode_number': episode_number,
+                                                  'puzzle_number': next})
             else:
-                response['url'] = reverse('episode', kwargs={'event_id': request.event.pk,
-                                                             'episode_number': episode_number})
+                response['url'] = reverse('episode', subdomain=request.META['HTTP_HOST'],
+                                          kwargs={'event_id': request.event.pk,
+                                                  'episode_number': episode_number}, )
         else:
             response['guess'] = given_answer
             response['timeout'] = str(timezone.now() + minimum_time)
+            response['new_hints'] = new_hints
             response['old_unlocks'] = unlocked_unlocks
             unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess, data) for a in u.unlockanswer_set.all()])]
             response['new_unlocks'] = [u.text for u in unlocks]
         response['correct'] = str(correct).lower()
 
-        return HttpResponse(json.dumps(response))
+        return JsonResponse(response)
 
 
 @method_decorator(login_required, name='dispatch')

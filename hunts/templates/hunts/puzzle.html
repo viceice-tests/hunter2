@@ -15,9 +15,11 @@
 <!-- CLUE ENDS HERE -->
 <h2>Clues</h2>
 <h3>Hints</h3>
+<div id="hints">
 {% for hint in hints %}
 <p>{{hint.time}}: {{hint.text}}</p>
 {% endfor %}
+</div>
 <h3>Unlocks</h3>
 <div id="unlocks">
 {% for unlock in unlocks %}
