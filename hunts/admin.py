@@ -35,10 +35,12 @@ class UnlockInline(NestedStackedInline):
     extra = 0
 
 
+@admin.register(models.Guess)
 class GuessAdmin(admin.ModelAdmin):
-    pass
+    read_only_fields = ('correct_current', 'correct_for')
 
 
+@admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdmin):
     inlines = [
         FileInline,
@@ -48,21 +50,11 @@ class PuzzleAdmin(NestedModelAdmin):
     ]
 
 
-class EpisodeAdmin(admin.ModelAdmin):
-    pass
-
-
-class TeamPuzzleDataAdmin(admin.ModelAdmin):
-    pass
-
-
+@admin.register(models.UserPuzzleData)
 class UserPuzzleDataAdmin(admin.ModelAdmin):
     readonly_fields = ('token', )
 
 
-admin.site.register(models.Guess, GuessAdmin)
-admin.site.register(models.Puzzle, PuzzleAdmin)
-admin.site.register(models.Episode, EpisodeAdmin)
-admin.site.register(models.TeamPuzzleData, TeamPuzzleDataAdmin)
-admin.site.register(models.UserPuzzleData, UserPuzzleDataAdmin)
 admin.site.register(models.Annoucement)
+admin.site.register(models.Episode)
+admin.site.register(models.TeamPuzzleData)
