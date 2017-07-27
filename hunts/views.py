@@ -199,7 +199,7 @@ class Answer(View):
                 time__gt=(last_updated - data.tp_data.start_time),
                 time__lt=(timezone.now() - data.tp_data.start_time),
             )
-            new_hints = [{'time': hint.time, 'text': hint.text} for hint in new_hints]
+            new_hints = [{'time': str(hint.time), 'text': hint.text} for hint in new_hints]
         else:
             new_hints = []
 
