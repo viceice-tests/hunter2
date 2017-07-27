@@ -346,3 +346,43 @@ class CorrectnessCacheTests(TestCase):
         self.assertTrue(guess2.get_correct_for())
         self.assertTrue(self.puzzle2.answered_by(self.team2))
 
+
+class GuessTeamDenormalisationTests(TestCase):
+    fixtures = ['hunts_progression']
+
+    def setUp(self):
+        self.team1   = Team.objects.get(pk=1)
+        self.team2   = Team.objects.get(pk=2)
+        self.user1   = self.team1.members.get()
+        self.user2   = self.team2.members.get()
+        self.episode = Episode.objects.get(pk=1)
+        self.puzzle1 = self.episode.get_puzzle(1)
+        self.puzzle2 = self.episode.get_puzzle(2)
+        self.answer1 = self.puzzle1.answer_set.get()
+
+    def test_adding_guess(self):
+        guess1 = Guess(for_puzzle=self.puzzle1, by=self.user1, guess="incorrect")
+        guess2 = Guess(for_puzzle=self.puzzle2, by=self.user2, guess="incorrect")
+        guess1.save()
+        guess2.save()
+        self.assertEqual(guess1.by_team, self.team1)
+        self.assertEqual(guess2.by_team, self.team2)
+
+    def test_join_team_updates_guesses(self):
+        guess1 = Guess(for_puzzle=self.puzzle1, by=self.user1, guess="incorrect")
+        guess2 = Guess(for_puzzle=self.puzzle2, by=self.user2, guess="incorrect")
+        guess1.save()
+        guess2.save()
+
+        # Swap teams and check the guesses update
+        self.team1.members = []
+        self.team2.members = [self.user1]
+        self.team1.save()
+        self.team2.save()
+        self.team1.members = [self.user2]
+        self.team1.save()
+
+        guess1.refresh_from_db()
+        guess2.refresh_from_db()
+        self.assertEqual(guess1.by_team, self.team2)
+        self.assertEqual(guess2.by_team, self.team1)
