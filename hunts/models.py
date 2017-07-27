@@ -170,6 +170,9 @@ class Guess(models.Model):
             puzzle=self.for_puzzle,
             team=team
         ).get()
+        if not data.start_time:
+            # This should never happen, but can do with sample data.
+            return '0'
         time_active = self.given - data.start_time
         hours, seconds = divmod(time_active.total_seconds(), 3600)
         minutes, seconds = divmod(seconds, 60)
