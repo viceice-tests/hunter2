@@ -8,8 +8,10 @@
 {% if answered %}
 <h2>Already Answered</h2>
 {% endif %}
-<!-- CLUE STARTS HERE -->
 <h1>{{ title }}</h1>
+<div class="puzzle-flavour">{{ flavour | safe }}</div>
+<hr class="flavour-clue-divider">
+<!-- CLUE STARTS HERE -->
 {% comment %}Render puzzle text including HTML elements{% endcomment %}
 {{ text | safe }}
 <!-- CLUE ENDS HERE -->

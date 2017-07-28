@@ -8,6 +8,8 @@
 {% endblock %}
 
 {% block content %}
+<div class="episode-flavour">{{ flavour | safe }}</div>
+<div class="puzzles">
 <ol>
 {% for puzzle in puzzles %}
 	<li>
@@ -19,4 +21,5 @@
 	</li>
 {% endfor %}
 </ol>
+</div>
 {% endblock %}

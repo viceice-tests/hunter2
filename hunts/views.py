@@ -73,6 +73,7 @@ class Episode(View):
             context={
                 'admin': admin,
                 'episode': episode.name,
+                'flavour': episode.flavour,
                 'position': position,
                 'episode_number': episode_number,
                 'event_id': request.event.pk,
@@ -251,6 +252,7 @@ class Puzzle(View):
                 'admin': admin,
                 'hints': hints,
                 'title': puzzle.title,
+                'flavour': puzzle.flavour,
                 'text': text,
                 'unlocks': unlocks,
             }
