@@ -39,7 +39,7 @@ class Puzzle(models.Model):
         return episode.unlocked_by(team) and \
             episode._puzzle_unlocked_by(self, team)
 
-    def answered_by(self, team, data=None, answers=None):
+    def answered_by(self, team):
         """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
         guesses = Guess.objects.filter(
             by__in=team.members.all(),

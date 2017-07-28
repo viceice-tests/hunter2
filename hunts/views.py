@@ -210,7 +210,7 @@ class Puzzle(View):
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
 
-        answered = bool(puzzle.answered_by(request.team, data))
+        answered = bool(puzzle.answered_by(request.team))
         hints = [
             h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
         ]
