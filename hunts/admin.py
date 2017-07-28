@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from nested_admin import \
     NestedModelAdmin, \
@@ -6,10 +7,18 @@ from nested_admin import \
 from . import models
 
 
+def make_textinput(field, db_field, kwdict):
+    if db_field.attname == field:
+        kwdict['widget'] = forms.Textarea(attrs={'rows': 1})
+
+
 class AnswerInline(NestedTabularInline):
     model = models.Answer
     fields = ('answer', 'runtime')
     extra = 0
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        make_textinput('answer', db_field, kwargs)
+        return super().formfield_for_dbfield(db_field, **kwargs)
 
 
 class FileInline(NestedTabularInline):
@@ -20,11 +29,17 @@ class FileInline(NestedTabularInline):
 class HintInline(NestedTabularInline):
     model = models.Hint
     extra = 0
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        make_textinput('text', db_field, kwargs)
+        return super().formfield_for_dbfield(db_field, **kwargs)
 
 
 class UnlockAnswerInline(NestedStackedInline):
     model = models.UnlockAnswer
     extra = 0
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        make_textinput('guess', db_field, kwargs)
+        return super().formfield_for_dbfield(db_field, **kwargs)
 
 
 class UnlockInline(NestedStackedInline):
@@ -33,6 +48,9 @@ class UnlockInline(NestedStackedInline):
         UnlockAnswerInline,
     ]
     extra = 0
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        make_textinput('text', db_field, kwargs)
+        return super().formfield_for_dbfield(db_field, **kwargs)
 
 
 class GuessAdmin(admin.ModelAdmin):
