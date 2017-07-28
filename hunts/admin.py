@@ -16,6 +16,7 @@ class AnswerInline(NestedTabularInline):
     model = models.Answer
     fields = ('answer', 'runtime')
     extra = 0
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('answer', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
@@ -29,6 +30,7 @@ class FileInline(NestedTabularInline):
 class HintInline(NestedTabularInline):
     model = models.Hint
     extra = 0
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('text', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
@@ -37,6 +39,7 @@ class HintInline(NestedTabularInline):
 class UnlockAnswerInline(NestedStackedInline):
     model = models.UnlockAnswer
     extra = 0
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('guess', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
@@ -48,6 +51,7 @@ class UnlockInline(NestedStackedInline):
         UnlockAnswerInline,
     ]
     extra = 0
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('text', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
