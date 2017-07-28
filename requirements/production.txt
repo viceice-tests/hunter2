@@ -3,6 +3,7 @@ PyYAML
 colour-runner
 coverage
 django-allauth
+django-analytical
 django-autocomplete-light
 django-debug-toolbar
 django-enumfields
