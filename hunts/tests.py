@@ -1,17 +1,17 @@
 # vim: set fileencoding=utf-8 :
-import datetime
-
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
 from subdomains.utils import reverse
-import time
 
 from events.models import Event
 from teams.models import Team, UserProfile
 from .models import Answer, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, Episode
 from .runtimes.registry import RuntimesRegistry as rr
+
+import datetime
+import freezegun
 
 
 class AnswerValidationTests(TestCase):
@@ -69,14 +69,15 @@ class AnswerSubmissionTest(TestCase):
         url = reverse('answer', subdomain='www',
                       kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1},
                       )
-        response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
-        self.assertEqual(response.status_code, 200)
-        response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
-        self.assertEqual(response.status_code, 429)
-        self.assertTrue(b'error' in response.content)
-        time.sleep(5)
-        response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
-        self.assertEqual(response.status_code, 200)
+        with freezegun.freeze_time() as frozen_datetime:
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            self.assertEqual(response.status_code, 200)
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            self.assertEqual(response.status_code, 429)
+            self.assertTrue(b'error' in response.content)
+            frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            self.assertEqual(response.status_code, 200)
 
 
 class PuzzleStartTimeTests(TestCase):
