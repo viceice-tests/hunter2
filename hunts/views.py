@@ -268,10 +268,24 @@ class Answer(View):
             request.event, episode_number, puzzle_number
         )
 
+        minimum_time = timedelta(seconds=5)
+        try:
+            latest_guess = models.Guess.objects.filter(
+                for_puzzle=puzzle,
+                by=request.user.profile
+            ).order_by(
+                '-given'
+            )[0]
+        except IndexError:
+            pass
+        else:
+            if latest_guess.given + minimum_time > timezone.now():
+                return JsonResponse({'error': 'too fast'}, status=429)
+
         data = models.PuzzleData(puzzle, request.team)
 
         last_updated = request.POST.get('last_updated')
-        if last_updated:
+        if last_updated and data.tp_data.start_time:
             last_updated = datetime.fromtimestamp(int(last_updated) // 1000, timezone.utc)
             new_hints = puzzle.hint_set.filter(
                 time__gt=(last_updated - data.tp_data.start_time),
@@ -322,7 +336,7 @@ class Answer(View):
                                                   'episode_number': episode_number}, )
         else:
             response['guess'] = given_answer
-            response['timeout'] = str(timezone.now() + timedelta(seconds=5))
+            response['timeout'] = str(timezone.now() + minimum_time)
             response['new_hints'] = new_hints
             response['old_unlocks'] = unlocked_unlocks
             unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess, data) for a in u.unlockanswer_set.all()])]

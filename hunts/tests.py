@@ -1,6 +1,4 @@
 # vim: set fileencoding=utf-8 :
-import datetime
-
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.test import TestCase
@@ -11,6 +9,9 @@ from events.models import Event
 from teams.models import Team, UserProfile
 from .models import Answer, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, Episode
 from .runtimes.registry import RuntimesRegistry as rr
+
+import datetime
+import freezegun
 
 
 class AnswerValidationTests(TestCase):
@@ -53,6 +54,30 @@ class AnswerValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess, self.data))
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
         self.assertFalse(answer.validate_guess(guess, self.data))
+
+
+class AnswerSubmissionTest(TestCase):
+    fixtures = ['hunts_test']
+
+    def setUp(self):
+        self.puzzle = Puzzle.objects.get(pk=1)
+        self.team = Team.objects.get(pk=1)
+        self.data = PuzzleData(self.puzzle, self.team)
+
+    def test_answer_cooldown(self):
+        self.assertTrue(self.client.login(username='test', password='hunter2'))
+        url = reverse('answer', subdomain='www',
+                      kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1},
+                      )
+        with freezegun.freeze_time() as frozen_datetime:
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            self.assertEqual(response.status_code, 200)
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            self.assertEqual(response.status_code, 429)
+            self.assertTrue(b'error' in response.content)
+            frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            self.assertEqual(response.status_code, 200)
 
 
 class PuzzleStartTimeTests(TestCase):
