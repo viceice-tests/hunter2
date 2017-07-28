@@ -62,9 +62,7 @@ $(function() {
 			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
 			success: function(data) {
 				last_updated = Date.now();
-				if (data.error == "too fast") {
-					message("Slow down there, sparky! You're supposed to wait 5s between submissions.", "");
-				} else if (data.correct == "true") {
+				if (data.correct == "true") {
 					button.removeAttr('disabled');
 					correct_answer(data.url);
 				} else {
@@ -73,7 +71,11 @@ $(function() {
 			},
 			error: function(xhr, status, error) {
 				button.removeAttr('disabled');
-				message("There was an error submitting the answer.", error);
+				if (xhr.responseJSON.error == "too fast") {
+					message("Slow down there, sparky! You're supposed to wait 5s between submissions.", "");
+				} else {
+					message("There was an error submitting the answer.", error);
+				}
 			},
 			dataType: 'json'
 		});
