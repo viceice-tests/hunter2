@@ -17,6 +17,7 @@ django-nested-admin==3.0.19
 django-registration==2.2
 django-silk==0.7.0
 django-sortedm2m==1.4.0
+freezegun==0.3.9
 idna==2.5
 Jinja2==2.9.6
 lupa==1.4

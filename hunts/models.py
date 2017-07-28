@@ -218,6 +218,19 @@ class Guess(models.Model):
             self.by_team = self.get_team()
         self._evaluate_correctness()
         super().save(*args, **kwargs)
+    def time_on_puzzle(self):
+        team = self.by_team()
+        data = TeamPuzzleData.objects.filter(
+            puzzle=self.for_puzzle,
+            team=team
+        ).get()
+        if not data.start_time:
+            # This should never happen, but can do with sample data.
+            return '0'
+        time_active = self.given - data.start_time
+        hours, seconds = divmod(time_active.total_seconds(), 3600)
+        minutes, seconds = divmod(seconds, 60)
+        return '%02d:%02d:%02d' % (hours, minutes, seconds)
 
 
 class TeamData(models.Model):
@@ -333,6 +346,28 @@ class Episode(models.Model):
     def get_puzzle(self, puzzle_number):
         n = int(puzzle_number)
         return self.puzzles.all()[n - 1:n].get()
+
+    def next_puzzle(self, team):
+        """return the relative id of the next puzzle the player should attempt, or None.
+
+        None is returned if the puzzle is parallel and there is not exactly
+        one unlocked puzzle, or if it is linear and all puzzles have been unlocked."""
+
+        if self.parallel:
+            unlocked = None
+            for i, puzzle in enumerate(self.puzzles.all()):
+                if not puzzle.answered_by(team):
+                    if unlocked is None:
+                        unlocked = i + 1
+                    else:
+                        return None
+            return unlocked
+        else:
+            for i, puzzle in enumerate(self.puzzles.all()):
+                if not puzzle.answered_by(team):
+                    return i + 1
+
+        return None
 
     def started(self, team=None):
         date = self.start_date

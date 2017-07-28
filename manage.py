@@ -5,6 +5,10 @@ import os
 import sys
 
 if __name__ == "__main__":
+    # TODO: remove this when silk stops being bullshit
+    if 'makemigrations' in sys.argv:
+        os.environ['H2_SILK'] = "False"
+
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hunter2.settings")
     from django.core.management import execute_from_command_line
 
