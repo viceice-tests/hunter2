@@ -130,7 +130,7 @@ class GuessesContent(View):
 
         if request.GET.get('highlight_unlocks'):
             for g in guesses:
-                g_data = models.PuzzleData(g.for_puzzle, g.by_team(), g.by)
+                g_data = models.PuzzleData(g.for_puzzle, g.by_team, g.by)
                 unlockanswers = models.UnlockAnswer.objects.filter(unlock__puzzle=g.for_puzzle)
                 if any([a.validate_guess(g, g_data) for a in unlockanswers]):
                     g.unlocked = True

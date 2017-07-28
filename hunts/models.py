@@ -218,8 +218,9 @@ class Guess(models.Model):
             self.by_team = self.get_team()
         self._evaluate_correctness()
         super().save(*args, **kwargs)
+
     def time_on_puzzle(self):
-        team = self.by_team()
+        team = self.by_team
         data = TeamPuzzleData.objects.filter(
             puzzle=self.for_puzzle,
             team=team
