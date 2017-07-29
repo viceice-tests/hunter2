@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="episode-flavour">{{ flavour | safe }}</div>
+{% if flavour %}<div class="episode-flavour">{{ flavour | safe }}</div>{% endif %}
 <div class="puzzles">
 <ol>
 {% for puzzle in puzzles %}

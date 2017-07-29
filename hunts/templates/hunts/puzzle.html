@@ -9,8 +9,10 @@
 <h2>Already Answered</h2>
 {% endif %}
 <h1>{{ title }}</h1>
+{% if flavour %}
 <div class="puzzle-flavour">{{ flavour | safe }}</div>
 <hr class="flavour-clue-divider">
+{% endif %}
 <!-- CLUE STARTS HERE -->
 {% comment %}Render puzzle text including HTML elements{% endcomment %}
 {{ text | safe }}
