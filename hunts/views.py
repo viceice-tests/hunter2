@@ -126,8 +126,10 @@ class GuessesContent(View):
             'by__user__id', 'by__user__username',
             'correct_for__id'
         ).prefetch_related(
-            Prefetch('for_puzzle__episode_set',
-            queryset=models.Episode.objects.only('id', 'name').all())
+            Prefetch(
+                'for_puzzle__episode_set',
+                queryset=models.Episode.objects.only('id', 'name').all()
+            )
         )
 
         if team:
@@ -144,8 +146,11 @@ class GuessesContent(View):
             guesses = guess_pages.page(guess_pages.num_pages)
 
         for g in guesses:
-            # Using .get() here for some reason creates an extra query for each guess
-            # even though we have prefetched this relation. .all()[0] does not.
+            # Using .get() here for some reason creates an extra query for each guess even though
+            # we have prefetched this relation. .all()[0] does not.
+            # We are monkey-patching here so that we can do guess.episode.<blah> in the template -
+            # otherwise we'd have to do guess.for_puzzle.episode_set.all.0.id etc there, which is
+            # too nasty.
             g.episode = g.for_puzzle.episode_set.all()[0]
 
         if request.GET.get('highlight_unlocks'):
