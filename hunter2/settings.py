@@ -10,6 +10,7 @@ env = environ.Env()
 DEBUG         = env.bool      ('H2_DEBUG',         default=False)
 LOG_LEVEL     = env.str       ('H2_LOG_LEVEL',     default='WARNING')
 LANGUAGE_CODE = env.str       ('H2_LANGUAGE_CODE', default='en-gb')
+PIWIK         = env.url       ('H2_PIWIK',         default=None)
 TIME_ZONE     = env.str       ('H2_TIME_ZONE',     default='Europe/London')
 ALLOWED_HOSTS = env.list      ('H2_ALLOWED_HOSTS', default=['*'])
 INTERNAL_IPS  = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
@@ -55,8 +56,14 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
 INSTALLED_APPS = (
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.openid',
+    'analytical',
     'dal',
     'dal_select2',
+    'debug_toolbar',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -64,19 +71,14 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.openid',
-    'debug_toolbar',
+    'events',
+    'hunter2',
+    'hunts',
     'nested_admin',
     'rules.apps.AutodiscoverRulesConfig',
     'sortedm2m',
     'subdomains',
-    'events',
     'teams',
-    'hunts',
-    'hunter2',
 )
 if USE_SILK:
     INSTALLED_APPS = INSTALLED_APPS + ('silk',)
@@ -123,6 +125,9 @@ MIDDLEWARE = (
 )
 if USE_SILK:
     MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
+
+if PIWIK:
+    PIWIK_DOMAIN_PATH = PIWIK.geturl()
 
 ROOT_URLCONF = 'hunter2.urls'
 
