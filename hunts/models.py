@@ -222,10 +222,9 @@ class Guess(models.Model):
         super().save(*args, **kwargs)
 
     def time_on_puzzle(self):
-        team = self.by_team
         data = TeamPuzzleData.objects.filter(
             puzzle=self.for_puzzle,
-            team=team
+            team=self.by_team
         ).get()
         if not data.start_time:
             # This should never happen, but can do with sample data.
