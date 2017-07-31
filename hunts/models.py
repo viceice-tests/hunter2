@@ -18,6 +18,7 @@ class Puzzle(models.Model):
     runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
+    flavour = models.TextField()
     content = models.TextField()
     cb_runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
@@ -315,13 +316,14 @@ class PuzzleData:
 
 
 class Episode(models.Model):
+    name = models.CharField(max_length=255)
+    flavour = models.TextField()
+    puzzles = SortedManyToManyField(Puzzle, blank=True)
     prequels = models.ManyToManyField(
         'self', blank=True,
         help_text='Set of episodes which must be completed before starting this one', related_name='sequels',
         symmetrical=False,
     )
-    puzzles = SortedManyToManyField(Puzzle, blank=True)
-    name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
     event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
     parallel = models.BooleanField(default=False)
