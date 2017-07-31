@@ -71,7 +71,7 @@ class PuzzleAdmin(NestedModelAdmin):
 
 
 class EpisodeAdmin(admin.ModelAdmin):
-    filter_horizontal = ['puzzles']
+    pass
 
 
 class TeamPuzzleDataAdmin(admin.ModelAdmin):
