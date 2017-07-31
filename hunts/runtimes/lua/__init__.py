@@ -35,11 +35,9 @@ class LuaRuntime(AbstractRuntime):
 
         return return_values[0]
 
-    def validate_guess(self, validator, guess, team_puzzle_data, team_data):
+    def validate_guess(self, validator, guess):
         return_values = self._sandbox_run(validator, {
             "guess":            guess,
-            "team_puzzle_data": team_puzzle_data,
-            "team_data":        team_data,
         })
 
         if len(return_values) == 0:

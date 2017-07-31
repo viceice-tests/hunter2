@@ -11,5 +11,5 @@ class IFrameRuntime():
         url = url_parts.geturl()
         return f'<iframe src="{url}"></iframe>'
 
-    def validate_guess(self, validator, guess, team_puzzle_data, team_data):
+    def validate_guess(self, validator, guess):
         raise NotImplementedError("IFrameRuntime can not be used for guess validation")

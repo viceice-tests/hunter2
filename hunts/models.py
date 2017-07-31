@@ -106,13 +106,13 @@ class Hint(Clue):
 
 
 class Unlock(Clue):
-    def unlocked_by(self, team, data):
+    def unlocked_by(self, team):
         guesses = Guess.objects.filter(
             by__in=team.members.all()
         ).filter(
             for_puzzle=self.puzzle
         )
-        return [g for g in guesses if any([u.validate_guess(g, data) for u in self.unlockanswer_set.all()])]
+        return [g for g in guesses if any([u.validate_guess(g) for u in self.unlockanswer_set.all()])]
 
 
 class UnlockAnswer(models.Model):
@@ -122,13 +122,11 @@ class UnlockAnswer(models.Model):
     )
     guess = models.TextField()
 
-    def validate_guess(self, guess, data):
+    def validate_guess(self, guess):
         return rr.validate_guess(
             self.runtime,
             self.guess,
             guess.guess,
-            data.tp_data,
-            data.t_data,
         )
 
 
@@ -158,13 +156,11 @@ class Answer(models.Model):
         guesses.update(correct_current=False)
         super().delete(*args, **kwargs)
 
-    def validate_guess(self, guess, data):
+    def validate_guess(self, guess):
         return rr.validate_guess(
             self.runtime,
             self.answer,
             guess.guess,
-            data.tp_data,
-            data.t_data,
         )
 
 
@@ -210,7 +206,7 @@ class Guess(models.Model):
         self.correct_current = True
 
         for answer in answers:
-            if answer.validate_guess(self, data):
+            if answer.validate_guess(self):
                 self.correct_for = answer
                 return
 

@@ -129,9 +129,8 @@ class GuessesContent(LoginRequiredMixin, View):
 
         if request.GET.get('highlight_unlocks'):
             for g in guesses:
-                g_data = models.PuzzleData(g.for_puzzle, g.by_team, g.by)
                 unlockanswers = models.UnlockAnswer.objects.filter(unlock__puzzle=g.for_puzzle)
-                if any([a.validate_guess(g, g_data) for a in unlockanswers]):
+                if any([a.validate_guess(g) for a in unlockanswers]):
                     g.unlocked = True
 
         return TemplateResponse(
@@ -212,7 +211,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
         ]
         unlocks = [
             {
-                'guesses': u.unlocked_by(request.team, data),
+                'guesses': u.unlocked_by(request.team),
                 'text': u.text
             }
             for u in puzzle.unlock_set.all()
@@ -287,7 +286,7 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         locked_unlocks = []
         unlocked_unlocks = []
         for u in all_unlocks:
-            correct_guesses = u.unlocked_by(request.team, data)
+            correct_guesses = u.unlocked_by(request.team)
             if correct_guesses:
                 unlocked_unlocks.append(
                     {
@@ -306,7 +305,7 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         )
         guess.save()
 
-        correct = any([a.validate_guess(guess, data) for a in puzzle.answer_set.all()])
+        correct = any([a.validate_guess(guess) for a in puzzle.answer_set.all()])
 
         # Build the response JSON depending on whether the answer was correct
         response = {}
@@ -326,7 +325,7 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
             response['timeout'] = str(timezone.now() + minimum_time)
             response['new_hints'] = new_hints
             response['old_unlocks'] = unlocked_unlocks
-            unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess, data) for a in u.unlockanswer_set.all()])]
+            unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess) for a in u.unlockanswer_set.all()])]
             response['new_unlocks'] = [u.text for u in unlocks]
         response['correct'] = str(correct).lower()
 

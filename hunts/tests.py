@@ -25,35 +25,35 @@ class AnswerValidationTests(TestCase):
     def test_static_answers(self):
         answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.STATIC)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
-        self.assertTrue(answer.validate_guess(guess, self.data))
+        self.assertTrue(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
 
     def test_regex_answers(self):
         answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.REGEX)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
-        self.assertTrue(answer.validate_guess(guess, self.data))
+        self.assertTrue(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
 
     def test_lua_answers(self):
         answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.LUA)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
-        self.assertTrue(answer.validate_guess(guess, self.data))
+        self.assertTrue(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
 
 
 class AnswerSubmissionTest(TestCase):
@@ -203,11 +203,9 @@ class ClueDisplayTests(TestCase):
 
     def test_unlock_display(self):
         unlock = Unlock.objects.get(pk=1)
-        self.assertTrue(unlock.unlocked_by(self.team, self.data))
+        self.assertTrue(unlock.unlocked_by(self.team))
         fail_team = Team.objects.get(pk=2)
-        fail_user = UserProfile.objects.get(pk=2)
-        fail_data = PuzzleData(self.puzzle, fail_team, fail_user)
-        self.assertFalse(unlock.unlocked_by(fail_team, fail_data))
+        self.assertFalse(unlock.unlocked_by(fail_team))
 
 
 class AdminTeamTests(TestCase):
