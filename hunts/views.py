@@ -50,11 +50,7 @@ class Episode(View):
                 request, 'hunts/episodelocked.html', status=403
             )
 
-        all_puzzles = episode.puzzles.all()
-        puzzles = []
-        for p in all_puzzles:
-            if p.unlocked_by(request.team):
-                puzzles.append(p)
+        puzzles = episode.unlocked_puzzles(request.team)
 
         positions = episode.finished_positions()
         if request.team in positions:
@@ -73,6 +69,7 @@ class Episode(View):
             context={
                 'admin': admin,
                 'episode': episode.name,
+                'flavour': episode.flavour,
                 'position': position,
                 'episode_number': episode_number,
                 'event_id': request.event.pk,
@@ -132,14 +129,9 @@ class GuessesContent(View):
         except EmptyPage:
             guesses = guess_pages.page(guess_pages.num_pages)
 
-        for g in guesses:
-            g_data = models.PuzzleData(g.for_puzzle, g.by_team(), g.by)
-            answers = models.Answer.objects.filter(for_puzzle=g.for_puzzle)
-            if any([a.validate_guess(g, g_data) for a in answers]):
-                g.correct = True
-                continue
-
-            if request.GET.get('highlight_unlocks'):
+        if request.GET.get('highlight_unlocks'):
+            for g in guesses:
+                g_data = models.PuzzleData(g.for_puzzle, g.by_team, g.by)
                 unlockanswers = models.UnlockAnswer.objects.filter(unlock__puzzle=g.for_puzzle)
                 if any([a.validate_guess(g, g_data) for a in unlockanswers]):
                     g.unlocked = True
@@ -219,7 +211,7 @@ class Puzzle(View):
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
 
-        answered = bool(puzzle.answered_by(request.team, data))
+        answered = bool(puzzle.answered_by(request.team))
         hints = [
             h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
         ]
@@ -251,6 +243,7 @@ class Puzzle(View):
                 'admin': admin,
                 'hints': hints,
                 'title': puzzle.title,
+                'flavour': puzzle.flavour,
                 'text': text,
                 'unlocks': unlocks,
             }
