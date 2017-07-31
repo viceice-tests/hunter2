@@ -85,6 +85,35 @@ class InviteTests(TestCase):
         self.assertTrue(user in team.members.all())
         self.assertFalse(user in team.invites.all())
 
+        # Now try to invite to a full team
+        self.assertTrue(self.client.login(username='test_a', password='hunter2'))
+        response = self.client.post(
+            '/team/1/invite',
+            json.dumps({
+                'user': 3
+            }),
+            'application/json',
+            HTTP_HOST='www.testserver',
+        )
+        user = UserProfile.objects.get(pk=3)
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(user in team.members.all())
+        self.assertFalse(user in team.invites.all())
+
+        # Now bypass the invitation mechanism to add an invite anyway and
+        # check it can't be accepted
+        team.invites.add(user)
+        self.assertTrue(self.client.login(username='test_c', password='hunter2'))
+        response = self.client.post(
+            '/team/1/acceptinvite',
+            json.dumps({}),
+            'application/json',
+            HTTP_HOST='www.testserver',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(user in team.members.all())
+        self.assertTrue(user in team.invites.all())
+
     def test_invite_cancel(self):
         response = self.client.post(
             '/team/1/cancelinvite',
@@ -182,6 +211,33 @@ class RequestTests(TestCase):
         team = Team.objects.get(pk=1)
         self.assertTrue(user in team.members.all())
         self.assertFalse(user in team.requests.all())
+
+        # Now try to send a request to the full team
+        self.assertTrue(self.client.login(username='test_c', password='hunter2'))
+        response = self.client.post(
+            '/team/1/request',
+            json.dumps({}),
+            'application/json',
+            HTTP_HOST='www.testserver',
+        )
+        self.assertEqual(response.status_code, 400)
+        user = UserProfile.objects.get(pk=3)
+        self.assertFalse(user in team.members.all())
+        self.assertFalse(user in team.requests.all())
+
+        # Now bypass the request mechanism to add a request anyway and
+        # check it can't be accepted
+        team.requests.add(user)
+        self.assertTrue(self.client.login(username='test_a', password='hunter2'))
+        response = self.client.post(
+            '/team/1/acceptinvite',
+            json.dumps({}),
+            'application/json',
+            HTTP_HOST='www.testserver',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(user in team.members.all())
+        self.assertTrue(user in team.requests.all())
 
     def test_request_cancel(self):
         response = self.client.post(

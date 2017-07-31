@@ -1,20 +1,23 @@
+from datetime import datetime, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import ValidationError
-from django.http import HttpResponse, JsonResponse
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.views import View
+from subdomains.utils import reverse
 from string import Template
-
 from teams.mixins import TeamMixin
 
 from . import models
 from . import rules
-from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
+from .runtimes.registry import RuntimesRegistry as rr
 
 import events
+import teams
 
 
 class Index(View):
@@ -47,11 +50,7 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
                 request, 'hunts/episodelocked.html', status=403
             )
 
-        all_puzzles = episode.puzzles.all()
-        puzzles = []
-        for p in all_puzzles:
-            if p.unlocked_by(request.team):
-                puzzles.append(p)
+        puzzles = episode.unlocked_puzzles(request.team)
 
         positions = episode.finished_positions()
         if request.team in positions:
@@ -70,10 +69,77 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
             context={
                 'admin': admin,
                 'episode': episode.name,
+                'flavour': episode.flavour,
                 'position': position,
                 'episode_number': episode_number,
                 'event_id': request.event.pk,
                 'puzzles': puzzles,
+            }
+        )
+
+
+class Guesses(LoginRequiredMixin, View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            raise PermissionDenied
+
+        return TemplateResponse(
+            request,
+            'hunts/guesses.html',
+        )
+
+
+class GuessesContent(LoginRequiredMixin, View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            return HttpResponseForbidden()
+
+        episode = request.GET.get('episode')
+        puzzle = request.GET.get('puzzle')
+        team = request.GET.get('team')
+
+        puzzles = models.Puzzle.objects.filter(episode__event=request.event)
+        if puzzle:
+            puzzles = puzzles.filter(id=puzzle)
+        if episode:
+            puzzles = puzzles.filter(episode=episode)
+
+        all_guesses = models.Guess.objects.filter(
+            for_puzzle__in=puzzles
+        ).order_by(
+            '-given'
+        )
+
+        if team:
+            team = teams.models.Team.objects.get(id=team)
+            all_guesses = all_guesses.filter(by__in=team.members.all())
+
+        guess_pages = Paginator(all_guesses, 50)
+        page = request.GET.get('page')
+        try:
+            guesses = guess_pages.page(page)
+        except PageNotAnInteger:
+            guesses = guess_pages.page(1)
+        except EmptyPage:
+            guesses = guess_pages.page(guess_pages.num_pages)
+
+        if request.GET.get('highlight_unlocks'):
+            for g in guesses:
+                g_data = models.PuzzleData(g.for_puzzle, g.by_team, g.by)
+                unlockanswers = models.UnlockAnswer.objects.filter(unlock__puzzle=g.for_puzzle)
+                if any([a.validate_guess(g, g_data) for a in unlockanswers]):
+                    g.unlocked = True
+
+        return TemplateResponse(
+            request,
+            'hunts/guesses_content.html',
+            context={
+                'event_id': request.event.pk,
+                'guesses': guesses,
             }
         )
 
@@ -115,6 +181,9 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
         )
         admin = rules.is_admin_for_puzzle(request.user, puzzle)
 
+        # Make the puzzle available on the request object
+        request.puzzle = puzzle
+
         # If episode has not started redirect to episode holding page
         if episode.start_date > timezone.now() and not admin:
             if request.event:
@@ -137,7 +206,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
 
-        answered = reversed(puzzle.answered_by(request.team, data))
+        answered = bool(puzzle.answered_by(request.team))
         hints = [
             h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
         ]
@@ -169,6 +238,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
                 'admin': admin,
                 'hints': hints,
                 'title': puzzle.title,
+                'flavour': puzzle.flavour,
                 'text': text,
                 'unlocks': unlocks,
             }
@@ -185,6 +255,49 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
             request.event, episode_number, puzzle_number
         )
 
+        minimum_time = timedelta(seconds=5)
+        try:
+            latest_guess = models.Guess.objects.filter(
+                for_puzzle=puzzle,
+                by=request.user.profile
+            ).order_by(
+                '-given'
+            )[0]
+        except IndexError:
+            pass
+        else:
+            if latest_guess.given + minimum_time > timezone.now():
+                return JsonResponse({'error': 'too fast'}, status=429)
+
+        data = models.PuzzleData(puzzle, request.team)
+
+        last_updated = request.POST.get('last_updated')
+        if last_updated and data.tp_data.start_time:
+            last_updated = datetime.fromtimestamp(int(last_updated) // 1000, timezone.utc)
+            new_hints = puzzle.hint_set.filter(
+                time__gt=(last_updated - data.tp_data.start_time),
+                time__lt=(timezone.now() - data.tp_data.start_time),
+            )
+            new_hints = [{'time': str(hint.time), 'text': hint.text} for hint in new_hints]
+        else:
+            new_hints = []
+
+        # Gather together unlocks. Need to separate new and old ones for display.
+        all_unlocks = models.Unlock.objects.filter(puzzle=puzzle)
+        locked_unlocks = []
+        unlocked_unlocks = []
+        for u in all_unlocks:
+            correct_guesses = u.unlocked_by(request.team, data)
+            if correct_guesses:
+                unlocked_unlocks.append(
+                    {
+                        'guesses': [g.guess for g in correct_guesses],
+                        'text': u.text
+                    })
+            else:
+                locked_unlocks.append(u)
+
+        # Put answer in DB
         given_answer = request.POST['answer']
         guess = models.Guess(
             guess=given_answer,
@@ -193,19 +306,31 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         )
         guess.save()
 
-        if request.event:
-            return redirect(
-                'puzzle',
-                event_id=request.event.pk,
-                episode_number=episode_number,
-                puzzle_number=puzzle_number,
-            )
+        correct = any([a.validate_guess(guess, data) for a in puzzle.answer_set.all()])
+
+        # Build the response JSON depending on whether the answer was correct
+        response = {}
+        if correct:
+            next = episode.next_puzzle(request.team)
+            if next:
+                response['url'] = reverse('puzzle', subdomain=request.META['HTTP_HOST'],
+                                          kwargs={'event_id': request.event.pk,
+                                                  'episode_number': episode_number,
+                                                  'puzzle_number': next})
+            else:
+                response['url'] = reverse('episode', subdomain=request.META['HTTP_HOST'],
+                                          kwargs={'event_id': request.event.pk,
+                                                  'episode_number': episode_number}, )
         else:
-            return redirect(
-                'episode',
-                episode_number=episode_number,
-                puzzle_number=puzzle_number,
-            )
+            response['guess'] = given_answer
+            response['timeout'] = str(timezone.now() + minimum_time)
+            response['new_hints'] = new_hints
+            response['old_unlocks'] = unlocked_unlocks
+            unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess, data) for a in u.unlockanswer_set.all()])]
+            response['new_unlocks'] = [u.text for u in unlocks]
+        response['correct'] = str(correct).lower()
+
+        return JsonResponse(response)
 
 
 class Callback(LoginRequiredMixin, TeamMixin, View):

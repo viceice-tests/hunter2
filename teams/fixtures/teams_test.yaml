@@ -6,7 +6,7 @@
   fields: {name: Test Theme, script: '', style: ''}
 - model: events.event
   pk: 1
-  fields: {name: Test Event, theme: 1, current: true}
+  fields: {name: Test Event, theme: 1, current: true, max_team_size: 2}
 - model: auth.user
   pk: 1
   fields:

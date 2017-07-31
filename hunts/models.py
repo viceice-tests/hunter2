@@ -1,10 +1,12 @@
 # vim: set fileencoding=utf-8 :
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
+from enumfields import EnumField, Enum
 
 import events
 import teams
@@ -16,6 +18,7 @@ class Puzzle(models.Model):
     runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
+    flavour = models.TextField()
     content = models.TextField()
     cb_runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
@@ -37,29 +40,30 @@ class Puzzle(models.Model):
         return episode.unlocked_by(team) and \
             episode._puzzle_unlocked_by(self, team)
 
-    def answered_by(self, team, data=None):
+    def answered_by(self, team):
         """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
-        if data is None:
-            data = PuzzleData(self, team)
         guesses = Guess.objects.filter(
-            by__in=team.members.all()
-        ).filter(
-            for_puzzle=self
+            by__in=team.members.all(),
+            for_puzzle=self,
         ).order_by(
             'given'
-        )
+        ).select_related('correct_for')
 
         # TODO: Should return bool
-        return [g for g in guesses if any([a.validate_guess(g, data) for a in self.answer_set.all()])]
+        return [g for g in guesses if g.get_correct_for()]
 
     def first_correct_guesses(self, event):
         """Returns a dictionary of teams to guesses, where the guess is that team's earliest correct, validated guess for this puzzle"""
-        all_teams = teams.models.Team.objects.filter(at_event=event)
+        correct_guesses = Guess.objects.filter(
+            for_puzzle=self,
+        ).order_by(
+            'given'
+        ).select_related('correct_for', 'by_team')
+
         team_guesses = {}
-        for t in all_teams:
-            correct_answers = self.answered_by(t)
-            if correct_answers:
-                team_guesses[t] = correct_answers[0]
+        for g in correct_guesses:
+            if g.get_correct_for() and g.by_team not in team_guesses:
+                team_guesses[g.by_team] = g
 
         return team_guesses
 
@@ -67,7 +71,7 @@ class Puzzle(models.Model):
         """Return a list of teams who have completed this puzzle at the given event in order of completion."""
         team_guesses = self.first_correct_guesses(event)
 
-        return sorted(team_guesses.keys(), key=lambda t: team_guesses[t].given)
+        return sorted(team_guesses.keys(), key=lambda t: (team_guesses[t].given, team_guesses[t].pk))
 
     def position(self, team):
         """Returns the position in which the given team finished this puzzle: 0 = first, None = not yet finished."""
@@ -138,6 +142,22 @@ class Answer(models.Model):
     def __str__(self):
         return f'<Answer: {self.answer}>'
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        guesses = Guess.objects.filter(
+            Q(for_puzzle=self.for_puzzle),
+            Q(correct_for__isnull=True) | Q(correct_for=self)
+        )
+        guesses.update(correct_current=False)
+
+    def delete(self, *args, **kwargs):
+        guesses = Guess.objects.filter(
+            for_puzzle=self.for_puzzle,
+            correct_for=self
+        )
+        guesses.update(correct_current=False)
+        super().delete(*args, **kwargs)
+
     def validate_guess(self, guess, data):
         return rr.validate_guess(
             self.runtime,
@@ -151,14 +171,68 @@ class Answer(models.Model):
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
+    by_team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
+    # The following two fields cache whether the guess is correct. Do not use them directly.
+    correct_for = models.ForeignKey(Answer, blank=True, null=True, on_delete=models.SET_NULL)
+    correct_current = models.BooleanField(default=False)
 
     class Meta:
         verbose_name_plural = 'Guesses'
 
     def __str__(self):
         return f'<Guess: {self.guess} by {self.by}>'
+
+    def get_team(self):
+        event = self.for_puzzle.episode_set.get().event
+        return teams.models.Team.objects.filter(at_event=event, members=self.by).get()
+
+    def get_correct_for(self):
+        """Get the first answer this guess is correct for, if such exists."""
+        if not self.correct_current:
+            self._evaluate_correctness()
+            self.save(update_team=False)
+
+        return self.correct_for
+
+    def _evaluate_correctness(self, data=None, answers=None):
+        """Re-evaluate self.correct_current and self.correct_for.
+
+        Sets self.correct_current to True, and self.correct_for to the first
+        answer this is correct for, if such exists. Does not save the model."""
+        if data is None:
+            data = PuzzleData(self.for_puzzle, self.by_team)
+        if answers is None:
+            answers = self.for_puzzle.answer_set.all()
+
+        self.correct_for = None
+        self.correct_current = True
+
+        for answer in answers:
+            if answer.validate_guess(self, data):
+                self.correct_for = answer
+                return
+
+    def save(self, *args, update_team=True, **kwargs):
+        if update_team:
+            self.by_team = self.get_team()
+        self._evaluate_correctness()
+        super().save(*args, **kwargs)
+
+    def time_on_puzzle(self):
+        team = self.by_team
+        data = TeamPuzzleData.objects.filter(
+            puzzle=self.for_puzzle,
+            team=team
+        ).get()
+        if not data.start_time:
+            # This should never happen, but can do with sample data.
+            return '0'
+        time_active = self.given - data.start_time
+        hours, seconds = divmod(time_active.total_seconds(), 3600)
+        minutes, seconds = divmod(seconds, 60)
+        return '%02d:%02d:%02d' % (hours, minutes, seconds)
 
 
 class TeamData(models.Model):
@@ -242,13 +316,14 @@ class PuzzleData:
 
 
 class Episode(models.Model):
+    name = models.CharField(max_length=255)
+    flavour = models.TextField()
+    puzzles = SortedManyToManyField(Puzzle, blank=True)
     prequels = models.ManyToManyField(
         'self', blank=True,
         help_text='Set of episodes which must be completed before starting this one', related_name='sequels',
         symmetrical=False,
     )
-    puzzles = SortedManyToManyField(Puzzle, blank=True)
-    name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
     event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
     parallel = models.BooleanField(default=False)
@@ -274,6 +349,28 @@ class Episode(models.Model):
     def get_puzzle(self, puzzle_number):
         n = int(puzzle_number)
         return self.puzzles.all()[n - 1:n].get()
+
+    def next_puzzle(self, team):
+        """return the relative id of the next puzzle the player should attempt, or None.
+
+        None is returned if the puzzle is parallel and there is not exactly
+        one unlocked puzzle, or if it is linear and all puzzles have been unlocked."""
+
+        if self.parallel:
+            unlocked = None
+            for i, puzzle in enumerate(self.puzzles.all()):
+                if not puzzle.answered_by(team):
+                    if unlocked is None:
+                        unlocked = i + 1
+                    else:
+                        return None
+            return unlocked
+        else:
+            for i, puzzle in enumerate(self.puzzles.all()):
+                if not puzzle.answered_by(team):
+                    return i + 1
+
+        return None
 
     def started(self, team=None):
         date = self.start_date
@@ -342,3 +439,35 @@ class Episode(models.Model):
                     return True
                 if not p.answered_by(team):
                     return False
+
+    def unlocked_puzzles(self, team):
+        started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())
+        if self.parallel:
+            return started_puzzles
+        else:
+            result = []
+            for p in started_puzzles:
+                result.append(p)
+                if not p.answered_by(team):
+                    break
+
+            return result
+
+
+class AnnoucmentType(Enum):
+    INFO = 'I'
+    SUCCESSS = 'S'
+    WARNING = 'W'
+    ERROR = 'E'
+
+
+class Annoucement(models.Model):
+    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='announcements')
+    puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE, related_name='announcements', null=True, blank=True)
+    title = models.CharField(max_length=255)
+    posted = models.DateTimeField(auto_now_add=True)
+    message = models.TextField(blank=True)
+    type = EnumField(AnnoucmentType, max_length=1, default=AnnoucmentType.INFO)
+
+    def __str__(self):
+        return f'<EventAnnoucement: {self.title}>'

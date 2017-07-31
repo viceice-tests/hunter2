@@ -1,6 +1,4 @@
 # vim: set fileencoding=utf-8 :
-import datetime
-
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.test import TestCase
@@ -11,6 +9,9 @@ from events.models import Event
 from teams.models import Team, UserProfile
 from .models import Answer, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, Episode
 from .runtimes.registry import RuntimesRegistry as rr
+
+import datetime
+import freezegun
 
 
 class AnswerValidationTests(TestCase):
@@ -53,6 +54,30 @@ class AnswerValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess, self.data))
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
         self.assertFalse(answer.validate_guess(guess, self.data))
+
+
+class AnswerSubmissionTest(TestCase):
+    fixtures = ['hunts_test']
+
+    def setUp(self):
+        self.puzzle = Puzzle.objects.get(pk=1)
+        self.team = Team.objects.get(pk=1)
+        self.data = PuzzleData(self.puzzle, self.team)
+
+    def test_answer_cooldown(self):
+        self.assertTrue(self.client.login(username='test', password='hunter2'))
+        url = reverse('answer', subdomain='www',
+                      kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1},
+                      )
+        with freezegun.freeze_time() as frozen_datetime:
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            self.assertEqual(response.status_code, 200)
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            self.assertEqual(response.status_code, 429)
+            self.assertTrue(b'error' in response.content)
+            frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            self.assertEqual(response.status_code, 200)
 
 
 class PuzzleStartTimeTests(TestCase):
@@ -121,6 +146,18 @@ class EpisodeBehaviourTest(TestCase):
         # Test that headstart does not apply in the wrong direction
         self.assertEqual(self.linear_episode.headstart_applied(self.team), datetime.timedelta(minutes=0))
 
+    def test_next_puzzle(self):
+        self.assertEqual(self.linear_episode.next_puzzle(self.team), 2)
+        Guess(for_puzzle=self.linear_episode.get_puzzle(2), by=self.user, guess="correct").save()
+        self.assertEqual(self.linear_episode.next_puzzle(self.team), 3)
+        Guess(for_puzzle=self.linear_episode.get_puzzle(3), by=self.user, guess="correctish").save()
+        self.assertEqual(self.linear_episode.next_puzzle(self.team), None)
+
+        self.assertEqual(self.parallel_episode.next_puzzle(self.team), None)
+        Guess(for_puzzle=self.parallel_episode.get_puzzle(2), by=self.user, guess="4").save()
+        self.assertTrue(self.parallel_episode.get_puzzle(2).answered_by(self.team))
+        self.assertEqual(self.parallel_episode.next_puzzle(self.team), 3)
+
 
 class EpisodeSequenceTests(TestCase):
     fixtures = ['hunts_episodesequence']
@@ -180,6 +217,15 @@ class AdminTeamTests(TestCase):
         self.assertTrue(self.client.login(username='admin', password='hunter2'))
 
         response = self.client.get(reverse('episode', subdomain='www', kwargs={'event_id': 1, 'episode_number': 1}), HTTP_HOST='www.testserver')
+        self.assertEqual(response.status_code, 200)
+
+
+class AdminViewTests(TestCase):
+    fixtures = ['hunts_test']
+
+    def test_can_view_guesses(self):
+        self.assertTrue(self.client.login(username='admin', password='hunter2'))
+        response = self.client.get(reverse('guesses', subdomain='www', kwargs={'event_id': 1}), HTTP_HOST='www.testserver')
         self.assertEqual(response.status_code, 200)
 
 
@@ -280,3 +326,109 @@ class ProgressionTests(TestCase):
 
         # Ensure that the first correct guess is correctly returned
         self.assertEqual(puzzle1.first_correct_guesses(self.event)[self.team1], first_correct_guess)
+
+
+class CorrectnessCacheTests(TestCase):
+    fixtures = ['hunts_progression']
+
+    def setUp(self):
+        self.user1   = UserProfile.objects.get(pk=1)
+        self.user2   = UserProfile.objects.get(pk=2)
+        self.team1   = Team.objects.get(pk=1)
+        self.team2   = Team.objects.get(pk=2)
+        self.episode = Episode.objects.get(pk=1)
+        self.puzzle1 = self.episode.get_puzzle(1)
+        self.puzzle2 = self.episode.get_puzzle(2)
+        self.answer1 = self.puzzle1.answer_set.get()
+
+    def test_changing_answers(self):
+        # Check starting state
+        self.assertFalse(self.puzzle1.answered_by(self.team1))
+        self.assertFalse(self.puzzle2.answered_by(self.team2))
+
+        # Add a correct guess and check it is marked correct
+        guess1 = Guess(for_puzzle=self.puzzle1, by=self.user1, guess="correct")
+        guess1.save()
+        self.assertTrue(guess1.correct_current)
+        self.assertTrue(self.puzzle1.answered_by(self.team1))
+
+        # Add an incorrect guess and check
+        guess2 = Guess(for_puzzle=self.puzzle2, by=self.user2, guess="correct?")
+        guess2.save()
+        self.assertTrue(guess2.correct_current)
+        self.assertFalse(self.puzzle2.answered_by(self.team2))
+
+        # Alter the answer and check only the first guess is invalidated
+        self.answer1.answer = "correct!"
+        self.answer1.save()
+        guess1.refresh_from_db()
+        guess2.refresh_from_db()
+        self.assertFalse(guess1.correct_current)
+        self.assertTrue(guess2.correct_current)
+        self.assertFalse(guess1.get_correct_for())
+        self.assertFalse(self.puzzle1.answered_by(self.team1))
+
+        # Update the first guess and check
+        guess1.guess = "correct!"
+        guess1.save()
+        self.assertTrue(self.puzzle1.answered_by(self.team1))
+
+        # Delete the first answer and check
+        self.answer1.delete()
+        guess1.refresh_from_db()
+        guess2.refresh_from_db()
+        self.assertFalse(guess1.correct_current)
+        self.assertTrue(guess2.correct_current)
+        self.assertFalse(guess1.get_correct_for())
+        self.assertFalse(self.puzzle1.answered_by(self.team1))
+
+        # Add an answer that matches guess 2 and check
+        Answer(for_puzzle=self.puzzle2, runtime='S', answer='correct?').save()
+        guess1.refresh_from_db()
+        guess2.refresh_from_db()
+        self.assertTrue(guess1.correct_current)
+        self.assertFalse(guess2.correct_current)
+        self.assertFalse(self.puzzle1.answered_by(self.team1))
+        self.assertTrue(guess2.get_correct_for())
+        self.assertTrue(self.puzzle2.answered_by(self.team2))
+
+
+class GuessTeamDenormalisationTests(TestCase):
+    fixtures = ['hunts_progression']
+
+    def setUp(self):
+        self.team1   = Team.objects.get(pk=1)
+        self.team2   = Team.objects.get(pk=2)
+        self.user1   = self.team1.members.get()
+        self.user2   = self.team2.members.get()
+        self.episode = Episode.objects.get(pk=1)
+        self.puzzle1 = self.episode.get_puzzle(1)
+        self.puzzle2 = self.episode.get_puzzle(2)
+        self.answer1 = self.puzzle1.answer_set.get()
+
+    def test_adding_guess(self):
+        guess1 = Guess(for_puzzle=self.puzzle1, by=self.user1, guess="incorrect")
+        guess2 = Guess(for_puzzle=self.puzzle2, by=self.user2, guess="incorrect")
+        guess1.save()
+        guess2.save()
+        self.assertEqual(guess1.by_team, self.team1)
+        self.assertEqual(guess2.by_team, self.team2)
+
+    def test_join_team_updates_guesses(self):
+        guess1 = Guess(for_puzzle=self.puzzle1, by=self.user1, guess="incorrect")
+        guess2 = Guess(for_puzzle=self.puzzle2, by=self.user2, guess="incorrect")
+        guess1.save()
+        guess2.save()
+
+        # Swap teams and check the guesses update
+        self.team1.members = []
+        self.team2.members = [self.user1]
+        self.team1.save()
+        self.team2.save()
+        self.team1.members = [self.user2]
+        self.team1.save()
+
+        guess1.refresh_from_db()
+        guess2.refresh_from_db()
+        self.assertEqual(guess1.by_team, self.team2)
+        self.assertEqual(guess2.by_team, self.team1)
