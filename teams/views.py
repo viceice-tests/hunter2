@@ -98,6 +98,11 @@ class Invite(LoginRequiredMixin, View):
                 'result': 'Bad Request',
                 'message': 'User is already a member of a team for this event',
             }, status=400)
+        if team.is_full():
+            return JsonResponse({
+                'result': 'Bad Request',
+                'message': 'This team is full',
+            }, status=400)
         team.invites.add(user)
         return JsonResponse({
             'result': 'OK',
@@ -152,6 +157,11 @@ class AcceptInvite(LoginRequiredMixin, View):
                 'result': 'Bad Request',
                 'message': 'Already on a team for this event',
             }, status=400)
+        if team.is_full():
+            return JsonResponse({
+                'result': 'Bad Request',
+                'message': 'This team is full',
+            }, status=400)
         team.invites.remove(user)
         team.members.add(user)
         return JsonResponse({
@@ -193,6 +203,11 @@ class Request(LoginRequiredMixin, View):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'Already requested',
+            }, status=400)
+        if team.is_full():
+            return JsonResponse({
+                'result': 'Bad Request',
+                'message': 'This team is full',
             }, status=400)
         team.requests.add(user)
         return JsonResponse({
@@ -247,6 +262,11 @@ class AcceptRequest(LoginRequiredMixin, View):
                 'result': 'Bad Request',
                 'message': 'Already a member of a team for this event',
             }, status=403)
+        if team.is_full():
+            return JsonResponse({
+                'result': 'Bad Request',
+                'message': 'This team is full',
+            }, status=400)
         team.members.add(user)
         team.requests.remove(user)
         return JsonResponse({
