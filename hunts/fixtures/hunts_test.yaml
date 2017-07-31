@@ -75,7 +75,7 @@
   fields: {name: Admin Team, at_event: 1, members: [3], is_admin: true}
 - model: hunts.puzzle
   pk: 1
-  fields: {title: Test Puzzle, runtime: S, content: Test Content, cb_runtime: S,
+  fields: {title: Test Puzzle, flavour: Apple and Raspberry, runtime: S, content: Test Content, cb_runtime: S,
   cb_content: '', headstart_granted: '00:10:00'}
 - model: hunts.puzzle
   pk: 5
