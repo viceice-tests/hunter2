@@ -12,6 +12,9 @@ class UserProfile(models.Model):
     def __str__(self):
         return f'<UserProfile: {self.user.username}>'
 
+    def is_on_explicit_team(self, event):
+        return self.teams.filter(at_event=event).exclude(name='').exists()
+
     def team_at(self, event):
         return self.teams.get(at_event=event)
 

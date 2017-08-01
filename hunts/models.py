@@ -167,7 +167,7 @@ class Answer(models.Model):
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
-    by_team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
+    by_team = models.ForeignKey(teams.models.Team, on_delete=models.PROTECT)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
     # The following two fields cache whether the guess is correct. Do not use them directly.
