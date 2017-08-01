@@ -47,7 +47,7 @@ class TeamCreateTests(TestCase):
 
     def test_automatic_creation(self):
         factory = RequestFactory()
-        request = factory.get('/rand')
+        request = factory.get('/irrelevant')  # Path is not used because we call the view function directly
         request.event = events.models.Event.objects.get(pk=1)
         request.user = User.objects.get(pk=4)
         view = EmptyTeamView.as_view()
