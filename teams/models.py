@@ -8,7 +8,7 @@ import events
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    seat = models.CharField(max_length=6, blank=True, default='')
+    seat = models.CharField(max_length=6, blank=True, default='', help_text='Enter your seat so we can find you easily if you get stuck. (To help you, not to mock you <3)')
 
     def __str__(self):
         return f'<UserProfile: {self.user.username}>'

@@ -1,6 +1,24 @@
 from dal import autocomplete
 from django import forms
+from django.forms.models import inlineformset_factory
 from . import models
+
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = models.UserProfile
+        fields = ['seat']
+
+    field_order = ['username', 'email', 'password1', 'password2', 'seat']
+
+    def signup(self, request, user):
+        user.profile = models.UserProfile(user=user)
+        user.profile.seat = self.cleaned_data['seat']
+        user.profile.save()
+        user.save()
+
+
+#SignupForm = inlineformset_factory(
 
 
 class InviteForm(forms.Form):
