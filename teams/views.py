@@ -2,7 +2,7 @@ from dal import autocomplete
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.views import View
@@ -52,6 +52,8 @@ class Team(LoginRequiredMixin, TeamMixin, View):
         team = get_object_or_404(
             models.Team, at_event=request.event, pk=team_id
         )
+        if not team.name:
+            raise Http404
         if team == request.team:
             invite_form = forms.InviteForm()
             return TemplateResponse(
@@ -103,7 +105,7 @@ class Invite(LoginRequiredMixin, TeamMixin, View):
                 'result': 'Bad Request',
                 'message': 'User has already been invited',
             }, status=400)
-        if models.Team.objects.filter(at_event=request.event, members=user).count() > 0:
+        if models.Team.objects.filter(at_event=request.event, members=user).exclude(name='').count() > 0:
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User is already a member of a team for this event',
