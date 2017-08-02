@@ -1,4 +1,4 @@
-function incorrect_answer(guess, timeout, new_hints, old_unlocks, new_unlocks) {
+function incorrect_answer(guess, timeout, new_hints, unlocks) {
 	var hints_div = $('#hints');
 	var n_hints = new_hints.length;
 	for (var i = 0; i < n_hints; i++) {
@@ -8,15 +8,14 @@ function incorrect_answer(guess, timeout, new_hints, old_unlocks, new_unlocks) {
 	var unlocks_div = $('#unlocks');
 	unlocks_div.empty();
 
-	var n_unlocks = old_unlocks.length;
+	var n_unlocks = unlocks.length;
 	for (var i = 0; i < n_unlocks; i++) {
-		guesses = old_unlocks[i].guesses.join(', ');
-		unlocks_div.append('<p>' + guesses + ': ' + old_unlocks[i].text + '</p>');
-	}
-	var n_unlocks = new_unlocks.length;
-	for (var i = 0; i < n_unlocks; i++) {
-		var unlock_p = $('<p class="new-unlock">' + guess + ': ' + new_unlocks[i] + '</p>');
-		unlock_p.appendTo(unlocks_div);
+		guesses = unlocks[i].guesses.join(', ');
+		if (unlocks[i].new) {
+			unlocks_div.append('<p class="new-unlock">' + guesses + ': ' + unlocks[i].text + '</p>');
+		} else {
+			unlocks_div.append('<p>' + guesses + ': ' + unlocks[i].text + '</p>');
+		}
 	}
 
 	var milliseconds = Date.parse(timeout) - Date.now();
@@ -67,7 +66,7 @@ $(function() {
 					button.removeAttr('disabled');
 					correct_answer(data.url);
 				} else {
-					incorrect_answer(data.guess, data.timeout, data.new_hints, data.old_unlocks, data.new_unlocks);
+					incorrect_answer(data.guess, data.timeout, data.new_hints, data.unlocks);
 				}
 			},
 			error: function(xhr, status, error) {

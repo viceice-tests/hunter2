@@ -284,21 +284,6 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         else:
             new_hints = []
 
-        # Gather together unlocks. Need to separate new and old ones for display.
-        all_unlocks = models.Unlock.objects.filter(puzzle=puzzle)
-        locked_unlocks = []
-        unlocked_unlocks = []
-        for u in all_unlocks:
-            correct_guesses = u.unlocked_by(request.team)
-            if correct_guesses:
-                guesses = [g.guess for g in correct_guesses]
-                # Get rid of duplicates but preserve order
-                duplicates = set()
-                guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
-                unlocked_unlocks.append({'guesses': guesses, 'text': u.text})
-            else:
-                locked_unlocks.append(u)
-
         # Put answer in DB
         given_answer = request.POST['answer']
         guess = models.Guess(
@@ -324,12 +309,25 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
                                           kwargs={'event_id': request.event.pk,
                                                   'episode_number': episode_number}, )
         else:
+            all_unlocks = models.Unlock.objects.filter(puzzle=puzzle)
+            unlocks = []
+            for u in all_unlocks:
+                correct_guesses = u.unlocked_by(request.team)
+                if not correct_guesses:
+                    continue
+
+                guesses = [g.guess for g in correct_guesses]
+                # Get rid of duplicates but preserve order
+                duplicates = set()
+                guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
+                unlocks.append({'guesses': guesses,
+                                'text': u.text,
+                                'new': guess in correct_guesses})
+
             response['guess'] = given_answer
             response['timeout'] = str(timezone.now() + minimum_time)
             response['new_hints'] = new_hints
-            response['old_unlocks'] = unlocked_unlocks
-            unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess) for a in u.unlockanswer_set.all()])]
-            response['new_unlocks'] = [u.text for u in unlocks]
+            response['unlocks'] = unlocks
         response['correct'] = str(correct).lower()
 
         return JsonResponse(response)
