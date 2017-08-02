@@ -13,8 +13,12 @@ teampatterns = [
     url(r'^denyrequest$', views.DenyRequest.as_view(), name='denyrequest'),
 ]
 
-urlpatterns = [
+eventpatterns = [
     url(r'^create_team$', views.TeamCreateView.as_view(), name='create_team'),
     url(r'^team/(?P<team_id>[1-9]\d*)/', include(teampatterns), name='team'),
+]
+
+urlpatterns = [
+    url(r'^event/(?P<event_id>[1-9]\d*)/', include(eventpatterns)),
     url(r'^userprofile_autocomplete/$', views.UserProfileAutoComplete.as_view(), name='userprofile_autocomplete'),
 ]
