@@ -240,10 +240,10 @@ class TeamData(models.Model):
     data = JSONField(default={})
 
     class Meta:
-        verbose_name_plural = 'Team puzzle data'
+        verbose_name_plural = 'Team data'
 
     def __str__(self):
-        return f'<TeamData: {self.team.name} - {self.puzzle.title}>'
+        return f'<TeamData: {self.team.name}>'
 
 
 class UserData(models.Model):
@@ -252,10 +252,10 @@ class UserData(models.Model):
     data = JSONField(default={})
 
     class Meta:
-        verbose_name_plural = 'User puzzle data'
+        verbose_name_plural = 'User data'
 
     def __str__(self):
-        return f'<UserData: {self.user.name} - {self.puzzle.title}>'
+        return f'<UserData: {self.user.user.username}>'
 
 
 class TeamPuzzleData(models.Model):
