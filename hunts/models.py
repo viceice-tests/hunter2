@@ -81,10 +81,22 @@ class Puzzle(models.Model):
             return None
 
 
+class HuntFile(models.Model):
+    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
+    slug = models.SlugField()
+    file = models.FileField(upload_to='events/')
+
+    class Meta:
+        unique_together = (('event', 'slug'), )
+
+
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     slug = models.SlugField()
     file = models.FileField(upload_to='puzzles/')
+
+    class Meta:
+        unique_together = (('puzzle', 'slug'), )
 
 
 class Clue(models.Model):
