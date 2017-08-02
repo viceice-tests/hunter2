@@ -44,6 +44,8 @@ ACCOUNT_EMAIL_REQUIRED = True
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
+ACCOUNT_SIGNUP_FORM_CLASS = 'teams.forms.UserProfileForm'
+
 AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
     'django.contrib.auth.backends.ModelBackend',
