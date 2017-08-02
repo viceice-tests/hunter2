@@ -1,6 +1,5 @@
 from dal import autocomplete
 from django import forms
-from django.forms.models import inlineformset_factory
 from . import models
 
 
@@ -16,9 +15,6 @@ class UserProfileForm(forms.ModelForm):
         user.profile.seat = self.cleaned_data['seat']
         user.profile.save()
         user.save()
-
-
-#SignupForm = inlineformset_factory(
 
 
 class InviteForm(forms.Form):
