@@ -17,6 +17,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='userprofile',
             name='seat',
-            field=models.CharField(blank=True, default='', max_length=6),
+            field=models.CharField(blank=True, default='', help_text='Enter your seat so we can find you easily if you get stuck. (To help you, not to mock you <3)', max_length=6)
         ),
     ]
