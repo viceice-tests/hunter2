@@ -27,7 +27,7 @@
 <h3>Unlocks</h3>
 <div id="unlocks">
 {% for unlock in unlocks %}
-<p>{% for guess in unlock.guesses %}{{guess.guess}} {% endfor %}: {{unlock.text}}</p>
+<p>{% for guess in unlock.guesses %}{{guess}}{% if not forloop.last %}, {% endif %}{% endfor %}: {{unlock.text}}</p>
 {% endfor %}
 </div>
 <hr />

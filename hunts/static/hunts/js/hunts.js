@@ -10,11 +10,12 @@ function incorrect_answer(guess, timeout, new_hints, old_unlocks, new_unlocks) {
 
 	var n_unlocks = old_unlocks.length;
 	for (var i = 0; i < n_unlocks; i++) {
-		unlocks_div.append('<p>' + old_unlocks[i].guesses[0] + ' : ' + old_unlocks[i].text + '</p>');
+		guesses = old_unlocks[i].guesses.join(', ');
+		unlocks_div.append('<p>' + guesses + ': ' + old_unlocks[i].text + '</p>');
 	}
 	var n_unlocks = new_unlocks.length;
 	for (var i = 0; i < n_unlocks; i++) {
-		var unlock_p = $('<p class="new-unlock">' + guess + ' : ' + new_unlocks[i] + '</p>');
+		var unlock_p = $('<p class="new-unlock">' + guess + ': ' + new_unlocks[i] + '</p>');
 		unlock_p.appendTo(unlocks_div);
 	}
 

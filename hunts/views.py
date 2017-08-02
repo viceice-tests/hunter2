@@ -209,14 +209,17 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
         hints = [
             h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
         ]
-        unlocks = [
-            {
-                'guesses': u.unlocked_by(request.team),
-                'text': u.text
-            }
-            for u in puzzle.unlock_set.all()
-        ]
-        unlocks = [u for u in unlocks if len(u['guesses'])]
+        unlocks = []
+        for u in puzzle.unlock_set.all():
+            guesses = u.unlocked_by(request.team)
+            if not guesses:
+                continue
+
+            guesses = [g.guess for g in guesses]
+            # Get rid of duplicates but preserve order
+            duplicates = set()
+            guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
+            unlocks.append({'guesses': guesses, 'text': u.text})
 
         files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
 
@@ -288,11 +291,11 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         for u in all_unlocks:
             correct_guesses = u.unlocked_by(request.team)
             if correct_guesses:
-                unlocked_unlocks.append(
-                    {
-                        'guesses': [g.guess for g in correct_guesses],
-                        'text': u.text
-                    })
+                guesses = [g.guess for g in correct_guesses]
+                # Get rid of duplicates but preserve order
+                duplicates = set()
+                guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
+                unlocked_unlocks.append({'guesses': guesses, 'text': u.text})
             else:
                 locked_unlocks.append(u)
 
