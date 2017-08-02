@@ -1,22 +1,23 @@
-from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from datetime import datetime, timedelta
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
-from django.utils.decorators import method_decorator
 from django.views import View
 from subdomains.utils import reverse
 from string import Template
-from datetime import datetime, timedelta
+from teams.mixins import TeamMixin
+
 from . import models
-import teams
 from . import rules
-from .runtimes.registry import RuntimesRegistry as rr
 from . import utils
+from .runtimes.registry import RuntimesRegistry as rr
 
 import events
+import teams
 
 
 class Index(View):
@@ -27,8 +28,7 @@ class Index(View):
         )
 
 
-@method_decorator(login_required, name='dispatch')
-class Episode(View):
+class Episode(LoginRequiredMixin, TeamMixin, View):
     def get(self, request, episode_number):
         episode = utils.event_episode(request.event, episode_number)
         admin = rules.is_admin_for_episode(request.user, episode)
@@ -78,8 +78,7 @@ class Episode(View):
         )
 
 
-@method_decorator(login_required, name='dispatch')
-class Guesses(View):
+class Guesses(LoginRequiredMixin, View):
     def get(self, request):
         admin = rules.is_admin_for_event(request.user, request.event)
 
@@ -92,8 +91,7 @@ class Guesses(View):
         )
 
 
-@method_decorator(login_required, name='dispatch')
-class GuessesContent(View):
+class GuessesContent(LoginRequiredMixin, View):
     def get(self, request):
         admin = rules.is_admin_for_event(request.user, request.event)
 
@@ -131,9 +129,8 @@ class GuessesContent(View):
 
         if request.GET.get('highlight_unlocks'):
             for g in guesses:
-                g_data = models.PuzzleData(g.for_puzzle, g.by_team, g.by)
                 unlockanswers = models.UnlockAnswer.objects.filter(unlock__puzzle=g.for_puzzle)
-                if any([a.validate_guess(g, g_data) for a in unlockanswers]):
+                if any([a.validate_guess(g) for a in unlockanswers]):
                     g.unlocked = True
 
         return TemplateResponse(
@@ -146,8 +143,7 @@ class GuessesContent(View):
         )
 
 
-@method_decorator(login_required, name='dispatch')
-class EventDirect(View):
+class EventDirect(LoginRequiredMixin, View):
     def get(self, request):
         event = events.models.Event.objects.filter(current=True).get()
 
@@ -157,8 +153,7 @@ class EventDirect(View):
         )
 
 
-@method_decorator(login_required, name='dispatch')
-class EventIndex(View):
+class EventIndex(LoginRequiredMixin, View):
     def get(self, request):
 
         event = request.event
@@ -178,8 +173,7 @@ class EventIndex(View):
         )
 
 
-@method_decorator(login_required, name='dispatch')
-class Puzzle(View):
+class Puzzle(LoginRequiredMixin, TeamMixin, View):
     def get(self, request, episode_number, puzzle_number):
         episode, puzzle = utils.event_episode_puzzle(
             request.event, episode_number, puzzle_number
@@ -217,7 +211,7 @@ class Puzzle(View):
         ]
         unlocks = [
             {
-                'guesses': u.unlocked_by(request.team, data),
+                'guesses': u.unlocked_by(request.team),
                 'text': u.text
             }
             for u in puzzle.unlock_set.all()
@@ -254,8 +248,7 @@ class Puzzle(View):
         return response
 
 
-@method_decorator(login_required, name='dispatch')
-class Answer(View):
+class Answer(LoginRequiredMixin, TeamMixin, View):
     def post(self, request, episode_number, puzzle_number):
         episode, puzzle = utils.event_episode_puzzle(
             request.event, episode_number, puzzle_number
@@ -293,7 +286,7 @@ class Answer(View):
         locked_unlocks = []
         unlocked_unlocks = []
         for u in all_unlocks:
-            correct_guesses = u.unlocked_by(request.team, data)
+            correct_guesses = u.unlocked_by(request.team)
             if correct_guesses:
                 unlocked_unlocks.append(
                     {
@@ -312,7 +305,7 @@ class Answer(View):
         )
         guess.save()
 
-        correct = any([a.validate_guess(guess, data) for a in puzzle.answer_set.all()])
+        correct = any([a.validate_guess(guess) for a in puzzle.answer_set.all()])
 
         # Build the response JSON depending on whether the answer was correct
         response = {}
@@ -332,15 +325,14 @@ class Answer(View):
             response['timeout'] = str(timezone.now() + minimum_time)
             response['new_hints'] = new_hints
             response['old_unlocks'] = unlocked_unlocks
-            unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess, data) for a in u.unlockanswer_set.all()])]
+            unlocks = [u for u in locked_unlocks if any([a.validate_guess(guess) for a in u.unlockanswer_set.all()])]
             response['new_unlocks'] = [u.text for u in unlocks]
         response['correct'] = str(correct).lower()
 
         return JsonResponse(response)
 
 
-@method_decorator(login_required, name='dispatch')
-class Callback(View):
+class Callback(LoginRequiredMixin, TeamMixin, View):
     def post(self, request, episode_number, puzzle_number):
         if request.content_type != 'application/json':
             return HttpResponse(status=415)

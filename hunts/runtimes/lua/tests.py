@@ -24,14 +24,14 @@ class LuaRuntimeTestCase(TestCase):
         lua_runtime = LuaRuntime()
         lua_script = '''return (tonumber(guess) == 100 + 100)'''
         guess = "200"
-        result = lua_runtime.validate_guess(lua_script, guess, None, None)
+        result = lua_runtime.validate_guess(lua_script, guess)
         self.assertTrue(result, "Guess was correct, but did not return true")
 
     def test_validate_guess_requires_return_value(self):
         lua_runtime = LuaRuntime()
         lua_script = ''''''
         with self.assertRaises(RuntimeExecutionError):
-            lua_runtime.validate_guess(lua_script, None, None, None)
+            lua_runtime.validate_guess(lua_script, None)
 
     def test_evaluate_syntax_error_fails(self):
         lua_runtime = LuaRuntime()
