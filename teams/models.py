@@ -9,7 +9,7 @@ import events
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     seat = models.CharField(
-        max_length=6,
+        max_length=12,
         blank=True,
         default='',
         help_text='Enter your seat so we can find you easily if you get stuck. (To help you, not to mock you <3)'
