@@ -218,7 +218,10 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
         ]
         unlocks = [u for u in unlocks if len(u['guesses'])]
 
-        files = {f.slug: f.file.url for f in puzzle.puzzlefile_set.all()}
+        files = {
+            **{f.slug: f.file.url for f in request.event.huntfile_set.all()},
+            **{f.slug: f.file.url for f in puzzle.puzzlefile_set.all()},
+        }  # Puzzle files with matching slugs override hunt counterparts
 
         text = Template(rr.evaluate(
             runtime=puzzle.runtime,
