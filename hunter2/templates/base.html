@@ -34,11 +34,14 @@
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
 						{% if user.is_authenticated %}
+						<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.path }}" method="post">
+							{% csrf_token %}
+						</form>
 						<li class="button">
 							<a href="#" id="navUser">{{ user.username }}</a>
 						</li>
 						<li class="button">
-							<a href="{% url 'account_logout' %}?next={{ request.path }}">Logout</a>
+							<a href="#" onclick="$('#logoutForm').submit()">Logout</a>
 						</li>
 						{% else %}
 						<li>
