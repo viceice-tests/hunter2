@@ -64,12 +64,29 @@ class GuessAdmin(admin.ModelAdmin):
 
 @admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdmin):
+    ordering = ('episode', 'pk')
     inlines = [
         FileInline,
         AnswerInline,
         HintInline,
         UnlockInline,
     ]
+    list_display = ('the_episode', '__str__', 'title', 'start_date', 'answers', 'hints', 'unlocks')
+    list_display_links = ('__str__',)
+
+    # Who knows why we can't call this 'episode' but it causes an AttributeError...
+    def the_episode(self, obj):
+        return obj.episode_set.get().name
+    the_episode.short_description = 'episode'
+
+    def answers(self, obj):
+        return obj.answer_set.count()
+
+    def hints(self, obj):
+        return obj.hint_set.count()
+
+    def unlocks(self, obj):
+        return obj.unlock_set.count()
 
 
 @admin.register(models.UserPuzzleData)
