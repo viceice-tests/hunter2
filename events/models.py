@@ -29,3 +29,12 @@ class Event(models.Model):
             Event.objects.exclude(id=self.id).filter(current=True).count() > 0
         ):
             raise ValidationError('There can only be one current event')
+
+
+class EventFile(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    slug = models.SlugField()
+    file = models.FileField(upload_to='events/')
+
+    class Meta:
+        unique_together = (('event', 'slug'), )

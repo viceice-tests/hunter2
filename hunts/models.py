@@ -86,6 +86,9 @@ class PuzzleFile(models.Model):
     slug = models.SlugField()
     file = models.FileField(upload_to='puzzles/')
 
+    class Meta:
+        unique_together = (('puzzle', 'slug'), )
+
 
 class Clue(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
