@@ -15,7 +15,7 @@ def make_textinput(field, db_field, kwdict):
 
 class AnswerInline(NestedStackedInline):
     model = models.Answer
-    fields = ( 'alter_progress', 'answer', 'runtime')
+    fields = ('alter_progress', 'answer', 'runtime')
     extra = 0
     form = AnswerForm
 
