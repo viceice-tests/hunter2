@@ -16,7 +16,7 @@ class UserProfile(models.Model):
     )
 
     def __str__(self):
-        return f'<UserProfile: {self.user.username}>'
+        return f'{self.user.username} @{self.seat}'
 
     def is_on_explicit_team(self, event):
         return self.teams.filter(at_event=event).exclude(name='').exists()
@@ -34,7 +34,7 @@ class Team(models.Model):
     requests = models.ManyToManyField(UserProfile, blank=True, related_name='team_requests')
 
     def __str__(self):
-        return f'<Team: {self.name} @{self.at_event.name}>'
+        return f'{self.name} @{self.at_event.name}'
 
     def clean(self):
         if (
