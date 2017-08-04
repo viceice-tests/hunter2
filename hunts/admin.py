@@ -13,9 +13,9 @@ def make_textinput(field, db_field, kwdict):
         kwdict['widget'] = forms.Textarea(attrs={'rows': 1})
 
 
-class AnswerInline(NestedTabularInline):
+class AnswerInline(NestedStackedInline):
     model = models.Answer
-    fields = ('answer', 'runtime')
+    fields = ( 'alter_progress', 'answer', 'runtime')
     extra = 0
     form = AnswerForm
 

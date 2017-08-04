@@ -12,12 +12,6 @@ class AnswerForm(forms.ModelForm):
         model = Answer
         fields = ('answer', 'runtime')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if self.errors.get('alter_progress'):
-            self.fields['alter_progress'].widget = forms.CheckboxInput()
-
     def clean(self, **kwargs):
         cleaned_data = super().clean(**kwargs)
 
@@ -63,16 +57,19 @@ class AnswerForm(forms.ModelForm):
             removed_teams[t].append(g)
 
         if new_teams or removed_teams:
-            msg = "WARNING! You are about to alter this puzzle's answers in a way which will affect teams' progress!<br>"
-            if new_teams:
-                msg += "The following teams will have NO LONGER ANSWERED this puzzle correctly and will be brought backwards:<br>"
-                msg += "<br>".join([" - %s: %s" % (team.name, ', '.join([g.guess for g in guesses])) for team, guesses in new_teams.items()])
+            msg = "<b>WARNING!</b> You are about to alter this puzzle's answers in a way which will affect teams' progress!<br>"
             if removed_teams:
-                msg += "The following teams will be BROUGHT FORWARD by this change:<br>"
-                msg += "<br>".join([" - %s: %s" % (team.name, ', '.join([g.guess for g in guesses])) for team, guesses in removed_teams.items()])
-            msg += "<br>If you are sure you want to make this change, tick below."
+                msg += "The following teams will have NO LONGER ANSWERED this puzzle correctly and will be brought backwards:<br><ul>"
+                msg += "\n".join(["<li>%s with guesses %s</li>" % (team.name, ', '.join([g.guess for g in guesses])) for team, guesses in removed_teams.items()])
+                msg += "</ul>"
+            if new_teams:
+                msg += "The following teams will be BROUGHT FORWARD by this change:<br><ul>"
+                msg += "\n".join(['<li>"%s" with guesses: %s</li>' % (team.name, ', '.join([g.guess for g in guesses])) for team, guesses in new_teams.items()])
+                msg += "</ul>"
+            msg += "If you are sure you want to make this change, tick below."
 
-            self._errors['alter_progress'] = self.error_class([msg])
+            self.fields['alter_progress'].widget = forms.CheckboxInput()
             del cleaned_data['alter_progress']
+            raise ValidationError(mark_safe(msg))
 
         return cleaned_data
