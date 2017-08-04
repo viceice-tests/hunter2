@@ -18,7 +18,7 @@ class Puzzle(models.Model):
     runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
-    flavour = models.TextField()
+    flavour = models.TextField(blank=True)
     content = models.TextField()
     cb_runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
@@ -316,7 +316,7 @@ class PuzzleData:
 
 class Episode(models.Model):
     name = models.CharField(max_length=255)
-    flavour = models.TextField()
+    flavour = models.TextField(blank=True)
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     prequels = models.ManyToManyField(
         'self', blank=True,
