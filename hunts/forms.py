@@ -56,8 +56,9 @@ class AnswerForm(forms.ModelForm):
             msg = "<b>WARNING!</b> You are about to alter this puzzle's answers in a way which will affect teams' progress!\n<br>"
             team_line = '<li>"%s" with guesses: %s</li>'
 
+            # TODO: separate out teams which have another valid answer
             if removed_teams:
-                msg += "The following teams will have <b>NO LONGER ANSWERED</b> this puzzle correctly and will be brought backwards:\n<ul>"
+                msg += "The following teams will have <b>NO LONGER ANSWERED</b> this puzzle correctly and will be brought backwards unless they have another valid answer:\n<ul>"
                 msg += "\n".join(
                     [team_line % (team.name, ', '.join([g.guess for g in guesses]))
                      for team, guesses in removed_teams.items()]
