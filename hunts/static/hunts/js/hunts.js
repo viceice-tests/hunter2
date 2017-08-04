@@ -61,6 +61,7 @@ $(function() {
 			data: jQuery.param(data),
 			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
 			success: function(data) {
+				form.children('input[name=answer]')[0].value = ''
 				last_updated = Date.now();
 				if (data.correct == "true") {
 					button.removeAttr('disabled');
