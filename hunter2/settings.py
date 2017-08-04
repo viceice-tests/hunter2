@@ -66,10 +66,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.openid',
     'debug_toolbar',
     'nested_admin',
     'rules.apps.AutodiscoverRulesConfig',
@@ -79,6 +75,11 @@ INSTALLED_APPS = (
     'teams',
     'hunts',
     'hunter2',
+    # allauth stuff should be last because we override some of its templates in our apps
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.openid',
 )
 if USE_SILK:
     INSTALLED_APPS = INSTALLED_APPS + ('silk',)
