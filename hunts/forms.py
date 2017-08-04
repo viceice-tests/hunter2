@@ -26,14 +26,17 @@ class AnswerForm(forms.ModelForm):
         guesses = Guess.objects.filter(for_puzzle=self.instance.for_puzzle)
         old_valid_guesses = [g for g in guesses if self.instance.validate_guess(g)]
 
-        # Create an answer with the entered data that we can use to validate against
-        new_answer = Answer(
-            for_puzzle=cleaned_data['for_puzzle'],
-            runtime=cleaned_data['runtime'],
-            answer=cleaned_data['answer']
-        )
-        guesses = Guess.objects.filter(for_puzzle=new_answer.for_puzzle)
-        new_valid_guesses = [g for g in guesses if new_answer.validate_guess(g)]
+        if cleaned_data['DELETE']:
+            new_valid_guesses = []
+        else:
+            # Create an answer with the entered data that we can use to validate against
+            new_answer = Answer(
+                for_puzzle=cleaned_data['for_puzzle'],
+                runtime=cleaned_data['runtime'],
+                answer=cleaned_data['answer']
+            )
+            guesses = Guess.objects.filter(for_puzzle=new_answer.for_puzzle)
+            new_valid_guesses = [g for g in guesses if new_answer.validate_guess(g)]
 
         # Has anything actually changed?
         if old_valid_guesses == new_valid_guesses:
@@ -60,7 +63,7 @@ class AnswerForm(forms.ModelForm):
             msg = "<b>WARNING!</b> You are about to alter this puzzle's answers in a way which will affect teams' progress!<br>"
             if removed_teams:
                 msg += "The following teams will have NO LONGER ANSWERED this puzzle correctly and will be brought backwards:<br><ul>"
-                msg += "\n".join(["<li>%s with guesses %s</li>" % (team.name, ', '.join([g.guess for g in guesses])) for team, guesses in removed_teams.items()])
+                msg += "\n".join(['<li>"%s" with guesses %s</li>' % (team.name, ', '.join([g.guess for g in guesses])) for team, guesses in removed_teams.items()])
                 msg += "</ul>"
             if new_teams:
                 msg += "The following teams will be BROUGHT FORWARD by this change:<br><ul>"
@@ -68,6 +71,8 @@ class AnswerForm(forms.ModelForm):
                 msg += "</ul>"
             msg += "If you are sure you want to make this change, tick below."
 
+            if cleaned_data['DELETE']:
+                del cleaned_data['DELETE']
             self.fields['alter_progress'].widget = forms.CheckboxInput()
             del cleaned_data['alter_progress']
             raise ValidationError(mark_safe(msg))
