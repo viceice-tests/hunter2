@@ -42,7 +42,7 @@ class Puzzle(models.Model):
         params = {
             'event_id': episode.event.pk,
             'episode_number': episode.get_relative_id(),
-            'puzzle_number': puzzle_number+1
+            'puzzle_number': puzzle_number + 1
         }
         return reverse('puzzle', subdomain='www', kwargs=params)
 
