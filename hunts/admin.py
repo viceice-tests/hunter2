@@ -5,6 +5,7 @@ from nested_admin import \
     NestedStackedInline, \
     NestedTabularInline
 from . import models
+from .forms import AnswerForm
 
 
 def make_textinput(field, db_field, kwdict):
@@ -12,10 +13,11 @@ def make_textinput(field, db_field, kwdict):
         kwdict['widget'] = forms.Textarea(attrs={'rows': 1})
 
 
-class AnswerInline(NestedTabularInline):
+class AnswerInline(NestedStackedInline):
     model = models.Answer
-    fields = ('answer', 'runtime')
+    fields = ('alter_progress', 'answer', 'runtime')
     extra = 0
+    form = AnswerForm
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('answer', db_field, kwargs)
