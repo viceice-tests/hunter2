@@ -70,6 +70,7 @@ class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
             context=context,
         )
 
+
 class Team(LoginRequiredMixin, TeamMixin, View):
     def get(self, request, team_id):
         team = get_object_or_404(
