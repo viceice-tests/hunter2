@@ -160,11 +160,26 @@ class PuzzleAdmin(NestedModelAdmin):
         return format_html('<a href="{}/unlocks/">{}</a>', obj.pk, obj.unlock_count)
 
 
+@admin.register(models.Episode)
+class EpisodeAdmin(NestedModelAdmin):
+    list_display = ('event', 'name', 'num_puzzles')
+    list_display_links = ('name',)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(
+            puzzles_count=Count('puzzles', distinct=True)
+        )
+
+    def num_puzzles(self, obj):
+        return obj.puzzles_count
+    num_puzzles.short_description = 'puzzles'
+
+
 @admin.register(models.UserPuzzleData)
 class UserPuzzleDataAdmin(admin.ModelAdmin):
     readonly_fields = ('token', )
 
 
 admin.site.register(models.Annoucement)
-admin.site.register(models.Episode)
 admin.site.register(models.TeamPuzzleData)
