@@ -1,41 +1,57 @@
 $(document).ready(function() {
 	$('#inv-create').submit(function(event) {
 		event.preventDefault();
-		var $user = $(this).children('select[name=user]').val();
+		var $field = $(this).find('select[name=user]');
+		var $user = $field.val();
+		var $team = $(this).data('team');
 		$.post(
 			$(this).attr('action'), JSON.stringify({ user: $user })
 		).done(function(data) {
-			var $cancel_button = $(`<button type="button" class="btn btn-danger inv-cancel" autocomplete="off" value="${$user}">Cancel</button>`);
-			$cancel_button.click(cancel_invite);
-			var $new_element = $(`<li>${data.username}\n</li>`).append($cancel_button);
+			var $cancel = $(`<a href="#" class="inv-cancel" data-user="${$user}">Cancel</a>`);
+			if ($team) {
+				$cancel.data('team', $team);
+			}
+			$cancel.click(cancel_invite);
+			var $new_element = $(`<li>${data.username}<span style="float: right">&nbsp;</span></li>`);
+			$new_element.find('span').append($cancel);
 			$('#inv-list').append($new_element);
+			$field.empty();
 		});
 	});
 
 	function cancel_invite() {
-		var $list_entry = $(this).parent('li');
+		var $prefix = $(this).data('team') ? `${$(this).data('team')}/` : ''
+		var $list_entry = $(this).closest('li');
 		$.post(
-			'cancelinvite', JSON.stringify({ user: $(this).attr('value') })
+			$prefix + 'cancelinvite', JSON.stringify({ user: $(this).data('user') })
 		).done(function() {
-			$list_entry.remove();
+			$list_entry.fadeOut(300, function() {
+				$(this).fadeOut(300, function() {
+					$(this).remove();
+				});
+			});
 		});
 	}
 	$('.inv-cancel').click(cancel_invite);
 
 	$('.inv-accept').click(function() {
+		var $prefix = $(this).data('team') ? `${$(this).data('team')}/` : ''
 		$.post(
-			'acceptinvite'
+			$prefix + 'acceptinvite'
 		).done(function() {
 			location.reload();
 		});
 	});
 
 	$('.inv-deny').click(function() {
-		var $invite_section = $(this).closest('div');
+		var $prefix = $(this).data('team') ? `${$(this).data('team')}/` : ''
+		var $invite_section = $(this).closest('li');
 		$.post(
-			'denyinvite'
+			$prefix + 'denyinvite'
 		).done(function() {
-			$invite_section.remove();
+			$invite_section.fadeOut(300, function() {
+				$(this).remove();
+			});
 		});
 	});
 
@@ -44,7 +60,7 @@ $(document).ready(function() {
 		$.post(
 			'request'
 		).done(function() {
-			$cancel_button = $(`<button type="button" class="btn btn-danger req-cancel" autocomplete="off">Cancel</button>`);
+			var $cancel_button = $(`<button type="button" class="btn btn-danger req-cancel" autocomplete="off">Cancel</button>`);
 			$cancel_button.click(cancel_request);
 			$request_section.replaceWith(`
 <div id="req-div">
@@ -84,7 +100,9 @@ $(document).ready(function() {
 		$.post(
 			'acceptrequest', JSON.stringify({ user: $(this).attr('value') })
 		).done(function(data) {
-			$list_entry.remove();
+			$list_entry.fadeOut(300, function() {
+				$(this).remove();
+			});
 			var $new_element = $(`<li>${data.username}\n</li>`);
 			$('#member-list').append($new_element);
 		});
@@ -95,7 +113,9 @@ $(document).ready(function() {
 		$.post(
 			'denyrequest', JSON.stringify({ user: $(this).attr('value') })
 		).done(function() {
-			$list_entry.remove();
+			$list_entry.fadeOut(300, function() {
+				$(this).remove();
+			});
 		});
 	});
 })

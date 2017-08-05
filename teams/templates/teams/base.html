@@ -1,0 +1,6 @@
+{% extends "events/base.html" %}
+
+{% block topbar_right %}{% spaceless %}
+	{{ block.super }}
+	<li class="button"><a href="{% url 'manage_team' request.event.pk %}">Team</a></li>
+{% endspaceless %}{% endblock %}

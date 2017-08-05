@@ -18,7 +18,7 @@
 {% for u in invites %}
 	<li>
 		{{ u.user.username }}
-		<button type="button" class="btn btn-danger inv-cancel" autocomplete="off" value="{{ u.pk }}">Cancel</button>
+		<button type="button" class="btn btn-danger inv-cancel" autocomplete="off" data-user="{{ u.pk }}">Cancel</button>
 	</li>
 {% endfor -%}
 </ul>

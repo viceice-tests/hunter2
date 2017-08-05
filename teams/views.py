@@ -8,6 +8,7 @@ from django.template.response import TemplateResponse
 from django.views import View
 from django.views.generic import UpdateView
 from . import forms, models
+from .forms import CreateTeamForm, InviteForm
 from .mixins import TeamMixin
 
 import json
@@ -17,7 +18,7 @@ class UserProfileAutoComplete(LoginRequiredMixin, autocomplete.Select2QuerySetVi
     raise_exception = True
 
     def get_queryset(self):
-        qs = models.UserProfile.objects.exclude(pk=self.request.user.profile.pk)
+        qs = models.UserProfile.objects.exclude(pk=self.request.user.profile.pk).order_by('user__username')
 
         if self.q:
             qs = qs.filter(
@@ -46,6 +47,28 @@ class TeamCreateView(LoginRequiredMixin, TeamMixin, UpdateView):
         team_id = self.request.team.pk
         return reverse('team', kwargs={'event_id': event_id, 'team_id': team_id})
 
+
+class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
+    def get(self, request):
+        if request.team.is_explicit():
+            invite_form = InviteForm()
+            invites = request.team.invites.all()
+            context = {
+                'invite_form': invite_form,
+                'invites': invites,
+            }
+        else:
+            create_form = CreateTeamForm(instance=request.team)
+            invites = models.Team.objects.filter(invites=request.user.profile)
+            context = {
+                'create_form': create_form,
+                'invites': invites,
+            }
+        return TemplateResponse(
+            request,
+            'teams/manage_team.html',
+            context=context,
+        )
 
 class Team(LoginRequiredMixin, TeamMixin, View):
     def get(self, request, team_id):
