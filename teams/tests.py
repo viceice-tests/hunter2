@@ -19,6 +19,23 @@ class EmptyTeamView(TeamMixin, View):
 class TeamCreateTests(TestCase):
     fixtures = ['teams_test']
 
+    def test_team_create(self):
+        self.assertTrue(self.client.login(username='test_b', password='hunter2'))
+        response = self.client.post(
+            reverse('create_team', kwargs={'event_id': 1}, subdomain='www'),
+            {
+                'name': 'Test Team',
+                'invites': [3],
+            },
+            HTTP_HOST='www.testserver',
+        )
+        self.assertEqual(response.status_code, 302)
+        creator = UserProfile.objects.get(pk=2)
+        invitee = UserProfile.objects.get(pk=3)
+        team = Team.objects.get(name='Test Team')
+        self.assertTrue(creator in team.members.all())
+        self.assertTrue(invitee in team.invites.all())
+
     def test_team_name_uniqueness(self):
         old_event = events.models.Event.objects.get(pk=1)
         new_event = events.models.Event(name='New Event', theme=old_event.theme, current=False)
