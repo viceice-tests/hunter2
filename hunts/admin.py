@@ -119,8 +119,9 @@ class PuzzleAdmin(NestedModelAdmin):
             unlock_count=Count('unlock', distinct=True)
         )
 
-    ### The following three methods do nothing if popup is True. This removes everything else from
-    ### the form except the inline.
+    # The following three methods do nothing if popup is True. This removes everything else from
+    # the form except the inline.
+
     def get_fields(self, request, obj=None):
         if self.popup:
             return ()
