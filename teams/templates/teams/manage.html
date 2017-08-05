@@ -57,7 +57,8 @@
 {% endspaceless %}
 {% else %}
 {% spaceless %}
-	<form>
+	<form action="create" method="post">
+		{% csrf_token %}
 		{% for field in create_form %}
 			<p>{{ field.label_tag }}</p>
 			<p>{{ field }}</p>

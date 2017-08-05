@@ -29,12 +29,12 @@ class UserProfileAutoComplete(LoginRequiredMixin, autocomplete.Select2QuerySetVi
         return qs
 
 
-class TeamCreateView(LoginRequiredMixin, TeamMixin, UpdateView):
+class CreateTeamView(LoginRequiredMixin, TeamMixin, UpdateView):
     form_class = forms.TeamForm
-    template_name = 'teams/team_form.html'
+    template_name = 'teams/create.html'
 
     def get_form_kwargs(self):
-        kwargs = super(TeamCreateView, self).get_form_kwargs()
+        kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
         kwargs['user'] = self.request.user.profile
         return kwargs
@@ -44,8 +44,7 @@ class TeamCreateView(LoginRequiredMixin, TeamMixin, UpdateView):
 
     def get_success_url(self):
         event_id = self.request.event.pk
-        team_id = self.request.team.pk
-        return reverse('team', kwargs={'event_id': event_id, 'team_id': team_id})
+        return reverse('manage_team', kwargs={'event_id': event_id})
 
 
 class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
@@ -66,7 +65,7 @@ class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
             }
         return TemplateResponse(
             request,
-            'teams/manage_team.html',
+            'teams/manage.html',
             context=context,
         )
 

@@ -15,6 +15,7 @@ teampatterns = [
 
 eventpatterns = [
     url(r'^team/$', views.ManageTeamView.as_view(), name='manage_team'),
+    url(r'^team/create$', views.CreateTeamView.as_view(), name='create_team'),
     url(r'^team/(?P<team_id>[1-9]\d*)/', include(teampatterns), name='team'),
 ]
 
