@@ -7,6 +7,7 @@ from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
 from enumfields import EnumField, Enum
+from subdomains.utils import reverse
 
 import events
 import teams
@@ -32,6 +33,18 @@ class Puzzle(models.Model):
 
     def __str__(self):
         return f'<Puzzle: {self.title}>'
+
+    def get_absolute_url(self):
+        episode = self.episode_set.get()
+        for i, p in enumerate(episode.puzzles.values('pk')):
+            if self.pk == p['pk']:
+                puzzle_number = i
+        params = {
+            'event_id': episode.event.pk,
+            'episode_number': episode.get_relative_id(),
+            'puzzle_number': puzzle_number+1
+        }
+        return reverse('puzzle', subdomain='www', kwargs=params) + '?preview=1'
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
