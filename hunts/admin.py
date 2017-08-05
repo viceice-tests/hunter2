@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import admin
+from django.db.models import Count
 from nested_admin import \
     NestedModelAdmin, \
     NestedStackedInline, \
@@ -74,19 +75,28 @@ class PuzzleAdmin(NestedModelAdmin):
     list_display = ('the_episode', '__str__', 'title', 'start_date', 'answers', 'hints', 'unlocks')
     list_display_links = ('__str__',)
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # TODO prefetch_related?
+        return qs.annotate(
+            answer_count=Count('answer'),
+            hint_count=Count('hint'),
+            unlock_count=Count('unlock')
+        )
+
     # Who knows why we can't call this 'episode' but it causes an AttributeError...
     def the_episode(self, obj):
         return obj.episode_set.get().name
     the_episode.short_description = 'episode'
 
     def answers(self, obj):
-        return obj.answer_set.count()
+        return obj.answer_count
 
     def hints(self, obj):
-        return obj.hint_set.count()
+        return obj.hint_count
 
     def unlocks(self, obj):
-        return obj.unlock_set.count()
+        return obj.unlock_count
 
 
 @admin.register(models.UserPuzzleData)
