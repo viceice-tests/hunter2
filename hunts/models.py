@@ -44,7 +44,7 @@ class Puzzle(models.Model):
             'episode_number': episode.get_relative_id(),
             'puzzle_number': puzzle_number+1
         }
-        return reverse('puzzle', subdomain='www', kwargs=params) + '?preview=1'
+        return reverse('puzzle', subdomain='www', kwargs=params)
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
