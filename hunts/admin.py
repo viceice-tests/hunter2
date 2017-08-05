@@ -65,7 +65,8 @@ class UnlockInline(NestedStackedInline):
 @admin.register(models.Guess)
 class GuessAdmin(admin.ModelAdmin):
     read_only_fields = ('correct_current', 'correct_for')
-    list_display = ('for_puzzle', 'by_team', 'by', 'guess', 'given')
+    list_display = ('for_puzzle', 'guess', 'by_team', 'by', 'given')
+    list_display_links = ('guess',)
 
 
 @admin.register(models.Puzzle)
