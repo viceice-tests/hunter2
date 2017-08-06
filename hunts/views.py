@@ -242,9 +242,10 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
 
         # TODO: May need caching of progress to avoid DB load
         if not puzzle.unlocked_by(request.team):
-            return TemplateResponse(
-                request, 'hunts/puzzlelocked.html', status=403
-            )
+            if not (admin and request.GET.get('preview')):
+                return TemplateResponse(
+                    request, 'hunts/puzzlelocked.html', status=403
+                )
 
         data = models.PuzzleData(puzzle, request.team, request.user.profile)
 
