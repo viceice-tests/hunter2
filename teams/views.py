@@ -1,12 +1,12 @@
 from dal import autocomplete
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.views import View
 from django.views.generic import UpdateView
+from hunter2.resolvers import reverse
 from . import forms, models
 from .mixins import TeamMixin
 
@@ -44,7 +44,7 @@ class TeamCreateView(LoginRequiredMixin, TeamMixin, UpdateView):
     def get_success_url(self):
         event_id = self.request.event.pk
         team_id = self.request.team.pk
-        return reverse('team', kwargs={'event_id': event_id, 'team_id': team_id})
+        return reverse('team', subdomain=self.request.subdomain, kwargs={'event_id': event_id, 'team_id': team_id})
 
 
 class Team(LoginRequiredMixin, TeamMixin, View):
