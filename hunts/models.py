@@ -35,7 +35,11 @@ class Puzzle(models.Model):
         return f'<Puzzle: {self.title}>'
 
     def get_absolute_url(self):
-        episode = self.episode_set.get()
+        try:
+            episode = self.episode_set.get()
+        except Episode.DoesNotExist:
+            return ''
+
         for i, p in enumerate(episode.puzzles.values('pk')):
             if self.pk == p['pk']:
                 puzzle_number = i
