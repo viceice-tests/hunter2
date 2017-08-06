@@ -163,16 +163,26 @@ class StatsContent(LoginRequiredMixin, View):
         if not admin:
             raise PermissionDenied
 
+        # TODO select and prefetch all the things
         episodes = models.Episode.objects.filter(event=request.event)
         puzzles = models.Puzzle.objects.filter(episode__event=request.event)
 
         all_teams = teams.models.Team.objects.filter(at_event=request.event)
 
-        puzzle_completers = [[t for t in all_teams if p.answered_by(t)] for p in puzzles]
-        puzzle_completion = [{'puzzle': p.title, 'completion': len(completers) / len(all_teams) * 100}
-            for p, completers in zip(puzzles, puzzle_completers)]
+        correct_guesses = {puzzle: {t: puzzle.answered_by(t) for t in all_teams} for puzzle in puzzles}
+        puzzle_completion = [
+            {
+                'puzzle': p.title,
+                'completion': [{
+                    'team': t.name,
+                    'time': correct_guesses[p][t][0].given
+                } for t in all_teams if correct_guesses[p][t]]
+            } for p in puzzles]
 
         data = {
+            'numTeams': all_teams.count(),
+            'startTime': min([e.start_date for e in episodes]),
+            'endTime': max([guesses[0].given for stuff in correct_guesses.values() for guesses in stuff.values() if guesses]),
             'puzzles': [p.title for p in puzzles],
             'puzzleCompletion': puzzle_completion
         }
