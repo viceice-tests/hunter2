@@ -7,6 +7,7 @@ from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
 from enumfields import EnumField, Enum
+from subdomains.utils import reverse
 
 import events
 import teams
@@ -32,6 +33,32 @@ class Puzzle(models.Model):
 
     def __str__(self):
         return f'<Puzzle: {self.title}>'
+
+    def get_absolute_url(self):
+        try:
+            episode = self.episode_set.get()
+        except Episode.DoesNotExist:
+            return ''
+
+        params = {
+            'event_id': episode.event.pk,
+            'episode_number': episode.get_relative_id(),
+            'puzzle_number': self.get_relative_id()
+        }
+        return reverse('puzzle', subdomain='www', kwargs=params)
+
+    def get_relative_id(self):
+        try:
+            episode = self.episode_set.get()
+        except Episode.DoesNotExist:
+            raise ValueError("Puzzle %s is not on an episode and so has no relative id" % self.title)
+
+        for i, p in enumerate(episode.puzzles.values('pk')):
+            if self.pk == p['pk']:
+                puzzle_number = i + 1
+                break
+
+        return puzzle_number
 
     def unlocked_by(self, team):
         # Is this puzzle playable?

@@ -73,6 +73,13 @@ class PuzzleAdmin(NestedModelAdmin):
         UnlockInline,
     ]
 
+    def view_on_site(self, obj):
+        url = obj.get_absolute_url()
+        if url:
+            return url + '?preview=1'
+
+        return ''
+
 
 @admin.register(models.UserPuzzleData)
 class UserPuzzleDataAdmin(admin.ModelAdmin):
