@@ -40,15 +40,25 @@ class Puzzle(models.Model):
         except Episode.DoesNotExist:
             return ''
 
-        for i, p in enumerate(episode.puzzles.values('pk')):
-            if self.pk == p['pk']:
-                puzzle_number = i
         params = {
             'event_id': episode.event.pk,
             'episode_number': episode.get_relative_id(),
-            'puzzle_number': puzzle_number + 1
+            'puzzle_number': self.get_relative_id()
         }
         return reverse('puzzle', subdomain='www', kwargs=params)
+
+    def get_relative_id(self):
+        try:
+            episode = self.episode_set.get()
+        except Episode.DoesNotExist:
+            raise ValueError("Puzzle %s is not on an episode and so has no relative id" % self.title)
+
+        for i, p in enumerate(episode.puzzles.values('pk')):
+            if self.pk == p['pk']:
+                puzzle_number = i + 1
+                break
+
+        return puzzle_number
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
