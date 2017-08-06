@@ -12,9 +12,10 @@ $(document).ready(function() {
 				$cancel.data('team', $team);
 			}
 			$cancel.click(cancel_invite);
-			var $new_element = $(`<li>${data.username}<span style="float: right">&nbsp;</span></li>`);
-			$new_element.find('span').append($cancel);
-			$('#inv-list').append($new_element);
+			var $list_entry = $(`<li hidden>${data.username} has been invited<span style="float: right">&nbsp;</span></li>`);
+			$list_entry.find('span').append($cancel);
+			$('#inv-list').append($list_entry);
+			$list_entry.fadeIn('slow');
 			$field.empty();
 		});
 	});
@@ -25,10 +26,11 @@ $(document).ready(function() {
 		$.post(
 			$prefix + 'cancelinvite', JSON.stringify({ user: $(this).data('user') })
 		).done(function() {
-			$list_entry.fadeOut(300, function() {
-				$(this).fadeOut(300, function() {
-					$(this).remove();
-				});
+			if (!$list_entry.siblings().length) {
+				$('#inv-div').hide('slow');
+			}
+			$list_entry.fadeOut('slow', function() {
+				$(this).remove();
 			});
 		});
 	}
@@ -45,75 +47,75 @@ $(document).ready(function() {
 
 	$('.inv-deny').click(function() {
 		var $prefix = $(this).data('team') ? `${$(this).data('team')}/` : ''
-		var $invite_section = $(this).closest('li');
+		var $list_entry = $(this).closest('li');
 		$.post(
 			$prefix + 'denyinvite'
 		).done(function() {
-			$invite_section.fadeOut(300, function() {
+			if ($list_entry.siblings().length == 0) {
+				$('#inv-div').hide('slow')
+			}
+			$list_entry.fadeOut('slow', function() {
 				$(this).remove();
 			});
 		});
 	});
 
-	function create_request() {
-		var $request_section = $(this).closest('div');
+	$('#req-create').submit(function(event) {
+		event.preventDefault();
+		var $field = $(this).find('select[name=team]');
+		var $team = $field.val();
 		$.post(
-			'request'
-		).done(function() {
-			var $cancel_button = $(`<button type="button" class="btn btn-danger req-cancel" autocomplete="off">Cancel</button>`);
-			$cancel_button.click(cancel_request);
-			$request_section.replaceWith(`
-<div id="req-div">
-	<h2>Request</h2>
-	<p>
-		You have requested to join this team.
-	</p>
-</div>
-			`);
-			$('#req-div p').append($cancel_button);
+			$team + '/request'
+		).done(function(data) {
+			var $cancel_link = $(`<a href="#" data-team="${$team}">Cancel</a>`);
+			$cancel_link.click(cancel_request);
+			var $list_entry = $(`<li hidden>You have requested to join ${data['team']}<span style="float: right"></span></li>`);
+			$list_entry.find('span').append($cancel_link);
+			$('#req-list').append($list_entry);
+			$list_entry.fadeIn('slow');
 		});
-	}
-	$('.req-create').click(create_request);
-
+	});
+	
 	function cancel_request() {
-		var $request_section = $(this).closest('div');
+		var $list_entry = $(this).closest('li');
+		var $list = $(this).closest('ul');
 		$.post(
-			'cancelrequest'
+			$(this).data('team') + '/cancelrequest'
 		).done(function() {
-			$create_button= $(`<button type="button" class="btn btn-primary req-create" autocomplete="off">Request</button>`);
-			$create_button.click(create_request);
-			$request_section.replaceWith(`
-<div id="req-div">
-	<h2>Request</h2>
-	<p>
-		Request to join this team:
-	</p>
-</div>
-			`);
-			$('#req-div p').append($create_button);
+			$list_entry.fadeOut('slow', function() {
+				$(this).remove();
+			});
 		});
 	}
 	$('.req-cancel').click(cancel_request);
 
 	$('.req-accept').click(function() {
-		var $list_entry = $(this).parent('li');
+		var $prefix = $(this).data('team') ? `${$(this).data('team')}/` : ''
+		var $list_entry = $(this).closest('li');
 		$.post(
-			'acceptrequest', JSON.stringify({ user: $(this).attr('value') })
+			$prefix + 'acceptrequest', JSON.stringify({ user: $(this).data('user') })
 		).done(function(data) {
-			$list_entry.fadeOut(300, function() {
+			if ($list_entry.siblings().length == 0) {
+				$('#req-div').hide('slow');
+			}
+			$list_entry.fadeOut('slow', function() {
 				$(this).remove();
 			});
-			var $new_element = $(`<li>${data.username}\n</li>`);
+			var $new_element = $(`<li>${data.username}<span style="float: right">&nbsp;${data.seat}</span></li>`);
 			$('#member-list').append($new_element);
 		});
 	});
 
 	$('.req-deny').click(function() {
-		var $list_entry = $(this).parent('li');
+		var $prefix = $(this).data('team') ? `${$(this).data('team')}/` : ''
+		var $list_entry = $(this).closest('li');
 		$.post(
-			'denyrequest', JSON.stringify({ user: $(this).attr('value') })
+			$prefix + 'denyrequest', JSON.stringify({ user: $(this).data('user') })
 		).done(function() {
-			$list_entry.fadeOut(300, function() {
+			if ($list_entry.siblings().length == 0) {
+				$('#req-div').hide('slow');
+			}
+			$list_entry.fadeOut('slow', function() {
 				$(this).remove();
 			});
 		});

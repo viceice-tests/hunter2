@@ -8,10 +8,22 @@ from django.template.response import TemplateResponse
 from django.views import View
 from django.views.generic import UpdateView
 from . import forms, models
-from .forms import CreateTeamForm, InviteForm
+from .forms import CreateTeamForm, InviteForm, RequestForm
 from .mixins import TeamMixin
 
 import json
+
+
+class TeamAutoComplete(LoginRequiredMixin, autocomplete.Select2QuerySetView):
+    raise_exception = True
+
+    def get_queryset(self):
+        qs = models.Team.objects.filter(at_event=self.request.event).order_by('name')
+
+        if self.q:
+            qs = qs.filter(name__istartswith=self.q)
+
+        return qs
 
 
 class UserProfileAutoComplete(LoginRequiredMixin, autocomplete.Select2QuerySetView):
@@ -22,8 +34,8 @@ class UserProfileAutoComplete(LoginRequiredMixin, autocomplete.Select2QuerySetVi
 
         if self.q:
             qs = qs.filter(
-                Q(user__username__startswith=self.q) |
-                Q(user__email__startswith=self.q)
+                Q(user__username__istartswith=self.q) |
+                Q(user__email__istartswith=self.q)
             )
 
         return qs
@@ -52,16 +64,22 @@ class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
         if request.team.is_explicit():
             invite_form = InviteForm()
             invites = request.team.invites.all()
+            requests = request.team.requests.all()
             context = {
                 'invite_form': invite_form,
                 'invites': invites,
+                'requests': requests,
             }
         else:
-            create_form = CreateTeamForm(instance=request.team)
             invites = models.Team.objects.filter(invites=request.user.profile)
+            requests = models.Team.objects.filter(requests=request.user.profile)
+            create_form = CreateTeamForm(instance=request.team)
+            request_form = RequestForm()
             context = {
-                'create_form': create_form,
                 'invites': invites,
+                'requests': requests,
+                'create_form': create_form,
+                'request_form': request_form,
             }
         return TemplateResponse(
             request,
@@ -251,6 +269,7 @@ class Request(LoginRequiredMixin, TeamMixin, View):
         return JsonResponse({
             'result': 'OK',
             'message': 'Requested',
+            'team': team.name,
         })
 
 
@@ -314,6 +333,7 @@ class AcceptRequest(LoginRequiredMixin, TeamMixin, View):
             'result': 'OK',
             'message': 'Request accepted',
             'username': user.user.username,
+            'seat': user.seat,
         })
 
 
