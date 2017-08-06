@@ -1,29 +1,13 @@
-var height = 420;
-var width = 420;
-
-var svg = d3.select('#episode-stats'),
-	margin = {top: 100, right: 10, bottom: 100, left: 50},
-	width = +svg.attr("width") - margin.left - margin.right,
-	height = +svg.attr("height") - margin.top - margin.bottom;
-
-var chart = svg.append("g")
-	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-chart.append("rect")
-	.attr("width", width)
-	.attr("height", height)
-	.attr("class", "chart-background");
-
-var xAxisElt = chart.append("g")
-	.attr("class", "axis axis-x");
-
-var yAxisElt = chart.append("g")
-	.attr("class", "axis axis-y");
-
 function getStats(force) {
 	if (!(force || $('#auto-update').prop('checked'))) {
 		return;
 	}
-	$.get('stats_content', {}, drawTimeCompleted);
+	var graphType = $('#type').val();
+	drawFunction = {
+		"percent-complete": drawCompletion,
+		"time-completed": drawTimeCompleted
+	}[graphType];
+	$.get('stats_content', {}, drawFunction);
 	setTimeout(getStats, 5000);
 }
 
@@ -32,12 +16,12 @@ function drawCompletion(data) {
 		.rangeRound([0, width]).padding(0.1)
 		.domain(data.puzzleCompletion.map(function(d) { return d.puzzle; }));
 	var y = d3.scaleLinear()
-		.domain([0, 100])
+		.domain([0, 1])
 		.range([height, 0]);
 	var barWidth = width / data.puzzleCompletion.length;
 
 	var completion = data.puzzleCompletion.map(
-		function (d) { return d.completion.length / data.numTeams * 100; }
+		function (d) { return d.completion.length / data.numTeams; }
 	);
 	var bar = chart.selectAll("g.bar")
 		.data(completion);
@@ -55,11 +39,13 @@ function drawCompletion(data) {
 		.attr("height", function(d) { return height - y(d); })
 		.attr("width", barWidth - 3);
 
+	var percentFormatter = d3.format(".0%");
+
 	updateBar.select("text")
 		.attr("y", function(d) { return y(d) + 3; })
 		.attr("x", barWidth / 2)
 		.attr("dy", ".75em")
-		.text(function(d) { return d + '%'; });
+		.text(percentFormatter);
 
 	bar.exit().remove();
 
@@ -67,11 +53,19 @@ function drawCompletion(data) {
 		.attr("transform", "translate(0," + height + ")")
 		.selectAll("text")
 		.attr("transform", "rotate(-20)");
+
+	var yAxis = d3.axisLeft(y)
+		.tickSize(-width)
+		.tickPadding(10)
+		.tickFormat(percentFormatter);
+
+	yAxisElt.call(yAxis);
 }
 
 function drawTimeCompleted(data) {
-	var x = d3.scaleBand()
-		.rangeRound([0, width]).padding(0.1)
+	var x = d3.scalePoint()
+		.range([0, width])
+		.padding(0.5)
 		.domain(data.puzzleCompletion.map(function(d) { return d.puzzle; }));
 	var y = d3.scaleTime()
 		.domain([new Date(data.startTime), new Date(data.endTime)])
@@ -82,29 +76,25 @@ function drawTimeCompleted(data) {
 		function (d) { return d.completion }
 	);
 	var puzzle = chart.selectAll("g.puzzle")
-		.data(timeCompleted)
+		.data(data.puzzleCompletion)
 
-	console.log(puzzle);
 	puzzle.selectAll("path").remove();
-	console.log(puzzle);
 
 	var enterPuzzle = puzzle.enter()
 		.append("g")
 		.attr("class", "puzzle");
-	console.log(enterPuzzle);
 
 	var updatePuzzle = enterPuzzle.merge(puzzle)
-		.attr("transform", function(d, i) { return "translate(" + i * colWidth + ",0)"; })
+		.attr("transform", function(d, i) { console.log(d); return "translate(" + x(d.puzzle) + ",0)"; })
 	puzzle.exit().remove();
-	console.log(updatePuzzle);
 
 	var cross = d3.symbol().type(d3.symbolCross).size(30);
 
 	updatePuzzle.selectAll("path")
-		.data(function(d, i) { return d; })
+		.data(function(d, i) { return d.completion; })
 		.enter()
 		.append("path")
-		.attr("transform", function(d, i) { return "translate(" + colWidth / 2 + "," + y(new Date(d.time)) + ") rotate(45)"; })
+		.attr("transform", function(d, i) { return "translate(0," + y(new Date(d.time)) + ") rotate(45)"; })
 		.attr("d", cross);
 
 	var xAxis = d3.axisTop(x)
@@ -112,7 +102,6 @@ function drawTimeCompleted(data) {
 		.tickPadding(10);
 
 	xAxisElt.call(xAxis)
-		//.attr("transform", "translate(0," + height + ")")
 		.selectAll("text")
 		.attr("transform", "rotate(20)");
 
@@ -123,6 +112,36 @@ function drawTimeCompleted(data) {
 	yAxisElt.call(yAxis);
 }
 
+var chart;
+
+function clearChart() {
+	if (chart) {
+		chart.selectAll("*").remove();
+	}
+	var svg = d3.select('#episode-stats')
+	var margin = {top: 100, right: 10, bottom: 100, left: 50}
+	width = +svg.attr("width") - margin.left - margin.right
+	height = +svg.attr("height") - margin.top - margin.bottom
+
+	chart = svg.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	chart.append("rect")
+		.attr("width", width)
+		.attr("height", height)
+		.attr("class", "chart-background");
+
+	xAxisElt = chart.append("g")
+		.attr("class", "axis axis-x");
+
+	yAxisElt = chart.append("g")
+		.attr("class", "axis axis-y");
+}
+
+function typeChanged(ev) {
+	clearChart();
+	getStats(true);
+}
+
 function updateClicked(ev) {
 	if ($(this).prop('checked')) {
 		getStats();
@@ -130,7 +149,9 @@ function updateClicked(ev) {
 }
 
 $(function () {
+	clearChart();
 	getStats(true);
+	$('#type').change(typeChanged);
 	$('#auto-update').click(updateClicked);
 });
 

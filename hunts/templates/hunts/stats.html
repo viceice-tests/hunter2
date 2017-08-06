@@ -45,11 +45,10 @@
 <p><label for="type">Graph type</label>
 	<select id="type">
 		<option value="percent-complete">Percentage completion</option>
-		<option value="percent-complete">Time completed</option>
-		<option value="percent-complete">Progress</option>
+		<option value="time-completed">Time completed</option>
+		<option value="progress">Progress</option>
 	</select>
 </p>
-<h2>Puzzle Completion Rate</h2>
 <svg class="chart" id="episode-stats" width="600" height="800"></svg>
 <script src="{% static 'hunts/js/stats.js' %}"></script>
 {% endblock %}
