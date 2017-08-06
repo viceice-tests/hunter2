@@ -254,7 +254,7 @@ class UserData(models.Model):
         verbose_name_plural = 'User data'
 
     def __str__(self):
-        return f'Data for {self.user.user.username}'
+        return f'Data for {self.user.user.username} at {self.event}'
 
 
 class TeamPuzzleData(models.Model):
