@@ -158,6 +158,20 @@ class EpisodeBehaviourTest(TestCase):
         self.assertTrue(self.parallel_episode.get_puzzle(2).answered_by(self.team))
         self.assertEqual(self.parallel_episode.next_puzzle(self.team), 3)
 
+    def test_puzzle_numbers(self):
+        puzzle1 = Puzzle.objects.get(pk=1)
+        puzzle2 = Puzzle.objects.get(pk=2)
+        puzzle3 = Puzzle.objects.get(pk=3)
+        puzzle4 = Puzzle.objects.get(pk=4)
+        self.assertEqual(puzzle1.get_relative_id(), 1)
+        self.assertEqual(puzzle2.get_relative_id(), 1)
+        self.assertEqual(puzzle3.get_relative_id(), 2)
+        self.assertEqual(puzzle4.get_relative_id(), 3)
+        self.assertEqual(self.linear_episode.get_puzzle(puzzle1.get_relative_id()), puzzle1)
+        self.assertEqual(self.parallel_episode.get_puzzle(puzzle2.get_relative_id()), puzzle2)
+        self.assertEqual(self.parallel_episode.get_puzzle(puzzle3.get_relative_id()), puzzle3)
+        self.assertEqual(self.parallel_episode.get_puzzle(puzzle4.get_relative_id()), puzzle4)
+
 
 class EpisodeSequenceTests(TestCase):
     fixtures = ['hunts_episodesequence']
