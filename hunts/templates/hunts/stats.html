@@ -1,0 +1,42 @@
+{% extends "events/base.html" %}
+{% load staticfiles %}
+
+{% block style %}
+<style type="text/css">
+.chart rect {
+	fill: steelblue;
+}
+
+.chart text {
+	fill: #eee;
+	font: 10px sans-serif;
+	text-anchor: middle;
+}
+
+.chart .axis text {
+	fill: #222;
+	text-anchor: end;
+}
+
+.chart .axis-x line {
+	display: none;
+}
+
+</style>
+{% endblock %}
+{% block script %}
+<script src="https://d3js.org/d3.v4.min.js"></script>
+{% endblock %}
+
+{% block page_header %}
+<h1>Stats</h1>
+{% endblock %}
+
+{% block content %}
+<p><input type="checkbox" checked="checked" id="auto-update"> <label for="auto-update">Update automatically</label></p>
+<h2>Puzzle Completion Rate</h2>
+<svg class="chart" id="episode-stats" width="500" height="500"></svg>
+<script src="{% static 'hunts/js/stats.js' %}"></script>
+{% endblock %}
+
+

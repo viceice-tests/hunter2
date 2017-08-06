@@ -143,6 +143,42 @@ class GuessesContent(LoginRequiredMixin, View):
         )
 
 
+class Stats(LoginRequiredMixin, View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            raise PermissionDenied
+
+        return TemplateResponse(
+            request,
+            'hunts/stats.html',
+        )
+
+
+class StatsContent(LoginRequiredMixin, View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            raise PermissionDenied
+
+        episodes = models.Episode.objects.filter(event=request.event)
+        puzzles = models.Puzzle.objects.filter(episode__event=request.event)
+
+        all_teams = teams.models.Team.objects.filter(at_event=request.event)
+
+        puzzle_completers = [[t for t in all_teams if p.answered_by(t)] for p in puzzles]
+        puzzle_completion = [{'puzzle': p.title, 'completion': len(completers) / len(all_teams) * 100}
+            for p, completers in zip(puzzles, puzzle_completers)]
+
+        data = {
+            'puzzles': [p.title for p in puzzles],
+            'puzzleCompletion': puzzle_completion
+        }
+        return JsonResponse(data)
+
+
 class EventDirect(LoginRequiredMixin, View):
     def get(self, request):
         event = events.models.Event.objects.filter(current=True).get()
