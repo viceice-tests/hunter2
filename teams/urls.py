@@ -2,7 +2,7 @@ from django.conf.urls import include, url
 from . import views
 
 teampatterns = [
-    url(r'^$', views.Team.as_view(), name='team'),
+    url(r'^$', views.TeamView.as_view(), name='team'),
     url(r'^invite$', views.Invite.as_view(), name='invite'),
     url(r'^cancelinvite$', views.CancelInvite.as_view(), name='cancelinvite'),
     url(r'^acceptinvite$', views.AcceptInvite.as_view(), name='acceptinvite'),

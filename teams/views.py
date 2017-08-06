@@ -88,36 +88,22 @@ class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
         )
 
 
-class Team(LoginRequiredMixin, TeamMixin, View):
+class TeamView(LoginRequiredMixin, TeamMixin, View):
     def get(self, request, team_id):
         team = get_object_or_404(
             models.Team, at_event=request.event, pk=team_id
         )
         if not team.name:
             raise Http404
-        if team == request.team:
-            invite_form = forms.InviteForm()
-            return TemplateResponse(
-                request,
-                'teams/team_member.html',
-                context={
-                    'team': team.name,
-                    'members': team.members.all(),
-                    'invites': team.invites.all(),
-                    'requests': team.requests.all(),
-                    'invite_form': invite_form,
-                }
-            )
         else:
             return TemplateResponse(
                 request,
-                'teams/team_viewer.html',
+                'teams/view.html',
                 context={
                     'team': team.name,
                     'members': team.members.all(),
                     'invited': request.user.profile in team.invites.all(),
                     'requested': request.user.profile in team.requests.all(),
-                    'requestable': request.team is None,
                 }
             )
 
