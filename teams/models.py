@@ -55,5 +55,4 @@ class Team(models.Model):
         return reverse('team', args=[self.pk])
 
     def is_full(self):
-        return self.is_admin \
-            or self.members.count() >= self.at_event.max_team_size > 0
+        return self.members.count() >= self.at_event.max_team_size > 0 and not self.is_admin
