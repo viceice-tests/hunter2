@@ -60,18 +60,6 @@
 	{{ invite_form.media }}
 {% endspaceless %}
 {% else %}
-<h2>Create a team</h2>
-{% spaceless %}
-	<form action="create" method="post">
-		{% csrf_token %}
-		{% for field in create_form %}
-			<p>{{ field.label_tag }}</p>
-			<p>{{ field }}</p>
-		{% endfor %}
-		<p id="inv-error" hidden></p>
-		<input type="submit" value="Create your team" />
-	</form>
-{% endspaceless %}
 <h2>Join a team</h2>
 {% if invites %}
 <div id="inv-div">
@@ -108,6 +96,18 @@
 	<input type="submit" value="Request" />
 </form>
 {{ request_form.media }}
+{% endspaceless %}
+<h2>Create a team</h2>
+{% spaceless %}
+	<form action="create" method="post">
+		{% csrf_token %}
+		{% for field in create_form %}
+			<p>{{ field.label_tag }}</p>
+			<p>{{ field }}</p>
+		{% endfor %}
+		<p id="inv-error" hidden></p>
+		<input type="submit" value="Create your team" />
+	</form>
 {% endspaceless %}
 {% endif %}
 {% endblock %}
