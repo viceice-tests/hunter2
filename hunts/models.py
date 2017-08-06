@@ -32,7 +32,7 @@ class Puzzle(models.Model):
     )
 
     def __str__(self):
-        return f'<Puzzle: {self.title}>'
+        return self.title
 
     def get_absolute_url(self):
         try:
@@ -168,7 +168,7 @@ class Answer(models.Model):
     answer = models.TextField()
 
     def __str__(self):
-        return f'<Answer: {self.answer}>'
+        return self.answer
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -208,7 +208,7 @@ class Guess(models.Model):
         verbose_name_plural = 'Guesses'
 
     def __str__(self):
-        return f'<Guess: {self.guess} by {self.by}>'
+        return f'"{self.guess}" by {self.by} ({self.by_team})'
 
     def get_team(self):
         event = self.for_puzzle.episode_set.get().event
@@ -269,7 +269,7 @@ class TeamData(models.Model):
         verbose_name_plural = 'Team data'
 
     def __str__(self):
-        return f'<TeamData: {self.team.name}>'
+        return f'Data for {self.team.name}'
 
 
 class UserData(models.Model):
@@ -281,7 +281,7 @@ class UserData(models.Model):
         verbose_name_plural = 'User data'
 
     def __str__(self):
-        return f'<UserData: {self.user.user.username}>'
+        return f'Data for {self.user.user.username} at {self.event}'
 
 
 class TeamPuzzleData(models.Model):
@@ -294,7 +294,7 @@ class TeamPuzzleData(models.Model):
         verbose_name_plural = 'Team puzzle data'
 
     def __str__(self):
-        return f'<TeamPuzzleData: {self.team.name} - {self.puzzle.title}>'
+        return f'Data for {self.team.name} on {self.puzzle.title}'
 
 
 class UserPuzzleData(models.Model):
@@ -307,7 +307,7 @@ class UserPuzzleData(models.Model):
         verbose_name_plural = 'User puzzle data'
 
     def __str__(self):
-        return f'<UserPuzzleData: {self.user.user.username} - {self.puzzle.title}>'
+        return f'Data for {self.user.user.username} on {self.puzzle.title}'
 
     def team(self):
         """Helper method to fetch the team associated with this user and puzzle"""
@@ -363,7 +363,7 @@ class Episode(models.Model):
         unique_together = (('event', 'start_date'),)
 
     def __str__(self):
-        return f'<Episode: {self.event.name} - {self.name}>'
+        return f'{self.event.name} - {self.name}'
 
     def follows(self, episode):
         """Does this episode follow the provied episode by one or more prequel relationships?"""
@@ -496,4 +496,4 @@ class Annoucement(models.Model):
     type = EnumField(AnnoucmentType, max_length=1, default=AnnoucmentType.INFO)
 
     def __str__(self):
-        return f'<EventAnnoucement: {self.title}>'
+        return self.title

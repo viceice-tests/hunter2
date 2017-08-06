@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, MultipleObjectsReturned
 from django.db import models
 from django.urls import reverse
 
@@ -16,7 +16,10 @@ class UserProfile(models.Model):
     )
 
     def __str__(self):
-        return f'<UserProfile: {self.user.username}>'
+        if self.seat:
+            return f'{self.user.username} @{self.seat}'
+        else:
+            return f'{self.user.username}'
 
     def is_on_explicit_team(self, event):
         return self.teams.filter(at_event=event).exclude(name='').exists()
@@ -34,7 +37,17 @@ class Team(models.Model):
     requests = models.ManyToManyField(UserProfile, blank=True, related_name='team_requests')
 
     def __str__(self):
-        return f'<Team: {self.name} @{self.at_event.name}>'
+        if self.name:
+            return f'{self.name} @{self.at_event.name}'
+        else:
+            try:
+                member = self.members.get()
+                return f'[{member}\'s team] @{self.at_event.name}'
+            except MultipleObjectsReturned:
+                # This should never happen but we don't want the admin to break if it does!
+                return '[anonymous team with %d members!] @{self.at_event.name}' % self.members.count()
+            except UserProfile.DoesNotExist:
+                return '[empty anonymous team] @{self.at_event.name}'
 
     def clean(self):
         if (
