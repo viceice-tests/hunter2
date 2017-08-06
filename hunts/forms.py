@@ -24,7 +24,12 @@ class AnswerForm(forms.ModelForm):
         if cleaned_data.get('alter_progress'):
             return cleaned_data
 
-        guesses = Guess.objects.filter(for_puzzle=self.instance.for_puzzle)
+        try:
+            guesses = Guess.objects.filter(for_puzzle=self.instance.for_puzzle)
+        except Answer.for_puzzle.RelatedObjectDoesNotExist:
+            # We are adding a new puzzle, it won't have any guesses
+            return cleaned_data
+
         old_valid_guesses = [g for g in guesses if self.instance.validate_guess(g)]
 
         if cleaned_data['DELETE']:
