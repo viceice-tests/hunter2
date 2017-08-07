@@ -25,16 +25,13 @@ class TeamCreateTests(TestCase):
             reverse('create_team', kwargs={'event_id': 1}, subdomain='www'),
             {
                 'name': 'Test Team',
-                'invites': [3],
             },
             HTTP_HOST='www.testserver',
         )
         self.assertEqual(response.status_code, 302)
         creator = UserProfile.objects.get(pk=2)
-        invitee = UserProfile.objects.get(pk=3)
         team = Team.objects.get(name='Test Team')
         self.assertTrue(creator in team.members.all())
-        self.assertTrue(invitee in team.invites.all())
 
     def test_team_name_uniqueness(self):
         old_event = events.models.Event.objects.get(pk=1)
