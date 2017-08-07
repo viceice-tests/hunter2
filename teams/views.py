@@ -6,7 +6,7 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.views import View
-from django.views.generic import UpdateView
+from django.views.generic import TemplateView, UpdateView
 from . import forms, models
 from .mixins import TeamMixin
 
@@ -322,3 +322,12 @@ class DenyRequest(LoginRequiredMixin, TeamMixin, View):
             'result': 'OK',
             'message': 'Request denied',
         })
+
+
+class EditProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'teams\profile.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        return context

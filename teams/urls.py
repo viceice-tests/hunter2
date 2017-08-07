@@ -20,5 +20,6 @@ eventpatterns = [
 
 urlpatterns = [
     url(r'^event/(?P<event_id>[1-9]\d*)/', include(eventpatterns)),
+    url(r'^profile/$', views.EditProfileView.as_view, name='edit_profile'),
     url(r'^userprofile_autocomplete/$', views.UserProfileAutoComplete.as_view(), name='userprofile_autocomplete'),
 ]
