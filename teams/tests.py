@@ -113,7 +113,8 @@ class InviteTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertFalse(user in team.members.all())
-        self.assertTrue(user in team.invites.all())
+        # Finally check we cleaned up the invite after failing
+        self.assertFalse(user in team.invites.all())
 
     def test_invite_cancel(self):
         response = self.client.post(
@@ -231,14 +232,17 @@ class RequestTests(TestCase):
         team.requests.add(user)
         self.assertTrue(self.client.login(username='test_a', password='hunter2'))
         response = self.client.post(
-            reverse('acceptinvite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
-            json.dumps({}),
+            reverse('acceptrequest', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            json.dumps({
+                'user': 3
+            }),
             'application/json',
             HTTP_HOST='www.testserver',
         )
         self.assertEqual(response.status_code, 400)
         self.assertFalse(user in team.members.all())
-        self.assertTrue(user in team.requests.all())
+        # Finally check we cleaned up the request after failing
+        self.assertFalse(user in team.requests.all())
 
     def test_request_cancel(self):
         response = self.client.post(

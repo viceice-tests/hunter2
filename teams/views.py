@@ -198,6 +198,7 @@ class AcceptInvite(LoginRequiredMixin, TeamMixin, View):
                 'message': 'Already on a team for this event',
             }, status=400)
         if team.is_full():
+            team.invites.remove(user)
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'This team is full',
@@ -205,7 +206,8 @@ class AcceptInvite(LoginRequiredMixin, TeamMixin, View):
         old_team = request.user.profile.team_at(request.event)
         old_team.guess_set.update(by_team=team)
         old_team.delete()  # This is the user's implicit team, as checked above.
-        team.invites.remove(user)
+        user.team_invites.remove(*user.team_invites.filter(at_event=request.event))
+        user.team_requests.remove(*user.team_requests.filter(at_event=request.event))
         team.members.add(user)
         return JsonResponse({
             'result': 'OK',
@@ -307,6 +309,7 @@ class AcceptRequest(LoginRequiredMixin, TeamMixin, View):
                 'message': 'Already a member of a team for this event',
             }, status=403)
         if team.is_full():
+            team.requests.remove(user)
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'This team is full',
@@ -314,8 +317,9 @@ class AcceptRequest(LoginRequiredMixin, TeamMixin, View):
         old_team = user.team_at(request.event)
         old_team.guess_set.update(by_team=team)
         old_team.delete()  # This is the user's implicit team, as checked above.
+        user.team_invites.remove(*user.team_invites.filter(at_event=request.event))
+        user.team_requests.remove(*user.team_requests.filter(at_event=request.event))
         team.members.add(user)
-        team.requests.remove(user)
         return JsonResponse({
             'result': 'OK',
             'message': 'Request accepted',
