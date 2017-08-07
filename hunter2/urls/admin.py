@@ -1,10 +1,14 @@
 from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.auth.decorators import login_required
 
 from hunts.urls.admin import urlpatterns as hunts_patterns
 
 from .. import settings
+
+# Wrap the admin login page with login_required so that it goes through allauth login.
+admin.site.login = login_required(admin.site.login)
 
 admin_patterns = [
     url(r'^accounts/', include('allauth.urls')),
