@@ -164,7 +164,7 @@ class EventIndex(LoginRequiredMixin, View):
 
         return TemplateResponse(
             request,
-            'events/index.html',
+            'hunts/event.html',
             context={
                 'event_title':  event.name,
                 'event_id':     event.id,
