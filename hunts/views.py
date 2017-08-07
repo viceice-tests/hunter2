@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.views import View
-from subdomains.utils import reverse
+from hunter2.resolvers import reverse
 from string import Template
 from teams.mixins import TeamMixin
 
@@ -196,9 +196,10 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
 
         # TODO: May need caching of progress to avoid DB load
         if not puzzle.unlocked_by(request.team):
-            return TemplateResponse(
-                request, 'hunts/puzzlelocked.html', status=403
-            )
+            if not (admin and request.GET.get('preview')):
+                return TemplateResponse(
+                    request, 'hunts/puzzlelocked.html', status=403
+                )
 
         data = models.PuzzleData(puzzle, request.team, request.user.profile)
 
@@ -303,12 +304,12 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         if correct:
             next = episode.next_puzzle(request.team)
             if next:
-                response['url'] = reverse('puzzle', subdomain=request.META['HTTP_HOST'],
+                response['url'] = reverse('puzzle', subdomain=request.subdomain,
                                           kwargs={'event_id': request.event.pk,
                                                   'episode_number': episode_number,
                                                   'puzzle_number': next})
             else:
-                response['url'] = reverse('episode', subdomain=request.META['HTTP_HOST'],
+                response['url'] = reverse('episode', subdomain=request.subdomain,
                                           kwargs={'event_id': request.event.pk,
                                                   'episode_number': episode_number}, )
         else:

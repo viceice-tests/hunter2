@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
-from subdomains.utils import reverse
+from hunter2.resolvers import reverse
 
 from events.models import Event
 from teams.models import Team, UserProfile
@@ -157,6 +157,20 @@ class EpisodeBehaviourTest(TestCase):
         Guess(for_puzzle=self.parallel_episode.get_puzzle(2), by=self.user, guess="4").save()
         self.assertTrue(self.parallel_episode.get_puzzle(2).answered_by(self.team))
         self.assertEqual(self.parallel_episode.next_puzzle(self.team), 3)
+
+    def test_puzzle_numbers(self):
+        puzzle1 = Puzzle.objects.get(pk=1)
+        puzzle2 = Puzzle.objects.get(pk=2)
+        puzzle3 = Puzzle.objects.get(pk=3)
+        puzzle4 = Puzzle.objects.get(pk=4)
+        self.assertEqual(puzzle1.get_relative_id(), 1)
+        self.assertEqual(puzzle2.get_relative_id(), 1)
+        self.assertEqual(puzzle3.get_relative_id(), 2)
+        self.assertEqual(puzzle4.get_relative_id(), 3)
+        self.assertEqual(self.linear_episode.get_puzzle(puzzle1.get_relative_id()), puzzle1)
+        self.assertEqual(self.parallel_episode.get_puzzle(puzzle2.get_relative_id()), puzzle2)
+        self.assertEqual(self.parallel_episode.get_puzzle(puzzle3.get_relative_id()), puzzle3)
+        self.assertEqual(self.parallel_episode.get_puzzle(puzzle4.get_relative_id()), puzzle4)
 
 
 class EpisodeSequenceTests(TestCase):

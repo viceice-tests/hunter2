@@ -27,8 +27,8 @@ services:
       - "8080:80"
     volumes:
       - static:/static:ro
-      - uploads_events:/uploads/events:ro
-      - uploads_puzzles:/uploads/puzzles:ro
+      - uploads_events:/media/events:ro
+      - uploads_puzzles:/media/puzzles:ro
 
 volumes:
   db: {}
