@@ -38,7 +38,9 @@
 {% endspaceless %}
 </ul>
 </div>
+{% comment %}{% if not team.is_full %}{% endcomment %}
 <h3>Invite team members</h3>
+<p id="inv-error" hidden></p>
 <ul id="inv-list" style="width: 40%">
 {% for user in invites %}
 	<li>
@@ -59,6 +61,7 @@
 	</form>
 	{{ invite_form.media }}
 {% endspaceless %}
+{% comment %}{% endif %}{% endcomment %}
 {% else %}
 <h2>Join a team</h2>
 {% if invites %}
@@ -67,6 +70,7 @@
 <div id="inv-div" hidden>
 {% endif %}
 <h2>Invites</h2>
+<p id="inv-error" hidden></p>
 {% spaceless %}
 <ul id="inv-list" style="width: 40%">
 {% for team in invites %}
@@ -82,6 +86,7 @@
 {% endspaceless %}
 </div>
 <h3>Requests</h3>
+<p id="req-error" hidden></p>
 {% spaceless %}
 <ul id="req-list" style="width: 40%">
 {% for team in requests %}
@@ -98,6 +103,7 @@
 {{ request_form.media }}
 {% endspaceless %}
 <h2>Create a team</h2>
+<p id="create-error" hidden></p>
 {% spaceless %}
 	<form action="create" method="post">
 		{% csrf_token %}

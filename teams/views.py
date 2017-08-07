@@ -42,14 +42,8 @@ class UserProfileAutoComplete(LoginRequiredMixin, autocomplete.Select2QuerySetVi
 
 
 class CreateTeamView(LoginRequiredMixin, TeamMixin, UpdateView):
-    form_class = forms.TeamForm
+    form_class = forms.CreateTeamForm
     template_name = 'teams/create.html'
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['event'] = self.request.event
-        kwargs['user'] = self.request.user.profile
-        return kwargs
 
     def get_object(self):
         return self.request.team
@@ -168,11 +162,13 @@ class CancelInvite(LoginRequiredMixin, TeamMixin, View):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User does not exist',
+                'delete': True,
             }, status=400)
         if user not in team.invites.all():
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User has not been invited',
+                'delete': True,
             }, status=400)
         team.invites.remove(user)
         return JsonResponse({
@@ -191,17 +187,20 @@ class AcceptInvite(LoginRequiredMixin, TeamMixin, View):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'Not invited to this team',
+                'delete': True,
             }, status=400)
         if user.is_on_explicit_team(request.event):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'Already on a team for this event',
+                'delete': True,
             }, status=400)
         if team.is_full():
             team.invites.remove(user)
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'This team is full',
+                'delete': True,
             }, status=400)
         old_team = request.user.profile.team_at(request.event)
         old_team.guess_set.update(by_team=team)
@@ -225,6 +224,7 @@ class DenyInvite(LoginRequiredMixin, TeamMixin, View):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'You have not been invited',
+                'delete': True,
             }, status=400)
         team.invites.remove(user)
         return JsonResponse({
@@ -272,6 +272,7 @@ class CancelRequest(LoginRequiredMixin, TeamMixin, View):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'Request does not exist',
+                'delete': True,
             }, status=400)
         team.requests.remove(user)
         return JsonResponse({
@@ -297,22 +298,26 @@ class AcceptRequest(LoginRequiredMixin, TeamMixin, View):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User does not exist',
+                'delete': True,
             }, status=400)
         if user not in team.requests.all():
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User has not requested to join',
+                'delete': True,
             }, status=400)
         if user.is_on_explicit_team(request.event):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'Already a member of a team for this event',
+                'delete': True,
             }, status=403)
         if team.is_full():
             team.requests.remove(user)
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'This team is full',
+                'delete': True,
             }, status=400)
         old_team = user.team_at(request.event)
         old_team.guess_set.update(by_team=team)
@@ -345,11 +350,13 @@ class DenyRequest(LoginRequiredMixin, TeamMixin, View):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User does not exist',
+                'delete': True,
             }, status=400)
         if user not in team.requests.all():
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User has not requested to join',
+                'delete': True,
             }, status=400)
         team.requests.remove(user)
         return JsonResponse({
