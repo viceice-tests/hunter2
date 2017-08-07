@@ -7,7 +7,7 @@ from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
 from enumfields import EnumField, Enum
-from subdomains.utils import reverse
+from hunter2.resolvers import reverse
 
 import events
 import teams
