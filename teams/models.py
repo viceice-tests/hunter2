@@ -68,4 +68,4 @@ class Team(models.Model):
         return reverse('team', subdomain='www', kwargs={'event_id': self.at_event.pk, 'team_id': self.pk})
 
     def is_full(self):
-        return self.members.count() >= self.at_event.max_team_size > 0
+        return self.members.count() >= self.at_event.max_team_size > 0 and not self.is_admin
