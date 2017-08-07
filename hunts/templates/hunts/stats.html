@@ -11,7 +11,7 @@
 	fill: steelblue;
 }
 
-.chart text {
+.chart .bar text {
 	fill: #eee;
 	font: 10px sans-serif;
 	text-anchor: middle;
@@ -29,6 +29,13 @@
 	stroke-dasharray: 4,4;
 	stroke-width: 0.5;
 }
+
+/*#legend {
+	display: inline-block;
+	vertical-align: top;
+	margin-top: 100px;
+	font-weight: bold;
+}*/
 
 </style>
 {% endblock %}
@@ -49,7 +56,9 @@
 		<option value="progress">Progress</option>
 	</select>
 </p>
-<svg class="chart" id="episode-stats" width="600" height="800"></svg>
+<div id="chart-container">
+	<svg class="chart" id="episode-stats" width="900" height="800"></svg>
+</div>
 <script src="{% static 'hunts/js/stats.js' %}"></script>
 {% endblock %}
 

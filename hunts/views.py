@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
@@ -167,7 +168,9 @@ class StatsContent(LoginRequiredMixin, View):
         episodes = models.Episode.objects.filter(event=request.event)
         puzzles = models.Puzzle.objects.filter(episode__event=request.event)
 
-        all_teams = teams.models.Team.objects.filter(at_event=request.event)
+        all_teams = (teams.models.Team.objects
+                        .annotate(num_members=Count('members'))
+                        .filter(at_event=request.event, num_members__gte=1))
 
         correct_guesses = {puzzle: {t: puzzle.answered_by(t) for t in all_teams} for puzzle in puzzles}
         puzzle_completion = [
@@ -180,6 +183,7 @@ class StatsContent(LoginRequiredMixin, View):
             } for p in puzzles]
 
         data = {
+            'teams': [t.name for t in all_teams],
             'numTeams': all_teams.count(),
             'startTime': min([e.start_date for e in episodes]),
             'endTime': max([guesses[0].given for stuff in correct_guesses.values() for guesses in stuff.values() if guesses]),
