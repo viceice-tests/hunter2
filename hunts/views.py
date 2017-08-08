@@ -168,9 +168,11 @@ class StatsContent(LoginRequiredMixin, View):
         episodes = models.Episode.objects.filter(event=request.event)
         puzzles = models.Puzzle.objects.filter(episode__event=request.event)
 
-        all_teams = (teams.models.Team.objects
-                        .annotate(num_members=Count('members'))
-                        .filter(at_event=request.event, num_members__gte=1))
+        all_teams = teams.models.Team.objects.annotate(
+            num_members=Count('members')
+        ).filter(
+            at_event=request.event, num_members__gte=1
+        )
 
         correct_guesses = {
             puzzle: {
