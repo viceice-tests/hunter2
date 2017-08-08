@@ -49,43 +49,46 @@ function getStats(force) {
 }
 
 function drawCompletion(data) {
+	// Create scales for a bar chart
 	var x = d3.scaleBand()
 		.rangeRound([0, width]).padding(0.1)
 		.domain(data.puzzleCompletion.map(function(d) { return d.puzzle; }));
 	var y = d3.scaleLinear()
 		.domain([0, 1])
 		.range([height, 0]);
-	var barWidth = width / data.puzzleCompletion.length;
 
-	var completion = data.puzzleCompletion.map(
-		function (d) { return d.completion.length / data.numTeams; }
-	);
+	// Join data to a group with class bar
 	var bar = chart.selectAll("g.bar")
 		.data(data.puzzleCompletion);
 
+	// For new bars, create the group, rectangle and some text
 	var enterBar = bar.enter()
 		.append("g")
 		.attr("class", "bar");
 	enterBar.append("rect");
 	enterBar.append("text");
 
+	// Update the rectangle...
 	var updateBar = enterBar.merge(bar);
-	updateBar.attr("transform", function(d, i) { return "translate(" + i * barWidth + ",0)"; })
+	updateBar.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + ",0)"; })
 		.select("rect")
 		.attr("y", function(d) { return y(d.completion); })
 		.attr("height", function(d) { return height - y(d.completion); })
-		.attr("width", barWidth - 3);
+		.attr("width", x.bandwidth());
 
+	// ...and the text
 	var percentFormatter = d3.format(".0%");
 
 	updateBar.select("text")
 		.attr("y", function(d) { return y(d.completion) + 3; })
-		.attr("x", barWidth / 2)
+		.attr("x", x.bandwidth() / 2)
 		.attr("dy", ".75em")
 		.text(function (d) { return percentFormatter(d.completion); });
 
+	// Clear old bars
 	bar.exit().remove();
 
+	// Draw axes and horizontal marker lines
 	xAxisElt.call(d3.axisBottom(x))
 		.attr("transform", "translate(0," + height + ")")
 		.selectAll("text")
