@@ -1,11 +1,13 @@
 from dal import autocomplete
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.db.models import Q
+from django.forms.models import inlineformset_factory
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.views import View
-from django.views.generic import TemplateView, UpdateView
+from django.views.generic import UpdateView
 from hunter2.resolvers import reverse
 from . import forms, models
 from .forms import CreateTeamForm, InviteForm, RequestForm
@@ -365,10 +367,20 @@ class DenyRequest(LoginRequiredMixin, TeamMixin, View):
         })
 
 
-class EditProfileView(LoginRequiredMixin, TemplateView):
-    template_name = 'teams\profile.html'
+class EditProfileView(LoginRequiredMixin, View):
+    def get(self, request):
+        user_form = forms.UserForm(instance=request.user)
+        ProfileInlineFormset = inlineformset_factory(User, models.UserProfile, fields=('seat', ))
+        profile_form = ProfileInlineFormset(instance=request.user)
+        context = {
+            'user_form': user_form,
+            'profile_form': profile_form,
+        }
+        return TemplateResponse(
+            request,
+            'teams/profile.html',
+            context=context,
+        )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        return context
+    def post(self, request):
+        pass
