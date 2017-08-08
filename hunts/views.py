@@ -172,23 +172,24 @@ class StatsContent(LoginRequiredMixin, View):
                         .annotate(num_members=Count('members'))
                         .filter(at_event=request.event, num_members__gte=1))
 
-        correct_guesses = {puzzle: {t: puzzle.answered_by(t) for t in all_teams} for puzzle in puzzles}
+        correct_guesses = {
+            puzzle: {
+                t: a for t, a in [(t, puzzle.answered_by(t)) for t in all_teams] if a
+            } for puzzle in puzzles
+        }
         puzzle_progress = [
             {
                 'team': t.name,
                 'progress': [{
                     'puzzle': p.title,
                     'time': correct_guesses[p][t][0].given
-                } for p in puzzles if correct_guesses[p][t]]
+                } for p in puzzles if t in correct_guesses[p]]
             } for t in all_teams
         ]
         puzzle_completion = [
             {
                 'puzzle': p.title,
-                'completion': [{
-                    'team': t.name,
-                    'time': correct_guesses[p][t][0].given
-                } for t in all_teams if correct_guesses[p][t]]
+                'completion': len([gs for gs in correct_guesses[p] if gs]) / all_teams.count()
             } for p in puzzles]
 
         data = {

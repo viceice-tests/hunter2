@@ -60,7 +60,7 @@ function drawCompletion(data) {
 		function (d) { return d.completion.length / data.numTeams; }
 	);
 	var bar = chart.selectAll("g.bar")
-		.data(completion);
+		.data(data.puzzleCompletion);
 
 	var enterBar = bar.enter()
 		.append("g")
@@ -71,17 +71,17 @@ function drawCompletion(data) {
 	var updateBar = enterBar.merge(bar);
 	updateBar.attr("transform", function(d, i) { return "translate(" + i * barWidth + ",0)"; })
 		.select("rect")
-		.attr("y", function(d) { return y(d); })
-		.attr("height", function(d) { return height - y(d); })
+		.attr("y", function(d) { return y(d.completion); })
+		.attr("height", function(d) { return height - y(d.completion); })
 		.attr("width", barWidth - 3);
 
 	var percentFormatter = d3.format(".0%");
 
 	updateBar.select("text")
-		.attr("y", function(d) { return y(d) + 3; })
+		.attr("y", function(d) { return y(d.completion) + 3; })
 		.attr("x", barWidth / 2)
 		.attr("dy", ".75em")
-		.text(percentFormatter);
+		.text(function (d) { return percentFormatter(d.completion); });
 
 	bar.exit().remove();
 
