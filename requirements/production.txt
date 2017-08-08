@@ -9,7 +9,6 @@ django-enumfields
 django-environ
 django-extensions
 django-nested-admin
-django-registration
 django-sortedm2m
 freezegun
 lupa

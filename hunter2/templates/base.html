@@ -33,20 +33,13 @@
 						<li class="button"><a href="{% url 'faq' %}">FAQ</a></li>
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
+						{% block topbar_right %}{% endblock %}
 						{% if user.is_authenticated %}
-						<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">
-							{% csrf_token %}
-						</form>
-						<li class="button">
-							<a href="#" id="navUser">{{ user.username }}</a>
-						</li>
-						<li class="button">
-							<a href="#" onclick="$('#logoutForm').submit()">Logout</a>
-						</li>
+						<li class="button"><a href="#" id="navUser">{{ user.username }}</a></li>
+						<li class="button"><a href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
+						<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
 						{% else %}
-						<li>
-							<a href="{% url 'account_login' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a>
-						</li>
+						<li><a href="{% url 'account_login' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a></li>
 						{% endif %}
 					</ul>
 				</div>

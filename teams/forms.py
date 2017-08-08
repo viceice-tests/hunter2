@@ -19,6 +19,7 @@ class UserProfileForm(forms.ModelForm):
 
 class InviteForm(forms.Form):
     user = forms.ModelChoiceField(
+        label='Search for a user:',
         queryset=models.UserProfile.objects.all(),
         widget=autocomplete.ModelSelect2(
             url='userprofile_autocomplete',
@@ -27,6 +28,29 @@ class InviteForm(forms.Form):
             },
         ),
     )
+
+
+class RequestForm(forms.Form):
+    team = forms.ModelChoiceField(
+        label='Search for a team:',
+        queryset=models.Team.objects.all(),
+        widget=autocomplete.ModelSelect2(
+            url='team_autocomplete',
+            attrs={
+                'data-minimum-input-length': 1,
+            },
+        ),
+    )
+
+
+class CreateTeamForm(forms.ModelForm):
+    """Teams are never really created explicitly. Creating a team really means giving a name to your team."""
+    class Meta:
+        model = models.Team
+        fields = ['name']
+        labels = {
+            'name': 'Choose a name for your team:',
+        }
 
 
 class TeamForm(forms.ModelForm):

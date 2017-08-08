@@ -67,5 +67,8 @@ class Team(models.Model):
     def get_absolute_url(self):
         return reverse('team', subdomain='www', kwargs={'event_id': self.at_event.pk, 'team_id': self.pk})
 
+    def is_explicit(self):
+        return self.name != ''
+
     def is_full(self):
         return self.members.count() >= self.at_event.max_team_size > 0 and not self.is_admin
