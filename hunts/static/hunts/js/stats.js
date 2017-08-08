@@ -188,6 +188,7 @@ function drawLegend(data, colours, symbols) {
 	var entryHeight = 16;
 	// Add data about the teams
 	var legend = d3.select("#legend").selectAll("g").data(data.puzzleProgress);
+	legend.selectAll("*").remove();
 	var enterLegend = legend.enter()
 		.append("g")
 	// Transform each group to a position just right of the main graph, and down some for each line
@@ -235,17 +236,24 @@ var chart,
 	yAxisElt;
 
 function clearChart() {
-	if (chart) {
-		chart.selectAll("*").remove();
-	}
 	var svg = d3.select('#episode-stats');
-	svg.append("g").attr("id", "legend");
 	margin = {top: 100, right: 200, bottom: 100, left: 50};
 	width = +svg.attr("width") - margin.left - margin.right;
 	height = +svg.attr("height") - margin.top - margin.bottom;
 
-	chart = svg.append("g")
-		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	if (chart) {
+		chart.selectAll("*").remove();
+	} else {
+		svg.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	}
+	if (svg.select('#legend').empty()) {
+		svg.append("g").attr("id", "legend");
+	} else {
+		clearLegend();
+	}
+
+	chart = svg.select("g")
 	chart.append("rect")
 		.attr("width", width)
 		.attr("height", height)
@@ -256,6 +264,10 @@ function clearChart() {
 
 	yAxisElt = chart.append("g")
 		.attr("class", "axis axis-y");
+}
+
+function clearLegend() {
+	d3.selectAll("#legend *").remove();
 }
 
 function typeChanged(ev) {
