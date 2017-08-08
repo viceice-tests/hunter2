@@ -1,5 +1,5 @@
 blessings==1.6
-certifi==2017.4.17
+certifi==2017.7.27.1
 chardet==3.0.4
 colour-runner==0.0.5
 coverage==4.4.1
