@@ -1,9 +1,8 @@
 from django.conf.urls import include, url
-
-from ..settings import DEBUG, USE_SILK
-
 from django.views.defaults import page_not_found, server_error, bad_request, permission_denied
 from django.views.csrf import csrf_failure
+
+from ..settings import DEBUG, USE_SILK
 
 if DEBUG:
     from .admin import admin_patterns
