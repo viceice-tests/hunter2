@@ -1,3 +1,4 @@
+from allauth.account.views import logout as allauth_logout
 from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -9,6 +10,7 @@ from .. import settings
 
 # Wrap the admin login page with login_required so that it goes through allauth login.
 admin.site.login = login_required(admin.site.login)
+admin.site.logout = allauth_logout
 
 admin_patterns = [
     url(r'^accounts/', include('allauth.urls')),
