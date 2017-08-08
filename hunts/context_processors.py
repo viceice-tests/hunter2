@@ -11,17 +11,17 @@ def announcements(request):
 
     css_class = {
         AnnouncementType.INFO: 'alert-info',
-        AnnouncementType.SUCCESSS: 'alet-success',
+        AnnouncementType.SUCCESS: 'alert-success',
         AnnouncementType.WARNING: 'alert-warning',
         AnnouncementType.ERROR: 'alert-danger',
     }
 
     if has_puzzle:
-        current_announcements = models.Annoucement.objects.filter(
+        current_announcements = models.Announcement.objects.filter(
             (Q(event__isnull=True) | Q(event=request.event)) &
             (Q(puzzle__isnull=True) | Q(puzzle=request.puzzle)))
     else:
-        current_announcements = models.Annoucement.objects.filter(
+        current_announcements = models.Announcement.objects.filter(
             (Q(event__isnull=True) | Q(event=request.event)) &
             (Q(puzzle__isnull=True)))
 
