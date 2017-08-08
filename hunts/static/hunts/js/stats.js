@@ -1,10 +1,11 @@
 "use strict";
 
+// Keep the number of entries in here such that it has a large least common multiple with the number of colours.
 var symbolsPathList = [
 	{path: "M -3,-3 L 3,3 M 3,-3 L -3,3", strokeWidth: 2, fillOpacity: 0}, // X
 	{path: "M -3,0 A 3,3 0 1 1 -3,0.0000001Z", strokeWidth: 0, fillOpacity: 1}, // Filled circle
 	{path: "M 0,3 L 3,0 L 0,-3 L -3,0Z", strokeWidth: 0, fillOpacity: 1}, // Filled diamond
-	{path: "M 0,-4 L 3.4641016,2 L -3.4641016,2Z", strokeWidth: 0, fillOpacity: 1}, // Filled triangle
+	{path: "M 0,-4 L 3.4641016,2 L -3.4641016,2Z", strokeWidth: 0, fillOpacity: 1}, // Filled triangle. I used legit trigonometry to get these coordinates.
 	{path: "M -3,-3 L -3,3 L 3,3 L 3,-3Z", strokeWidth: 0, fillOpacity: 1}, // Filled square
 	{path: "M 0,4 L 3.4641016,-2 L -3.4641016,-2Z", strokeWidth: 0, fillOpacity: 1}, // Filled upside-down triangle
 	{path: "M 0,3 L 0,-3 M -3,0 L 3,0", strokeWidth: 2, fillOpacity: 0}, // +
@@ -79,6 +80,7 @@ function drawCompletion(data) {
 }
 
 function drawTimeCompleted(data) {
+	// Create the X and Y scales
 	var x = d3.scalePoint()
 		.range([0, width])
 		.padding(0.5)
@@ -87,6 +89,7 @@ function drawTimeCompleted(data) {
 		.domain([new Date(data.startTime), new Date(data.endTime)])
 		.range([0, height]);
 
+	// Create scales for the marks on the graph
 	var colours = d3.scaleOrdinal(d3.schemeCategory20)
 		.domain(data.teams);
 	var symbolsList = d3.symbols;
@@ -97,21 +100,26 @@ function drawTimeCompleted(data) {
 	var timeCompleted = data.puzzleCompletion.map(
 		function (d) { return d.completion }
 	);
+	// Load data into puzzle groups
 	var puzzle = chart.selectAll("g.puzzle")
 		.data(data.puzzleCompletion)
 
+	// Kill the paths in the updating groups
 	puzzle.selectAll("path").remove();
 
+	// Create new groups
 	var enterPuzzle = puzzle.enter()
 		.append("g")
 		.attr("class", "puzzle");
 
+	// Translate groups to correct column
 	var updatePuzzle = enterPuzzle.merge(puzzle)
 		.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + ",0)"; })
 	puzzle.exit().remove();
 
-	var cross = d3.symbol().type(d3.symbolCross).size(30);
-
+	// MAIN STUFF
+	// Now add data to this column for each correct answer, create a new path,
+	// transform it to the right time and draw a symbol corresponding to the team that made the answer
 	updatePuzzle.selectAll("path")
 		.data(function(d, i) { return d.completion; })
 		.enter()
@@ -123,10 +131,10 @@ function drawTimeCompleted(data) {
 		.attr("stroke-width", function(d) { return symbols(d.team).strokeWidth; })
 		.attr("d", function(d) { return symbols(d.team).path; } );
 
+	// Draw the axes with large negative tick sizes to get grid lines
 	var xAxis = d3.axisTop(x)
 		.tickSize(-height)
 		.tickPadding(10);
-
 	xAxisElt.call(xAxis)
 		.selectAll("text")
 		.attr("transform", "rotate(20)");
@@ -134,18 +142,20 @@ function drawTimeCompleted(data) {
 	var yAxis = d3.axisLeft(y)
 		.tickSize(-width)
 		.tickPadding(10);
-
 	yAxisElt.call(yAxis);
 
 	drawLegend(data, colours, symbols);
 }
 
 function drawLegend(data, colours, symbols) {
+	// Compute margin from the main graph margin
 	var legendMargin = {top: margin.top + 20, right: 0, bottom: 0, left: 6}
 	var entryHeight = 16;
+	// Add data about the teams
 	var legend = d3.select("#legend").selectAll("g").data(data.teams);
 	var enterLegend = legend.enter()
 		.append("g")
+	// Transform each group to a position just right of the main graph, and down some for each line
 	var updateLegend = enterLegend.merge(legend)
 		.attr("transform", function(d, i) {
 			return "translate("
@@ -153,6 +163,7 @@ function drawLegend(data, colours, symbols) {
 				  (legendMargin.top + i * entryHeight) +
 			")";
 		})
+	// Add the symbol corresponding to that team
 	updateLegend.append("path")
 		.attr("transform", "translate(5, -4)")
 		.attr("fill", function(d) { return colours(d); })
@@ -160,10 +171,11 @@ function drawLegend(data, colours, symbols) {
 		.attr("stroke", function(d) { return colours(d); })
 		.attr("stroke-width", function(d) { return symbols(d).strokeWidth; })
 		.attr("d", function(d) { return symbols(d).path; });
-
+	// Add the team's name
 	updateLegend.append("text")
 		.attr("x", 16)
 		.text(function(d) { return d; });
+	// Delete vanished teams
 	legend.exit().remove();
 }
 
