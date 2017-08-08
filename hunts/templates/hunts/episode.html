@@ -1,4 +1,5 @@
 {% extends "teams/base.html" %}
+{% load hunter2urls %}
 
 {% block page_header %}
 <h1>{{ episode }}</h1>
@@ -14,9 +15,9 @@
 {% for puzzle in puzzles %}
 	<li>
 {% if event_id %}
-		<a href="{% url 'puzzle' event_id episode_number forloop.counter %}">{{ puzzle.title }}</a>
+		<a href="{% url 'puzzle' 'www' event_id episode_number forloop.counter %}">{{ puzzle.title }}</a>
 {% else %}
-		<a href="{% url 'puzzle' episode_number forloop.counter %}">{{ puzzle.title }}</a>
+		<a href="{% url 'puzzle' 'www' episode_number forloop.counter %}">{{ puzzle.title }}</a>
 {% endif %}
 	</li>
 {% endfor %}
