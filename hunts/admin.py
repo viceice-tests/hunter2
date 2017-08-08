@@ -192,5 +192,5 @@ class UserPuzzleDataAdmin(admin.ModelAdmin):
     readonly_fields = ('token', )
 
 
-admin.site.register(models.Annoucement)
+admin.site.register(models.Announcement)
 admin.site.register(models.TeamPuzzleData)
