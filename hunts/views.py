@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.views import View
-from subdomains.utils import reverse
+from hunter2.resolvers import reverse
 from string import Template
 from teams.mixins import TeamMixin
 
@@ -164,7 +164,7 @@ class EventIndex(LoginRequiredMixin, View):
 
         return TemplateResponse(
             request,
-            'events/index.html',
+            'hunts/event.html',
             context={
                 'event_title':  event.name,
                 'event_id':     event.id,
@@ -304,12 +304,12 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         if correct:
             next = episode.next_puzzle(request.team)
             if next:
-                response['url'] = reverse('puzzle', subdomain=request.META['HTTP_HOST'],
+                response['url'] = reverse('puzzle', subdomain=request.subdomain,
                                           kwargs={'event_id': request.event.pk,
                                                   'episode_number': episode_number,
                                                   'puzzle_number': next})
             else:
-                response['url'] = reverse('episode', subdomain=request.META['HTTP_HOST'],
+                response['url'] = reverse('episode', subdomain=request.subdomain,
                                           kwargs={'event_id': request.event.pk,
                                                   'episode_number': episode_number}, )
         else:
