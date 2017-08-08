@@ -10,6 +10,8 @@ from .. import settings
 
 # Wrap the admin login page with login_required so that it goes through allauth login.
 admin.site.login = login_required(admin.site.login)
+# Replace the admin logout view with the allauth logout view.
+# Unfortunately the admin UI makes a GET so we can't avoid the confirmation page.
 admin.site.logout = allauth_logout
 
 admin_patterns = [
