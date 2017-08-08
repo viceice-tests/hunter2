@@ -15,6 +15,25 @@ var symbolsPathList = [
 	{path: "M -3,0 A 3,3 0 1 1 -3,0.0000001Z", strokeWidth: 2, fillOpacity: 0}, // O
 ];
 
+// Fuck JS and its lack of a standard library
+var entityMap = {
+	'&': '&amp;',
+	'<': '&lt;',
+	'>': '&gt;',
+	'"': '&quot;',
+	"'": '&#39;',
+	'/': '&#x2F;',
+	'`': '&#x60;',
+	'=': '&#x3D;',
+	' ': '&nbsp;'
+};
+
+function escapeHtml (string) {
+	return String(string).replace(/[&<>"'`=\/ ]/g, function (s) {
+		return entityMap[s];
+	});
+}
+
 function getStats(force) {
 	if (!(force || $('#auto-update').prop('checked'))) {
 		return;
@@ -102,36 +121,37 @@ function drawTimeCompleted(data, lines) {
 		function (d) { return d.completion }
 	);
 	// Load data into puzzle groups
-	var puzzle = chart.selectAll("g.puzzle")
-		.data(data.puzzleCompletion)
+	var team = chart.selectAll("g.team")
+		.data(data.puzzleProgress)
 
 	// Kill the paths in the updating groups
-	puzzle.selectAll("path").remove();
+	team.selectAll("path").remove();
 
 	// Create new groups
-	var enterPuzzle = puzzle.enter()
+	var enterTeam = team.enter()
 		.append("g")
-		.attr("class", "puzzle");
+		.attr("class", "team");
 
 	// Translate groups to correct column
-	var updatePuzzle = enterPuzzle.merge(puzzle)
-		.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + ",0)"; })
-	puzzle.exit().remove();
+	var updateTeam = enterTeam.merge(team)
+		// !!! .attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + ",0)"; })
+		//.attr("transform", function(d, i) { return "translate(0," + y(d.team) + ")"; })
+	team.exit().remove();
 
 	// MAIN STUFF
 	// Now add data to this column for each correct answer, create a new path,
 	// transform it to the right time and draw a symbol corresponding to the team that made the answer
-	updatePuzzle.selectAll("path")
-		.data(function(d, i) { return d.completion; })
+	updateTeam.selectAll("path")
+		.data(function(d, i) { return d.progress })
 		.enter()
 		.append("path")
-		.attr("transform", function(d, i) { return "translate(0," + y(new Date(d.time)) + ")"; })
-		//.attr("class", function(d, i) { return "team-" + i; })
-		.attr("fill", function(d) { return colours(d.team); })
-		.attr("fill-opacity", function(d) { return symbols(d.team).fillOpacity; })
-		.attr("stroke", function(d) { return colours(d.team); })
-		.attr("stroke-width", function(d) { return symbols(d.team).strokeWidth; })
-		.attr("d", function(d) { return symbols(d.team).path; } );
+		.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + "," + y(new Date(d.time)) + ")"; })
+		.attr("class", function(d, i) { return "team-" + escapeHtml(parentData(this).team); })
+		.attr("fill", function(d) { return colours(parentData(this).team); })
+		.attr("fill-opacity", function(d) { return symbols(parentData(this).team).fillOpacity; })
+		.attr("stroke", function(d) { return colours(parentData(this).team); })
+		.attr("stroke-width", function(d) { return symbols(parentData(this).team).strokeWidth; })
+		.attr("d", function(d) { return symbols(parentData(this).team).path; } );
 
 	if (lines) {
 		chart.selectAll(".progress-line").remove();
@@ -141,7 +161,7 @@ function drawTimeCompleted(data, lines) {
 
 		data.puzzleProgress.forEach(function (d, i) {
 			chart.append("path")
-				.attr("class", "line progress-line team-" + i)
+				.attr("class", "line progress-line team-" + escapeHtml(d.team))
 				.attr("stroke", colours(d.team))
 				.attr("d", progressLine(d.progress));
 		});
@@ -174,15 +194,15 @@ function drawLegend(data, colours, symbols) {
 	// Transform each group to a position just right of the main graph, and down some for each line
 	var updateLegend = enterLegend.merge(legend)
 		.attr("transform", function(d, i) {
-			return "translate("
-				+ (width + margin.left + legendMargin.left) + "," +
-				  (legendMargin.top + i * entryHeight) +
+			return "translate(" +
+				(width + margin.left + legendMargin.left) + "," +
+				(legendMargin.top + i * entryHeight) +
 			")";
 		})
 	updateLegend.on("click", function(d, i) {
 		var active = d.active? false : true;
 		var opacity = active? 0 : 1;
-		d3.selectAll(".team-" + i)
+		d3.selectAll('[class~="team-' + escapeHtml(d.team) + '"]')
 			.transition().duration(200)
 			.style("opacity", opacity);
 		d.active = active;
@@ -190,7 +210,7 @@ function drawLegend(data, colours, symbols) {
 	// Add the symbol corresponding to that team
 	updateLegend.append("path")
 		.attr("transform", "translate(5, -4)")
-		.attr("class", function(d, i) { return "team-" + i; })
+		.attr("class", function(d, i) { return "team-" + escapeHtml(d.team); })
 		.attr("fill", function(d) { return colours(d.team); })
 		.attr("fill-opacity", function(d) { return symbols(d.team).fillOpacity; })
 		.attr("stroke", function(d) { return colours(d.team); })
@@ -202,6 +222,10 @@ function drawLegend(data, colours, symbols) {
 		.text(function(d) { return d.team; });
 	// Delete vanished teams
 	legend.exit().remove();
+}
+
+function parentData(n) {
+	return n.parentNode.__data__;
 }
 
 var chart,
