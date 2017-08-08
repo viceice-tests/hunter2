@@ -173,6 +173,15 @@ class StatsContent(LoginRequiredMixin, View):
                         .filter(at_event=request.event, num_members__gte=1))
 
         correct_guesses = {puzzle: {t: puzzle.answered_by(t) for t in all_teams} for puzzle in puzzles}
+        puzzle_progress = [
+            {
+                'team': t.name,
+                'progress': [{
+                    'puzzle': p.title,
+                    'time': correct_guesses[p][t][0].given
+                } for p in puzzles if correct_guesses[p][t]]
+            } for t in all_teams
+        ]
         puzzle_completion = [
             {
                 'puzzle': p.title,
@@ -188,7 +197,8 @@ class StatsContent(LoginRequiredMixin, View):
             'startTime': min([e.start_date for e in episodes]),
             'endTime': max([guesses[0].given for stuff in correct_guesses.values() for guesses in stuff.values() if guesses]),
             'puzzles': [p.title for p in puzzles],
-            'puzzleCompletion': puzzle_completion
+            'puzzleCompletion': puzzle_completion,
+            'puzzleProgress': puzzle_progress
         }
         return JsonResponse(data)
 

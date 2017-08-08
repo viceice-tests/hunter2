@@ -79,7 +79,8 @@ function drawCompletion(data) {
 	yAxisElt.call(yAxis);
 }
 
-function drawTimeCompleted(data) {
+function drawTimeCompleted(data, lines) {
+	lines = true;
 	// Create the X and Y scales
 	var x = d3.scalePoint()
 		.range([0, width])
@@ -125,11 +126,26 @@ function drawTimeCompleted(data) {
 		.enter()
 		.append("path")
 		.attr("transform", function(d, i) { return "translate(0," + y(new Date(d.time)) + ")"; })
+		//.attr("class", function(d, i) { return "team-" + i; })
 		.attr("fill", function(d) { return colours(d.team); })
 		.attr("fill-opacity", function(d) { return symbols(d.team).fillOpacity; })
 		.attr("stroke", function(d) { return colours(d.team); })
 		.attr("stroke-width", function(d) { return symbols(d.team).strokeWidth; })
 		.attr("d", function(d) { return symbols(d.team).path; } );
+
+	if (lines) {
+		chart.selectAll(".progress-line").remove();
+		var progressLine = d3.line()
+			.x(function (d) { return x(d.puzzle); })
+			.y(function (d) { return y(new Date(d.time)); });
+
+		data.puzzleProgress.forEach(function (d, i) {
+			chart.append("path")
+				.attr("class", "line progress-line team-" + i)
+				.attr("stroke", colours(d.team))
+				.attr("d", progressLine(d.progress));
+		});
+	}
 
 	// Draw the axes with large negative tick sizes to get grid lines
 	var xAxis = d3.axisTop(x)
@@ -152,7 +168,7 @@ function drawLegend(data, colours, symbols) {
 	var legendMargin = {top: margin.top + 20, right: 0, bottom: 0, left: 6}
 	var entryHeight = 16;
 	// Add data about the teams
-	var legend = d3.select("#legend").selectAll("g").data(data.teams);
+	var legend = d3.select("#legend").selectAll("g").data(data.puzzleProgress);
 	var enterLegend = legend.enter()
 		.append("g")
 	// Transform each group to a position just right of the main graph, and down some for each line
@@ -163,18 +179,27 @@ function drawLegend(data, colours, symbols) {
 				  (legendMargin.top + i * entryHeight) +
 			")";
 		})
+	updateLegend.on("click", function(d, i) {
+		var active = d.active? false : true;
+		var opacity = active? 0 : 1;
+		d3.selectAll(".team-" + i)
+			.transition().duration(200)
+			.style("opacity", opacity);
+		d.active = active;
+	});
 	// Add the symbol corresponding to that team
 	updateLegend.append("path")
 		.attr("transform", "translate(5, -4)")
-		.attr("fill", function(d) { return colours(d); })
-		.attr("fill-opacity", function(d) { return symbols(d).fillOpacity; })
-		.attr("stroke", function(d) { return colours(d); })
-		.attr("stroke-width", function(d) { return symbols(d).strokeWidth; })
-		.attr("d", function(d) { return symbols(d).path; });
+		.attr("class", function(d, i) { return "team-" + i; })
+		.attr("fill", function(d) { return colours(d.team); })
+		.attr("fill-opacity", function(d) { return symbols(d.team).fillOpacity; })
+		.attr("stroke", function(d) { return colours(d.team); })
+		.attr("stroke-width", function(d) { return symbols(d.team).strokeWidth; })
+		.attr("d", function(d) { return symbols(d.team).path; });
 	// Add the team's name
 	updateLegend.append("text")
 		.attr("x", 16)
-		.text(function(d) { return d; });
+		.text(function(d) { return d.team; });
 	// Delete vanished teams
 	legend.exit().remove();
 }
