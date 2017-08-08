@@ -1,7 +1,6 @@
 from .utils import load_or_create_secret_key
 import environ
 import logging
-import raven
 
 # Load the current environment profile
 root = environ.Path(__file__) - 2
