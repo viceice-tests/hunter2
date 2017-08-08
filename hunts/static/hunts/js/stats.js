@@ -41,7 +41,8 @@ function getStats(force) {
 	var graphType = $('#type').val();
 	var drawFunction = {
 		"percent-complete": drawCompletion,
-		"time-completed": drawTimeCompleted
+		"time-completed": drawTimeCompleted(false),
+		"progress": drawTimeCompleted(true),
 	}[graphType];
 	$.get('stats_content', {}, drawFunction);
 	setTimeout(getStats, 5000);
@@ -98,89 +99,87 @@ function drawCompletion(data) {
 	yAxisElt.call(yAxis);
 }
 
-function drawTimeCompleted(data, lines) {
-	lines = true;
-	// Create the X and Y scales
-	var x = d3.scalePoint()
-		.range([0, width])
-		.padding(0.5)
-		.domain(data.puzzleCompletion.map(function(d) { return d.puzzle; }));
-	var y = d3.scaleTime()
-		.domain([new Date(data.startTime), new Date(data.endTime)])
-		.range([0, height]);
+function drawTimeCompleted(lines) {
+	return function(data) {
+		// Create the X and Y scales
+		var x = d3.scalePoint()
+			.range([0, width])
+			.padding(0.5)
+			.domain(data.puzzleCompletion.map(function(d) { return d.puzzle; }));
+		var y = d3.scaleTime()
+			.domain([new Date(data.startTime), new Date(data.endTime)])
+			.range([0, height]);
 
-	// Create scales for the marks on the graph
-	var colours = d3.scaleOrdinal(d3.schemeCategory20)
-		.domain(data.teams);
-	var symbolsList = d3.symbols;
-	var symbols = d3.scaleOrdinal()
-		.range(symbolsPathList)
-		.domain(data.teams);
+		// Create scales for the marks on the graph
+		var colours = d3.scaleOrdinal(d3.schemeCategory20)
+			.domain(data.teams);
+		var symbolsList = d3.symbols;
+		var symbols = d3.scaleOrdinal()
+			.range(symbolsPathList)
+			.domain(data.teams);
 
-	var timeCompleted = data.puzzleCompletion.map(
-		function (d) { return d.completion }
-	);
-	// Load data into puzzle groups
-	var team = chart.selectAll("g.team")
-		.data(data.puzzleProgress)
+		var timeCompleted = data.puzzleCompletion.map(
+			function (d) { return d.completion }
+		);
+		// Load data into team groups
+		var team = chart.selectAll("g.team")
+			.data(data.puzzleProgress)
 
-	// Kill the paths in the updating groups
-	team.selectAll("path").remove();
+		// Kill the paths in the updating groups
+		team.selectAll("path").remove();
 
-	// Create new groups
-	var enterTeam = team.enter()
-		.append("g")
-		.attr("class", "team");
+		// Create new groups
+		var enterTeam = team.enter()
+			.append("g")
+			.attr("class", "team");
 
-	// Translate groups to correct column
-	var updateTeam = enterTeam.merge(team)
-		// !!! .attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + ",0)"; })
-		//.attr("transform", function(d, i) { return "translate(0," + y(d.team) + ")"; })
-	team.exit().remove();
+		var updateTeam = enterTeam.merge(team)
+		team.exit().remove();
 
-	// MAIN STUFF
-	// Now add data to this column for each correct answer, create a new path,
-	// transform it to the right time and draw a symbol corresponding to the team that made the answer
-	updateTeam.selectAll("path")
-		.data(function(d, i) { return d.progress })
-		.enter()
-		.append("path")
-		.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + "," + y(new Date(d.time)) + ")"; })
-		.attr("class", function(d, i) { return "team-" + escapeHtml(parentData(this).team); })
-		.attr("fill", function(d) { return colours(parentData(this).team); })
-		.attr("fill-opacity", function(d) { return symbols(parentData(this).team).fillOpacity; })
-		.attr("stroke", function(d) { return colours(parentData(this).team); })
-		.attr("stroke-width", function(d) { return symbols(parentData(this).team).strokeWidth; })
-		.attr("d", function(d) { return symbols(parentData(this).team).path; } );
+		// MAIN STUFF
+		// Now add data to this column for each correct answer, create a new path,
+		// transform it to the right time and draw a symbol corresponding to the team that made the answer
+		updateTeam.selectAll("path")
+			.data(function(d, i) { return d.progress })
+			.enter()
+			.append("path")
+			.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + "," + y(new Date(d.time)) + ")"; })
+			.attr("class", function(d, i) { return "team-" + escapeHtml(parentData(this).team); })
+			.attr("fill", function(d) { return colours(parentData(this).team); })
+			.attr("fill-opacity", function(d) { return symbols(parentData(this).team).fillOpacity; })
+			.attr("stroke", function(d) { return colours(parentData(this).team); })
+			.attr("stroke-width", function(d) { return symbols(parentData(this).team).strokeWidth; })
+			.attr("d", function(d) { return symbols(parentData(this).team).path; } );
 
-	if (lines) {
-		chart.selectAll(".progress-line").remove();
-		var progressLine = d3.line()
-			.x(function (d) { return x(d.puzzle); })
-			.y(function (d) { return y(new Date(d.time)); });
+		if (lines) {
+			chart.selectAll(".progress-line").remove();
+			var progressLine = d3.line()
+				.x(function (d) { return x(d.puzzle); })
+				.y(function (d) { return y(new Date(d.time)); });
 
-		data.puzzleProgress.forEach(function (d, i) {
-			chart.append("path")
-				.attr("class", "line progress-line team-" + escapeHtml(d.team))
-				.attr("stroke", colours(d.team))
-				.attr("d", progressLine(d.progress));
-		});
-	}
+			data.puzzleProgress.forEach(function (d, i) {
+				chart.append("path")
+					.attr("class", "line progress-line team-" + escapeHtml(d.team))
+					.attr("stroke", colours(d.team))
+					.attr("d", progressLine(d.progress));
+			});
+		}
 
-	// Draw the axes with large negative tick sizes to get grid lines
-	var xAxis = d3.axisTop(x)
-		.tickSize(-height)
-		.tickPadding(10);
-	xAxisElt.call(xAxis)
-		.selectAll("text")
-		.attr("transform", "rotate(20)");
+		// Draw the axes with large negative tick sizes to get grid lines
+		var xAxis = d3.axisTop(x)
+			.tickSize(-height)
+			.tickPadding(10);
+		xAxisElt.call(xAxis)
+			.selectAll("text")
+			.attr("transform", "rotate(20)");
 
-	var yAxis = d3.axisLeft(y)
-		.tickSize(-width)
-		.tickPadding(10);
-	yAxisElt.call(yAxis);
+		var yAxis = d3.axisLeft(y)
+			.tickSize(-width)
+			.tickPadding(10);
+		yAxisElt.call(yAxis);
 
-	drawLegend(data, colours, symbols);
+		drawLegend(data, colours, symbols);
+	};
 }
 
 function drawLegend(data, colours, symbols) {
