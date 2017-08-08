@@ -16,6 +16,7 @@ INTERNAL_IPS  = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
 EMAIL_CONFIG  = env.email_url ('H2_EMAIL_URL',     default='smtp://localhost:25')
 EMAIL_DOMAIN  = env.str       ('H2_EMAIL_DOMAIN',  default='hunter2.local')
 ADMINS        = env.list      ('H2_ADMINS',        default=[])
+RAVEN_DSN     = env.str       ('H2_SENTRY_DSN',    default=None)
 DATABASES = {
     'default': env.db('H2_DATABASE_URL', default="postgres://postgres:postgres@db:5432/postgres")
 }
@@ -72,7 +73,9 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'django_extensions',
     'debug_toolbar',
+    'raven.contrib.django.raven_compat',
     'nested_admin',
     'rules.apps.AutodiscoverRulesConfig',
     'sortedm2m',
@@ -133,6 +136,11 @@ MIDDLEWARE = (
 )
 if USE_SILK:
     MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
+
+if RAVEN_DSN:
+    RAVEN_CONFIG = {
+        'dsn': RAVEN_DSN
+    }
 
 ROOT_URLCONF = 'hunter2.urls'
 

@@ -9,3 +9,7 @@ coverage
 
 # Ignore selected docker-compose.yml file
 docker-compose.yml
+
+# Ignore interactive python stuff
+.ipython
+.ptpython_history
