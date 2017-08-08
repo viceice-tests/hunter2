@@ -1,7 +1,7 @@
 from django.db.models import Q
 
 from hunts import models
-from hunts.models import AnnoucmentType
+from hunts.models import AnnouncementType
 
 
 def announcements(request):
@@ -10,10 +10,10 @@ def announcements(request):
     has_puzzle = hasattr(request, 'puzzle') and request.puzzle is not None
 
     css_class = {
-        AnnoucmentType.INFO: 'alert-info',
-        AnnoucmentType.SUCCESSS: 'alet-success',
-        AnnoucmentType.WARNING: 'alert-warning',
-        AnnoucmentType.ERROR: 'alert-danger',
+        AnnouncementType.INFO: 'alert-info',
+        AnnouncementType.SUCCESSS: 'alet-success',
+        AnnouncementType.WARNING: 'alert-warning',
+        AnnouncementType.ERROR: 'alert-danger',
     }
 
     if has_puzzle:
