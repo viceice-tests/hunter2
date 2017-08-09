@@ -191,7 +191,7 @@ class StatsContent(LoginRequiredMixin, View):
         puzzle_completion = [
             {
                 'puzzle': p.title,
-                'completion': len([gs for gs in correct_guesses[p] if gs]) / all_teams.count()
+                'completion': len(correct_guesses[p])
             } for p in puzzles]
 
         data = {

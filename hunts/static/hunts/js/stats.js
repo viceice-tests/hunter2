@@ -54,7 +54,7 @@ function drawCompletion(data) {
 		.rangeRound([0, width]).padding(0.1)
 		.domain(data.puzzleCompletion.map(function(d) { return d.puzzle; }));
 	var y = d3.scaleLinear()
-		.domain([0, 1])
+		.domain([0, data.numTeams])
 		.range([height, 0]);
 
 	// Join data to a group with class bar
@@ -77,13 +77,13 @@ function drawCompletion(data) {
 		.attr("width", x.bandwidth());
 
 	// ...and the text
-	var percentFormatter = d3.format(".0%");
+	var percentFormatter = function (d) { return d3.format(".0%")(d / data.numTeams); };
 
 	updateBar.select("text")
 		.attr("y", function(d) { return y(d.completion) + 3; })
 		.attr("x", x.bandwidth() / 2)
 		.attr("dy", ".75em")
-		.text(function (d) { return percentFormatter(d.completion); });
+		.text(function (d) { return d.completion; });
 
 	// Clear old bars
 	bar.exit().remove();
@@ -94,10 +94,14 @@ function drawCompletion(data) {
 		.selectAll("text")
 		.attr("transform", "rotate(-20)");
 
-	var yAxis = d3.axisLeft(y)
+	// On the y axis, don't draw the actual numbers but instead a percentage.
+	var yForAxis = d3.scaleLinear()
+		.domain([0, 1])
+		.range([height, 0]);
+	var yAxis = d3.axisLeft(yForAxis)
 		.tickSize(-width)
 		.tickPadding(10)
-		.tickFormat(percentFormatter);
+		.tickFormat(d3.format(".0%"));
 
 	yAxisElt.call(yAxis);
 }
