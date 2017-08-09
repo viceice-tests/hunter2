@@ -2,6 +2,7 @@
 data_file = coverage/data
 omit =
     */migrations/*.py
+    hunter2/wsgi.py
 
 [html]
 directory = coverage/html
