@@ -153,7 +153,7 @@ function drawTimeCompleted(lines) {
 			.enter()
 			.append("path")
 			.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + "," + y(new Date(d.time)) + ")"; })
-			.attr("class", function(d, i) { return "hide-team team-" + escapeHtml(parentData(this).team); })
+			.attr("class", function(d, i) { return "marker hide-team team-" + escapeHtml(parentData(this).team); })
 			.attr("fill", function(d) { return colours(parentData(this).team); })
 			.attr("fill-opacity", function(d) { return symbols(parentData(this).team).fillOpacity; })
 			.attr("stroke", function(d) { return colours(parentData(this).team); })
@@ -193,7 +193,6 @@ function drawTimeCompleted(lines) {
 
 function timeFormatter(date) {
 	var seconds = date.getTime() / 1000;
-	console.log(date); console.log(seconds);
 	return Math.floor(seconds / 3600) + ":" + Math.floor(seconds / 60) % 60;
 }
 
@@ -238,7 +237,7 @@ function drawTeamPuzzleStuckness(data) {
 		.enter()
 		.append("path")
 		.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + "," + y(new Date(1970, 0, 0, 0, 0, d.stuckness)) + ")"; })
-		.attr("class", function(d, i) { return "hide-team team-" + escapeHtml(parentData(this).team); })
+		.attr("class", function(d, i) { return "marker hide-team team-" + escapeHtml(parentData(this).team); })
 		.attr("fill", function(d) { return colours(parentData(this).team); })
 		.attr("fill-opacity", function(d) { return symbols(parentData(this).team).fillOpacity; })
 		.attr("stroke", function(d) { return colours(parentData(this).team); })
@@ -317,16 +316,19 @@ function drawLegend(data, colours, symbols) {
 		})
 	// Hide/show graph stuff
 	var hiddenOpacity = 0.1;
+	function teamClass(d) {
+		return '[class~="team-' + escapeHtml(d.team) + '"]';
+	}
 	updateLegend.on("click", function(d, i) {
 		if (d3.event.ctrlKey) {
-			var currentlyinvis = d3.select('[class~="invis"][class~="team-' + escapeHtml(d.team) + '"]').empty();
-			d3.selectAll('[class~="team-' + escapeHtml(d.team) + '"]')
+			var currentlyinvis = d3.select('[class~="invis"]' + teamClass(d)).empty();
+			d3.selectAll(teamClass(d))
 				.classed("invis", currentlyinvis)
 				.transition(200)
 				.style("opacity", currentlyinvis ? hiddenOpacity : 1);
 		} else {
 			// If all others are invis and this isn't, unhide all. Otherwise hide all but this one.
-			var unhideAll = d3.selectAll('.hide-team:not([class~="invis"]):not([class~="team-' + escapeHtml(d.team) + '"])').empty();
+			var unhideAll = d3.selectAll('.hide-team:not([class~="invis"]):not(' + teamClass(d) + ')').empty();
 			if (unhideAll) {
 				d3.selectAll(".hide-team")
 					.classed("invis", false)
@@ -338,17 +340,33 @@ function drawLegend(data, colours, symbols) {
 					.classed("invis", true)
 					.transition(200)
 					.style("opacity", hiddenOpacity);
-				d3.selectAll('[class~="team-' + escapeHtml(d.team) + '"]')
+				d3.selectAll(teamClass(d))
 					.classed("invis", false)
 					.transition(200)
 					.style("opacity", 1);
 			}
 		}
 	});
+	updateLegend.on("mouseover", function(d) {
+		console.log(d3.selectAll(teamClass(d)).selectAll(".line"));
+		console.log(teamClass(d));
+		d3.selectAll(teamClass(d)).filter(".line")
+			.style("stroke-width", 3)
+			.raise();
+		d3.selectAll(teamClass(d)).filter(".marker")
+			.attr("stroke-width", symbols(d.team).strokeWidth + 2)
+			.each(function (d) { this.parentNode.parentNode.appendChild(this.parentNode); });
+	});
+	updateLegend.on("mouseout", function(d) {
+		d3.selectAll(teamClass(d)).filter(".line")
+			.style("stroke-width", 1);
+		d3.selectAll(teamClass(d)).filter(".marker")
+			.attr("stroke-width", symbols(d.team).strokeWidth);
+	});
 	// Add the symbol corresponding to that team
 	updateLegend.append("path")
 		.attr("transform", "translate(5, -4)")
-		.attr("class", function(d, i) { return "hide-team team-" + escapeHtml(d.team); })
+		.attr("class", function(d, i) { return "marker hide-team team-" + escapeHtml(d.team); })
 		.attr("fill", function(d) { return colours(d.team); })
 		.attr("fill-opacity", function(d) { return symbols(d.team).fillOpacity; })
 		.attr("stroke", function(d) { return colours(d.team); })
