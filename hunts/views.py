@@ -186,6 +186,11 @@ class StatsContent(LoginRequiredMixin, View):
             if guess.by_team not in team_guesses or guess.given < team_guesses[guess.by_team].given:
                 team_guesses[guess.by_team] = guess
 
+        # The time of the latest correct guess, plus some padding which I cba to add in JS
+        end_time = max([
+            guesses.given for stuff in correct_guesses.values() for guesses in stuff.values() if guesses
+        ]) + timedelta(minutes=10)
+
         puzzle_datas = models.TeamPuzzleData.objects.filter(puzzle__in=puzzles, team__in=all_teams).select_related('puzzle', 'team')
         start_times = defaultdict(dict)
         for data in puzzle_datas:
@@ -217,6 +222,14 @@ class StatsContent(LoginRequiredMixin, View):
                 'puzzle': p.title,
                 'completion': len(correct_guesses[p])
             } for p in puzzles]
+        team_puzzle_stuckness = [
+            {
+                'team': t.name,
+                'puzzleStuckness': [{
+                    'puzzle': p.title,
+                    'stuckness': (now - start_times[t][p]).total_seconds()
+                } for p in puzzles if start_times[t][p]]
+            } for t in all_teams]
         team_total_stuckness = [
             {
                 'team': t.name,
@@ -227,11 +240,12 @@ class StatsContent(LoginRequiredMixin, View):
             'teams': [t.name for t in all_teams],
             'numTeams': all_teams.count(),
             'startTime': min([e.start_date for e in episodes]),
-            'endTime': max([guesses.given for stuff in correct_guesses.values() for guesses in stuff.values() if guesses]),
+            'endTime': end_time,
             'puzzles': [p.title for p in puzzles],
             'puzzleCompletion': puzzle_completion,
             'puzzleProgress': puzzle_progress,
-            'teamTotalStuckness': team_total_stuckness
+            'teamTotalStuckness': team_total_stuckness,
+            'teamPuzzleStuckness': team_puzzle_stuckness
         }
         return JsonResponse(data)
 

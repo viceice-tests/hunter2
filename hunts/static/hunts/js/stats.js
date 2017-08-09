@@ -43,7 +43,8 @@ function getStats(force) {
 		"percent-complete": drawCompletion,
 		"time-completed": drawTimeCompleted(false),
 		"progress": drawTimeCompleted(true),
-		"team-total-stuckness": drawTeamStuckness
+		"team-total-stuckness": drawTeamStuckness,
+		"team-puzzle-stuckness": drawTeamPuzzleStuckness
 	}[graphType];
 	$.get('stats_content', {}, drawFunction);
 	setTimeout(getStats, 5000);
@@ -190,9 +191,74 @@ function drawTimeCompleted(lines) {
 	};
 }
 
-function timeFormatter(seconds) {
-	console.log(seconds); console.log(Math.floor(seconds / 3600) + ":" + Math.floor(seconds / 60) % 60);
+function timeFormatter(date) {
+	var seconds = date.getTime() / 1000;
+	console.log(date); console.log(seconds);
 	return Math.floor(seconds / 3600) + ":" + Math.floor(seconds / 60) % 60;
+}
+
+function drawTeamPuzzleStuckness(data) {
+	var x = d3.scalePoint()
+		.range([0, width])
+		.padding(0.5)
+		.domain(data.puzzles);
+	var maxSeconds = d3.max(data.teamPuzzleStuckness.map(function (d) {
+		return d3.max(d.puzzleStuckness.map(function (d) { return d.stuckness; }));
+	}));
+	var y = d3.scaleTime()
+		.domain([new Date(1970, 0, 0, 0, 1), new Date(1970, 0, 0, 0, 0, maxSeconds*1.05)])
+		.range([height, 0]);
+
+	// Create scales for the marks on the graph
+	var colours = d3.scaleOrdinal(d3.schemeCategory20)
+		.domain(data.teams);
+	var symbolsList = d3.symbols;
+	var symbols = d3.scaleOrdinal()
+		.range(symbolsPathList)
+		.domain(data.teams);
+
+	// Load data into team groups
+	var team = chart.selectAll("g.team")
+		.data(data.teamPuzzleStuckness)
+
+	// Kill the paths in the updating groups
+	team.selectAll("path").remove();
+
+	// Create new groups
+	var enterTeam = team.enter()
+		.append("g")
+		.attr("class", "team");
+
+	var updateTeam = enterTeam.merge(team)
+	team.exit().remove();
+
+	// MAIN STUFF
+	updateTeam.selectAll("path")
+		.data(function(d, i) { return d.puzzleStuckness })
+		.enter()
+		.append("path")
+		.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + "," + y(new Date(1970, 0, 0, 0, 0, d.stuckness)) + ")"; })
+		.attr("class", function(d, i) { return "hide-team team-" + escapeHtml(parentData(this).team); })
+		.attr("fill", function(d) { return colours(parentData(this).team); })
+		.attr("fill-opacity", function(d) { return symbols(parentData(this).team).fillOpacity; })
+		.attr("stroke", function(d) { return colours(parentData(this).team); })
+		.attr("stroke-width", function(d) { return symbols(parentData(this).team).strokeWidth; })
+		.attr("d", function(d) { return symbols(parentData(this).team).path; } );
+
+	var xAxis = d3.axisTop(x)
+		.tickSize(-height)
+		.tickPadding(10);
+	xAxisElt.call(xAxis)
+		.selectAll("text")
+		.attr("transform", "rotate(20)");
+
+	var yAxis = d3.axisLeft(y)
+		.tickSize(-width)
+		.tickPadding(10)
+		.tickFormat(timeFormatter);
+	yAxisElt.call(yAxis);
+
+	drawLegend(data, colours, symbols);
 }
 
 function drawTeamStuckness(data) {
