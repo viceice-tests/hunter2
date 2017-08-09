@@ -11,6 +11,7 @@ from django.views import View
 from subdomains.utils import reverse
 from string import Template
 from teams.mixins import TeamMixin
+from collections import defaultdict
 
 from . import models
 from . import rules
@@ -174,17 +175,35 @@ class StatsContent(LoginRequiredMixin, View):
             at_event=request.event, num_members__gte=1
         )
 
-        correct_guesses = {
-            puzzle: {
-                t: a for t, a in [(t, puzzle.answered_by(t)) for t in all_teams] if a
-            } for puzzle in puzzles
+        # Get the first correct guess for each team on each puzzle.
+        # We use Guess.correct_for (i.e. the cache) because otherwise we perform a query for every
+        # (team, puzzle) pair i.e. a butt-ton. This comes at the cost of possibly seeing
+        # a team doing worse than it really is.
+        guesses = models.Guess.objects.filter(for_puzzle__in=puzzles, correct_for__isnull=False).select_related('for_puzzle', 'by_team')
+        correct_guesses = defaultdict(dict)
+        for guess in guesses:
+            team_guesses = correct_guesses[guess.for_puzzle]
+            if guess.by_team not in team_guesses or guess.given < team_guesses[guess.by_team].given:
+                team_guesses[guess.by_team] = guess
+
+        now = timezone.now()
+        puzzle_datas = models.TeamPuzzleData.objects.filter(puzzle__in=puzzles, team__in=all_teams).select_related('puzzle', 'team')
+        start_times = defaultdict(dict)
+        for data in puzzle_datas:
+            start_times[data.team][data.puzzle] = data.start_time
+
+        stuckness = {
+            team: [
+                now - start for start in start_times[team].values() if start
+            ] for team in all_teams
         }
+
         puzzle_progress = [
             {
                 'team': t.name,
                 'progress': [{
                     'puzzle': p.title,
-                    'time': correct_guesses[p][t][0].given
+                    'time': correct_guesses[p][t].given
                 } for p in puzzles if t in correct_guesses[p]]
             } for t in all_teams
         ]
@@ -193,15 +212,21 @@ class StatsContent(LoginRequiredMixin, View):
                 'puzzle': p.title,
                 'completion': len(correct_guesses[p])
             } for p in puzzles]
+        team_total_stuckness = [
+            {
+                'team': t.name,
+                'stuckness': sum(stuckness[t], timedelta()),
+            } for t in all_teams]
 
         data = {
             'teams': [t.name for t in all_teams],
             'numTeams': all_teams.count(),
             'startTime': min([e.start_date for e in episodes]),
-            'endTime': max([guesses[0].given for stuff in correct_guesses.values() for guesses in stuff.values() if guesses]),
+            'endTime': max([guesses.given for stuff in correct_guesses.values() for guesses in stuff.values() if guesses]),
             'puzzles': [p.title for p in puzzles],
             'puzzleCompletion': puzzle_completion,
-            'puzzleProgress': puzzle_progress
+            'puzzleProgress': puzzle_progress,
+            'teamTotalStuckness': team_total_stuckness
         }
         return JsonResponse(data)
 

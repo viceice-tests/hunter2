@@ -52,7 +52,7 @@ function drawCompletion(data) {
 	// Create scales for a bar chart
 	var x = d3.scaleBand()
 		.rangeRound([0, width]).padding(0.1)
-		.domain(data.puzzleCompletion.map(function(d) { return d.puzzle; }));
+		.domain(data.puzzles);
 	var y = d3.scaleLinear()
 		.domain([0, data.numTeams])
 		.range([height, 0]);
@@ -112,7 +112,7 @@ function drawTimeCompleted(lines) {
 		var x = d3.scalePoint()
 			.range([0, width])
 			.padding(0.5)
-			.domain(data.puzzleCompletion.map(function(d) { return d.puzzle; }));
+			.domain(data.puzzles);
 		var y = d3.scaleTime()
 			.domain([new Date(data.startTime), new Date(data.endTime)])
 			.range([0, height]);
