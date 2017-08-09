@@ -186,11 +186,16 @@ class StatsContent(LoginRequiredMixin, View):
             if guess.by_team not in team_guesses or guess.given < team_guesses[guess.by_team].given:
                 team_guesses[guess.by_team] = guess
 
-        now = timezone.now()
         puzzle_datas = models.TeamPuzzleData.objects.filter(puzzle__in=puzzles, team__in=all_teams).select_related('puzzle', 'team')
         start_times = defaultdict(dict)
         for data in puzzle_datas:
-            start_times[data.team][data.puzzle] = data.start_time
+            if data.team in correct_guesses[data.puzzle]:
+                start_times[data.team][data.puzzle] = None
+            else:
+                start_times[data.team][data.puzzle] = data.start_time
+
+        # TODO: use something more intelligent here. Episode end time once we have it...
+        now = timezone.now()
 
         stuckness = {
             team: [
@@ -215,7 +220,7 @@ class StatsContent(LoginRequiredMixin, View):
         team_total_stuckness = [
             {
                 'team': t.name,
-                'stuckness': sum(stuckness[t], timedelta()),
+                'stuckness': sum(stuckness[t], timedelta()).total_seconds(),
             } for t in all_teams]
 
         data = {

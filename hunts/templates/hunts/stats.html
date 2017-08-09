@@ -3,6 +3,11 @@
 
 {% block style %}
 <style type="text/css">
+
+#episode-stats {
+	overflow: visible;
+}
+
 .chart-background {
 	fill: #e4e0f2;
 }
@@ -59,6 +64,7 @@
 		<option value="percent-complete">Percentage completion</option>
 		<option value="time-completed">Progress (scatter)</option>
 		<option value="progress">Progress (line)</option>
+		<option value="team-total-stuckness">Time stuck (per team)</option>
 	</select>
 </p>
 <div id="chart-container">

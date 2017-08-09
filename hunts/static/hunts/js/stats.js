@@ -43,6 +43,7 @@ function getStats(force) {
 		"percent-complete": drawCompletion,
 		"time-completed": drawTimeCompleted(false),
 		"progress": drawTimeCompleted(true),
+		"team-total-stuckness": drawTeamStuckness
 	}[graphType];
 	$.get('stats_content', {}, drawFunction);
 	setTimeout(getStats, 5000);
@@ -189,6 +190,48 @@ function drawTimeCompleted(lines) {
 	};
 }
 
+function timeFormatter(seconds) {
+	console.log(seconds); console.log(Math.floor(seconds / 3600) + ":" + Math.floor(seconds / 60) % 60);
+	return Math.floor(seconds / 3600) + ":" + Math.floor(seconds / 60) % 60;
+}
+
+function drawTeamStuckness(data) {
+	var stuckness = data.teamTotalStuckness.sort(function (a, b) { return b.stuckness - a.stuckness; });
+	var y = d3.scaleBand()
+		.domain(stuckness.map(function(d) { return d.team; }))
+		.range([0, height])
+		.padding(0.1);
+	var x = d3.scaleTime()
+		.domain([new Date(1970, 0, 0), new Date(1970, 0, 0, 0, 0, d3.max(stuckness.map(function(d) { return d.stuckness; })))])
+		.range([0, width]);
+
+	var bar = chart.selectAll("g.bar")
+		.data(data.teamTotalStuckness);
+
+	var enterBar = bar.enter()
+		.append("g")
+		.attr("class", "bar");
+	enterBar.append("rect");
+
+	var updateBar = enterBar.merge(bar);
+	updateBar.attr("transform", function(d, i) { return "translate(0," + y(d.team) + ")"; })
+		.select("rect")
+		.attr("width", function(d) { return x(new Date(1970, 0, 0, 0, 0, d.stuckness)); })
+		.attr("height", y.bandwidth());
+
+	var xAxis = d3.axisTop(x)
+		.tickSize(-height)
+		.tickPadding(10)
+		.tickFormat(timeFormatter);
+
+	xAxisElt.call(xAxis)
+		.selectAll("text")
+		.style("text-anchor", "middle");
+
+	yAxisElt.call(d3.axisLeft(y))
+		.selectAll("text")
+}
+
 function drawLegend(data, colours, symbols) {
 	// Compute margin from the main graph margin
 	var legendMargin = {top: margin.top + 20, right: 0, bottom: 0, left: 6}
@@ -266,7 +309,7 @@ var chart,
 
 function clearChart() {
 	var svg = d3.select('#episode-stats');
-	margin = {top: 100, right: 200, bottom: 100, left: 50};
+	margin = {top: 100, right: 200, bottom: 100, left: 100};
 	width = +svg.attr("width") - margin.left - margin.right;
 	height = +svg.attr("height") - margin.top - margin.bottom;
 
