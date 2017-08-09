@@ -151,7 +151,7 @@ function drawTimeCompleted(lines) {
 			.enter()
 			.append("path")
 			.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + "," + y(new Date(d.time)) + ")"; })
-			.attr("class", function(d, i) { return "team-" + escapeHtml(parentData(this).team); })
+			.attr("class", function(d, i) { return "hide-team team-" + escapeHtml(parentData(this).team); })
 			.attr("fill", function(d) { return colours(parentData(this).team); })
 			.attr("fill-opacity", function(d) { return symbols(parentData(this).team).fillOpacity; })
 			.attr("stroke", function(d) { return colours(parentData(this).team); })
@@ -166,7 +166,7 @@ function drawTimeCompleted(lines) {
 
 			data.puzzleProgress.forEach(function (d, i) {
 				chart.append("path")
-					.attr("class", "line progress-line team-" + escapeHtml(d.team))
+					.attr("class", "line progress-line hide-team team-" + escapeHtml(d.team))
 					.attr("stroke", colours(d.team))
 					.attr("d", progressLine(d.progress));
 			});
@@ -206,18 +206,40 @@ function drawLegend(data, colours, symbols) {
 				(legendMargin.top + i * entryHeight) +
 			")";
 		})
+	// Hide/show graph stuff
+	var hiddenOpacity = 0.1;
 	updateLegend.on("click", function(d, i) {
-		var active = d.active? false : true;
-		var opacity = active? 0 : 1;
-		d3.selectAll('[class~="team-' + escapeHtml(d.team) + '"]')
-			.transition().duration(200)
-			.style("opacity", opacity);
-		d.active = active;
+		if (d3.event.ctrlKey) {
+			var currentlyinvis = d3.select('[class~="invis"][class~="team-' + escapeHtml(d.team) + '"]').empty();
+			d3.selectAll('[class~="team-' + escapeHtml(d.team) + '"]')
+				.classed("invis", currentlyinvis)
+				.transition(200)
+				.style("opacity", currentlyinvis ? hiddenOpacity : 1);
+		} else {
+			// If all others are invis and this isn't, unhide all. Otherwise hide all but this one.
+			var unhideAll = d3.selectAll('.hide-team:not([class~="invis"]):not([class~="team-' + escapeHtml(d.team) + '"])').empty();
+			if (unhideAll) {
+				d3.selectAll(".hide-team")
+					.classed("invis", false)
+					.transition(200)
+					.style("opacity", 1);
+			} else {
+				// The second transition overrides the first, so only the second selection has to be complicated
+				d3.selectAll(".hide-team")
+					.classed("invis", true)
+					.transition(200)
+					.style("opacity", hiddenOpacity);
+				d3.selectAll('[class~="team-' + escapeHtml(d.team) + '"]')
+					.classed("invis", false)
+					.transition(200)
+					.style("opacity", 1);
+			}
+		}
 	});
 	// Add the symbol corresponding to that team
 	updateLegend.append("path")
 		.attr("transform", "translate(5, -4)")
-		.attr("class", function(d, i) { return "team-" + escapeHtml(d.team); })
+		.attr("class", function(d, i) { return "hide-team team-" + escapeHtml(d.team); })
 		.attr("fill", function(d) { return colours(d.team); })
 		.attr("fill-opacity", function(d) { return symbols(d.team).fillOpacity; })
 		.attr("stroke", function(d) { return colours(d.team); })
