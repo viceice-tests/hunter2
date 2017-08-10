@@ -65,12 +65,14 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
 INSTALLED_APPS = (
-    # Our apps are order sensitive and come first to allow us to override things
+    # Our apps first to allow us to override third party templates
+    # These are in dependency order
     'events',
     'teams',
     'hunts',
     'hunter2',
     # Third party apps
+    # These are in alphabetical order
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
