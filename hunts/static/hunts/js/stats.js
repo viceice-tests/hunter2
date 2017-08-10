@@ -192,7 +192,9 @@ function drawTimeCompleted(lines) {
 }
 
 function timeFormatter(date) {
-	var seconds = date.getTime() / 1000;
+	// When we create dates from the number of seconds, JS interprets them in the local time
+	// which makes the display weird. Correct for that here.
+	var seconds = date.getTime() / 1000 - date.getTimezoneOffset()*60;
 	return Math.floor(seconds / 3600) + ":" + Math.floor(seconds / 60) % 60;
 }
 
@@ -348,8 +350,6 @@ function drawLegend(data, colours, symbols) {
 		}
 	});
 	updateLegend.on("mouseover", function(d) {
-		console.log(d3.selectAll(teamClass(d)).selectAll(".line"));
-		console.log(teamClass(d));
 		d3.selectAll(teamClass(d)).filter(".line")
 			.style("stroke-width", 3)
 			.raise();
