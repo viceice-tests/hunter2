@@ -1,0 +1,119 @@
+{% extends "teams/base.html" %}
+{% load static %}
+
+{% block script %}
+<script src="{% static 'teams/js/team.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<h1>Team</h1>
+{% lorem %}
+{% if team.is_explicit %}
+<h2>Manage your team</h2>
+<h3>{{ team.name }}</h3>
+{% spaceless %}
+<ul id="member-list" style="width: 40%">
+	{% for member in team.members.all %}
+		<li>{{ member.user.username }}<span style="float: right">&nbsp;{{ member.seat }}</span></li>
+	{% endfor %}
+</ul>
+{% endspaceless %}
+{% if requests %}
+<div id="req-div">
+{% else %}
+<div id="req-div" hidden>
+{% endif %}
+<h3>Requests to join</h3>
+<ul style="width: 40%">
+{% spaceless %}
+{% for user in requests %}
+	<li>
+		{{ user.user.username }} has requested to join
+		<span style="float: right">
+			&nbsp;<a href="#" class="req-accept" data-team="{{ team.pk }}" data-user="{{ user.pk }}">Accept</a>
+			&nbsp;<a href="#" class="req-deny" data-team="{{ team.pk }}" data-user="{{ user.pk }}">Ignore</a>
+		</span>
+	</li>
+{% endfor %}
+{% endspaceless %}
+</ul>
+</div>
+{% comment %}{% if not team.is_full %}{% endcomment %}
+<h3>Invite team members</h3>
+<p id="inv-error" hidden></p>
+<ul id="inv-list" style="width: 40%">
+{% for user in invites %}
+	<li>
+		{{ user.user.username }} has been invited
+		<span style="float: right">
+			&nbsp;<a href="#" class="inv-cancel" data-team="{{ team.pk }}" data-user="{{ user.pk }}">Cancel</a>
+		</span>
+	</li>
+{% endfor %}
+</ul>
+{% spaceless %}
+	<form id="inv-create" action="{{ team.pk }}/invite" method="post" data-team="{{ team.pk }}">
+		{% for field in invite_form %}
+			<p>{{ field.label_tag }}</p>
+			<p>{{ field }}</p>
+		{% endfor %}
+		<input type="submit" value="Invite" />
+	</form>
+	{{ invite_form.media }}
+{% endspaceless %}
+{% comment %}{% endif %}{% endcomment %}
+{% else %}
+<h2>Join a team</h2>
+{% if invites %}
+<div id="inv-div">
+{% else %}
+<div id="inv-div" hidden>
+{% endif %}
+<h2>Invites</h2>
+<p id="inv-error" hidden></p>
+{% spaceless %}
+<ul id="inv-list" style="width: 40%">
+{% for team in invites %}
+	<li>
+		You have been invited to {{ team.name }}
+		<span style="float: right">
+			&nbsp;<a href="#" class="inv-accept" data-team="{{ team.pk }}">Join</a>
+			&nbsp;<a href="#" class="inv-deny" data-team="{{ team.pk }}">Ignore</a>
+		</span>
+	</li>
+{% endfor %}
+</ul>
+{% endspaceless %}
+</div>
+<h3>Requests</h3>
+<p id="req-error" hidden></p>
+{% spaceless %}
+<ul id="req-list" style="width: 40%">
+{% for team in requests %}
+<li>You have requested to join {{ team.name }}<span style="float: right">&nbsp;<a href="#" class="req-cancel" data-team="{{ team.pk }}">Cancel</a></span></li>
+{% endfor %}
+</ul>
+<form id="req-create" action="#" method="post">
+	{% for field in request_form %}
+		<p>{{ field.label_tag }}</p>
+		<p>{{ field }}</p>
+	{% endfor %}
+	<input type="submit" value="Request" />
+</form>
+{{ request_form.media }}
+{% endspaceless %}
+<h2>Create a team</h2>
+<p id="create-error" hidden></p>
+{% spaceless %}
+	<form action="create" method="post">
+		{% csrf_token %}
+		{% for field in create_form %}
+			<p>{{ field.label_tag }}</p>
+			<p>{{ field }}</p>
+		{% endfor %}
+		<p id="inv-error" hidden></p>
+		<input type="submit" value="Create your team" />
+	</form>
+{% endspaceless %}
+{% endif %}
+{% endblock %}

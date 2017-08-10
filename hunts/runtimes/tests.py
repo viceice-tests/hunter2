@@ -33,7 +33,7 @@ class IFrameRuntimeTestCase(TestCase):
     def test_validate_guess(self):
         iframe_url = r'https://example.com/'
         with self.assertRaises(NotImplementedError):
-            self.iframe_runtime.validate_guess(iframe_url, "", None, None)
+            self.iframe_runtime.validate_guess(iframe_url, "")
 
 
 class RegexRuntimeTestCase(TestCase):
@@ -47,17 +47,17 @@ class RegexRuntimeTestCase(TestCase):
         regex_runtime = RegexRuntime()
         regex_script = r'Hello \w*!'
         guess1 = "Hello Planet!"
-        result = regex_runtime.validate_guess(regex_script, guess1, None, None)
+        result = regex_runtime.validate_guess(regex_script, guess1)
         self.assertTrue(result)
         guess2 = "Goodbye World!"
-        result = regex_runtime.validate_guess(regex_script, guess2, None, None)
+        result = regex_runtime.validate_guess(regex_script, guess2)
         self.assertFalse(result)
 
     def test_evaluate_syntax_error_fails(self):
         regex_runtime = RegexRuntime()
         regex_script = r'[]'
         with self.assertRaises(SyntaxError):
-            regex_runtime.validate_guess(regex_script, "", None, None)
+            regex_runtime.validate_guess(regex_script, "")
 
 
 class StaticRuntimeTestCase(TestCase):
@@ -71,8 +71,8 @@ class StaticRuntimeTestCase(TestCase):
         static_runtime = StaticRuntime()
         static_script = '''answer'''
         guess1 = "answer"
-        result = static_runtime.validate_guess(static_script, guess1, None, None)
+        result = static_runtime.validate_guess(static_script, guess1)
         self.assertTrue(result)
         guess2 = "incorrect answer"
-        result = static_runtime.validate_guess(static_script, guess2, None, None)
+        result = static_runtime.validate_guess(static_script, guess2)
         self.assertFalse(result)

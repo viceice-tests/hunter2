@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
-from subdomains.utils import reverse
+from hunter2.resolvers import reverse
 
 from events.models import Event
 from teams.models import Team, UserProfile
@@ -25,35 +25,35 @@ class AnswerValidationTests(TestCase):
     def test_static_answers(self):
         answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.STATIC)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
-        self.assertTrue(answer.validate_guess(guess, self.data))
+        self.assertTrue(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
 
     def test_regex_answers(self):
         answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.REGEX)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
-        self.assertTrue(answer.validate_guess(guess, self.data))
+        self.assertTrue(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
 
     def test_lua_answers(self):
         answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.LUA)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
-        self.assertTrue(answer.validate_guess(guess, self.data))
+        self.assertTrue(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
-        self.assertFalse(answer.validate_guess(guess, self.data))
+        self.assertFalse(answer.validate_guess(guess))
 
 
 class AnswerSubmissionTest(TestCase):
@@ -158,6 +158,20 @@ class EpisodeBehaviourTest(TestCase):
         self.assertTrue(self.parallel_episode.get_puzzle(2).answered_by(self.team))
         self.assertEqual(self.parallel_episode.next_puzzle(self.team), 3)
 
+    def test_puzzle_numbers(self):
+        puzzle1 = Puzzle.objects.get(pk=1)
+        puzzle2 = Puzzle.objects.get(pk=2)
+        puzzle3 = Puzzle.objects.get(pk=3)
+        puzzle4 = Puzzle.objects.get(pk=4)
+        self.assertEqual(puzzle1.get_relative_id(), 1)
+        self.assertEqual(puzzle2.get_relative_id(), 1)
+        self.assertEqual(puzzle3.get_relative_id(), 2)
+        self.assertEqual(puzzle4.get_relative_id(), 3)
+        self.assertEqual(self.linear_episode.get_puzzle(puzzle1.get_relative_id()), puzzle1)
+        self.assertEqual(self.parallel_episode.get_puzzle(puzzle2.get_relative_id()), puzzle2)
+        self.assertEqual(self.parallel_episode.get_puzzle(puzzle3.get_relative_id()), puzzle3)
+        self.assertEqual(self.parallel_episode.get_puzzle(puzzle4.get_relative_id()), puzzle4)
+
 
 class EpisodeSequenceTests(TestCase):
     fixtures = ['hunts_episodesequence']
@@ -203,11 +217,9 @@ class ClueDisplayTests(TestCase):
 
     def test_unlock_display(self):
         unlock = Unlock.objects.get(pk=1)
-        self.assertTrue(unlock.unlocked_by(self.team, self.data))
+        self.assertTrue(unlock.unlocked_by(self.team))
         fail_team = Team.objects.get(pk=2)
-        fail_user = UserProfile.objects.get(pk=2)
-        fail_data = PuzzleData(self.puzzle, fail_team, fail_user)
-        self.assertFalse(unlock.unlocked_by(fail_team, fail_data))
+        self.assertFalse(unlock.unlocked_by(fail_team))
 
 
 class AdminTeamTests(TestCase):

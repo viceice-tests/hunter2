@@ -15,6 +15,9 @@ TIME_ZONE     = env.str       ('H2_TIME_ZONE',     default='Europe/London')
 ALLOWED_HOSTS = env.list      ('H2_ALLOWED_HOSTS', default=['*'])
 INTERNAL_IPS  = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
 EMAIL_CONFIG  = env.email_url ('H2_EMAIL_URL',     default='smtp://localhost:25')
+EMAIL_DOMAIN  = env.str       ('H2_EMAIL_DOMAIN',  default='hunter2.local')
+ADMINS        = env.list      ('H2_ADMINS',        default=[])
+RAVEN_DSN     = env.str       ('H2_SENTRY_DSN',    default=None)
 DATABASES = {
     'default': env.db('H2_DATABASE_URL', default="postgres://postgres:postgres@db:5432/postgres")
 }
@@ -36,14 +39,20 @@ SECRET_KEY = load_or_create_secret_key("/config/secrets.ini")
 # Load the email configuration
 vars().update(EMAIL_CONFIG)
 
-BASE_DIR = root()
+DEFAULT_FROM_EMAIL = f'webmaster@{EMAIL_DOMAIN}'
+
+SERVER_EMAIL = f'root@{EMAIL_DOMAIN}'
 
 # Application definition
+BASE_DIR = root()
+
 ACCOUNT_ACTIVATION_DAYS = 7
 
 ACCOUNT_EMAIL_REQUIRED = True
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+ACCOUNT_SIGNUP_FORM_CLASS = 'teams.forms.UserProfileForm'
 
 AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -56,7 +65,12 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
 INSTALLED_APPS = (
-    # Third party apps first
+    # Our apps are order sensitive and come first to allow us to override things
+    'events',
+    'teams',
+    'hunts',
+    'hunter2',
+    # Third party apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -72,15 +86,12 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'django_extensions',
     'nested_admin',
+    'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',
     'sortedm2m',
     'subdomains',
-    # Our apps are order sensitive and need to be at the end
-    'events',
-    'teams',
-    'hunts',
-    'hunter2',
 )
 if USE_SILK:
     INSTALLED_APPS = INSTALLED_APPS + ('silk',)
@@ -122,6 +133,7 @@ MIDDLEWARE = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'subdomains.middleware.SubdomainMiddleware',
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
@@ -130,6 +142,11 @@ if USE_SILK:
 
 if PIWIK:
     PIWIK_DOMAIN_PATH = PIWIK.geturl()
+
+if RAVEN_DSN:
+    RAVEN_CONFIG = {
+        'dsn': RAVEN_DSN
+    }
 
 ROOT_URLCONF = 'hunter2.urls'
 

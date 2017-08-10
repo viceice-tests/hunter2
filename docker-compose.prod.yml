@@ -13,7 +13,11 @@ services:
     depends_on:
       - db
     environment:
+      - H2_ADMINS
       - H2_DEBUG
+      - H2_EMAIL_DOMAIN
+      - H2_EMAIL_URL
+      - H2_SENTRY_DSN
     image: ${IMAGE_TAG:-hunter2_app}
     volumes:
       - config:/config
@@ -27,8 +31,8 @@ services:
       - "8080:80"
     volumes:
       - static:/static:ro
-      - uploads_events:/uploads/events:ro
-      - uploads_puzzles:/uploads/puzzles:ro
+      - uploads_events:/media/events:ro
+      - uploads_puzzles:/media/puzzles:ro
 
 volumes:
   db: {}

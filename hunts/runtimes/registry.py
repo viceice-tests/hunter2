@@ -36,10 +36,8 @@ class RuntimesRegistry(object):
         )
 
     @staticmethod
-    def validate_guess(runtime, script, guess, team_puzzle_data, team_data):
+    def validate_guess(runtime, script, guess):
         return RuntimesRegistry.REGISTERED_RUNTIMES[runtime].validate_guess(
             script,
             guess,
-            team_puzzle_data=team_puzzle_data,
-            team_data=team_data,
         )

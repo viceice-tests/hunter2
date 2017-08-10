@@ -5,8 +5,15 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 import django.db.models.deletion
 import enumfields.fields
+from enumfields import Enum
+
 import hunts.models
 
+class AnnoucmentType(Enum):
+    INFO = 'I'
+    SUCCESS = 'S'
+    WARNING = 'W'
+    ERROR = 'E'
 
 class Migration(migrations.Migration):
 
@@ -23,6 +30,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='annoucement',
             name='type',
-            field=enumfields.fields.EnumField(default='I', enum=hunts.models.AnnoucmentType, max_length=1),
+            field=enumfields.fields.EnumField(default='I', enum=AnnoucmentType, max_length=1),
         ),
     ]

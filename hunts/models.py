@@ -7,6 +7,7 @@ from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
 from enumfields import EnumField, Enum
+from hunter2.resolvers import reverse
 
 import events
 import teams
@@ -18,7 +19,7 @@ class Puzzle(models.Model):
     runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
-    flavour = models.TextField()
+    flavour = models.TextField(blank=True)
     content = models.TextField()
     cb_runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
@@ -31,7 +32,33 @@ class Puzzle(models.Model):
     )
 
     def __str__(self):
-        return f'<Puzzle: {self.title}>'
+        return self.title
+
+    def get_absolute_url(self):
+        try:
+            episode = self.episode_set.get()
+        except Episode.DoesNotExist:
+            return ''
+
+        params = {
+            'event_id': episode.event.pk,
+            'episode_number': episode.get_relative_id(),
+            'puzzle_number': self.get_relative_id()
+        }
+        return reverse('puzzle', subdomain='www', kwargs=params)
+
+    def get_relative_id(self):
+        try:
+            episode = self.episode_set.get()
+        except Episode.DoesNotExist:
+            raise ValueError("Puzzle %s is not on an episode and so has no relative id" % self.title)
+
+        for i, p in enumerate(episode.puzzles.values('pk')):
+            if self.pk == p['pk']:
+                puzzle_number = i + 1
+                break
+
+        return puzzle_number
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
@@ -86,6 +113,9 @@ class PuzzleFile(models.Model):
     slug = models.SlugField()
     file = models.FileField(upload_to='puzzles/')
 
+    class Meta:
+        unique_together = (('puzzle', 'slug'), )
+
 
 class Clue(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
@@ -106,13 +136,13 @@ class Hint(Clue):
 
 
 class Unlock(Clue):
-    def unlocked_by(self, team, data):
+    def unlocked_by(self, team):
         guesses = Guess.objects.filter(
             by__in=team.members.all()
         ).filter(
             for_puzzle=self.puzzle
         )
-        return [g for g in guesses if any([u.validate_guess(g, data) for u in self.unlockanswer_set.all()])]
+        return [g for g in guesses if any([u.validate_guess(g) for u in self.unlockanswer_set.all()])]
 
 
 class UnlockAnswer(models.Model):
@@ -122,13 +152,11 @@ class UnlockAnswer(models.Model):
     )
     guess = models.TextField()
 
-    def validate_guess(self, guess, data):
+    def validate_guess(self, guess):
         return rr.validate_guess(
             self.runtime,
             self.guess,
             guess.guess,
-            data.tp_data,
-            data.t_data,
         )
 
 
@@ -140,7 +168,7 @@ class Answer(models.Model):
     answer = models.TextField()
 
     def __str__(self):
-        return f'<Answer: {self.answer}>'
+        return self.answer
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -158,20 +186,18 @@ class Answer(models.Model):
         guesses.update(correct_current=False)
         super().delete(*args, **kwargs)
 
-    def validate_guess(self, guess, data):
+    def validate_guess(self, guess):
         return rr.validate_guess(
             self.runtime,
             self.answer,
             guess.guess,
-            data.tp_data,
-            data.t_data,
         )
 
 
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
-    by_team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
+    by_team = models.ForeignKey(teams.models.Team, on_delete=models.PROTECT)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
     # The following two fields cache whether the guess is correct. Do not use them directly.
@@ -182,7 +208,7 @@ class Guess(models.Model):
         verbose_name_plural = 'Guesses'
 
     def __str__(self):
-        return f'<Guess: {self.guess} by {self.by}>'
+        return f'"{self.guess}" by {self.by} ({self.by_team})'
 
     def get_team(self):
         event = self.for_puzzle.episode_set.get().event
@@ -210,7 +236,7 @@ class Guess(models.Model):
         self.correct_current = True
 
         for answer in answers:
-            if answer.validate_guess(self, data):
+            if answer.validate_guess(self):
                 self.correct_for = answer
                 return
 
@@ -240,10 +266,10 @@ class TeamData(models.Model):
     data = JSONField(default={})
 
     class Meta:
-        verbose_name_plural = 'Team puzzle data'
+        verbose_name_plural = 'Team data'
 
     def __str__(self):
-        return f'<TeamData: {self.team.name} - {self.puzzle.title}>'
+        return f'Data for {self.team.name}'
 
 
 class UserData(models.Model):
@@ -252,10 +278,10 @@ class UserData(models.Model):
     data = JSONField(default={})
 
     class Meta:
-        verbose_name_plural = 'User puzzle data'
+        verbose_name_plural = 'User data'
 
     def __str__(self):
-        return f'<UserData: {self.user.name} - {self.puzzle.title}>'
+        return f'Data for {self.user.user.username} at {self.event}'
 
 
 class TeamPuzzleData(models.Model):
@@ -268,7 +294,7 @@ class TeamPuzzleData(models.Model):
         verbose_name_plural = 'Team puzzle data'
 
     def __str__(self):
-        return f'<TeamPuzzleData: {self.team.name} - {self.puzzle.title}>'
+        return f'Data for {self.team.name} on {self.puzzle.title}'
 
 
 class UserPuzzleData(models.Model):
@@ -281,7 +307,7 @@ class UserPuzzleData(models.Model):
         verbose_name_plural = 'User puzzle data'
 
     def __str__(self):
-        return f'<UserPuzzleData: {self.user.user.username} - {self.puzzle.title}>'
+        return f'Data for {self.user.user.username} on {self.puzzle.title}'
 
     def team(self):
         """Helper method to fetch the team associated with this user and puzzle"""
@@ -317,7 +343,7 @@ class PuzzleData:
 
 class Episode(models.Model):
     name = models.CharField(max_length=255)
-    flavour = models.TextField()
+    flavour = models.TextField(blank=True)
     puzzles = SortedManyToManyField(Puzzle, blank=True)
     prequels = models.ManyToManyField(
         'self', blank=True,
@@ -337,7 +363,7 @@ class Episode(models.Model):
         unique_together = (('event', 'start_date'),)
 
     def __str__(self):
-        return f'<Episode: {self.event.name} - {self.name}>'
+        return f'{self.event.name} - {self.name}'
 
     def follows(self, episode):
         """Does this episode follow the provied episode by one or more prequel relationships?"""
@@ -454,20 +480,20 @@ class Episode(models.Model):
             return result
 
 
-class AnnoucmentType(Enum):
+class AnnouncementType(Enum):
     INFO = 'I'
-    SUCCESSS = 'S'
+    SUCCESS = 'S'
     WARNING = 'W'
     ERROR = 'E'
 
 
-class Annoucement(models.Model):
+class Announcement(models.Model):
     event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='announcements')
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE, related_name='announcements', null=True, blank=True)
     title = models.CharField(max_length=255)
     posted = models.DateTimeField(auto_now_add=True)
     message = models.TextField(blank=True)
-    type = EnumField(AnnoucmentType, max_length=1, default=AnnoucmentType.INFO)
+    type = EnumField(AnnouncementType, max_length=1, default=AnnouncementType.INFO)
 
     def __str__(self):
-        return f'<EventAnnoucement: {self.title}>'
+        return self.title
