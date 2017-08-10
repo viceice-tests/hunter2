@@ -195,7 +195,8 @@ function drawTimeCompleted(lines) {
 function timeFormatter(date) {
 	// When we create dates from the number of seconds, JS interprets them in the local time
 	// which makes the display weird. Correct for that here.
-	var seconds = date.getTime() / 1000 - date.getTimezoneOffset()*60;
+	//var seconds = date.getTime() / 1000 - date.getTimezoneOffset()*60;
+	var seconds = date;
 	return Math.floor(seconds / 3600) + ":" + d3.format("02")(Math.floor(seconds / 60) % 60);
 }
 
@@ -208,7 +209,7 @@ function drawTeamPuzzleStuckness(data) {
 		return d3.max(d.puzzleStuckness.map(function (d) { return d.stuckness; }));
 	}));
 	var y = d3.scaleTime()
-		.domain([new Date(1970, 0, 0, 0, 1), new Date(1970, 0, 0, 0, 0, maxSeconds*1.05)])
+		.domain([0, maxSeconds*1.05])
 		.range([height, 0]);
 
 	// Create scales for the marks on the graph
@@ -239,7 +240,7 @@ function drawTeamPuzzleStuckness(data) {
 		.data(function(d, i) { return d.puzzleStuckness })
 		.enter()
 		.append("path")
-		.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + "," + y(new Date(1970, 0, 0, 0, 0, d.stuckness)) + ")"; })
+		.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + "," + y(d.stuckness) + ")"; })
 		.attr("class", function(d, i) { return "marker hide-team team-" + escapeHtml(parentData(this).team); })
 		.attr("fill", function(d) { return colours(parentData(this).team); })
 		.attr("fill-opacity", function(d) { return symbols(parentData(this).team).fillOpacity; })
@@ -270,7 +271,7 @@ function drawTeamStuckness(data) {
 		.range([0, height])
 		.padding(0.1);
 	var x = d3.scaleTime()
-		.domain([new Date(1970, 0, 0), new Date(1970, 0, 0, 0, 0, d3.max(stuckness.map(function(d) { return d.stuckness; })))])
+		.domain([0, d3.max(stuckness.map(function(d) { return d.stuckness; }))])
 		.range([0, width]);
 
 	var bar = chart.selectAll("g.bar")
@@ -284,7 +285,7 @@ function drawTeamStuckness(data) {
 	var updateBar = enterBar.merge(bar);
 	updateBar.attr("transform", function(d, i) { return "translate(0," + y(d.team) + ")"; })
 		.select("rect")
-		.attr("width", function(d) { return x(new Date(1970, 0, 0, 0, 0, d.stuckness)); })
+		.attr("width", function(d) { return x(d.stuckness); })
 		.attr("height", y.bandwidth());
 
 	var xAxis = d3.axisTop(x)
@@ -305,18 +306,13 @@ function drawPuzzleAvgStuckness(data) {
 	var x = d3.scaleBand()
 		.rangeRound([0, width]).padding(0.1)
 		.domain(data.puzzles);
-	var y = d3.scaleTime()
-		.domain([new Date(1970, 0, 0, 0, 0, 1),
-			     new Date(1970, 0, 0, 0, 0, d3.max(data.puzzleAverageStuckness.map(function(d) {
-			     	 return d.stuckness;
-			     })))])
+	var y = d3.scaleLinear()
+		.domain([0, d3.max(data.puzzleAverageStuckness.map(function(d) { return d.stuckness; }))])
 		.range([height, 0]);
 
 	// Join data to a group with class bar
 	var bar = chart.selectAll("g.bar")
-		.data(data.puzzleAverageStuckness.map(function (d) {
-			return {puzzle: d.puzzle, stuckness: new Date(1970, 0, 0, 0, 0, d.stuckness)};
-		}));
+		.data(data.puzzleAverageStuckness);
 
 	// For new bars, create the group and rectangle
 	var enterBar = bar.enter()
