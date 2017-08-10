@@ -48,7 +48,7 @@ function getStats(force) {
 		"puzzle-stuckness": puzzleTimeDrawer('puzzleAverageStuckness', 'stuckness'),
 		"puzzle-difficulty": puzzleTimeDrawer('puzzleDifficulty', 'average_time'),
 	}[graphType];
-	$.get('stats_content', {}, drawFunction);
+	$.get('stats_content/' + $('#episode').val(), {}, drawFunction);
 	setTimeout(getStats, 5000);
 }
 
@@ -487,6 +487,14 @@ function updateClicked(ev) {
 }
 
 $(function () {
+	$.get('episode_list', {}, function (episodes) {
+		var select = $('#episode');
+		select.children(':not([value="all"])').remove();
+		episodes.forEach(function (d) {
+			select.append('<option value="' + d.id + '">' + escapeHtml(d.name) + '</option>');
+		});
+		select.change(typeChanged);
+	});
 	clearChart();
 	getStats(true);
 	$('#type').change(typeChanged);

@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
+from django.http import HttpResponse, JsonResponse, HttpResponseForbidden, Http404
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
@@ -78,6 +78,19 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
                 'puzzles': puzzles,
             }
         )
+
+
+class EpisodeList(LoginRequiredMixin, View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            raise PermissionDenied
+
+        return JsonResponse([{
+            'id': episode.pk,
+            'name': episode.name
+        } for episode in models.Episode.objects.filter(event=request.event)], safe=False)
 
 
 class Guesses(LoginRequiredMixin, View):
@@ -159,7 +172,7 @@ class Stats(LoginRequiredMixin, View):
 
 
 class StatsContent(LoginRequiredMixin, View):
-    def get(self, request):
+    def get(self, request, episode_id):
         admin = rules.is_admin_for_event(request.user, request.event)
 
         if not admin:
@@ -167,7 +180,12 @@ class StatsContent(LoginRequiredMixin, View):
 
         # TODO select and prefetch all the things
         episodes = models.Episode.objects.filter(event=request.event)
-        puzzles = models.Puzzle.objects.filter(episode__event=request.event)
+        if episode_id != 'all':
+            episodes = episodes.filter(pk=episode_id)
+            if not episodes.count():
+                raise Http404
+
+        puzzles = models.Puzzle.objects.filter(episode__in=episodes)
 
         all_teams = teams.models.Team.objects.annotate(
             num_members=Count('members')
