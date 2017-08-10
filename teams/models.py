@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError, MultipleObjectsReturned
 from django.db import models
-from django.urls import reverse
+from hunter2.resolvers import reverse
 
 import events
 
@@ -65,7 +65,10 @@ class Team(models.Model):
         return super().save()
 
     def get_absolute_url(self):
-        return reverse('team', args=[self.pk])
+        return reverse('team', subdomain='www', kwargs={'event_id': self.at_event.pk, 'team_id': self.pk})
+
+    def is_explicit(self):
+        return self.name != ''
 
     def is_full(self):
-        return self.members.count() >= self.at_event.max_team_size > 0
+        return self.members.count() >= self.at_event.max_team_size > 0 and not self.is_admin

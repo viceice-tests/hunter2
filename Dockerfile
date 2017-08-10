@@ -44,7 +44,7 @@ WORKDIR /usr/src/app
 COPY . .
 
 RUN addgroup --gid 500 --system django \
- && adduser --system --shell /sbin/nologin --gid 500 --system --uid 500 django \
+ && adduser --system --home /usr/src/app --shell /sbin/nologin --gid 500 --system --uid 500 django \
  && install -d -g django -o django /config /static /uploads/events /uploads/puzzles
 USER django
 

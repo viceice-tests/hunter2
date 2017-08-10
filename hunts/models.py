@@ -7,7 +7,7 @@ from sortedm2m.fields import SortedManyToManyField
 from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
 from enumfields import EnumField, Enum
-from subdomains.utils import reverse
+from hunter2.resolvers import reverse
 
 import events
 import teams
@@ -480,20 +480,20 @@ class Episode(models.Model):
             return result
 
 
-class AnnoucmentType(Enum):
+class AnnouncementType(Enum):
     INFO = 'I'
-    SUCCESSS = 'S'
+    SUCCESS = 'S'
     WARNING = 'W'
     ERROR = 'E'
 
 
-class Annoucement(models.Model):
+class Announcement(models.Model):
     event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='announcements')
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE, related_name='announcements', null=True, blank=True)
     title = models.CharField(max_length=255)
     posted = models.DateTimeField(auto_now_add=True)
     message = models.TextField(blank=True)
-    type = EnumField(AnnoucmentType, max_length=1, default=AnnoucmentType.INFO)
+    type = EnumField(AnnouncementType, max_length=1, default=AnnouncementType.INFO)
 
     def __str__(self):
         return self.title
