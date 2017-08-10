@@ -193,9 +193,11 @@ class StatsContent(LoginRequiredMixin, View):
 
         puzzle_datas = models.TeamPuzzleData.objects.filter(puzzle__in=puzzles, team__in=all_teams).select_related('puzzle', 'team')
         start_times = defaultdict(dict)
+        solved_times = defaultdict(list)
         for data in puzzle_datas:
-            if data.team in correct_guesses[data.puzzle]:
+            if data.team in correct_guesses[data.puzzle] and data.start_time:
                 start_times[data.team][data.puzzle] = None
+                solved_times[data.puzzle].append(correct_guesses[data.puzzle][data.team].given - data.start_time)
             else:
                 start_times[data.team][data.puzzle] = data.start_time
 
@@ -246,6 +248,11 @@ class StatsContent(LoginRequiredMixin, View):
                     now - start_times[t][p] for t in all_teams if start_times[t][p]
                 ], timedelta()).total_seconds() / active_teams[p]
             } for p in puzzles if active_teams[p] > 0]
+        puzzle_difficulty = [
+            {
+                'puzzle': p.title,
+                'average_time': sum(solved_times[p], timedelta()).total_seconds() / len(solved_times[p])
+            } for p in puzzles if solved_times[p]]
 
         data = {
             'teams': [t.name for t in all_teams],
@@ -257,7 +264,8 @@ class StatsContent(LoginRequiredMixin, View):
             'puzzleProgress': puzzle_progress,
             'teamTotalStuckness': team_total_stuckness,
             'teamPuzzleStuckness': team_puzzle_stuckness,
-            'puzzleAverageStuckness': puzzle_average_stuckness
+            'puzzleAverageStuckness': puzzle_average_stuckness,
+            'puzzleDifficulty': puzzle_difficulty
         }
         return JsonResponse(data)
 

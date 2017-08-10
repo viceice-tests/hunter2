@@ -45,7 +45,8 @@ function getStats(force) {
 		"progress": drawTimeCompleted(true),
 		"team-total-stuckness": drawTeamStuckness,
 		"team-puzzle-stuckness": drawTeamPuzzleStuckness,
-		"puzzle-stuckness": drawPuzzleAvgStuckness
+		"puzzle-stuckness": puzzleTimeDrawer('puzzleAverageStuckness', 'stuckness'),
+		"puzzle-difficulty": puzzleTimeDrawer('puzzleDifficulty', 'average_time'),
 	}[graphType];
 	$.get('stats_content', {}, drawFunction);
 	setTimeout(getStats, 5000);
@@ -301,48 +302,50 @@ function drawTeamStuckness(data) {
 		.selectAll("text")
 }
 
-function drawPuzzleAvgStuckness(data) {
-	// Create scales for a bar chart
-	var x = d3.scaleBand()
-		.rangeRound([0, width]).padding(0.1)
-		.domain(data.puzzles);
-	var y = d3.scaleLinear()
-		.domain([0, d3.max(data.puzzleAverageStuckness.map(function(d) { return d.stuckness; }))])
-		.range([height, 0]);
+function puzzleTimeDrawer(mainPropName, subPropName) {
+	return function (data) {
+		// Create scales for a bar chart
+		var x = d3.scaleBand()
+			.rangeRound([0, width]).padding(0.1)
+			.domain(data.puzzles);
+		var y = d3.scaleLinear()
+			.domain([0, d3.max(data[mainPropName].map(function(d) { return d[subPropName]; }))])
+			.range([height, 0]);
 
-	// Join data to a group with class bar
-	var bar = chart.selectAll("g.bar")
-		.data(data.puzzleAverageStuckness);
+		// Join data to a group with class bar
+		var bar = chart.selectAll("g.bar")
+			.data(data[mainPropName]);
 
-	// For new bars, create the group and rectangle
-	var enterBar = bar.enter()
-		.append("g")
-		.attr("class", "bar");
-	enterBar.append("rect");
+		// For new bars, create the group and rectangle
+		var enterBar = bar.enter()
+			.append("g")
+			.attr("class", "bar");
+		enterBar.append("rect");
 
-	// Update the rectangle...
-	var updateBar = enterBar.merge(bar);
-	updateBar.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + ",0)"; })
-		.select("rect")
-		.attr("y", function(d) { return y(d.stuckness); })
-		.attr("height", function(d) { return height - y(d.stuckness); })
-		.attr("width", x.bandwidth());
+		// Update the rectangle...
+		var updateBar = enterBar.merge(bar);
+		updateBar.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + ",0)"; })
+			.select("rect")
+			.attr("y", function(d) { return y(d[subPropName]); })
+			.attr("height", function(d) { return height - y(d[subPropName]); })
+			.attr("width", x.bandwidth());
 
-	// Clear old bars
-	bar.exit().remove();
+		// Clear old bars
+		bar.exit().remove();
 
-	// Draw axes and horizontal marker lines
-	xAxisElt.call(d3.axisBottom(x))
-		.attr("transform", "translate(0," + height + ")")
-		.selectAll("text")
-		.attr("transform", "rotate(-20)");
+		// Draw axes and horizontal marker lines
+		xAxisElt.call(d3.axisBottom(x))
+			.attr("transform", "translate(0," + height + ")")
+			.selectAll("text")
+			.attr("transform", "rotate(-20)");
 
-	var yAxis = d3.axisLeft(y)
-		.tickSize(-width)
-		.tickPadding(10)
-		.tickFormat(timeFormatter);
+		var yAxis = d3.axisLeft(y)
+			.tickSize(-width)
+			.tickPadding(10)
+			.tickFormat(timeFormatter);
 
-	yAxisElt.call(yAxis);
+		yAxisElt.call(yAxis);
+	};
 }
 
 function drawLegend(data, colours, symbols) {
