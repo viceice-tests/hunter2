@@ -40,12 +40,26 @@
 	stroke-width: 1;
 }
 
-/*#legend {
+#legend {
 	display: inline-block;
 	vertical-align: top;
 	margin-top: 100px;
 	font-weight: bold;
-}*/
+	list-style: none;
+	margin-left: 6px;
+	padding-left: 0;
+}
+
+#legend li span {
+	margin-right: 15px;
+}
+
+svg.li-marker {
+	display: inline;
+	width: 20px;
+	height: 20px;
+	float: left;
+}
 
 </style>
 {% endblock %}
@@ -75,7 +89,8 @@
 	</select>
 </p>
 <div id="chart-container">
-	<svg class="chart" id="episode-stats" width="900" height="800"></svg>
+	<svg class="chart" id="episode-stats" width="800" height="800"></svg>
+	<ol id="legend"></ol>
 </div>
 <script src="{% static 'hunts/js/stats.js' %}"></script>
 {% endblock %}

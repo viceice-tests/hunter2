@@ -353,18 +353,12 @@ function drawLegend(data, colours, symbols) {
 	var legendMargin = {top: margin.top + 20, right: 0, bottom: 0, left: 6}
 	var entryHeight = 16;
 	// Add data about the teams
-	var legend = d3.select("#legend").selectAll("g").data(data.puzzleProgress);
+	var legend = d3.select("#legend").selectAll("li").data(data.puzzleProgress);
 	legend.selectAll("*").remove();
 	var enterLegend = legend.enter()
-		.append("g")
+		.append("li")
 	// Transform each group to a position just right of the main graph, and down some for each line
-	var updateLegend = enterLegend.merge(legend)
-		.attr("transform", function(d, i) {
-			return "translate(" +
-				(width + margin.left + legendMargin.left) + "," +
-				(legendMargin.top + i * entryHeight) +
-			")";
-		})
+	var updateLegend = enterLegend.merge(legend);
 	// Hide/show graph stuff
 	var hiddenOpacity = 0.1;
 	function teamClass(d) {
@@ -399,6 +393,7 @@ function drawLegend(data, colours, symbols) {
 		}
 	});
 	updateLegend.on("mouseover", function(d) {
+		// Increase the size of the team's lines and raise them
 		d3.selectAll(teamClass(d)).filter(".line")
 			.style("stroke-width", 3)
 			.raise();
@@ -412,19 +407,19 @@ function drawLegend(data, colours, symbols) {
 		d3.selectAll(teamClass(d)).filter(".marker")
 			.attr("stroke-width", symbols(d.team).strokeWidth);
 	});
+	// Add the team's name
+	updateLegend.append("span").text(function(d) { return d.team; });
 	// Add the symbol corresponding to that team
-	updateLegend.append("path")
-		.attr("transform", "translate(5, -4)")
+	updateLegend.append("svg")
+		.attr("class", "li-marker")
+		.append("path")
+		.attr("transform", "translate(10, 10)")
 		.attr("class", function(d, i) { return "marker hide-team team-" + escapeHtml(d.team); })
 		.attr("fill", function(d) { return colours(d.team); })
 		.attr("fill-opacity", function(d) { return symbols(d.team).fillOpacity; })
 		.attr("stroke", function(d) { return colours(d.team); })
 		.attr("stroke-width", function(d) { return symbols(d.team).strokeWidth; })
 		.attr("d", function(d) { return symbols(d.team).path; });
-	// Add the team's name
-	updateLegend.append("text")
-		.attr("x", 16)
-		.text(function(d) { return d.team; });
 	// Delete vanished teams
 	legend.exit().remove();
 }
@@ -442,7 +437,7 @@ var chart,
 
 function clearChart() {
 	var svg = d3.select('#episode-stats');
-	margin = {top: 100, right: 200, bottom: 100, left: 100};
+	margin = {top: 100, right: 12, bottom: 100, left: 100};
 	width = +svg.attr("width") - margin.left - margin.right;
 	height = +svg.attr("height") - margin.top - margin.bottom;
 
@@ -452,9 +447,7 @@ function clearChart() {
 		svg.append("g")
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 	}
-	if (svg.select('#legend').empty()) {
-		svg.append("g").attr("id", "legend");
-	} else {
+	if (!d3.select('#legend').empty()) {
 		clearLegend();
 	}
 
