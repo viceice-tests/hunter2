@@ -359,7 +359,7 @@ function drawLegend(data, colours, symbols) {
 	});
 	updateLegend.on("mouseout", function(d) {
 		d3.selectAll(teamClass(d)).filter(".line")
-			.style("stroke-width", 1);
+			.style("stroke-width", null);
 		d3.selectAll(teamClass(d)).filter(".marker")
 			.attr("stroke-width", symbols(d.team).strokeWidth);
 	});
