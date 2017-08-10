@@ -83,6 +83,13 @@ class PuzzleAdmin(NestedModelAdmin):
     list_display_links = ('title',)
     popup = False
 
+    def view_on_site(self, obj):
+        url = obj.get_absolute_url()
+        if url:
+            return url + '?preview=1'
+
+        return ''
+
     def get_urls(self):
         # Expose three extra views for editing answers, hints and unlocks without anything else
         urls = super().get_urls()
@@ -178,13 +185,6 @@ class EpisodeAdmin(NestedModelAdmin):
     def num_puzzles(self, obj):
         return obj.puzzles_count
     num_puzzles.short_description = 'puzzles'
-
-    def view_on_site(self, obj):
-        url = obj.get_absolute_url()
-        if url:
-            return url + '?preview=1'
-
-        return ''
 
 
 @admin.register(models.UserPuzzleData)
