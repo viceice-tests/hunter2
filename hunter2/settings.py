@@ -56,6 +56,7 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
 INSTALLED_APPS = (
+    # Third party apps first
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -71,14 +72,15 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'events',
-    'hunter2',
-    'hunts',
     'nested_admin',
     'rules.apps.AutodiscoverRulesConfig',
     'sortedm2m',
     'subdomains',
+    # Our apps are order sensitive and need to be at the end
+    'events',
     'teams',
+    'hunts',
+    'hunter2',
 )
 if USE_SILK:
     INSTALLED_APPS = INSTALLED_APPS + ('silk',)
