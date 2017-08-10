@@ -207,6 +207,10 @@ class StatsContent(LoginRequiredMixin, View):
                 now - start for start in start_times[team].values() if start
             ] for team in all_teams
         }
+        active_teams = {
+            puzzle: len([1 for t in all_teams if start_times[t][puzzle]])
+            for puzzle in puzzles
+        }
 
         puzzle_progress = [
             {
@@ -235,6 +239,13 @@ class StatsContent(LoginRequiredMixin, View):
                 'team': t.name,
                 'stuckness': sum(stuckness[t], timedelta()).total_seconds(),
             } for t in all_teams]
+        puzzle_average_stuckness = [
+            {
+                'puzzle': p.title,
+                'stuckness': sum([
+                    now - start_times[t][p] for t in all_teams if start_times[t][p]
+                ], timedelta()).total_seconds() / active_teams[p]
+            } for p in puzzles if active_teams[p] > 0]
 
         data = {
             'teams': [t.name for t in all_teams],
@@ -245,7 +256,8 @@ class StatsContent(LoginRequiredMixin, View):
             'puzzleCompletion': puzzle_completion,
             'puzzleProgress': puzzle_progress,
             'teamTotalStuckness': team_total_stuckness,
-            'teamPuzzleStuckness': team_puzzle_stuckness
+            'teamPuzzleStuckness': team_puzzle_stuckness,
+            'puzzleAverageStuckness': puzzle_average_stuckness
         }
         return JsonResponse(data)
 

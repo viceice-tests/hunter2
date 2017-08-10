@@ -44,7 +44,8 @@ function getStats(force) {
 		"time-completed": drawTimeCompleted(false),
 		"progress": drawTimeCompleted(true),
 		"team-total-stuckness": drawTeamStuckness,
-		"team-puzzle-stuckness": drawTeamPuzzleStuckness
+		"team-puzzle-stuckness": drawTeamPuzzleStuckness,
+		"puzzle-stuckness": drawPuzzleAvgStuckness
 	}[graphType];
 	$.get('stats_content', {}, drawFunction);
 	setTimeout(getStats, 5000);
@@ -195,7 +196,7 @@ function timeFormatter(date) {
 	// When we create dates from the number of seconds, JS interprets them in the local time
 	// which makes the display weird. Correct for that here.
 	var seconds = date.getTime() / 1000 - date.getTimezoneOffset()*60;
-	return Math.floor(seconds / 3600) + ":" + Math.floor(seconds / 60) % 60;
+	return Math.floor(seconds / 3600) + ":" + d3.format("02")(Math.floor(seconds / 60) % 60);
 }
 
 function drawTeamPuzzleStuckness(data) {
@@ -297,6 +298,55 @@ function drawTeamStuckness(data) {
 
 	yAxisElt.call(d3.axisLeft(y))
 		.selectAll("text")
+}
+
+function drawPuzzleAvgStuckness(data) {
+	// Create scales for a bar chart
+	var x = d3.scaleBand()
+		.rangeRound([0, width]).padding(0.1)
+		.domain(data.puzzles);
+	var y = d3.scaleTime()
+		.domain([new Date(1970, 0, 0, 0, 0, 1),
+			     new Date(1970, 0, 0, 0, 0, d3.max(data.puzzleAverageStuckness.map(function(d) {
+			     	 return d.stuckness;
+			     })))])
+		.range([height, 0]);
+
+	// Join data to a group with class bar
+	var bar = chart.selectAll("g.bar")
+		.data(data.puzzleAverageStuckness.map(function (d) {
+			return {puzzle: d.puzzle, stuckness: new Date(1970, 0, 0, 0, 0, d.stuckness)};
+		}));
+
+	// For new bars, create the group and rectangle
+	var enterBar = bar.enter()
+		.append("g")
+		.attr("class", "bar");
+	enterBar.append("rect");
+
+	// Update the rectangle...
+	var updateBar = enterBar.merge(bar);
+	updateBar.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + ",0)"; })
+		.select("rect")
+		.attr("y", function(d) { return y(d.stuckness); })
+		.attr("height", function(d) { return height - y(d.stuckness); })
+		.attr("width", x.bandwidth());
+
+	// Clear old bars
+	bar.exit().remove();
+
+	// Draw axes and horizontal marker lines
+	xAxisElt.call(d3.axisBottom(x))
+		.attr("transform", "translate(0," + height + ")")
+		.selectAll("text")
+		.attr("transform", "rotate(-20)");
+
+	var yAxis = d3.axisLeft(y)
+		.tickSize(-width)
+		.tickPadding(10)
+		.tickFormat(timeFormatter);
+
+	yAxisElt.call(yAxis);
 }
 
 function drawLegend(data, colours, symbols) {
