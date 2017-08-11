@@ -14,17 +14,10 @@ episodepatterns = [
 ]
 
 eventpatterns = [
-    url(r'^$', views.EventDirect.as_view()),
-    url(
-        r'^(?P<event_id>[1-9]\d*)/$',
-        views.EventIndex.as_view(),
-        name='event'),
-    url(r'^(?P<event_id>[1-9]\d*)/guesses$', views.Guesses.as_view(), name='guesses'),
-    url(r'^(?P<event_id>[1-9]\d*)/guesses_content$', views.GuessesContent.as_view(), name='guesses_content'),
-    url(
-        r'^(?P<event_id>[1-9]\d*)/ep/(?P<episode_number>[1-9]\d*)/',
-        include(episodepatterns)
-    ),
+    url(r'^$', views.EventIndex.as_view(), name='event'),
+    url(r'^about$', views.AboutView.as_view(), name='about'),
+    url(r'^rules$', views.RulesView.as_view(), name='rules'),
+    url(r'^ep/(?P<episode_number>[1-9]\d*)/', include(episodepatterns)),
 ]
 
 urlpatterns = [
@@ -43,6 +36,7 @@ urlpatterns = [
         TemplateView.as_view(template_name='hunts/help.html'),
         name='help'
     ),
-    url(r'^event/', include(eventpatterns)),
+    url(r'^event/$', views.EventDirect.as_view()),
+    url(r'^event/(?P<event_id>[1-9]\d*)/', include(eventpatterns)),
     url(r'^puzzle_info$', views.PuzzleInfo.as_view(), name='puzzle_info'),
 ]
