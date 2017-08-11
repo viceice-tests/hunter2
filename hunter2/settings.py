@@ -27,7 +27,7 @@ CACHES = {
 }
 USE_SILK = DEBUG and env.bool('H2_SILK', default=False)
 
-if USE_SILK: # nocover
+if USE_SILK:  # nocover
     try:
         import silk  # noqa: F401
     except ImportError:
@@ -96,7 +96,7 @@ INSTALLED_APPS = (
     'sortedm2m',
     'subdomains',
 )
-if USE_SILK: # nocover
+if USE_SILK:  # nocover
     INSTALLED_APPS = INSTALLED_APPS + ('silk',)
 
 LOGGING = {
@@ -140,10 +140,10 @@ MIDDLEWARE = (
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
-if USE_SILK: # nocover
+if USE_SILK:  # nocover
     MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
 
-if RAVEN_DSN: # nocover
+if RAVEN_DSN:  # nocover
     RAVEN_CONFIG = {
         'dsn': RAVEN_DSN
     }
@@ -215,7 +215,7 @@ WSGI_APPLICATION = 'hunter2.wsgi.application'
 
 X_FRAME_OPTIONS = 'DENY'
 
-if USE_SILK: # nocover
+if USE_SILK:  # nocover
     SILKY_PYTHON_PROFILER = True
     SILKY_PYTHON_PROFILER_BINARY = True
     # Well, the following path is rubbish but I cba doing it properly for now

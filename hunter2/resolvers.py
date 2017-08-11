@@ -6,7 +6,7 @@ if DEBUG:
     def reverse(*args, **kwargs):
         del kwargs['subdomain']
         return django_reverse(*args, **kwargs)
-else: # nocover
+else:  # nocover
     from subdomains.utils import reverse
 
 __all__ = (reverse, )

@@ -11,9 +11,9 @@ if DEBUG:
     urlpatterns = admin_patterns + www_patterns + [
         url(r'^__debug__/', include(debug_toolbar.urls)),
     ]
-    if USE_SILK: # nocover
+    if USE_SILK:  # nocover
         urlpatterns.append(
             url(r'^silk/', include('silk.urls', namespace='silk')),
         )
-else: # nocover
+else:  # nocover
     urlpatterns = []
