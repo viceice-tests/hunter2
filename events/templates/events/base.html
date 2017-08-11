@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load hunter2urls %}
 
 {% block style %}{% spaceless %}
 {% if event.theme.style %}
@@ -17,8 +18,8 @@
 {% endspaceless %}{% endblock %}
 
 {% block topbar_left %}
-<li><a class="navbar-brand" href="{% url 'event' event.id %}">{{ event.name }}</a></li>
+<li><a class="navbar-brand" href="{% url 'event' 'www' event.id %}">{{ event.name }}</a></li>
 {{ block.super }}
-<li><a class="navbar-nav" href="{% url 'about' event.id %}">About</a></li>
-<li><a class="navbar-nav" href="{% url 'rules' event.id %}">Rules</a></li>
+<li><a class="navbar-nav" href="{% url 'about' 'www' event.id %}">About</a></li>
+<li><a class="navbar-nav" href="{% url 'rules' 'www' event.id %}">Rules</a></li>
 {% endblock %}

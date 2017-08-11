@@ -1,6 +1,12 @@
 from dal import autocomplete
 from django import forms
+from django.contrib.auth.models import User
+from django.forms.models import inlineformset_factory, modelform_factory
 from . import models
+
+UserForm = modelform_factory(User, fields=('email', ))
+
+UserProfileFormset = inlineformset_factory(User, models.UserProfile, fields=('seat', ), can_delete=False)
 
 
 class UserProfileForm(forms.ModelForm):
