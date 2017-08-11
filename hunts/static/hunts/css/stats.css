@@ -1,0 +1,57 @@
+#episode-stats {
+	overflow: visible;
+}
+
+.chart-background {
+	fill: #efedf8;
+}
+
+.chart .bar rect {
+	fill: steelblue;
+}
+
+.chart .bar text {
+	fill: #eee;
+	font: 10px sans-serif;
+	text-anchor: middle;
+}
+
+.chart .line {
+	fill: none;
+	stroke-width: 1;
+}
+
+.chart .axis text {
+	fill: #222;
+	text-anchor: end;
+}
+
+.chart .axis .tick {
+	stroke: #bbb;
+	stroke-opacity: 0.4;
+	shape-rendering: crispEdges;
+	stroke-dasharray: 4,4;
+	stroke-width: 1;
+}
+
+#legend {
+	display: inline-block;
+	vertical-align: top;
+	margin-top: 100px;
+	font-weight: bold;
+	list-style: none;
+	margin-left: 6px;
+	padding-left: 0;
+}
+
+#legend li span {
+	margin-right: 15px;
+}
+
+svg.li-marker {
+	display: inline;
+	width: 20px;
+	height: 20px;
+	float: left;
+}
+
