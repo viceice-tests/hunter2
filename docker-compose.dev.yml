@@ -17,12 +17,10 @@ services:
       - db
     environment:
       - H2_DEBUG=True
-      - H2_PIWIK_HOST
-      - H2_PIWIK_SITE
       - H2_SILK
     image: ${IMAGE_TAG:-hunter2_app}
     ports:
-      - "8080:3031"
+      - "${H2_LISTEN:-127.0.0.1:8080}:3031"
     volumes:
       - ${PWD:-.}:/usr/src/app
       - config:/config
