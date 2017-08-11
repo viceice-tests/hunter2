@@ -28,6 +28,9 @@ var entityMap = {
 	' ': '&nbsp;'
 };
 
+var globalData = null;
+var timeout = null;
+
 function escapeHtml (string) {
 	return String(string).replace(/[&<>"'`=\/ ]/g, function (s) {
 		return entityMap[s];
@@ -35,21 +38,19 @@ function escapeHtml (string) {
 }
 
 function getStats(force) {
+	if (timeout) {
+		clearTimeout(timeout);
+	}
 	if (!(force || $('#auto-update').prop('checked'))) {
 		return;
 	}
-	var graphType = $('#type').val();
-	var drawFunction = {
-		"percent-complete": drawCompletion,
-		"time-completed": drawTimeCompleted(false),
-		"progress": drawTimeCompleted(true),
-		"team-total-stuckness": drawTeamStuckness,
-		"team-puzzle-stuckness": drawTeamPuzzleStuckness,
-		"puzzle-stuckness": puzzleTimeDrawer('puzzleAverageStuckness', 'stuckness'),
-		"puzzle-difficulty": puzzleTimeDrawer('puzzleDifficulty', 'average_time'),
-	}[graphType];
-	$.get('stats_content/' + $('#episode').val(), {}, drawFunction);
-	setTimeout(getStats, 5000);
+	$.get('stats_content/' + $('#episode').val(), {}, function (data) { globalData = data; drawGraph(); });
+	timeout = setTimeout(getStats, 5000);
+}
+
+function drawGraph() {
+	clearChart();
+	drawFunction(globalData);
 }
 
 function drawCompletion(data) {
@@ -468,9 +469,24 @@ function clearLegend() {
 	d3.selectAll("#legend *").remove();
 }
 
-function typeChanged(ev) {
-	clearChart();
+function episodeChanged(ev) {
 	getStats(true);
+}
+
+function typeChanged(ev) {
+	var graphType = $('#type').val();
+	drawFunction = {
+		"percent-complete": drawCompletion,
+		"time-completed": drawTimeCompleted(false),
+		"progress": drawTimeCompleted(true),
+		"team-total-stuckness": drawTeamStuckness,
+		"team-puzzle-stuckness": drawTeamPuzzleStuckness,
+		"puzzle-stuckness": puzzleTimeDrawer('puzzleAverageStuckness', 'stuckness'),
+		"puzzle-difficulty": puzzleTimeDrawer('puzzleDifficulty', 'average_time'),
+	}[graphType];
+	if (globalData) {
+		drawGraph();
+	}
 }
 
 function updateClicked(ev) {
@@ -479,6 +495,8 @@ function updateClicked(ev) {
 	}
 }
 
+var drawFunction = drawCompletion;
+
 $(function () {
 	$.get('episode_list', {}, function (episodes) {
 		var select = $('#episode');
@@ -486,9 +504,10 @@ $(function () {
 		episodes.forEach(function (d) {
 			select.append('<option value="' + d.id + '">' + escapeHtml(d.name) + '</option>');
 		});
-		select.change(typeChanged);
+		select.change(episodeChanged);
 	});
 	clearChart();
+	typeChanged();
 	getStats(true);
 	$('#type').change(typeChanged);
 	$('#auto-update').click(updateClicked);
