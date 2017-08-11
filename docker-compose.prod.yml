@@ -17,7 +17,8 @@ services:
       - H2_DEBUG
       - H2_EMAIL_DOMAIN
       - H2_EMAIL_URL
-      - H2_PIWIK
+      - H2_PIWIK_HOST
+      - H2_PIWIK_SITE
       - H2_SENTRY_DSN
     image: ${IMAGE_TAG:-hunter2_app}
     volumes:
@@ -29,7 +30,7 @@ services:
     build: ./nginx
     image: ${IMAGE_TAG:-hunter2_web}
     ports:
-      - "8080:80"
+      - "${H2_LISTEN:-8080}:80"
     volumes:
       - static:/static:ro
       - uploads_events:/media/events:ro
