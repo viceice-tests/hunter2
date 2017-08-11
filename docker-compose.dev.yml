@@ -17,6 +17,8 @@ services:
       - db
     environment:
       - H2_DEBUG=True
+      - H2_PIWIK_HOST
+      - H2_PIWIK_SITE
       - H2_SILK
     image: ${IMAGE_TAG:-hunter2_app}
     ports:
