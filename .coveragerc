@@ -4,6 +4,10 @@ omit =
     */migrations/*.py
     hunter2/wsgi.py
 
+[report]
+exclude_lines =
+    nocover
+
 [html]
 directory = coverage/html
 

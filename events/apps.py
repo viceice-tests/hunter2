@@ -6,4 +6,4 @@ class EventsConfig(AppConfig):
 
     def ready(self):
         super(EventsConfig, self).ready()
-        from . import signals  # noqa: F401
+        #from . import signals  # noqa: F401

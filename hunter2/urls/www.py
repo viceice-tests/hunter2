@@ -19,5 +19,5 @@ if settings.DEBUG:
     urlpatterns = www_patterns + [
         url(r'^__debug__/', include(debug_toolbar.urls)),
     ]
-else:
+else: # nocover
     urlpatterns = www_patterns
