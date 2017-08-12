@@ -9,6 +9,7 @@ from events.management.commands import createdefaultevent
 from events.models import Event, Theme
 from hunter2.tests import MockTTY, mock_inputs
 
+
 class EventRulesTests(TestCase):
 
     def test_only_one_current_event(self):
@@ -21,7 +22,7 @@ class EventRulesTests(TestCase):
         event2.save()
         self.assertEqual(len(Event.objects.filter(current=True)), 1, "More than one event is set as current")
         self.assertEqual(Event.objects.get(current=True), event2, "Last added event is not current")
-
+s
     @expectedFailure  # TODO: Currently fails but non-critical
     def test_only_remaining_event_is_current(self):
         # Ensure that we only have one event set as current after deleting the current test
