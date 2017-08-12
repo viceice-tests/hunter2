@@ -237,7 +237,7 @@ class AdminViewTests(TestCase):
 
     def test_can_view_guesses(self):
         self.assertTrue(self.client.login(username='admin', password='hunter2'))
-        response = self.client.get(reverse('guesses', subdomain='admin', kwargs={'event_id': 1}), HTTP_HOST='www.testserver')
+        response = self.client.get(reverse('guesses', subdomain='admin', kwargs={'event_id': 1}), HTTP_HOST='admin.testserver')
         self.assertEqual(response.status_code, 200)
 
 

@@ -1,0 +1,39 @@
+version: '2.1'
+
+services:
+  db:
+    image: postgres:9.6-alpine
+    volumes:
+      - db:/var/lib/postgresql/data
+  app:
+    build:
+       context: .
+       args:
+          REQUIREMENTS_VERSION: "production"
+    depends_on:
+      - db
+    environment:
+      - H2_DEBUG
+    image: ${IMAGE_TAG:-hunter2_app}
+    volumes:
+      - config:/config
+      - static:/static
+      - uploads_events:/uploads/events
+      - uploads_puzzles:/uploads/puzzles
+  web:
+    build: ./nginx
+    image: ${IMAGE_TAG:-hunter2_web}
+    ports:
+      - "8080:80"
+    volumes:
+      - ${PWD:-.}:/usr/src/app
+      - static:/static:ro
+      - uploads_events:/media/events:ro
+      - uploads_puzzles:/media/puzzles:ro
+
+volumes:
+  db: {}
+  config: {}
+  static: {}
+  uploads_events: {}
+  uploads_puzzles: {}
