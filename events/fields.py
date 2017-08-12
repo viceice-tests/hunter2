@@ -12,6 +12,6 @@ class SingleTrueBooleanField(BooleanField):
 
         # If none is set as true, ensure this one is set as True
         elif not objects.exclude(id=model_instance.id).filter(**{self.attname: True}):
-            return True
+            setattr(model_instance, self.attname, True)
 
         return getattr(model_instance, self.attname)
