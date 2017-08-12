@@ -367,7 +367,6 @@ function teamClass(d) {
 }
 
 function tooltipTeam(data, computePuzzle) {
-	var ev = d3.event;
 	var puzzle = computePuzzle(d3.mouse(chart.node())[0]);
 	var progress = data.progress.find(function(d) { return d.puzzle == puzzle; });
 	if (progress === undefined) return;
@@ -419,6 +418,16 @@ function hideTooltip() {
 		.lower();
 }
 
+function highlightTeam(team) {
+	// Increase the size of the team's lines and raise them
+	d3.selectAll(teamClass(d)).filter(".line")
+		.style("stroke-width", 3)
+		.raise();
+	d3.selectAll(teamClass(d)).filter(".marker")
+		.attr("stroke-width", symbols(d.team).strokeWidth + 2)
+		.each(function (d) { this.parentNode.parentNode.appendChild(this.parentNode); });
+}
+
 function drawLegend(data, colours, symbols) {
 	// Compute margin from the main graph margin
 	var legendMargin = {top: margin.top + 20, right: 0, bottom: 0, left: 6}
@@ -460,15 +469,7 @@ function drawLegend(data, colours, symbols) {
 			}
 		}
 	});
-	updateLegend.on("mouseover", function(d) {
-		// Increase the size of the team's lines and raise them
-		d3.selectAll(teamClass(d)).filter(".line")
-			.style("stroke-width", 3)
-			.raise();
-		d3.selectAll(teamClass(d)).filter(".marker")
-			.attr("stroke-width", symbols(d.team).strokeWidth + 2)
-			.each(function (d) { this.parentNode.parentNode.appendChild(this.parentNode); });
-	});
+	updateLegend.on("mouseover", function(d) { highlightTeam(d.team); });
 	updateLegend.on("mouseout", function(d) {
 		d3.selectAll(teamClass(d)).filter(".line")
 			.style("stroke-width", null);

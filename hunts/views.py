@@ -210,7 +210,7 @@ class StatsContent(LoginRequiredMixin, View):
         ]) + timedelta(minutes=10)
 
         puzzle_datas = models.TeamPuzzleData.objects.filter(puzzle__in=puzzles, team__in=all_teams).select_related('puzzle', 'team')
-        start_times = defaultdict(dict)
+        start_times = defaultdict(lambda: defaultdict(dict))
         solved_times = defaultdict(list)
         for data in puzzle_datas:
             if data.team in correct_guesses[data.puzzle] and data.start_time:
