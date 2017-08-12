@@ -24,7 +24,7 @@ class TestRunner(ColourRunnerMixin, DiscoverRunner):
 
 # Adapted from:
 # https://github.com/django/django/blob/7588d7e439a5deb7f534bdeb2abe407b937e3c1a/tests/auth_tests/test_management.py
-def mock_inputs(inputs):
+def mock_inputs(inputs):  # nocover
     """
     Decorator to temporarily replace input/getpass to allow interactive
     createsuperuser.
@@ -56,7 +56,7 @@ class MockTTY:
     with mock_inputs.
     """
 
-    def isatty(self):
+    def isatty(self):  # nocover
         return True
 
 
@@ -77,7 +77,7 @@ class MigrationsTests(TestCase):
         except SystemExit as e:
             # The exit code will be 1 when there are no missing migrations
             self.assertEqual(str(e), '1')
-        else:
+        else:  # nocover
             self.fail("There are missing migrations:\n %s" % output.getvalue())
 
 
