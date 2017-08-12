@@ -37,6 +37,17 @@ class TeamRulesTests(TestCase):
             team.members.add(user3)
             team.save()
 
+    def test_one_team_per_member(self):
+        event = Event.objects.get(pk=1)
+        team1 = Team.objects.get(pk=1)
+        team2 = Team(name="Team2", at_event=event)
+        team2.save()
+        user1 = UserProfile.objects.get(pk=1)
+
+        with self.assertRaises(ValidationError):
+            team1.members.add(user1)
+            team2.members.add(user1)
+
 
 class TeamCreateTests(TestCase):
     fixtures = ['teams_test']
