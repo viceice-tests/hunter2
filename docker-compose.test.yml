@@ -16,6 +16,7 @@ services:
       - H2_DEBUG
     image: ${IMAGE_TAG:-hunter2_app}
     volumes:
+      - ${PWD:-.}:/usr/src/app
       - config:/config
       - static:/static
       - uploads_events:/uploads/events
@@ -26,7 +27,6 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ${PWD:-.}:/usr/src/app
       - static:/static:ro
       - uploads_events:/media/events:ro
       - uploads_puzzles:/media/puzzles:ro
