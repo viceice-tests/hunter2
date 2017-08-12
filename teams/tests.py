@@ -35,7 +35,6 @@ class TeamRulesTests(TestCase):
             team.members.add(user1)
             team.members.add(user2)
             team.members.add(user3)
-            team.save()
 
     def test_one_team_per_member(self):
         event = Event.objects.get(pk=1)
