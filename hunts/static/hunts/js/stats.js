@@ -168,12 +168,25 @@ function drawTimeCompleted(lines) {
 			var progressLine = d3.line()
 				.x(function (d) { return x(d.puzzle); })
 				.y(function (d) { return y(new Date(d.time)); });
+			var inverseScale = d3.scaleQuantize()
+				.range(x.domain())
+				.domain(x.range());
 
 			data.puzzleProgress.forEach(function (d, i) {
 				chart.append("path")
 					.attr("class", "line progress-line hide-team team-" + escapeHtml(d.team))
 					.attr("stroke", colours(d.team))
 					.attr("d", progressLine(d.progress));
+				chart.append("path")
+					.attr("class", "hover-line")
+					.attr("stroke", "black")
+					.attr("stroke-opacity", 0)
+					.attr("fill", "none")
+					.attr("stroke-width", 8)
+					.attr("d", progressLine(d.progress))
+					.on("mouseover", function () { tooltipTeam(d, inverseScale); })
+					.on("mousemove", function () { tooltipTeam(d, inverseScale); })
+					.on("mouseout", hideTooltip);
 			});
 		}
 
@@ -349,6 +362,63 @@ function puzzleTimeDrawer(mainPropName, subPropName) {
 	};
 }
 
+function teamClass(d) {
+	return '[class~="team-' + escapeHtml(d.team) + '"]';
+}
+
+function tooltipTeam(data, computePuzzle) {
+	var ev = d3.event;
+	var puzzle = computePuzzle(d3.mouse(chart.node())[0]);
+	var progress = data.progress.find(function(d) { return d.puzzle == puzzle; });
+	if (progress === undefined) return;
+
+	moveTooltip()
+	var time = d3.timeFormat("%a %H:%M:%S")(new Date(progress.time));
+	drawTooltip([data.team, progress.puzzle + ": " + time]);
+	chart.select(".chart-tooltip")
+		.style("visibility", "visible")
+}
+
+function moveTooltip() {
+	var mouse = d3.mouse(chart.select(".chart-background").node());
+	var ttx = mouse[0] + 24,
+		tty = mouse[1];
+	chart.select(".chart-tooltip")
+		.attr("transform", "translate(" + ttx + "," + tty + ")");
+}
+
+function drawTooltip(textArray) {
+	var tooltip = chart.select(".chart-tooltip")
+	tooltip.selectAll("*").remove();
+	var text = tooltip.append("g")
+
+	var lineHeight = 16;
+	textArray.forEach(function (d, i) {
+		text.append("text")
+			.attr("dy", i*lineHeight)
+			.text(d);
+	});
+
+	var bbox = text.node().getBBox()
+	var margin = 6
+
+	tooltip.append("rect")
+		.attr("width", bbox.width + 2 * margin)
+		.attr("height", bbox.height + 2 * margin)
+		.attr("x", -margin)
+		.attr("y", -margin)
+		.attr("rx", 6)
+		.attr("ry", 6)
+	text.raise();
+	tooltip.raise();
+}
+
+function hideTooltip() {
+	chart.select(".chart-tooltip")
+		.style("visibility", "hidden")
+		.lower();
+}
+
 function drawLegend(data, colours, symbols) {
 	// Compute margin from the main graph margin
 	var legendMargin = {top: margin.top + 20, right: 0, bottom: 0, left: 6}
@@ -362,9 +432,6 @@ function drawLegend(data, colours, symbols) {
 	var updateLegend = enterLegend.merge(legend);
 	// Hide/show graph stuff
 	var hiddenOpacity = 0.1;
-	function teamClass(d) {
-		return '[class~="team-' + escapeHtml(d.team) + '"]';
-	}
 	updateLegend.on("click", function(d, i) {
 		if (d3.event.ctrlKey) {
 			var currentlyinvis = d3.select('[class~="invis"]' + teamClass(d)).empty();
@@ -457,6 +524,8 @@ function clearChart() {
 		.attr("width", width)
 		.attr("height", height)
 		.attr("class", "chart-background");
+	chart.append("g")
+		.attr("class", "chart-tooltip");
 
 	xAxisElt = chart.append("g")
 		.attr("class", "axis axis-x");
