@@ -178,15 +178,15 @@ function drawTimeCompleted(lines) {
 					.attr("stroke", colours(d.team))
 					.attr("d", progressLine(d.progress));
 				chart.append("path")
-					.attr("class", "hover-line")
+					.attr("class", "hover-line team-" + escapeHtml(d.team))
 					.attr("stroke", "black")
 					.attr("stroke-opacity", 0)
 					.attr("fill", "none")
 					.attr("stroke-width", 8)
 					.attr("d", progressLine(d.progress))
-					.on("mouseover", function () { tooltipTeam(d, inverseScale); })
-					.on("mousemove", function () { tooltipTeam(d, inverseScale); })
-					.on("mouseout", hideTooltip);
+					.on("mouseover", function () { hoverTeam(d, inverseScale, symbols, true); })
+					.on("mousemove", function () { hoverTeam(d, inverseScale, symbols, false); })
+					.on("mouseout", function () { unhoverTeam(d, symbols); });
 			});
 		}
 
@@ -366,11 +366,14 @@ function teamClass(d) {
 	return '[class~="team-' + escapeHtml(d.team) + '"]';
 }
 
-function tooltipTeam(data, computePuzzle) {
+function hoverTeam(data, computePuzzle, symbols, highlight) {
 	var puzzle = computePuzzle(d3.mouse(chart.node())[0]);
 	var progress = data.progress.find(function(d) { return d.puzzle == puzzle; });
 	if (progress === undefined) return;
 
+	if (highlight) {
+		highlightTeam(data, symbols);
+	}
 	moveTooltip()
 	var time = d3.timeFormat("%a %H:%M:%S")(new Date(progress.time));
 	drawTooltip([data.team, progress.puzzle + ": " + time]);
@@ -412,20 +415,34 @@ function drawTooltip(textArray) {
 	tooltip.raise();
 }
 
-function hideTooltip() {
+function unhoverTeam(d, symbols) {
+	unhighlightTeam(d, symbols);
 	chart.select(".chart-tooltip")
 		.style("visibility", "hidden")
 		.lower();
 }
 
-function highlightTeam(team) {
-	// Increase the size of the team's lines and raise them
-	d3.selectAll(teamClass(d)).filter(".line")
-		.style("stroke-width", 3)
-		.raise();
+function highlightTeam(d, symbols) {
+	// Increase the size of the team's lines and markers and raise them
 	d3.selectAll(teamClass(d)).filter(".marker")
 		.attr("stroke-width", symbols(d.team).strokeWidth + 2)
 		.each(function (d) { this.parentNode.parentNode.appendChild(this.parentNode); });
+	d3.selectAll(teamClass(d)).filter(".line")
+		.style("stroke-width", 3)
+		.raise();
+	// Also do this for the invisible line to add a bit of hysteresis
+	d3.selectAll(teamClass(d)).filter(".hover-line")
+		.style("stroke-width", 12)
+		.raise();
+}
+
+function unhighlightTeam(d, symbols) {
+	d3.selectAll(teamClass(d)).filter(".line")
+		.style("stroke-width", null);
+	d3.selectAll(teamClass(d)).filter(".marker")
+		.attr("stroke-width", symbols(d.team).strokeWidth);
+	d3.selectAll(teamClass(d)).filter(".hover-line")
+		.style("stroke-width", null)
 }
 
 function drawLegend(data, colours, symbols) {
@@ -469,13 +486,8 @@ function drawLegend(data, colours, symbols) {
 			}
 		}
 	});
-	updateLegend.on("mouseover", function(d) { highlightTeam(d.team); });
-	updateLegend.on("mouseout", function(d) {
-		d3.selectAll(teamClass(d)).filter(".line")
-			.style("stroke-width", null);
-		d3.selectAll(teamClass(d)).filter(".marker")
-			.attr("stroke-width", symbols(d.team).strokeWidth);
-	});
+	updateLegend.on("mouseover", function(d) { highlightTeam(d, symbols); });
+	updateLegend.on("mouseout", function(d) { unhighlightTeam(d, symbols); });
 	// Add the team's name
 	updateLegend.append("span").text(function(d) { return d.team; });
 	// Add the symbol corresponding to that team
