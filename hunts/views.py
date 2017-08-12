@@ -185,7 +185,9 @@ class StatsContent(LoginRequiredMixin, View):
             if not episodes.count():
                 raise Http404
 
-        puzzles = models.Puzzle.objects.filter(episode__in=episodes)
+        # Directly use the through relation for sorted M2M so we can sort the entire query.
+        episode_puzzles = models.Episode.puzzles.through.objects.filter(episode__in=episodes).select_related('puzzle')
+        puzzles = [ep.puzzle for ep in episode_puzzles.order_by('episode', 'sort_value')]
 
         all_teams = teams.models.Team.objects.annotate(
             num_members=Count('members')
