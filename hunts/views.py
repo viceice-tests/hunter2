@@ -2,11 +2,12 @@ from datetime import datetime, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.views import View
+from django.views.generic import TemplateView
 from hunter2.resolvers import reverse
 from string import Template
 from teams.mixins import TeamMixin
@@ -394,3 +395,29 @@ class PuzzleInfo(View):
             'team_id': team.pk,
             'user_id': user.pk,
         })
+
+
+class AboutView(TemplateView):
+    template_name = 'hunts/about.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        admin_team = self.request.event.teams.get(is_admin=True)
+        context.update({
+            'admins': admin_team.members.all(),
+            'content': self.request.event.about_text,
+            'event_name': self.request.event.name,
+        })
+        return context
+
+
+class RulesView(TemplateView):
+    template_name = 'hunts/rules.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'content': self.request.event.rules_text,
+            'event_name': self.request.event.name,
+        })
+        return context

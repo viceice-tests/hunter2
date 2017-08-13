@@ -17,6 +17,9 @@
 {% endif %}
 {% endspaceless %}{% endblock %}
 
-{% block topbar %}{% spaceless %}
-<li><a class="navbar-brand" href="{% url 'event' 'www' event.id %}" >{{ event.name }}</a></li>
-{% endspaceless %}{% endblock %}
+{% block topbar_left %}
+<li><a class="navbar-brand" href="{% url 'event' 'www' event.id %}">{{ event.name }}</a></li>
+{{ block.super }}
+<li><a class="navbar-nav" href="{% url 'about' 'www' event.id %}">About</a></li>
+<li><a class="navbar-nav" href="{% url 'rules' 'www' event.id %}">Rules</a></li>
+{% endblock %}
