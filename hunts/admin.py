@@ -79,7 +79,7 @@ class PuzzleAdmin(NestedModelAdmin):
         UnlockInline,
     ]
     # TODO: once episode is a ForeignKey make it editable
-    list_display = ('the_episode', 'title', 'start_date', 'answers', 'hints', 'unlocks')
+    list_display = ('the_episode', 'title', 'start_date', 'check_flavour', 'headstart_granted', 'answers', 'hints', 'unlocks')
     list_display_links = ('title',)
     popup = False
 
@@ -161,6 +161,12 @@ class PuzzleAdmin(NestedModelAdmin):
 
     the_episode.short_description = 'episode'
     the_episode.admin_order_field = 'episode__start_date'
+
+    def check_flavour(self, obj):
+        return bool(obj.flavour)
+
+    check_flavour.short_description = 'tasty?'
+    check_flavour.boolean = True
 
     def answers(self, obj):
         return format_html('<a href="{}/answers/">{}</a>', obj.pk, obj.answer_count)
