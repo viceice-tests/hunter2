@@ -64,13 +64,17 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
         else:
             position = None
 
+        files = {
+            **{f.slug: f.file.url for f in request.event.eventfile_set.all()},
+        }
+
         return TemplateResponse(
             request,
             'hunts/episode.html',
             context={
                 'admin': admin,
                 'episode': episode.name,
-                'flavour': episode.flavour,
+                'flavour': episode.flavour.safe_substitute(**files),
                 'position': position,
                 'episode_number': episode_number,
                 'event_id': request.event.pk,
@@ -245,7 +249,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
                 'admin': admin,
                 'hints': hints,
                 'title': puzzle.title,
-                'flavour': puzzle.flavour,
+                'flavour': puzzle.flavour.safe_substitute(**files),
                 'text': text,
                 'unlocks': unlocks,
             }
@@ -403,9 +407,14 @@ class AboutView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         admin_team = self.request.event.teams.get(is_admin=True)
+
+        files = {
+            **{f.slug: f.file.url for f in self.request.event.eventfile_set.all()},
+        }
+
         context.update({
             'admins': admin_team.members.all(),
-            'content': self.request.event.about_text,
+            'content': self.request.event.about_text.safe_substitute(**files),
             'event_name': self.request.event.name,
         })
         return context
@@ -416,8 +425,13 @@ class RulesView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        files = {
+            **{f.slug: f.file.url for f in self.request.event.eventfile_set.all()},
+        }
+
         context.update({
-            'content': self.request.event.rules_text,
+            'content': self.request.event.rules_text.safe_substitute(**files),
             'event_name': self.request.event.name,
         })
         return context
