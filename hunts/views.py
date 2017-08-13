@@ -64,7 +64,7 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
         else:
             position = None
 
-        files = {f.slug: f.file.url for f in request.event.eventfile_set.all()}}
+        files = {f.slug: f.file.url for f in request.event.eventfile_set.all()}
 
         return TemplateResponse(
             request,
