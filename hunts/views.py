@@ -67,7 +67,6 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
             request,
             'hunts/episode.html',
             context={
-                'admin': admin,
                 'episode': episode.name,
                 'flavour': episode.flavour,
                 'position': position,
@@ -76,6 +75,32 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
                 'puzzles': puzzles,
             }
         )
+
+
+class EpisodeContent(LoginRequiredMixin, TeamMixin, View):
+    def get(self, request, episode_number):
+        episode = utils.event_episode(request.event, episode_number)
+        admin = rules.is_admin_for_episode(request.user, episode)
+
+        if (
+            episode.started(request.team) and
+            episode.unlocked_by(request.team) or
+            admin
+        ):
+            puzzles = episode.unlocked_puzzles(request.team)
+            return TemplateResponse(
+                request,
+                'hunts/episode_content.html',
+                context={
+                    'episode': episode.name,
+                    'flavour': episode.flavour,
+                    'episode_number': episode_number,
+                    'event_id': request.event.pk,
+                    'puzzles': puzzles,
+                }
+            )
+        else:
+            raise PermissionDenied
 
 
 class Guesses(LoginRequiredMixin, View):

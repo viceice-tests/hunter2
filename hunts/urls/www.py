@@ -10,6 +10,7 @@ puzzlepatterns = [
 
 episodepatterns = [
     url(r'^$', views.Episode.as_view(), name='episode'),
+    url(r'^content$', views.EpisodeContent.as_view(), name='episode_content'),
     url(r'^pz/(?P<puzzle_number>[1-9]\d*)/', include(puzzlepatterns)),
 ]
 
