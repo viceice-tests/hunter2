@@ -16,13 +16,13 @@ import uuid
 
 class Puzzle(models.Model):
     title = models.CharField(max_length=255, unique=True)
+    flavour = models.TextField(
+        blank=True, verbose_name="Flavour text",
+        help_text="Separate flavour text for the puzzle. Should not be required for solving the puzzle")
     runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC,
         help_text="Runtime for generating the question content"
     )
-    flavour = models.TextField(
-        blank=True, verbose_name="Flavour text",
-        help_text="Separate flavour text for the puzzle. Should not be required for solving the puzzle")
     content = models.TextField()
     cb_runtime = models.CharField(
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC, verbose_name="Callback runtime",
@@ -114,7 +114,7 @@ class Puzzle(models.Model):
 
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    slug = models.SlugField()
+    slug = models.SlugField(help_text="Precede the slug with a $ in the puzzle content to insert the URL of the file.")
     file = models.FileField(upload_to='puzzles/')
 
     class Meta:
@@ -123,7 +123,7 @@ class PuzzleFile(models.Model):
 
 class Clue(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    text = models.TextField()
+    text = models.TextField(help_text="Text displayed when this clue is unlocked")
 
     class Meta:
         abstract = True
