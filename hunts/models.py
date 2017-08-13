@@ -17,14 +17,18 @@ import uuid
 class Puzzle(models.Model):
     title = models.CharField(max_length=255, unique=True)
     runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
+        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC,
+        help_text="Runtime for generating the question content"
     )
-    flavour = models.TextField(blank=True)
+    flavour = models.TextField(
+        blank=True, verbose_name="Flavour text",
+        help_text="Separate flavour text for the puzzle. Should not be required for solving the puzzle")
     content = models.TextField()
     cb_runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
+        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC, verbose_name="Callback runtime",
+        help_text="Runtime for responding to an AJAX callback for this question, should return JSON"
     )
-    cb_content = models.TextField(blank=True, default='')
+    cb_content = models.TextField(blank=True, default='', verbose_name="Callback content")
     start_date = models.DateTimeField(blank=True, default=timezone.now)
     headstart_granted = models.DurationField(
         default=timedelta(),
