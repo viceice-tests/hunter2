@@ -71,7 +71,7 @@ class GuessAdmin(admin.ModelAdmin):
 
 @admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdmin):
-    ordering = ('episode', 'start_date', 'pk')
+    ordering = ('episode__start_date', 'start_date', 'pk')
     inlines = [
         FileInline,
         AnswerInline,
@@ -154,12 +154,13 @@ class PuzzleAdmin(NestedModelAdmin):
     # Who knows why we can't call this 'episode' but it causes an AttributeError...
     def the_episode(self, obj):
         episode_qs = obj.episode_set
-        if episode_qs:
+        if episode_qs.exists():
             return episode_qs.get().name
 
         return '[no episode set]'
 
     the_episode.short_description = 'episode'
+    the_episode.admin_order_field = 'episode__start_date'
 
     def answers(self, obj):
         return format_html('<a href="{}/answers/">{}</a>', obj.pk, obj.answer_count)
@@ -174,7 +175,7 @@ class PuzzleAdmin(NestedModelAdmin):
 @admin.register(models.Episode)
 class EpisodeAdmin(NestedModelAdmin):
     ordering = ['start_date', 'pk']
-    list_display = ('event', 'name', 'num_puzzles')
+    list_display = ('event', 'name', 'start_date', 'num_puzzles')
     list_display_links = ('name',)
 
     def get_queryset(self, request):
