@@ -108,10 +108,14 @@ class Puzzle(models.Model):
             return None
 
 
+def puzzle_file_path(instance, filename):
+    return 'puzzles/{0}/{1}'.format(instance.puzzle.id, filename)
+
+
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     slug = models.SlugField()
-    file = models.FileField(upload_to='puzzles/')
+    file = models.FileField(upload_to=puzzle_file_path)
 
     class Meta:
         unique_together = (('puzzle', 'slug'), )
