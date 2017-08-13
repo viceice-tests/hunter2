@@ -64,9 +64,7 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
         else:
             position = None
 
-        files = {
-            **{f.slug: f.file.url for f in request.event.eventfile_set.all()},
-        }
+        files = {f.slug: f.file.url for f in request.event.eventfile_set.all()}}
 
         return TemplateResponse(
             request,
@@ -408,9 +406,7 @@ class AboutView(TemplateView):
         context = super().get_context_data(**kwargs)
         admin_team = self.request.event.teams.get(is_admin=True)
 
-        files = {
-            **{f.slug: f.file.url for f in self.request.event.eventfile_set.all()},
-        }
+        files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
 
         context.update({
             'admins': admin_team.members.all(),
@@ -426,9 +422,7 @@ class RulesView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        files = {
-            **{f.slug: f.file.url for f in self.request.event.eventfile_set.all()},
-        }
+        files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
 
         context.update({
             'content': self.request.event.rules_text.safe_substitute(**files),
