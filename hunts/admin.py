@@ -71,7 +71,7 @@ class GuessAdmin(admin.ModelAdmin):
 
 @admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdmin):
-    ordering = ('episode', 'pk')
+    ordering = ('episode', 'start_date', 'pk')
     inlines = [
         FileInline,
         AnswerInline,
@@ -173,6 +173,7 @@ class PuzzleAdmin(NestedModelAdmin):
 
 @admin.register(models.Episode)
 class EpisodeAdmin(NestedModelAdmin):
+    ordering = ['start_date', 'pk']
     list_display = ('event', 'name', 'num_puzzles')
     list_display_links = ('name',)
 
