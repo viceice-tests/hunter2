@@ -114,7 +114,7 @@ class Puzzle(models.Model):
 
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    slug = models.SlugField(help_text="Precede the slug with a $ in the puzzle content to insert the URL of the file.")
+    slug = models.SlugField(help_text="Include the URL of the file in puzzle content using $slug or ${slug}.")
     file = models.FileField(upload_to='puzzles/')
 
     class Meta:
