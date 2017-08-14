@@ -33,10 +33,14 @@ class Event(models.Model):
             raise ValidationError('There can only be one current event')
 
 
+def event_file_path(instance, filename):
+    return 'event/{0}/{1}'.format(instance.event.id, filename)
+
+
 class EventFile(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     slug = models.SlugField()
-    file = models.FileField(upload_to='events/')
+    file = models.FileField(upload_to=event_file_path)
 
     class Meta:
         unique_together = (('event', 'slug'), )
