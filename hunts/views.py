@@ -92,7 +92,6 @@ class EpisodeContent(LoginRequiredMixin, TeamMixin, View):
                 request,
                 'hunts/episode_content.html',
                 context={
-                    'episode': episode.name,
                     'flavour': episode.flavour,
                     'episode_number': episode_number,
                     'event_id': request.event.pk,

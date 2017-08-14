@@ -4,11 +4,7 @@
 <ol>
 {% for puzzle in puzzles %}
 	<li>
-{% if event_id %}
 		<a href="{% url 'puzzle' 'www' event_id episode_number forloop.counter %}">{{ puzzle.title }}</a>
-{% else %}
-		<a href="{% url 'puzzle' 'www' episode_number forloop.counter %}">{{ puzzle.title }}</a>
-{% endif %}
 	</li>
 {% endfor %}
 </ol>
