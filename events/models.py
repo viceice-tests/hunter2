@@ -34,7 +34,7 @@ class Event(models.Model):
 
 
 def event_file_path(instance, filename):
-    return 'event/{0}/{1}'.format(instance.event.id, filename)
+    return 'events/{0}/{1}'.format(instance.event.id, filename)
 
 
 class EventFile(models.Model):
