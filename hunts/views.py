@@ -65,6 +65,7 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
             position = None
 
         files = {f.slug: f.file.url for f in request.event.eventfile_set.all()}
+        flavour = Template(episode.flavour).safe_substitute(**files)
 
         return TemplateResponse(
             request,
@@ -72,7 +73,7 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
             context={
                 'admin': admin,
                 'episode': episode.name,
-                'flavour': episode.flavour.safe_substitute(**files),
+                'flavour': flavour,
                 'position': position,
                 'episode_number': episode_number,
                 'event_id': request.event.pk,
@@ -239,6 +240,8 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
             user_data=data.u_data,
         )).safe_substitute(**files)
 
+        flavour = Template(puzzle.flavour).safe_substitute(**files)
+
         response = TemplateResponse(
             request,
             'hunts/puzzle.html',
@@ -247,7 +250,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
                 'admin': admin,
                 'hints': hints,
                 'title': puzzle.title,
-                'flavour': puzzle.flavour.safe_substitute(**files),
+                'flavour': flavour,
                 'text': text,
                 'unlocks': unlocks,
             }
@@ -407,10 +410,11 @@ class AboutView(TemplateView):
         admin_team = self.request.event.teams.get(is_admin=True)
 
         files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
+        content = Template(self.request.event.about_text).safe_substitute(**files)
 
         context.update({
             'admins': admin_team.members.all(),
-            'content': self.request.event.about_text.safe_substitute(**files),
+            'content': content,
             'event_name': self.request.event.name,
         })
         return context
@@ -423,9 +427,10 @@ class RulesView(TemplateView):
         context = super().get_context_data(**kwargs)
 
         files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
+        content = Template(self.request.event.rules_text).safe_substitute(**files)
 
         context.update({
-            'content': self.request.event.rules_text.safe_substitute(**files),
+            'content': content,
             'event_name': self.request.event.name,
         })
         return context
