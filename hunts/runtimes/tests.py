@@ -19,7 +19,7 @@ class IFrameRuntimeTestCase(TestCase):
         up_data = models.UserPuzzleData()
         response = self.iframe_runtime.evaluate(iframe_url, None, up_data, None, None)
         self.assertTrue(
-            re.match(r'<iframe src="https://example.com/\?token=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"></iframe>', response)
+            re.search(r'<iframe .* src="https://example.com/\?token=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"></iframe>', response)
         )
 
     def test_evaluate_with_param(self):
@@ -27,7 +27,7 @@ class IFrameRuntimeTestCase(TestCase):
         up_data = models.UserPuzzleData()
         response = self.iframe_runtime.evaluate(iframe_url, None, up_data, None, None)
         self.assertTrue(
-            re.match(r'<iframe src="https://example.com/\?k=v&token=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"></iframe>', response)
+            re.match(r'<iframe .* src="https://example.com/\?k=v&token=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"></iframe>', response)
         )
 
     def test_validate_guess(self):

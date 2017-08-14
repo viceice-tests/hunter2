@@ -71,7 +71,7 @@ class GuessAdmin(admin.ModelAdmin):
 
 @admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdmin):
-    ordering = ('episode', 'pk')
+    ordering = ('episode', 'start_date', 'pk')
     inlines = [
         FileInline,
         AnswerInline,
@@ -82,6 +82,13 @@ class PuzzleAdmin(NestedModelAdmin):
     list_display = ('the_episode', 'title', 'start_date', 'answers', 'hints', 'unlocks')
     list_display_links = ('title',)
     popup = False
+
+    def view_on_site(self, obj):
+        url = obj.get_absolute_url()
+        if url:
+            return url + '?preview=1'
+
+        return ''
 
     def get_urls(self):
         # Expose three extra views for editing answers, hints and unlocks without anything else
@@ -166,6 +173,7 @@ class PuzzleAdmin(NestedModelAdmin):
 
 @admin.register(models.Episode)
 class EpisodeAdmin(NestedModelAdmin):
+    ordering = ['start_date', 'pk']
     list_display = ('event', 'name', 'num_puzzles')
     list_display_links = ('name',)
 
@@ -179,18 +187,11 @@ class EpisodeAdmin(NestedModelAdmin):
         return obj.puzzles_count
     num_puzzles.short_description = 'puzzles'
 
-    def view_on_site(self, obj):
-        url = obj.get_absolute_url()
-        if url:
-            return url + '?preview=1'
-
-        return ''
-
 
 @admin.register(models.UserPuzzleData)
 class UserPuzzleDataAdmin(admin.ModelAdmin):
     readonly_fields = ('token', )
 
 
-admin.site.register(models.Annoucement)
+admin.site.register(models.Announcement)
 admin.site.register(models.TeamPuzzleData)

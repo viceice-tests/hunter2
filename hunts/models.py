@@ -16,15 +16,19 @@ import uuid
 
 class Puzzle(models.Model):
     title = models.CharField(max_length=255, unique=True)
+    flavour = models.TextField(
+        blank=True, verbose_name="Flavour text",
+        help_text="Separate flavour text for the puzzle. Should not be required for solving the puzzle")
     runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
+        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC,
+        help_text="Runtime for generating the question content"
     )
-    flavour = models.TextField(blank=True)
     content = models.TextField()
     cb_runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
+        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC, verbose_name="Callback runtime",
+        help_text="Runtime for responding to an AJAX callback for this question, should return JSON"
     )
-    cb_content = models.TextField(blank=True, default='')
+    cb_content = models.TextField(blank=True, default='', verbose_name="Callback content")
     start_date = models.DateTimeField(blank=True, default=timezone.now)
     headstart_granted = models.DurationField(
         default=timedelta(),
@@ -108,10 +112,14 @@ class Puzzle(models.Model):
             return None
 
 
+def puzzle_file_path(instance, filename):
+    return 'puzzles/{0}/{1}'.format(instance.puzzle.id, filename)
+
+
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    slug = models.SlugField()
-    file = models.FileField(upload_to='puzzles/')
+    slug = models.SlugField(help_text="Include the URL of the file in puzzle content using $slug or ${slug}.")
+    file = models.FileField(upload_to=puzzle_file_path)
 
     class Meta:
         unique_together = (('puzzle', 'slug'), )
@@ -119,7 +127,7 @@ class PuzzleFile(models.Model):
 
 class Clue(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    text = models.TextField()
+    text = models.TextField(help_text="Text displayed when this clue is unlocked")
 
     class Meta:
         abstract = True
@@ -480,20 +488,20 @@ class Episode(models.Model):
             return result
 
 
-class AnnoucmentType(Enum):
+class AnnouncementType(Enum):
     INFO = 'I'
-    SUCCESSS = 'S'
+    SUCCESS = 'S'
     WARNING = 'W'
     ERROR = 'E'
 
 
-class Annoucement(models.Model):
+class Announcement(models.Model):
     event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='announcements')
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE, related_name='announcements', null=True, blank=True)
     title = models.CharField(max_length=255)
     posted = models.DateTimeField(auto_now_add=True)
     message = models.TextField(blank=True)
-    type = EnumField(AnnoucmentType, max_length=1, default=AnnoucmentType.INFO)
+    type = EnumField(AnnouncementType, max_length=1, default=AnnouncementType.INFO)
 
     def __str__(self):
         return self.title
