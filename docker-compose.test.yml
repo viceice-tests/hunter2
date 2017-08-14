@@ -13,15 +13,10 @@ services:
     depends_on:
       - db
     environment:
-      - H2_ADMINS
       - H2_DEBUG
-      - H2_EMAIL_DOMAIN
-      - H2_EMAIL_URL
-      - H2_PIWIK_HOST
-      - H2_PIWIK_SITE
-      - H2_SENTRY_DSN
     image: ${IMAGE_TAG:-hunter2_app}
     volumes:
+      - ${PWD:-.}:/usr/src/app
       - config:/config
       - static:/static
       - uploads_events:/uploads/events
@@ -30,7 +25,7 @@ services:
     build: ./nginx
     image: ${IMAGE_TAG:-hunter2_web}
     ports:
-      - "${H2_LISTEN:-8080}:80"
+      - "8080:80"
     volumes:
       - static:/static:ro
       - uploads_events:/media/events:ro

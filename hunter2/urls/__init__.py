@@ -1,8 +1,8 @@
 from django.conf.urls import include, url
 
-from ..settings import DEBUG, USE_SILK
+from .. import settings
 
-if DEBUG:
+if settings.DEBUG:
     from .admin import admin_patterns
     from .www import www_patterns
 
@@ -11,9 +11,9 @@ if DEBUG:
     urlpatterns = admin_patterns + www_patterns + [
         url(r'^__debug__/', include(debug_toolbar.urls)),
     ]
-    if USE_SILK:  # nocover
+    if settings.USE_SILK:  # nocover
         urlpatterns.append(
             url(r'^silk/', include('silk.urls', namespace='silk')),
         )
-else:  # nocover
+else:
     urlpatterns = []
