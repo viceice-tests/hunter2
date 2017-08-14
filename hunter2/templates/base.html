@@ -32,20 +32,20 @@
 			<div class="container-fluid">
 				<div class="collapse navbar-collapse" id="site-navbar-collapse-1">
 					<ul class="nav navbar-nav">
-						{% block topbar %}{% endblock %}
+						{% block topbar_left %}
 						<li class="button"><a href="{% url 'index' 'www' %}">Home</a></li>
-						<li class="button"><a href="{% url 'help' 'www' %}">Help</a></li>
-						<li class="button"><a href="{% url 'faq' 'www' %}">FAQ</a></li>
+						{% endblock %}
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
-						{% block topbar_right %}{% endblock %}
+						{% block topbar_right %}
 						{% if user.is_authenticated %}
-						<li class="button"><a href="{% url 'edit_profile' 'www' %}" id="navUser">{{ user.username }}</a></li>
+						<li class="button"><a href="{% url 'edit_profile' 'www' %}" id="navUser">Account</a></li>
 						<li class="button"><a href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
 						<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
 						{% else %}
 						<li><a href="{% url 'account_login' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a></li>
 						{% endif %}
+						{% endblock %}
 					</ul>
 				</div>
 			</div>

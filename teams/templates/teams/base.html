@@ -2,6 +2,6 @@
 {% load hunter2urls %}
 
 {% block topbar_right %}{% spaceless %}
-	{{ block.super }}
 	<li class="button"><a href="{% url 'manage_team' 'www' request.event.pk %}">Team</a></li>
+	{{ block.super }}
 {% endspaceless %}{% endblock %}

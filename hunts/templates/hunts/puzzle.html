@@ -5,9 +5,6 @@
 <script src="{% static 'hunts/js/hunts.js' %}"></script>
 {% endblock %}
 {% block content %}
-{% if answered %}
-<h2>Already Answered</h2>
-{% endif %}
 <h1>{{ title }}</h1>
 {% if flavour %}
 <div class="puzzle-flavour">{{ flavour | safe }}</div>
@@ -31,7 +28,14 @@
 {% endfor %}
 </div>
 <hr />
-{% if not answered %}
+{% if answered %}
+<h2>Your correct answer{{ answered|pluralize }}</h2>
+<div id="answer">
+{% for guess in answered %}
+<p>"{{ guess.guess }}" &mdash; entered by {{ guess.by.user.username }}</p>
+{% endfor %}
+</div>
+{% else %}
 <form class="form-inline" action="an" method="POST">
 	{% csrf_token %}
 	<input name="answer" id="answer-entry" class="form-control"></input>

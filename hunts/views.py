@@ -3,11 +3,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import HttpResponse, JsonResponse, HttpResponseForbidden, Http404
+from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.views import View
+from django.views.generic import TemplateView
 from hunter2.resolvers import reverse
 from string import Template
 from teams.mixins import TeamMixin
@@ -65,13 +66,16 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
         else:
             position = None
 
+        files = {f.slug: f.file.url for f in request.event.eventfile_set.all()}
+        flavour = Template(episode.flavour).safe_substitute(**files)
+
         return TemplateResponse(
             request,
             'hunts/episode.html',
             context={
                 'admin': admin,
                 'episode': episode.name,
-                'flavour': episode.flavour,
+                'flavour': flavour,
                 'position': position,
                 'episode_number': episode_number,
                 'event_id': request.event.pk,
@@ -353,7 +357,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
         if not data.tp_data.start_time:
             data.tp_data.start_time = timezone.now()
 
-        answered = bool(puzzle.answered_by(request.team))
+        answered = puzzle.answered_by(request.team)
         hints = [
             h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
         ]
@@ -383,6 +387,8 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
             user_data=data.u_data,
         )).safe_substitute(**files)
 
+        flavour = Template(puzzle.flavour).safe_substitute(**files)
+
         response = TemplateResponse(
             request,
             'hunts/puzzle.html',
@@ -391,7 +397,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
                 'admin': admin,
                 'hints': hints,
                 'title': puzzle.title,
-                'flavour': puzzle.flavour,
+                'flavour': flavour,
                 'text': text,
                 'unlocks': unlocks,
             }
@@ -541,3 +547,37 @@ class PuzzleInfo(View):
             'team_id': team.pk,
             'user_id': user.pk,
         })
+
+
+class AboutView(TemplateView):
+    template_name = 'hunts/about.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        admin_team = self.request.event.teams.get(is_admin=True)
+
+        files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
+        content = Template(self.request.event.about_text).safe_substitute(**files)
+
+        context.update({
+            'admins': admin_team.members.all(),
+            'content': content,
+            'event_name': self.request.event.name,
+        })
+        return context
+
+
+class RulesView(TemplateView):
+    template_name = 'hunts/rules.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
+        content = Template(self.request.event.rules_text).safe_substitute(**files)
+
+        context.update({
+            'content': content,
+            'event_name': self.request.event.name,
+        })
+        return context

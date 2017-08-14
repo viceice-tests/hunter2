@@ -15,7 +15,7 @@ stages:
 before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   - chmod -R g-w,o-w .
-  - ln -s docker-compose.prod.yml docker-compose.yml
+  - ln -s docker-compose.test.yml docker-compose.yml
 
 flake8:
   stage: check
@@ -61,7 +61,6 @@ test:
     IMAGE_TAG: $CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_REF_NAME
     IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
   script:
-    - ln -fs docker-compose.dev.yml docker-compose.yml
     - docker load -i $IMAGE_FILE
     - install -d -m 777 coverage
     - docker-compose run $SERVICE coverage run --source . manage.py test -v 2
