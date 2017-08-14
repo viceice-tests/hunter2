@@ -20,12 +20,12 @@ function incorrect_answer(guess, timeout, new_hints, unlocks) {
 
 	var milliseconds = Date.parse(timeout) - Date.now();
 	var answer_button = $('#answer-button');
+	doCooldown(milliseconds);
 	answer_button.after('<span id="answer-blocker"> You may guess again in 5 seconds.</span>');
 	setTimeout(function () {
 		answer_button.removeAttr('disabled');
 		$('#answer-blocker').remove();
 	}, milliseconds);
-	answer_button.hide().delay(milliseconds).show(0);
 }
 
 function correct_answer(url) {
@@ -38,6 +38,76 @@ function correct_answer(url) {
 function message(message, error) {
 	var error_msg = $('<p class="submission-error" title="' + error + '">' + message + '</p>');
 	error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(5000, function(){$(this).remove();})
+}
+
+function doCooldown(milliseconds) {
+	var size = 100;
+
+	var svg = d3.select("form.form-inline").insert("svg", "button + *");
+	svg.attr("width", size).attr("height", size);
+	var path = svg.append("path");
+	path.attr("fill", "red");
+	path.transition()
+		.duration(milliseconds)
+		.ease(d3.easeLinear)
+		.attrTween("d", function () { return drawSliceSquare(size); });
+
+	var text = svg.append("text")
+		.attr("x", size / 2)
+		.attr("y", size / 2)
+		.attr("fill", "black")
+		.attr("text-anchor", "middle")
+		.attr("font-weight", "bold")
+		.attr("font-size", 18);
+	text.transition()
+		.duration(milliseconds)
+		.ease(d3.easeLinear)
+		.tween("text", function () {
+			console.log(this);
+			var oldthis = this;
+			return function (t) {
+				var time = milliseconds * (1-t) / 1000;
+				d3.select(oldthis).text(time < 1 ? d3.format(".1f")(time) : d3.format(".0f")(time));
+			};
+		});
+
+
+	setTimeout(function () {
+		svg.remove();
+	}, milliseconds);
+}
+
+function drawSliceSquare(size) {
+	return function(proportion) {
+		angle = (proportion * Math.PI * 2) - Math.PI / 2;
+		var x = Math.cos(angle) * size;
+		var y = Math.sin(angle) * size;
+		var pathString = "M " + size / 2 + ",0" +
+						" L " + size / 2 + "," + size / 2 +
+						" l " + x + "," + y;
+		var pathEnd = " Z";
+		if (proportion < 0.875) {
+			pathEnd = " L 0,0 Z" + pathEnd;
+		}
+		if (proportion < 0.625) {
+			pathEnd = " L 0," + size + pathEnd;
+		}
+		if (proportion < 0.375) {
+			pathEnd = " L " + size + "," + size + pathEnd;
+		}
+		if (proportion < 0.125) {
+			pathEnd = " L " + size + ",0" + pathEnd;
+		}
+		return pathString + pathEnd;
+	};
+}
+
+function drawCooldownText(milliseconds) {
+	return function(proportion) {
+		var time = milliseconds * proportion / 1000;
+		//console.log(time);
+		d3.select(this).text(time < 1 ? d3.format(".1")(time) : d3.format("1")(time));
+	};
 }
 
 var last_updated = Date.now();
