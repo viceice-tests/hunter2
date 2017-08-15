@@ -203,16 +203,18 @@ class StatsContent(LoginRequiredMixin, View):
         # We use Guess.correct_for (i.e. the cache) because otherwise we perform a query for every
         # (team, puzzle) pair i.e. a butt-ton. This comes at the cost of possibly seeing
         # a team doing worse than it really is.
-        guesses = models.Guess.objects.filter(for_puzzle__in=puzzles, correct_for__isnull=False).select_related('for_puzzle', 'by_team')
+        all_guesses = models.Guess.objects.filter(for_puzzle__in=puzzles, correct_for__isnull=False).select_related('for_puzzle', 'by_team')
         correct_guesses = defaultdict(dict)
-        for guess in guesses:
+        for guess in all_guesses:
             team_guesses = correct_guesses[guess.for_puzzle]
             if guess.by_team not in team_guesses or guess.given < team_guesses[guess.by_team].given:
                 team_guesses[guess.by_team] = guess
 
         # The time of the latest correct guess, plus some padding which I cba to add in JS
         end_time = max([
-            guesses.given for stuff in correct_guesses.values() for guesses in stuff.values() if guesses
+            guesses.given
+            for team_guesses in correct_guesses.values()
+            for guesses in team_guesses.values() if guesses
         ]) + timedelta(minutes=10)
 
         puzzle_datas = models.TeamPuzzleData.objects.filter(puzzle__in=puzzles, team__in=all_teams).select_related('puzzle', 'team')
