@@ -214,9 +214,11 @@ class StatsContent(LoginRequiredMixin, View):
         end_time = max([
             guess.given
             for team_guesses in correct_guesses.values()
-            for guess in team_guesses.values() if guess
+            for guess in team_guesses.values()
+            if guess
         ]) + timedelta(minutes=10)
 
+        # Get when each team started each puzzle, and in how much time they solved each puzzle if they did.
         puzzle_datas = models.TeamPuzzleData.objects.filter(puzzle__in=puzzles, team__in=all_teams).select_related('puzzle', 'team')
         start_times = defaultdict(lambda: defaultdict(dict))
         solved_times = defaultdict(list)
@@ -230,16 +232,19 @@ class StatsContent(LoginRequiredMixin, View):
         # TODO: use something more intelligent here. Episode end time once we have it...
         now = timezone.now()
 
+        # How long a team has been on a puzzle.
         stuckness = {
             team: [
                 now - start for start in start_times[team].values() if start
             ] for team in all_teams
         }
-        active_teams = {
+        # How many teams have been active on each puzzle
+        num_active_teams = {
             puzzle: len([1 for t in all_teams if start_times[t][puzzle]])
             for puzzle in puzzles
         }
 
+        # Now assemble all the stats ready for giving back to the user
         puzzle_progress = [
             {
                 'team': t.name,
@@ -247,8 +252,7 @@ class StatsContent(LoginRequiredMixin, View):
                     'puzzle': p.title,
                     'time': correct_guesses[p][t].given
                 } for p in puzzles if t in correct_guesses[p]]
-            } for t in all_teams
-        ]
+            } for t in all_teams]
         puzzle_completion = [
             {
                 'puzzle': p.title,
@@ -272,8 +276,8 @@ class StatsContent(LoginRequiredMixin, View):
                 'puzzle': p.title,
                 'stuckness': sum([
                     now - start_times[t][p] for t in all_teams if start_times[t][p]
-                ], timedelta()).total_seconds() / active_teams[p]
-            } for p in puzzles if active_teams[p] > 0]
+                ], timedelta()).total_seconds() / num_active_teams[p]
+            } for p in puzzles if num_active_teams[p] > 0]
         puzzle_difficulty = [
             {
                 'puzzle': p.title,
