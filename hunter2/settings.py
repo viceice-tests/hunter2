@@ -7,13 +7,19 @@ root = environ.Path(__file__) - 2
 env = environ.Env()
 
 # Default settings which should be overridden by environment variables
-DEBUG         = env.bool      ('H2_DEBUG',         default=False)
-LOG_LEVEL     = env.str       ('H2_LOG_LEVEL',     default='WARNING')
-LANGUAGE_CODE = env.str       ('H2_LANGUAGE_CODE', default='en-gb')
-TIME_ZONE     = env.str       ('H2_TIME_ZONE',     default='Europe/London')
-ALLOWED_HOSTS = env.list      ('H2_ALLOWED_HOSTS', default=['*'])
-INTERNAL_IPS  = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
-EMAIL_CONFIG  = env.email_url ('H2_EMAIL_URL',     default='smtp://localhost:25')
+DEBUG              = env.bool      ('H2_DEBUG',         default=False)
+DEFAULT_URL_SCHEME = env.str       ('H2_SCHEME',        default='http')
+LOG_LEVEL          = env.str       ('H2_LOG_LEVEL',     default='WARNING')
+LANGUAGE_CODE      = env.str       ('H2_LANGUAGE_CODE', default='en-gb')
+PIWIK_DOMAIN_PATH  = env.str       ('H2_PIWIK_HOST',    default=None)
+PIWIK_SITE_ID      = env.str       ('H2_PIWIK_SITE',    default='1')
+TIME_ZONE          = env.str       ('H2_TIME_ZONE',     default='Europe/London')
+ALLOWED_HOSTS      = env.list      ('H2_ALLOWED_HOSTS', default=['*'])
+INTERNAL_IPS       = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
+EMAIL_CONFIG       = env.email_url ('H2_EMAIL_URL',     default='smtp://localhost:25')
+EMAIL_DOMAIN       = env.str       ('H2_EMAIL_DOMAIN',  default='hunter2.local')
+ADMINS             = env.list      ('H2_ADMINS',        default=[])
+RAVEN_DSN          = env.str       ('H2_SENTRY_DSN',    default=None)
 DATABASES = {
     'default': env.db('H2_DATABASE_URL', default="postgres://postgres:postgres@db:5432/postgres")
 }
@@ -35,14 +41,20 @@ SECRET_KEY = load_or_create_secret_key("/config/secrets.ini")
 # Load the email configuration
 vars().update(EMAIL_CONFIG)
 
-BASE_DIR = root()
+DEFAULT_FROM_EMAIL = f'webmaster@{EMAIL_DOMAIN}'
+
+SERVER_EMAIL = f'root@{EMAIL_DOMAIN}'
 
 # Application definition
+BASE_DIR = root()
+
 ACCOUNT_ACTIVATION_DAYS = 7
 
 ACCOUNT_EMAIL_REQUIRED = True
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+ACCOUNT_SIGNUP_FORM_CLASS = 'teams.forms.UserProfileForm'
 
 AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -55,8 +67,22 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
 INSTALLED_APPS = (
+    # Our apps first to allow us to override third party templates
+    # These are in dependency order
+    'events',
+    'teams',
+    'hunts',
+    'hunter2',
+    # Third party apps
+    # These are in alphabetical order
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.openid',
+    'analytical',
     'dal',
     'dal_select2',
+    'debug_toolbar',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -64,19 +90,12 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.openid',
-    'debug_toolbar',
+    'django_extensions',
     'nested_admin',
+    'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',
     'sortedm2m',
     'subdomains',
-    'events',
-    'teams',
-    'hunts',
-    'hunter2',
 )
 if USE_SILK:
     INSTALLED_APPS = INSTALLED_APPS + ('silk',)
@@ -118,11 +137,17 @@ MIDDLEWARE = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'subdomains.middleware.SubdomainMiddleware',
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
 if USE_SILK:
     MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
+
+if RAVEN_DSN:
+    RAVEN_CONFIG = {
+        'dsn': RAVEN_DSN
+    }
 
 ROOT_URLCONF = 'hunter2.urls'
 

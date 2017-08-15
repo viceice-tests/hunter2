@@ -1,12 +1,14 @@
 blessings==1.6
-certifi==2017.4.17
+certifi==2017.7.27.1
 chardet==3.0.4
 colour-runner==0.0.5
+contextlib2==0.5.5
 coverage==4.4.1
 decorator==4.1.2
 defusedxml==0.5.0
 Django==1.11.3
-django-allauth==0.32.0
+git+git://github.com/pennersr/django-allauth.git@f1b5d4bd7216dad9670be22ae0c2ea29ba0fccfa
+django-analytical==2.2.2
 django-autocomplete-light==3.2.9
 django-debug-toolbar==1.8
 django-enumfields==0.9.0
@@ -27,6 +29,7 @@ python-monkey-business==1.0.0
 python3-openid==3.1.0
 pytz==2017.2
 PyYAML==3.12
+raven==6.1.0
 requests==2.18.2
 requests-oauthlib==0.8.0
 rules==1.2.1

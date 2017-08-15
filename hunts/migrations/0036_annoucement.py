@@ -5,8 +5,15 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 import django.db.models.deletion
 import enumfields.fields
+from enumfields import Enum
+
 import hunts.models
 
+class AnnoucmentType(Enum):
+    INFO = 'I'
+    SUCCESS = 'S'
+    WARNING = 'W'
+    ERROR = 'E'
 
 class Migration(migrations.Migration):
 
@@ -23,7 +30,7 @@ class Migration(migrations.Migration):
                 ('title', models.CharField(max_length=255)),
                 ('posted', models.DateTimeField(auto_now_add=True)),
                 ('message', models.TextField(blank=True)),
-                ('type', enumfields.fields.EnumField(enum=hunts.models.AnnoucmentType, max_length=1)),
+                ('type', enumfields.fields.EnumField(enum=AnnoucmentType, max_length=1)),
                 ('event', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='announcements', to='events.Event')),
                 ('puzzle', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='announcements', to='hunts.Puzzle')),
             ],

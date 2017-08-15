@@ -1,15 +1,16 @@
-{% extends "events/base.html" %}
+{% extends "teams/base.html" %}
 {% load staticfiles %}
 
 {% block script %} 
 <script src="{% static 'hunts/js/hunts.js' %}"></script>
 {% endblock %}
 {% block content %}
-{% if answered %}
-<h2>Already Answered</h2>
+<h1>{{ title }}</h1>
+{% if flavour %}
+<div class="puzzle-flavour">{{ flavour | safe }}</div>
+<hr class="flavour-clue-divider">
 {% endif %}
 <!-- CLUE STARTS HERE -->
-<h1>{{ title }}</h1>
 {% comment %}Render puzzle text including HTML elements{% endcomment %}
 {{ text | safe }}
 <!-- CLUE ENDS HERE -->
@@ -23,11 +24,18 @@
 <h3>Unlocks</h3>
 <div id="unlocks">
 {% for unlock in unlocks %}
-<p>{% for guess in unlock.guesses %}{{guess.guess}} {% endfor %}: {{unlock.text}}</p>
+<p>{% for guess in unlock.guesses %}{{guess}}{% if not forloop.last %}, {% endif %}{% endfor %}: {{unlock.text}}</p>
 {% endfor %}
 </div>
 <hr />
-{% if not answered %}
+{% if answered %}
+<h2>Your correct answer{{ answered|pluralize }}</h2>
+<div id="answer">
+{% for guess in answered %}
+<p>"{{ guess.guess }}" &mdash; entered by {{ guess.by.user.username }}</p>
+{% endfor %}
+</div>
+{% else %}
 <form class="form-inline" action="an" method="POST">
 	{% csrf_token %}
 	<input name="answer" id="answer-entry" class="form-control"></input>

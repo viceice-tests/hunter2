@@ -1,0 +1,16 @@
+{% extends "teams/base.html" %}
+
+{% block page_header %}
+<h1>About {{ event_name }}</h1>
+{% endblock %}
+
+{% block content %}
+<h2>Admins</h2>
+<p>{{ event_name }} is run by:</p>
+<ul style="width: 40%">
+    {% for admin in admins %}
+    <li>{{ admin.user.username }}<span style="float: right;">&nbsp;{{ admin.seat }}</li>
+    {% endfor %}
+</ul>
+{{ content | safe }}
+{% endblock %}

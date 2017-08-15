@@ -4,6 +4,7 @@
 		<th>Episode</th>
 		<th>Puzzle</th>
 		<th>User &amp; Team</th>
+		<th>Seat</th>
 		<th>Guess</th>
 		<th>Time given</th>
 		<th>Time on puzzle</th>
@@ -13,6 +14,7 @@
 		<td><a href="?episode={{ guess.episode.id }}">{{ guess.episode.name }}</a></td>
 		<td><a href="?puzzle={{ guess.for_puzzle.id }}">{{ guess.for_puzzle.title }}</a></td>
 		<td><span class="user">{{ guess.by.user.username }}</span> <span class="team">(<a href="?team={{ guess.by_team.id }}">{{ guess.by_team.name }}</a>)</span></td>
+		<td>{{ guess.by.seat }}</td>
 		<td><span class="guess">{{ guess.guess }}</span></td>
 		<td>{{ guess.given }}</td>
 		<td>{{ guess.time_on_puzzle }}</td>

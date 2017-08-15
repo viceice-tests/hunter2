@@ -2,13 +2,16 @@ from django.contrib import admin
 from . import models
 
 
+class FileInline(admin.TabularInline):
+    model = models.EventFile
+    extra = 0
+
+
+@admin.register(models.Event)
 class EventAdmin(admin.ModelAdmin):
-    pass
+    inlines = [
+        FileInline,
+    ]
 
 
-class ThemeAdmin(admin.ModelAdmin):
-    pass
-
-
-admin.site.register(models.Event, EventAdmin)
-admin.site.register(models.Theme, ThemeAdmin)
+admin.site.register(models.Theme)
