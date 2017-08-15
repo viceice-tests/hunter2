@@ -6,14 +6,23 @@
 {% endblock %}
 
 {% block content %}
+
 {% if episodes|length > 0 %}
-<ul>
+<ul id="ep-list" class="nav nav-tabs">
 {% for episode in episodes %}
-<li><a href='{% url 'episode' 'www' event_id episode.get_relative_id %}'>{{episode.name}}</a></li>
+<li role="presentation"><a href="#">{{ episode.name }}</a></li>
 {% endfor %}
 </ul>
+<div class="tab-content">
+{% for episode in episodes %}
+<div class="tab-pane" id="{{ episode.name }}"></div>
+{% endfor %}
+</div>
 {% else %}
 <p>No episodes are available.<p> 
 {% endif %}
-
+<script>
+$('#ep-list').tab();
+$('#ep-list a:first').click();
+</script>
 {% endblock %}
