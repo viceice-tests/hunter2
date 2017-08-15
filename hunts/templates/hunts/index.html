@@ -9,27 +9,5 @@
 {% if event %}
 <div class="alert alert-success" role="alert"><h2>Current Event: <a href='{% url 'event' 'www' event.id %}'>{{event.name}}</a></h2></div>
 {% endif %}
-<h2>What is the iHunt?</h2>
-The iHunt is an online &amp; offline <a href="http://en.wikipedia.org/wiki/Puzzle_hunt">puzzle hunt</a> at the i-Series. Teams race to find clues hidden around the venue, interact with strange physical devices, solve cool challenges and be crowned iHunt champions; <b>winning four free tickets to the next i-series in the process!</b><br /><br />
-There are two days of riddles (Sat-Sun), each of which should only last a few hours, leaving plenty of time for gaming.  After each day, we will organise a meet-up to discuss the day's events.
-<br />
-<br />
-<h2>Where do I start?</h2>
-All you need to do is create an	account and you're ready to go!	<b>Click the 'Register' button at the top-left of this page to get started.</b>
-<br />
-<br />
-Make sure you have Flash Player installed, Javascript enabled in your browser and POP-UP Blockers Turned OFF or allowed for this Site! You'll probably also find it handy to have a notebook to hand to write down ideas and solutions.
-<h2>Rules &amp; General info</h2>
-<ul>
-	<li>You win The iHunt by answering all the questions as fast as possible and being the first to reach the end - not by cheating!<br /><br /></li>
-	<li>It is not allowed to try to hack the server or access any restricted areas. WE WILL KNOW - So dont even try!<br /><br /></li>
-	<li>Removing or vandalising clues is really uncool and ruins it for everyone else. Leave them as you found them.<br /><br /></li>
-	<li>The maximum team size is 4 however it is subject to change.<br /><br /></li>
-	<li>All riddle answers are case-insensitive, it doesn't matter if you have capital letters or not!<br /><br /></li>
-	<li>The riddle answers are almost never completely random letters and numbers unless the answer is given to you explicitly, answers can be a combination of words and numbers, hexadecimal and binary digits or anything else without special characters.<br /><br /></li>
-	<li>Do not post tasks, answers or clues in the forum thread or in the iHunt IRC.<br /><br /></li>
-	<li>Teams may make alliances in private however this is discouaged to try and make things fair. Please remember though that the winning team who gets the golden tickets is the first team to correctly answer all questions so don't shoot yourself in the foot. There is no prize for second place!<br /><br /></li>
-	<li>If you seem to have a problem of a technical nature, please contact Cyphus, Jenesis, or Jingles via the forums or IRC. Exploiting bugs will result in disqualification so if you are unsure if somthing is a bug or not ask first.<br /><br /></li>
-	<li>Oh yeah, this site uses HTML5 and CSS3 so use an up-to-date browser.</li>
-</ul>
+{{ content | safe }}
 {% endblock %}

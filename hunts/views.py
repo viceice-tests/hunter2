@@ -23,14 +23,14 @@ import events
 import teams
 
 
-class Index(View):
-    def get(self, request):
-        print(request.site)
-        return TemplateResponse(
-            request,
-            'hunts/index.html',
-        )
+class Index(TemplateView):
+    template_name = 'hunts/index.html'
 
+    def get_context_data(self, **kwargs):
+        return {
+            # TODO: Real content from DB
+            'content': 'This is the index page',
+        }
 
 class Episode(LoginRequiredMixin, TeamMixin, View):
     def get(self, request, episode_number):
