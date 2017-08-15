@@ -200,5 +200,11 @@ class UserPuzzleDataAdmin(admin.ModelAdmin):
     readonly_fields = ('token', )
 
 
-admin.site.register(models.Announcement)
+@admin.register(models.Announcement)
+class AnnoucementAdmin(admin.ModelAdmin):
+    ordering = ['event', 'puzzle__start_date', 'pk']
+    list_display = ('event', 'puzzle', 'type', 'title', 'message', 'posted')
+    list_display_links = ('title', )
+
+
 admin.site.register(models.TeamPuzzleData)

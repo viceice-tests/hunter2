@@ -1,14 +1,28 @@
 from django.contrib import admin
+
 from . import models
 
 
+@admin.register(models.Team)
 class TeamAdmin(admin.ModelAdmin):
-    pass
+    ordering = ['at_event', 'name']
+    list_display = ('name', 'at_event', 'is_admin', 'member_count')
+    list_display_links = ('name', )
+
+    def member_count(self, obj: models.Team):
+        return obj.members.count()
+
+    member_count.short_description = "Members"
 
 
+@admin.register(models.UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    pass
+    ordering = ['pk']
+    list_display = ('username', 'seat', 'email')
+    list_display_links = ('username', )
 
+    def username(self, obj: models.UserProfile):
+        return obj.user.username
 
-admin.site.register(models.Team, TeamAdmin)
-admin.site.register(models.UserProfile, UserProfileAdmin)
+    def email(self, obj: models.UserProfile):
+        return obj.user.email
