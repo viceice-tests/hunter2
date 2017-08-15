@@ -63,6 +63,7 @@ class CreateTeamForm(forms.ModelForm):
 class TeamForm(forms.ModelForm):
     # Hidden unless someone tries to add someone who's already on a team
     move_user = forms.BooleanField(required=False, widget=forms.HiddenInput(), label="Yes, move user")
+    scrub_help_text_fields = ('members', 'invites', 'requests')
 
     class Meta:
         model = models.Team
@@ -81,6 +82,12 @@ class TeamForm(forms.ModelForm):
                 attrs={'data-minimum-input-length': 1}
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.base_fields:
+            if field in self.scrub_help_text_fields:
+                self.fields[field].help_text = ''
 
     def clean(self, **kwargs):
         cleaned_data = super().clean(**kwargs)
