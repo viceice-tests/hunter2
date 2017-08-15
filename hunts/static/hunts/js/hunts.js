@@ -21,10 +21,8 @@ function incorrect_answer(guess, timeout, new_hints, unlocks) {
 	var milliseconds = Date.parse(timeout) - Date.now();
 	var answer_button = $('#answer-button');
 	doCooldown(milliseconds);
-	answer_button.after('<span id="answer-blocker"> You may guess again in 5 seconds.</span>');
 	setTimeout(function () {
 		answer_button.removeAttr('disabled');
-		$('#answer-blocker').remove();
 	}, milliseconds);
 }
 
@@ -40,30 +38,55 @@ function message(message, error) {
 	error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(5000, function(){$(this).remove();})
 }
 
-function doCooldown(milliseconds) {
-	var size = 100;
+var size = 70;
 
-	var svg = d3.select("form.form-inline").insert("svg", "button + *");
-	svg.attr("width", size).attr("height", size);
-	var path = svg.append("path");
-	path.attr("fill", "red");
+function doCooldown(milliseconds) {
+	var button = d3.select("#answer-button");
+	var g = button.select("svg")
+		.append("g");
+
+	var path = g.append("path");
+	path.attr("fill", "#33e")
+		.attr("opacity", 0.9);
+
+	var flashDuration = 150;
 	path.transition()
 		.duration(milliseconds)
 		.ease(d3.easeLinear)
 		.attrTween("d", function () { return drawSliceSquare(size); });
 
-	var text = svg.append("text")
+	setTimeout(function () {
+		g.append("circle")
+			.attr("cx", size / 2)
+			.attr("cy", size / 2)
+			.attr("r", 0)
+			.attr("fill", "white")
+			.attr("opacity", 0.95)
+			.attr("stroke-width", 6)
+			.attr("stroke", "white")
+			.transition()
+			.duration(flashDuration)
+			.ease(d3.easeLinear)
+			.attr("r", size / 2 * Math.SQRT2)
+			.attr("fill-opacity", 0.3)
+			.attr("stroke-opacity", 0.2);
+	}, milliseconds - flashDuration);
+				
+
+	var text = g.append("text")
 		.attr("x", size / 2)
 		.attr("y", size / 2)
-		.attr("fill", "black")
+		.attr("fill", "white")
 		.attr("text-anchor", "middle")
 		.attr("font-weight", "bold")
-		.attr("font-size", 18);
+		.attr("font-size", 22)
+		.attr("dominant-baseline", "middle")
+		.style("filter", "url(#drop-shadow)");
+
 	text.transition()
 		.duration(milliseconds)
 		.ease(d3.easeLinear)
 		.tween("text", function () {
-			console.log(this);
 			var oldthis = this;
 			return function (t) {
 				var time = milliseconds * (1-t) / 1000;
@@ -71,9 +94,8 @@ function doCooldown(milliseconds) {
 			};
 		});
 
-
 	setTimeout(function () {
-		svg.remove();
+		g.remove();
 	}, milliseconds);
 }
 
@@ -105,14 +127,53 @@ function drawSliceSquare(size) {
 function drawCooldownText(milliseconds) {
 	return function(proportion) {
 		var time = milliseconds * proportion / 1000;
-		//console.log(time);
 		d3.select(this).text(time < 1 ? d3.format(".1")(time) : d3.format("1")(time));
 	};
+}
+
+function drawFlashSquare(size) {
+	return function(t) {
+		return "";
+	};
+}
+
+function addSVG() {
+	var svg = d3.select("#answer-button").append("svg");
+	svg.attr("width", size)
+		.attr("height", size);
+
+	var defs = svg.append("defs");
+
+	/*var filter = defs.append("filter")
+		.attr("id", "drop-shadow")
+		.attr("x", "0")
+		.attr("y", "0")
+		.attr(*/
+	var filter = defs.append("filter")
+	    .attr("id", "drop-shadow")
+		.attr("width", "200%")
+		.attr("height", "200%");
+	filter.append("feGaussianBlur")
+	    .attr("in", "SourceAlpha")
+	    .attr("stdDeviation", 4)
+	    .attr("result", "blur");
+	filter.append("feOffset")
+	    .attr("in", "blur")
+	    .attr("dx", 4)
+	    .attr("dy", 4)
+	    .attr("result", "offsetBlur");
+	var feMerge = filter.append("feMerge");
+	feMerge.append("feMergeNode")
+	    .attr("in", "offsetBlur")
+	feMerge.append("feMergeNode")
+	    .attr("in", "SourceGraphic");
 }
 
 var last_updated = Date.now();
 
 $(function() {
+	addSVG();
+
 	$('.form-inline').submit(function(e) {
 		e.preventDefault();
 		var form = $(e.target);

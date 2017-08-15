@@ -1,0 +1,20 @@
+#answer-button {
+	width: 70px;
+	height: 70px;
+	padding: 0;
+	background-image: linear-gradient(to bottom,#fff 0,#ddd 100%);
+	overflow: hidden;
+	position: relative;
+}
+
+#answer-button[disabled] {
+	opacity: 1;
+	filter: alpha(opacity=1);
+/*	background-image: initial;*/
+}
+
+#answer-button svg {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
