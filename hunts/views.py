@@ -186,7 +186,7 @@ class StatsContent(LoginRequiredMixin, View):
         episodes = models.Episode.objects.filter(event=request.event)
         if episode_id != 'all':
             episodes = episodes.filter(pk=episode_id)
-            if not episodes.count():
+            if not episodes.exists():
                 raise Http404
 
         # Directly use the through relation for sorted M2M so we can sort the entire query.
