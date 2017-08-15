@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db.models import Prefetch
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
@@ -11,6 +13,7 @@ from django.views.generic import TemplateView
 from hunter2.resolvers import reverse
 from string import Template
 from teams.mixins import TeamMixin
+from collections import defaultdict
 
 from . import models
 from . import rules
@@ -82,6 +85,19 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
         )
 
 
+class EpisodeList(LoginRequiredMixin, View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            raise PermissionDenied
+
+        return JsonResponse([{
+            'id': episode.pk,
+            'name': episode.name
+        } for episode in models.Episode.objects.filter(event=request.event)], safe=False)
+
+
 class Guesses(LoginRequiredMixin, View):
     def get(self, request):
         admin = rules.is_admin_for_event(request.user, request.event)
@@ -112,15 +128,31 @@ class GuessesContent(LoginRequiredMixin, View):
         if episode:
             puzzles = puzzles.filter(episode=episode)
 
+        # The following query is heavily optimised. We only retrieve the fields we will use here and
+        # in the template, and we select and prefetch related objects so as not to perform any extra
+        # queries.
         all_guesses = models.Guess.objects.filter(
             for_puzzle__in=puzzles
         ).order_by(
             '-given'
+        ).select_related(
+            'for_puzzle', 'by_team', 'by__user', 'correct_for'
+        ).only(
+            'given', 'guess', 'correct_current',
+            'for_puzzle__id', 'for_puzzle__title',
+            'by_team__id', 'by_team__name',
+            'by__user__id', 'by__user__username',
+            'correct_for__id'
+        ).prefetch_related(
+            Prefetch(
+                'for_puzzle__episode_set',
+                queryset=models.Episode.objects.only('id', 'name').all()
+            )
         )
 
         if team:
             team = teams.models.Team.objects.get(id=team)
-            all_guesses = all_guesses.filter(by__in=team.members.all())
+            all_guesses = all_guesses.filter(by_team=team)
 
         guess_pages = Paginator(all_guesses, 50)
         page = request.GET.get('page')
@@ -130,6 +162,14 @@ class GuessesContent(LoginRequiredMixin, View):
             guesses = guess_pages.page(1)
         except EmptyPage:
             guesses = guess_pages.page(guess_pages.num_pages)
+
+        for g in guesses:
+            # Using .get() here for some reason creates an extra query for each guess even though
+            # we have prefetched this relation. .all()[0] does not.
+            # We are monkey-patching here so that we can do guess.episode.<blah> in the template -
+            # otherwise we'd have to do guess.for_puzzle.episode_set.all.0.id etc there, which is
+            # too nasty.
+            g.episode = g.for_puzzle.episode_set.all()[0]
 
         if request.GET.get('highlight_unlocks'):
             for g in guesses:
@@ -145,6 +185,144 @@ class GuessesContent(LoginRequiredMixin, View):
                 'guesses': guesses,
             }
         )
+
+
+class Stats(LoginRequiredMixin, View):
+    def get(self, request):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            raise PermissionDenied
+
+        return TemplateResponse(
+            request,
+            'hunts/stats.html',
+        )
+
+
+class StatsContent(LoginRequiredMixin, View):
+    def get(self, request, episode_id):
+        admin = rules.is_admin_for_event(request.user, request.event)
+
+        if not admin:
+            raise PermissionDenied
+
+        # TODO select and prefetch all the things
+        episodes = models.Episode.objects.filter(event=request.event)
+        if episode_id != 'all':
+            episodes = episodes.filter(pk=episode_id)
+            if not episodes.exists():
+                raise Http404
+
+        # Directly use the through relation for sorted M2M so we can sort the entire query.
+        episode_puzzles = models.Episode.puzzles.through.objects.filter(episode__in=episodes).select_related('puzzle')
+        puzzles = [ep.puzzle for ep in episode_puzzles.order_by('episode', 'sort_value')]
+
+        all_teams = teams.models.Team.objects.annotate(
+            num_members=Count('members')
+        ).filter(
+            at_event=request.event, num_members__gte=1
+        )
+
+        # Get the first correct guess for each team on each puzzle.
+        # We use Guess.correct_for (i.e. the cache) because otherwise we perform a query for every
+        # (team, puzzle) pair i.e. a butt-ton. This comes at the cost of possibly seeing
+        # a team doing worse than it really is.
+        all_guesses = models.Guess.objects.filter(for_puzzle__in=puzzles, correct_for__isnull=False).select_related('for_puzzle', 'by_team')
+        correct_guesses = defaultdict(dict)
+        for guess in all_guesses:
+            team_guesses = correct_guesses[guess.for_puzzle]
+            if guess.by_team not in team_guesses or guess.given < team_guesses[guess.by_team].given:
+                team_guesses[guess.by_team] = guess
+
+        # The time of the latest correct guess, plus some padding which I cba to add in JS
+        end_time = max([
+            guess.given
+            for team_guesses in correct_guesses.values()
+            for guess in team_guesses.values()
+            if guess
+        ]) + timedelta(minutes=10)
+
+        # Get when each team started each puzzle, and in how much time they solved each puzzle if they did.
+        puzzle_datas = models.TeamPuzzleData.objects.filter(puzzle__in=puzzles, team__in=all_teams).select_related('puzzle', 'team')
+        start_times = defaultdict(lambda: defaultdict(dict))
+        solved_times = defaultdict(list)
+        for data in puzzle_datas:
+            if data.team in correct_guesses[data.puzzle] and data.start_time:
+                start_times[data.team][data.puzzle] = None
+                solved_times[data.puzzle].append(correct_guesses[data.puzzle][data.team].given - data.start_time)
+            else:
+                start_times[data.team][data.puzzle] = data.start_time
+
+        # TODO: use something more intelligent here. Episode end time once we have it...
+        now = timezone.now()
+
+        # How long a team has been on a puzzle.
+        stuckness = {
+            team: [
+                now - start for start in start_times[team].values() if start
+            ] for team in all_teams
+        }
+        # How many teams have been active on each puzzle
+        num_active_teams = {
+            puzzle: len([1 for t in all_teams if start_times[t][puzzle]])
+            for puzzle in puzzles
+        }
+
+        # Now assemble all the stats ready for giving back to the user
+        puzzle_progress = [
+            {
+                'team': t.name,
+                'progress': [{
+                    'puzzle': p.title,
+                    'time': correct_guesses[p][t].given
+                } for p in puzzles if t in correct_guesses[p]]
+            } for t in all_teams]
+        puzzle_completion = [
+            {
+                'puzzle': p.title,
+                'completion': len(correct_guesses[p])
+            } for p in puzzles]
+        team_puzzle_stuckness = [
+            {
+                'team': t.name,
+                'puzzleStuckness': [{
+                    'puzzle': p.title,
+                    'stuckness': (now - start_times[t][p]).total_seconds()
+                } for p in puzzles if start_times[t][p]]
+            } for t in all_teams]
+        team_total_stuckness = [
+            {
+                'team': t.name,
+                'stuckness': sum(stuckness[t], timedelta()).total_seconds(),
+            } for t in all_teams]
+        puzzle_average_stuckness = [
+            {
+                'puzzle': p.title,
+                'stuckness': sum([
+                    now - start_times[t][p] for t in all_teams if start_times[t][p]
+                ], timedelta()).total_seconds() / num_active_teams[p]
+            } for p in puzzles if num_active_teams[p] > 0]
+        puzzle_difficulty = [
+            {
+                'puzzle': p.title,
+                'average_time': sum(solved_times[p], timedelta()).total_seconds() / len(solved_times[p])
+            } for p in puzzles if solved_times[p]]
+
+        data = {
+            'teams': [t.name for t in all_teams],
+            'numTeams': all_teams.count(),
+            'startTime': min([e.start_date for e in episodes]),
+            'endTime': end_time,
+            'puzzles': [p.title for p in puzzles],
+            'puzzleCompletion': puzzle_completion,
+            'puzzleProgress': puzzle_progress,
+            'teamTotalStuckness': team_total_stuckness,
+            'teamPuzzleStuckness': team_puzzle_stuckness,
+            'puzzleAverageStuckness': puzzle_average_stuckness,
+            'puzzleDifficulty': puzzle_difficulty
+        }
+        return JsonResponse(data)
 
 
 class EventDirect(LoginRequiredMixin, View):

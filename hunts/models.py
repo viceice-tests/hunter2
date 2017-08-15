@@ -73,6 +73,7 @@ class Puzzle(models.Model):
 
     def answered_by(self, team):
         """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
+        # Select related since get_correct_for() will want it
         guesses = Guess.objects.filter(
             by__in=team.members.all(),
             for_puzzle=self,
@@ -85,6 +86,7 @@ class Puzzle(models.Model):
 
     def first_correct_guesses(self, event):
         """Returns a dictionary of teams to guesses, where the guess is that team's earliest correct, validated guess for this puzzle"""
+        # Select related to avoid a load of queries for answers and teams
         correct_guesses = Guess.objects.filter(
             for_puzzle=self,
         ).order_by(
@@ -255,10 +257,9 @@ class Guess(models.Model):
         super().save(*args, **kwargs)
 
     def time_on_puzzle(self):
-        team = self.by_team
         data = TeamPuzzleData.objects.filter(
             puzzle=self.for_puzzle,
-            team=team
+            team=self.by_team
         ).get()
         if not data.start_time:
             # This should never happen, but can do with sample data.
