@@ -80,6 +80,7 @@ class PuzzleAdmin(NestedModelAdmin):
     ]
     # TODO: once episode is a ForeignKey make it editable
     list_display = ('the_episode', 'title', 'start_date', 'check_flavour', 'headstart_granted', 'answers', 'hints', 'unlocks')
+    list_editable = ('start_date', 'headstart_granted')
     list_display_links = ('title',)
     popup = False
 
