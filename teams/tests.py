@@ -3,6 +3,8 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.views import View
 from django.test import RequestFactory, TestCase
+
+from events.models import Event
 from hunter2.resolvers import reverse
 from .mixins import TeamMixin
 from .models import Team, UserProfile
@@ -14,6 +16,36 @@ import json
 class EmptyTeamView(TeamMixin, View):
     def get(self, request, *args, **kwargs):
         return HttpResponse()
+
+
+class TeamRulesTests(TestCase):
+    fixtures = ['teams_test']
+
+    def test_max_team_size(self):
+        event = Event.objects.get(pk=1)
+        team  = Team.objects.get(pk=1)
+
+        # Add 3 users to a team when that max is less than that.
+        self.assertLess(event.max_team_size, 3)
+        user1 = UserProfile.objects.get(pk=1)
+        user2 = UserProfile.objects.get(pk=2)
+        user3 = UserProfile.objects.get(pk=3)
+
+        with self.assertRaises(ValidationError):
+            team.members.add(user1)
+            team.members.add(user2)
+            team.members.add(user3)
+
+    def test_one_team_per_member(self):
+        event = Event.objects.get(pk=1)
+        team1 = Team.objects.get(pk=1)
+        team2 = Team(name="Team2", at_event=event)
+        team2.save()
+        user1 = UserProfile.objects.get(pk=1)
+
+        with self.assertRaises(ValidationError):
+            team1.members.add(user1)
+            team2.members.add(user1)
 
 
 class TeamCreateTests(TestCase):

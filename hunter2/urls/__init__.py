@@ -2,9 +2,9 @@ from django.conf.urls import include, url
 from django.views.defaults import page_not_found, server_error, bad_request, permission_denied
 from django.views.csrf import csrf_failure
 
-from ..settings import DEBUG, USE_SILK
+from .. import settings
 
-if DEBUG:
+if settings.DEBUG:
     from .admin import admin_patterns
     from .www import www_patterns
 
@@ -23,7 +23,7 @@ if DEBUG:
         url(r'^test/http/500/$', server_error),
     ]
 
-    if USE_SILK:
+    if settings.USE_SILK:  # nocover
         urlpatterns.append(
             url(r'^silk/', include('silk.urls', namespace='silk')),
         )

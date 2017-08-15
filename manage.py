@@ -6,7 +6,7 @@ import sys
 
 if __name__ == "__main__":
     # TODO: remove this when silk stops being bullshit
-    if 'makemigrations' in sys.argv:
+    if 'makemigrations' in sys.argv:  # nocover
         os.environ['H2_SILK'] = "False"
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hunter2.settings")
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     print("Waiting for database connection...")
     DB_HOST = DATABASES['default']['HOST']
     DB_PORT = DATABASES['default']['PORT']
-    if not wait.tcp.open(DB_PORT, host=DB_HOST, timeout=10):
+    if not wait.tcp.open(DB_PORT, host=DB_HOST, timeout=10):  # nocover
         print("Failed to connect to database.")
         sys.exit(1)
 

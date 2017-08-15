@@ -1,6 +1,6 @@
-from .settings import DEBUG
+from . import settings
 
-if DEBUG:
+if settings.DEBUG:
     from subdomains.utils import reverse as subdomain_reverse
 
     def reverse(*args, **kwargs):
