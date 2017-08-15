@@ -212,9 +212,9 @@ class StatsContent(LoginRequiredMixin, View):
 
         # The time of the latest correct guess, plus some padding which I cba to add in JS
         end_time = max([
-            guesses.given
+            guess.given
             for team_guesses in correct_guesses.values()
-            for guesses in team_guesses.values() if guesses
+            for guess in team_guesses.values() if guess
         ]) + timedelta(minutes=10)
 
         puzzle_datas = models.TeamPuzzleData.objects.filter(puzzle__in=puzzles, team__in=all_teams).select_related('puzzle', 'team')
