@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count
 
 from . import models
 
@@ -9,8 +10,14 @@ class TeamAdmin(admin.ModelAdmin):
     list_display = ('name', 'at_event', 'is_admin', 'member_count')
     list_display_links = ('name', )
 
-    def member_count(self, obj: models.Team):
-        return obj.members.count()
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(
+            member_count=Count('members', distinct=True)
+        )
+
+    def member_count(self, team):
+        return team.member_count
 
     member_count.short_description = "Members"
 
@@ -20,9 +27,10 @@ class UserProfileAdmin(admin.ModelAdmin):
     ordering = ['pk']
     list_display = ('username', 'seat', 'email')
     list_display_links = ('username', )
+    list_select_related = ('user', )
 
-    def username(self, obj: models.UserProfile):
-        return obj.user.username
+    def username(self, profile):
+        return profile.user.username
 
-    def email(self, obj: models.UserProfile):
-        return obj.user.email
+    def email(self, profile):
+        return profile.user.email
