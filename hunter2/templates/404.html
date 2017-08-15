@@ -1,10 +1,12 @@
 {% extends "teams/base.html" %}
 
 {% block page_header %}
-<h1>404 - File not found</h1>
+<div class="alert alert-danger">
+    <strong>File not found (404):</strong>
+    <span>{{ request_path }}</span>
+</div>
 {% endblock %}
 
 {% block content %}
-<h2>{{ request_path }}</h2>
-<img src="http://http.cat/404" />
+<img class="center-block" src="http://http.cat/404" />
 {% endblock %}

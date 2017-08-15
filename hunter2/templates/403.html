@@ -1,9 +1,12 @@
 {% extends "teams/base.html" %}
 
 {% block page_header %}
-<h1>403 - Permission Denied</h1>
+<div class="alert alert-danger">
+    <strong>Permission Denied (403):</strong>
+    <span>You shouldn't be here</span>
+</div>
 {% endblock %}
 
 {% block content %}
-<img src="http://http.cat/403" />
+<img class="center-block" src="http://http.cat/403" />
 {% endblock %}

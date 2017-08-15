@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 
 {% block page_header %}
-<h1>403 - CRSF Validation Failed</h1>
+<div class="alert alert-danger">
+    <strong>CSRF Validation Failed (403):</strong>
+    <span>...</span>
+</div>
 {% endblock %}
 
 {% block content %}
-<img src="http://http.cat/403" />
+<img class="center-block" src="http://http.cat/403" />
 {% endblock %}

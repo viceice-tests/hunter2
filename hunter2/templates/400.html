@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 
 {% block page_header %}
-<h1>400 - Bad Request</h1>
+<div class="alert alert-danger">
+    <strong>Bad Request (400):</strong>
+    <span>Reload and try again</span>
+</div>
 {% endblock %}
 
 {% block content %}
-<img src="http://http.cat/400" />
+<img class="center-block" src="http://http.cat/400" />
 {% endblock %}
