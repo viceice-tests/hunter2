@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db.models import Prefetch
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import redirect
@@ -127,15 +128,31 @@ class GuessesContent(LoginRequiredMixin, View):
         if episode:
             puzzles = puzzles.filter(episode=episode)
 
+        # The following query is heavily optimised. We only retrieve the fields we will use here and
+        # in the template, and we select and prefetch related objects so as not to perform any extra
+        # queries.
         all_guesses = models.Guess.objects.filter(
             for_puzzle__in=puzzles
         ).order_by(
             '-given'
+        ).select_related(
+            'for_puzzle', 'by_team', 'by__user', 'correct_for'
+        ).only(
+            'given', 'guess', 'correct_current',
+            'for_puzzle__id', 'for_puzzle__title',
+            'by_team__id', 'by_team__name',
+            'by__user__id', 'by__user__username',
+            'correct_for__id'
+        ).prefetch_related(
+            Prefetch(
+                'for_puzzle__episode_set',
+                queryset=models.Episode.objects.only('id', 'name').all()
+            )
         )
 
         if team:
             team = teams.models.Team.objects.get(id=team)
-            all_guesses = all_guesses.filter(by__in=team.members.all())
+            all_guesses = all_guesses.filter(by_team=team)
 
         guess_pages = Paginator(all_guesses, 50)
         page = request.GET.get('page')
@@ -145,6 +162,14 @@ class GuessesContent(LoginRequiredMixin, View):
             guesses = guess_pages.page(1)
         except EmptyPage:
             guesses = guess_pages.page(guess_pages.num_pages)
+
+        for g in guesses:
+            # Using .get() here for some reason creates an extra query for each guess even though
+            # we have prefetched this relation. .all()[0] does not.
+            # We are monkey-patching here so that we can do guess.episode.<blah> in the template -
+            # otherwise we'd have to do guess.for_puzzle.episode_set.all.0.id etc there, which is
+            # too nasty.
+            g.episode = g.for_puzzle.episode_set.all()[0]
 
         if request.GET.get('highlight_unlocks'):
             for g in guesses:
