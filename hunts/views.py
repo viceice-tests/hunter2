@@ -25,6 +25,7 @@ import teams
 
 class Index(View):
     def get(self, request):
+        print(request.site)
         return TemplateResponse(
             request,
             'hunts/index.html',
