@@ -182,7 +182,8 @@ class PuzzleAdmin(NestedModelAdmin):
 @admin.register(models.Episode)
 class EpisodeAdmin(NestedModelAdmin):
     ordering = ['start_date', 'pk']
-    list_display = ('event', 'name', 'start_date', 'num_puzzles')
+    list_display = ('event', 'name', 'start_date', 'check_flavour', 'num_puzzles')
+    list_editable = ('start_date',)
     list_display_links = ('name',)
 
     def get_queryset(self, request):
@@ -190,6 +191,12 @@ class EpisodeAdmin(NestedModelAdmin):
         return qs.annotate(
             puzzles_count=Count('puzzles', distinct=True)
         )
+
+    def check_flavour(self, obj):
+        return bool(obj.flavour)
+
+    check_flavour.short_description = 'tasty?'
+    check_flavour.boolean = True
 
     def num_puzzles(self, obj):
         return obj.puzzles_count
