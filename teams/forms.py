@@ -1,7 +1,6 @@
 from dal import autocomplete
 from django import forms
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.forms.models import inlineformset_factory, modelform_factory
 from . import models
 
@@ -96,7 +95,6 @@ class TeamForm(forms.ModelForm):
         if self.errors:
             return
 
-
         members = cleaned_data.get('members')
         teams = models.Team.objects.filter(at_event=cleaned_data.get('at_event'))
         if self.instance.pk:
@@ -124,4 +122,3 @@ class TeamForm(forms.ModelForm):
             self.add_error('move_user', 'You are trying to add %s to this team. Are you sure you want to do this?' % (member_string))
             if len(moved_members) > 1:
                 self.fields['move_user'].label = "Yes, move users"
-
