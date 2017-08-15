@@ -1,9 +1,10 @@
 from django.contrib import admin
+from .forms import TeamForm
 from . import models
 
 
 class TeamAdmin(admin.ModelAdmin):
-    pass
+    form = TeamForm
 
 
 class UserProfileAdmin(admin.ModelAdmin):

@@ -1,6 +1,7 @@
 from dal import autocomplete
 from django import forms
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.forms.models import inlineformset_factory, modelform_factory
 from . import models
 
@@ -60,16 +61,14 @@ class CreateTeamForm(forms.ModelForm):
 
 
 class TeamForm(forms.ModelForm):
-    def __init__(self, *args, event, user, **kwargs):
-        self.event = event
-        self.user = user
-        super(TeamForm, self).__init__(*args, **kwargs)
+    # Hidden unless someone tries to add someone who's already on a team
+    move_user = forms.BooleanField(required=False, widget=forms.HiddenInput(), label="Yes, move user")
 
     class Meta:
         model = models.Team
-        fields = ['name', 'invites']
+        fields = ('name', 'at_event', 'members', 'move_user', 'invites', 'requests')
         widgets = {
-            'invites': autocomplete.ModelSelect2Multiple(
+            'members': autocomplete.ModelSelect2Multiple(
                 url='userprofile_autocomplete',
                 attrs={
                     'data-minimum-input-length': 1,
@@ -77,13 +76,39 @@ class TeamForm(forms.ModelForm):
             ),
         }
 
-    def save(self, commit=True):
-        instance = super(TeamForm, self).save(commit=False)
-        instance.at_event = self.event
+    def clean(self, **kwargs):
+        cleaned_data = super().clean(**kwargs)
 
-        if commit:
-            instance.save()
-            instance.members.add(self.user)
-            instance.invites.add(*models.UserProfile.objects.filter(pk__in=self.cleaned_data['invites']))
+        # We are going to check if changing this answer alters progress. But only if there are no other errors.
+        if self.errors:
+            return
 
-        return instance
+
+        members = cleaned_data.get('members')
+        teams = models.Team.objects.filter(at_event=cleaned_data.get('at_event'))
+        if self.instance.pk:
+            teams = teams.exclude(pk=self.instance.pk)
+
+        moved_members = []
+        moved_from = []
+        for member in members:
+            other_teams = teams.filter(members=member)
+            if other_teams.exists():
+                moved_members.append(member)
+                moved_from.append(other_teams.first())
+
+        if moved_members:
+            # User has ticked the alter progress checkbox, move those d00ds
+            if cleaned_data.get('move_user'):
+                for user, team in zip(moved_members, moved_from):
+                    team.members.remove(user)
+                    team.save()
+                return cleaned_data
+
+            self.fields['move_user'].widget = forms.CheckboxInput()
+            member_string = ', '.join(['%s (already on %s)' % (user.user.username, team.name)
+                                       for user, team in zip(moved_members, moved_from)])
+            self.add_error('move_user', 'You are trying to add %s to this team. Are you sure you want to do this?' % (member_string))
+            if len(moved_members) > 1:
+                self.fields['move_user'].label = "Yes, move users"
+
