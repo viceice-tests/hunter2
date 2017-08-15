@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block page_header %}
+<div class="alert alert-danger">
+    <strong>Server Error (500):</strong>
+    <span>The admins have been notified. If the problem persists please contact us.</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<img class="center-block" src="http://http.cat/500" />
+{% endblock %}
