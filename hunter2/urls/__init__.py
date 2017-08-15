@@ -23,7 +23,7 @@ if settings.DEBUG:
         url(r'^test/http/500/$', server_error),
     ]
 
-    if USE_SILK:  # nocover
+    if settings.USE_SILK:  # nocover
         urlpatterns.append(
             url(r'^silk/', include('silk.urls', namespace='silk')),
         )
