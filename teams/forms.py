@@ -70,9 +70,15 @@ class TeamForm(forms.ModelForm):
         widgets = {
             'members': autocomplete.ModelSelect2Multiple(
                 url='userprofile_autocomplete',
-                attrs={
-                    'data-minimum-input-length': 1,
-                },
+                attrs={'data-minimum-input-length': 1}
+            ),
+            'invites': autocomplete.ModelSelect2Multiple(
+                url='userprofile_autocomplete',
+                attrs={'data-minimum-input-length': 1}
+            ),
+            'requests': autocomplete.ModelSelect2Multiple(
+                url='userprofile_autocomplete',
+                attrs={'data-minimum-input-length': 1}
             ),
         }
 
