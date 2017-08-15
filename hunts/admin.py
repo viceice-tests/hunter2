@@ -101,6 +101,11 @@ class PuzzleAdmin(NestedModelAdmin):
         ] + urls
         return urls
 
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if db_field.attname == 'headstart_granted':
+            kwargs['widget'] = forms.TextInput(attrs={'size': '8'})
+        return super().formfield_for_dbfield(db_field, **kwargs)
+
     def onlyinlines_view(self, inline):
         """Construct a view that only shows the given inline"""
         def the_view(self, request, puzzle_id):
