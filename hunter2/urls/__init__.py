@@ -17,7 +17,7 @@ if DEBUG:
     # Http error code handlers (including CSRF validation)
     urlpatterns += [
         url(r'^test/http/400/$', bad_request, kwargs={'exception': Exception("Bad Request!")}),
-        url(r'^test/http/403/$', permission_denied, kwargs={'exception': Exception("Permissin Denied")}),
+        url(r'^test/http/403/$', permission_denied, kwargs={'exception': Exception("Permission Denied")}),
         url(r'^test/http/403/csrf/$', csrf_failure),
         url(r'^test/http/404/$', page_not_found, kwargs={'exception': Exception("Page not Found")}),
         url(r'^test/http/500/$', server_error),
