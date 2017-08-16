@@ -34,6 +34,7 @@ class Index(TemplateView):
             'content': config.index_content,
         }
 
+
 class Episode(LoginRequiredMixin, TeamMixin, View):
     def get(self, request, episode_number):
         episode = utils.event_episode(request.event, episode_number)
