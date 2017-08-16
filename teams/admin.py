@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.db.models import Count
 
 from . import models
 
@@ -12,17 +11,15 @@ class TeamAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.annotate(
-            member_count=Count('members', distinct=True)
-        )
+        return qs.prefetch_related('members', 'members__user')
 
     def member_count(self, team):
-        return team.member_count
+        return team.members.all().count()
 
     member_count.short_description = "Members"
 
     def the_name(self, team):
-        return team.verbose_name
+        return team.get_verbose_name()
 
     the_name.short_description = "Name"
 

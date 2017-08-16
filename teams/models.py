@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError, MultipleObjectsReturned
+from django.core.exceptions import ValidationError
 from django.db import models
 from hunter2.resolvers import reverse
 
@@ -37,20 +37,19 @@ class Team(models.Model):
     requests = models.ManyToManyField(UserProfile, blank=True, related_name='team_requests')
 
     def __str__(self):
-        return f'{self.verbose_name} @{self.at_event.name}'
+        return '%s @%s' % (self.get_verbose_name(), self.at_event)
 
-    @property
-    def verbose_name(self):
+    def get_verbose_name(self):
         if self.is_explicit():
             return self.name
-        try:
-            member = self.members.get()
-            return f'[{member}\'s team]'
-        except MultipleObjectsReturned:
+        if self.members.all().count() == 1:
+            # We use .all()[0] to allow for prefetch_related
+            return '[%s\'s team]' % (self.members.all()[0])
+        elif self.members.all().count() == 0:
+            return '[empty anonymous team]'
+        else:
             # This should never happen but we don't want things to break if it does!
             return '[anonymous team with %d members!]' % self.members.count()
-        except UserProfile.DoesNotExist:
-            return '[empty anonymous team]'
 
     def clean(self):
         if (
