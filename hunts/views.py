@@ -222,7 +222,7 @@ class StatsContent(LoginRequiredMixin, View):
             num_members=Count('members')
         ).filter(
             at_event=request.event, num_members__gte=1
-        )
+        ).prefetch_related('members', 'members__user')
 
         # Get the first correct guess for each team on each puzzle.
         # We use Guess.correct_for (i.e. the cache) because otherwise we perform a query for every
@@ -272,7 +272,7 @@ class StatsContent(LoginRequiredMixin, View):
         # Now assemble all the stats ready for giving back to the user
         puzzle_progress = [
             {
-                'team': t.name,
+                'team': t.get_verbose_name(),
                 'progress': [{
                     'puzzle': p.title,
                     'time': correct_guesses[p][t].given
@@ -285,7 +285,7 @@ class StatsContent(LoginRequiredMixin, View):
             } for p in puzzles]
         team_puzzle_stuckness = [
             {
-                'team': t.name,
+                'team': t.get_verbose_name(),
                 'puzzleStuckness': [{
                     'puzzle': p.title,
                     'stuckness': (now - start_times[t][p]).total_seconds()
@@ -293,7 +293,7 @@ class StatsContent(LoginRequiredMixin, View):
             } for t in all_teams]
         team_total_stuckness = [
             {
-                'team': t.name,
+                'team': t.get_verbose_name(),
                 'stuckness': sum(stuckness[t], timedelta()).total_seconds(),
             } for t in all_teams]
         puzzle_average_stuckness = [
@@ -310,7 +310,7 @@ class StatsContent(LoginRequiredMixin, View):
             } for p in puzzles if solved_times[p]]
 
         data = {
-            'teams': [t.name for t in all_teams],
+            'teams': [t.get_verbose_name() for t in all_teams],
             'numTeams': all_teams.count(),
             'startTime': min([e.start_date for e in episodes]),
             'endTime': end_time,
