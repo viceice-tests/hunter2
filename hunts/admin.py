@@ -205,7 +205,7 @@ class EpisodeAdmin(NestedModelAdmin):
             reverse('admin:events_event_change', args=(obj.event.pk, )),
             obj.event.name
         )
-        
+
     event_change.short_descrption = 'event'
 
     def check_flavour(self, obj):
@@ -216,10 +216,12 @@ class EpisodeAdmin(NestedModelAdmin):
 
     def num_puzzles(self, obj):
         return obj.puzzles_count
+
     num_puzzles.short_description = 'puzzles'
 
     def total_headstart(self, obj):
         return obj.headstart_sum
+
     total_headstart.short_description = 'headstart granted'
 
 
