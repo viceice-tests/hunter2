@@ -81,6 +81,7 @@ class PuzzleAdmin(NestedModelAdmin):
     ]
     # TODO: once episode is a ForeignKey make it editable
     list_display = ('the_episode', 'title', 'start_date', 'check_flavour', 'headstart_granted', 'answers', 'hints', 'unlocks')
+    list_editable = ('start_date', 'headstart_granted')
     list_display_links = ('title',)
     popup = False
 
@@ -100,6 +101,11 @@ class PuzzleAdmin(NestedModelAdmin):
             url(r'^(?P<puzzle_id>[1-9]\d*)/unlocks/$', self.onlyinlines_view(UnlockInline))
         ] + urls
         return urls
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if db_field.attname == 'headstart_granted':
+            kwargs['widget'] = forms.TextInput(attrs={'size': '8'})
+        return super().formfield_for_dbfield(db_field, **kwargs)
 
     def onlyinlines_view(self, inline):
         """Construct a view that only shows the given inline"""
@@ -182,7 +188,8 @@ class PuzzleAdmin(NestedModelAdmin):
 @admin.register(models.Episode)
 class EpisodeAdmin(NestedModelAdmin):
     ordering = ['start_date', 'pk']
-    list_display = ('event_change', 'name', 'start_date', 'num_puzzles', 'total_headstart')
+    list_display = ('event_change', 'name', 'start_date', 'check_flavour', 'num_puzzles', 'total_headstart')
+    list_editable = ('start_date',)
     list_display_links = ('name',)
 
     def get_queryset(self, request):
@@ -198,7 +205,14 @@ class EpisodeAdmin(NestedModelAdmin):
             reverse('admin:events_event_change', args=(obj.event.pk, )),
             obj.event.name
         )
+        
     event_change.short_descrption = 'event'
+
+    def check_flavour(self, obj):
+        return bool(obj.flavour)
+
+    check_flavour.short_description = 'tasty?'
+    check_flavour.boolean = True
 
     def num_puzzles(self, obj):
         return obj.puzzles_count
