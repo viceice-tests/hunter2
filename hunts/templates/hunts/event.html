@@ -10,18 +10,35 @@
 {% if episodes|length > 0 %}
 <ul id="ep-list" class="nav nav-tabs">
 {% for episode in episodes %}
-<li role="presentation"><a href="#">{{ episode.name }}</a></li>
+<li><a href="#episode-{{ episode.index }}" data-url="{% url 'episode_content' 'www' event_id=event_id episode_number=episode.index %}" data-toggle="tab">{{ episode.name }}</a></li>
 {% endfor %}
 </ul>
 <div class="tab-content">
 {% for episode in episodes %}
-<div class="tab-pane" id="{{ episode.name }}"></div>
+<div class="tab-pane" id="episode-{{ episode.index }}"></div>
 {% endfor %}
 </div>
 {% else %}
 <p>No episodes are available.<p> 
 {% endif %}
 <script>
+$(function() {
+	$('#episode-1').addClass('active');
+	$('#episode-1').load(
+		'{% url 'episode_content' 'www' event_id=event_id episode_number=1 %}',
+		function() {
+			$('#ep-list').tab();
+		}
+	);
+	$('a[data-toggle="tab"]').on('show.bs.tab', function(e) {
+		var url = $(this).data('url');
+		var target = $(this).attr('href');
+		var tab = $(this);
+		$(target).load(url, function(result) {
+			tab.tab('show');
+		});
+	});
+});
 $('#ep-list').tab();
 $('#ep-list a:first').click();
 </script>
