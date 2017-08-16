@@ -235,13 +235,17 @@ class StatsContent(LoginRequiredMixin, View):
             if guess.by_team not in team_guesses or guess.given < team_guesses[guess.by_team].given:
                 team_guesses[guess.by_team] = guess
 
-        # The time of the latest correct guess, plus some padding which I cba to add in JS
-        end_time = max([
-            guess.given
-            for team_guesses in correct_guesses.values()
-            for guess in team_guesses.values()
-            if guess
-        ]) + timedelta(minutes=10)
+        try:
+            # The time of the latest correct guess, plus some padding which I cba to add in JS
+            end_time = max([
+                guess.given
+                for team_guesses in correct_guesses.values()
+                for guess in team_guesses.values()
+                if guess
+            ]) + timedelta(minutes=10)
+        except ValueError:
+            # No guesses yet
+            end_time = timezone.now() + timedelta(minutes=10)
 
         # Get when each team started each puzzle, and in how much time they solved each puzzle if they did.
         puzzle_datas = models.TeamPuzzleData.objects.filter(puzzle__in=puzzles, team__in=all_teams).select_related('puzzle', 'team')
