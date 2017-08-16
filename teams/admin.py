@@ -7,8 +7,8 @@ from . import models
 @admin.register(models.Team)
 class TeamAdmin(admin.ModelAdmin):
     ordering = ['at_event', 'name']
-    list_display = ('name', 'at_event', 'is_admin', 'member_count')
-    list_display_links = ('name', )
+    list_display = ('the_name', 'at_event', 'is_admin', 'member_count')
+    list_display_links = ('the_name', )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -20,6 +20,11 @@ class TeamAdmin(admin.ModelAdmin):
         return team.member_count
 
     member_count.short_description = "Members"
+
+    def the_name(self, team):
+        return team.verbose_name
+
+    the_name.short_description = "Name"
 
 
 @admin.register(models.UserProfile)

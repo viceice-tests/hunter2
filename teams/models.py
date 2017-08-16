@@ -37,17 +37,20 @@ class Team(models.Model):
     requests = models.ManyToManyField(UserProfile, blank=True, related_name='team_requests')
 
     def __str__(self):
-        if self.name:
-            return f'{self.name} @{self.at_event.name}'
-        else:
-            try:
-                member = self.members.get()
-                return f'[{member}\'s team] @{self.at_event.name}'
-            except MultipleObjectsReturned:
-                # This should never happen but we don't want the admin to break if it does!
-                return '[anonymous team with %d members!] @{self.at_event.name}' % self.members.count()
-            except UserProfile.DoesNotExist:
-                return '[empty anonymous team] @{self.at_event.name}'
+        return f'{self.verbose_name} @{self.at_event.name}'
+
+    @property
+    def verbose_name(self):
+        if self.is_explicit():
+            return self.name
+        try:
+            member = self.members.get()
+            return f'[{member}\'s team]'
+        except MultipleObjectsReturned:
+            # This should never happen but we don't want things to break if it does!
+            return '[anonymous team with %d members!]' % self.members.count()
+        except UserProfile.DoesNotExist:
+            return '[empty anonymous team]'
 
     def clean(self):
         if (
