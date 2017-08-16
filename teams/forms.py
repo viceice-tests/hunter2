@@ -91,7 +91,7 @@ class TeamForm(forms.ModelForm):
     def clean(self, **kwargs):
         cleaned_data = super().clean(**kwargs)
 
-        # We are going to check if changing this answer alters progress. But only if there are no other errors.
+        # We are going to check if the admin is moving members. But only if there are no other errors.
         if self.errors:
             return
 
@@ -109,7 +109,7 @@ class TeamForm(forms.ModelForm):
                 moved_from.append(other_teams.first())
 
         if moved_members:
-            # User has ticked the alter progress checkbox, move those d00ds
+            # User has ticked confirmation checkbox, move those d00ds
             if cleaned_data.get('move_user'):
                 for user, team in zip(moved_members, moved_from):
                     team.members.remove(user)
@@ -117,8 +117,15 @@ class TeamForm(forms.ModelForm):
                 return cleaned_data
 
             self.fields['move_user'].widget = forms.CheckboxInput()
-            member_string = ', '.join(['%s (already on %s)' % (user.user.username, team.name)
-                                       for user, team in zip(moved_members, moved_from)])
-            self.add_error('move_user', 'You are trying to add %s to this team. Are you sure you want to do this?' % (member_string))
             if len(moved_members) > 1:
                 self.fields['move_user'].label = "Yes, move users"
+                this_user = "these users have"
+            else:
+                this_user = "this user has"
+            member_string = ', '.join(['%s (already on %s)' % (user.user.username, team.name)
+                                       for user, team in zip(moved_members, moved_from)])
+            self.add_error('move_user',
+                           'You are trying to add %s to this team. Are you sure you want'
+                           ' to do this? Note! If %s already answered questions, this '
+                           'will most likely alter the respective teams\' progress!' %
+                           (member_string, this_user))
