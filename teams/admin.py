@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .forms import TeamForm
 from django.db.models import Count
 
+from .forms import TeamForm
 from . import models
 
 
