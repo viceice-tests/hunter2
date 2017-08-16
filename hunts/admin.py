@@ -198,6 +198,7 @@ class EpisodeAdmin(NestedModelAdmin):
             reverse('admin:events_event_change', args=(obj.event.pk, )),
             obj.event.name
         )
+    event_change.short_descrption = 'event'
 
     def num_puzzles(self, obj):
         return obj.puzzles_count
