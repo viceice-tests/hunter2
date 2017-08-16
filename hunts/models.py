@@ -138,6 +138,9 @@ class Clue(models.Model):
 class Hint(Clue):
     time = models.DurationField()
 
+    def __str__(self):
+        return f'Hint unlocked after {self.time}'
+
     def unlocked_by(self, team, data):
         if data.tp_data.start_time:
             return data.tp_data.start_time + self.time < timezone.now()
@@ -154,6 +157,9 @@ class Unlock(Clue):
         )
         return [g for g in guesses if any([u.validate_guess(g) for u in self.unlockanswer_set.all()])]
 
+    def __str__(self):
+        return f'Unlock for {self.puzzle}'
+
 
 class UnlockAnswer(models.Model):
     unlock = models.ForeignKey(Unlock, on_delete=models.CASCADE)
@@ -161,6 +167,12 @@ class UnlockAnswer(models.Model):
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
     guess = models.TextField()
+
+    def __str__(self):
+        if self.runtime == rr.STATIC or self.runtime == rr.REGEX:
+            return self.guess
+        else:
+            return '[Using %s]' % self.get_runtime_display()
 
     def validate_guess(self, guess):
         return rr.validate_guess(
@@ -178,7 +190,10 @@ class Answer(models.Model):
     answer = models.TextField()
 
     def __str__(self):
-        return self.answer
+        if self.runtime == rr.STATIC or self.runtime == rr.REGEX:
+            return self.answer
+        else:
+            return '[Using %s]' % self.get_runtime_display()
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
