@@ -38,10 +38,9 @@ function message(message, error) {
 	error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(5000, function(){$(this).remove();})
 }
 
-var size = 70;
-
 function doCooldown(milliseconds) {
 	var button = d3.select("#answer-button");
+	var size = button.node().getBoundingClientRect().width;
 	var g = button.select("svg")
 		.append("g");
 
@@ -138,7 +137,9 @@ function drawFlashSquare(size) {
 }
 
 function addSVG() {
-	var svg = d3.select("#answer-button").append("svg");
+	var button = d3.select("#answer-button");
+	var svg = button.append("svg");
+	var size = button.node().getBoundingClientRect().width;
 	svg.attr("width", size)
 		.attr("height", size);
 
