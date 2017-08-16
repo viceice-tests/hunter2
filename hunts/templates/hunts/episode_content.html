@@ -1,11 +1,9 @@
 {% load hunter2urls %}
 {% if flavour %}<div class="episode-flavour">{{ flavour | safe }}</div>{% endif %}
-<div class="puzzles">
-<ol>
+<div class="container-fluid">
 {% for puzzle in puzzles %}
-	<li>
-		<a href="{% url 'puzzle' 'www' event_id episode_number forloop.counter %}">{{ puzzle.title }}</a>
-	</li>
+<div class="col-xs-12 col-sm-6 col-md-4 col-lg-2">
+	<a href="{% url 'puzzle' 'www' event_id episode_number forloop.counter %}">{{ puzzle.title }}</a>
+</div>
 {% endfor %}
-</ol>
 </div>

@@ -51,7 +51,7 @@
 			</div>
 		</nav>
 		{% block debug %}{% endblock %}
-		<div class="container">
+		<div class="container-fluid">
 			{% for announcement in announcements %}
 			<div class="alert {{ announcement.css_type }} fade in">
 				<strong>{{ announcement.title }}</strong> {{ announcement.message }}
@@ -65,7 +65,7 @@
 		{% endblock content %}
 		</div>
 		<footer class="footer">
-			<div class="container">
+			<div class="container-fluid">
 				<div style="float: left; width: 33%;font-size: 10px;text-align: left;padding-left: 15px;color: #646464;">
 					Riddlers Online: 0 <br />
 					Teams Online: 0
