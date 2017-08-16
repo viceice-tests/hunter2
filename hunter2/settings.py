@@ -94,6 +94,7 @@ INSTALLED_APPS = (
     'nested_admin',
     'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',
+    'solo',
     'sortedm2m',
     'subdomains',
 )
