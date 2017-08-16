@@ -2,7 +2,8 @@ from django import forms
 from django.contrib import admin
 from django.conf.urls import url
 from django.utils.html import format_html
-from django.db.models import Count
+from django.urls import reverse
+from django.db.models import Count, Sum
 from nested_admin import \
     NestedModelAdmin, \
     NestedStackedInline, \
@@ -181,18 +182,30 @@ class PuzzleAdmin(NestedModelAdmin):
 @admin.register(models.Episode)
 class EpisodeAdmin(NestedModelAdmin):
     ordering = ['start_date', 'pk']
-    list_display = ('event', 'name', 'start_date', 'num_puzzles')
+    list_display = ('event_change', 'name', 'start_date', 'num_puzzles', 'total_headstart')
     list_display_links = ('name',)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.annotate(
-            puzzles_count=Count('puzzles', distinct=True)
+            puzzles_count=Count('puzzles', distinct=True),
+            headstart_sum=Sum('puzzles__headstart_granted'),
+        )
+
+    def event_change(self, obj):
+        return format_html(
+            '<a href="{}">{}</a>',
+            reverse('admin:events_event_change', args=(obj.event.pk, )),
+            obj.event.name
         )
 
     def num_puzzles(self, obj):
         return obj.puzzles_count
     num_puzzles.short_description = 'puzzles'
+
+    def total_headstart(self, obj):
+        return obj.headstart_sum
+    total_headstart.short_description = 'headstart granted'
 
 
 @admin.register(models.UserPuzzleData)
