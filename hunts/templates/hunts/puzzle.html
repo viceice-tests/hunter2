@@ -42,7 +42,9 @@
 {% else %}
 <form class="form-inline" action="an" method="POST">
 	{% csrf_token %}
+	<span id="answer-border">
 	<input name="answer" id="answer-entry" class="form-control"></input>
+	</span>
 	<button type="submit" id="answer-button" class="btn btn-default">Guess!</button>
 </form>
 {% endif %}
