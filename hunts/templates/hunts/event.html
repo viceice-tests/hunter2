@@ -23,23 +23,17 @@
 {% endif %}
 <script>
 $(function() {
-	$('#episode-1').addClass('active');
-	$('#episode-1').load(
-		'{% url 'episode_content' 'www' event_id=event_id episode_number=1 %}',
-		function() {
-			$('#ep-list').tab();
-		}
-	);
 	$('a[data-toggle="tab"]').on('show.bs.tab', function(e) {
 		var url = $(this).data('url');
 		var target = $(this).attr('href');
 		var tab = $(this);
 		$(target).load(url, function(result) {
 			tab.tab('show');
+			window.location.hash = target.substr(1);
 		});
 	});
+	var hash = window.location.hash ? window.location.hash : '#episode-1';
+	$(`#ep-list a[href="${hash}"`).tab('show');
 });
-$('#ep-list').tab();
-$('#ep-list a:first').click();
 </script>
 {% endblock %}
