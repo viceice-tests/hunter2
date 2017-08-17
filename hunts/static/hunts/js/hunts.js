@@ -185,7 +185,7 @@ $(function() {
 		button.attr('disabled', 'true');
 		var data = {
 			last_updated: last_updated,
-			answer: $('#answer-entry').value
+			answer: $('#answer-entry').val()
 		};
 		$.ajax({
 			type: 'POST',
@@ -193,7 +193,7 @@ $(function() {
 			data: jQuery.param(data),
 			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
 			success: function(data) {
-				$('#answer-entry').value = ''
+				$('#answer-entry').val('');
 				last_updated = Date.now();
 				if (data.correct == "true") {
 					button.removeAttr('disabled');
