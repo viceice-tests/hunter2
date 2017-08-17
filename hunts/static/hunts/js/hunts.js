@@ -1,4 +1,4 @@
-function incorrect_answer(guess, timeout, new_hints, unlocks) {
+function incorrect_answer(guess, timeout_length, timeout, new_hints, unlocks) {
 	var hints_div = $('#hints');
 	var n_hints = new_hints.length;
 	for (var i = 0; i < n_hints; i++) {
@@ -19,6 +19,15 @@ function incorrect_answer(guess, timeout, new_hints, unlocks) {
 	}
 
 	var milliseconds = Date.parse(timeout) - Date.now();
+	var difference = timeout_length - milliseconds;
+
+	// If the time the server is saying it will accept answers again is very different from our own
+	// calculation of the same thing, assume that it's due to clock problems (rather than latency somewhere)
+	// and just wait however long the server was trying to tell us.
+	if (difference > 2000 || difference < 0) {
+		message("Your clock seems not to match the server's. The displayed cooldown may not be optimal.");
+		milliseconds = timeout_length;
+	}
 	var answer_button = $('#answer-button');
 	answer_button.after('<span id="answer-blocker"> You may guess again in 5 seconds.</span>');
 	setTimeout(function () {
@@ -67,7 +76,7 @@ $(function() {
 					button.removeAttr('disabled');
 					correct_answer(data.url);
 				} else {
-					incorrect_answer(data.guess, data.timeout, data.new_hints, data.unlocks);
+					incorrect_answer(data.guess, data.timeout_length, data.timeout_end, data.new_hints, data.unlocks);
 				}
 			},
 			error: function(xhr, status, error) {

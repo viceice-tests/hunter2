@@ -517,7 +517,8 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
                                 'new': guess in correct_guesses})
 
             response['guess'] = given_answer
-            response['timeout'] = str(timezone.now() + minimum_time)
+            response['timeout_length'] = minimum_time.total_seconds() * 1000
+            response['timeout_end'] = str(timezone.now() + minimum_time)
             response['new_hints'] = new_hints
             response['unlocks'] = unlocks
         response['correct'] = str(correct).lower()
