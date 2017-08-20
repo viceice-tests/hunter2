@@ -1,3 +1,9 @@
+function escapeHtml(text) {
+    return text.replace(/[\"&<>]/g, function (a) {
+        return { '"': '&quot;', '&': '&amp;', '<': '&lt;', '>': '&gt;' }[a];
+    });
+}
+
 function incorrect_answer(guess, timeout, new_hints, unlocks) {
 	var hints_div = $('#hints');
 	var n_hints = new_hints.length;
@@ -12,9 +18,9 @@ function incorrect_answer(guess, timeout, new_hints, unlocks) {
 	for (var i = 0; i < n_unlocks; i++) {
 		guesses = unlocks[i].guesses.join(', ');
 		if (unlocks[i].new) {
-			unlocks_div.append('<p class="new-unlock">' + guesses + ': ' + unlocks[i].text + '</p>');
+			unlocks_div.append('<p class="new-unlock">' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
 		} else {
-			unlocks_div.append('<p>' + guesses + ': ' + unlocks[i].text + '</p>');
+			unlocks_div.append('<p>' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
 		}
 	}
 

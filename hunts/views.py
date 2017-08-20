@@ -8,7 +8,6 @@ from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonRespon
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
-from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.views import View
 from django.views.generic import TemplateView
@@ -510,7 +509,7 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
                 if not correct_guesses:
                     continue
 
-                guesses = [escape(g.guess) for g in correct_guesses]
+                guesses = [g.guess for g in correct_guesses]
                 # Get rid of duplicates but preserve order
                 duplicates = set()
                 guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
