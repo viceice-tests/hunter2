@@ -8,6 +8,8 @@ from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonRespon
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 from django.views import View
 from django.views.generic import TemplateView
 from hunter2.resolvers import reverse
@@ -406,7 +408,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
             # Get rid of duplicates but preserve order
             duplicates = set()
             guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
-            unlocks.append({'guesses': guesses, 'text': u.text})
+            unlocks.append({'guesses': guesses, 'text': mark_safe(u.text)})
 
         files = {
             **{f.slug: f.file.url for f in request.event.eventfile_set.all()},
@@ -508,7 +510,7 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
                 if not correct_guesses:
                     continue
 
-                guesses = [g.guess for g in correct_guesses]
+                guesses = [escape(g.guess) for g in correct_guesses]
                 # Get rid of duplicates but preserve order
                 duplicates = set()
                 guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
