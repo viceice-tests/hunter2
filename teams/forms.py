@@ -93,7 +93,7 @@ class TeamForm(forms.ModelForm):
 
         # We are going to check if the admin is moving members. But only if there are no other errors.
         if self.errors:
-            return
+            return cleaned_data
 
         members = cleaned_data.get('members')
         teams = models.Team.objects.filter(at_event=cleaned_data.get('at_event'))
@@ -113,7 +113,10 @@ class TeamForm(forms.ModelForm):
             if cleaned_data.get('move_user'):
                 for user, team in zip(moved_members, moved_from):
                     team.members.remove(user)
-                    team.save()
+                    if team.members.count() > 0:
+                        team.save()
+                    else:
+                        team.delete()
                 return cleaned_data
 
             self.fields['move_user'].widget = forms.CheckboxInput()
