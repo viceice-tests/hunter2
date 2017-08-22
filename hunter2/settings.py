@@ -158,7 +158,7 @@ SOCIALACCOUNT_PROVIDERS = {
         'SERVERS': [{
             'id': 'steam',
             'name': 'Steam',
-            'openid_url': 'http://steamcommunity.com/openid',
+            'openid_url': 'https://steamcommunity.com/openid',
             'stateless': True,
         }]
     }
