@@ -159,6 +159,7 @@ SOCIALACCOUNT_PROVIDERS = {
             'id': 'steam',
             'name': 'Steam',
             'openid_url': 'http://steamcommunity.com/openid',
+            'stateless': True,
         }]
     }
 }
