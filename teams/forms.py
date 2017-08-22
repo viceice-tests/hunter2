@@ -110,6 +110,9 @@ class TeamForm(forms.ModelForm):
 
         if moved_members:
             # User has ticked confirmation checkbox, move those d00ds
+            # TODO: executing the move in the clean() method is not "correct" but it works.
+            # Probably the change should be happening in the model or signal handler instead of the ValidationError
+            # and the form would just control the confirmation checkbox.
             if cleaned_data.get('move_user'):
                 for user, team in zip(moved_members, moved_from):
                     team.members.remove(user)
