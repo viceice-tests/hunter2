@@ -208,7 +208,7 @@ class StatsContent(LoginRequiredMixin, View):
             raise PermissionDenied
 
         # TODO select and prefetch all the things
-        episodes = models.Episode.objects.filter(event=request.event)
+        episodes = models.Episode.objects.filter(event=request.event).order_by('start_date')
         if episode_id != 'all':
             episodes = episodes.filter(pk=episode_id)
             if not episodes.exists():
