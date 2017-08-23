@@ -10,7 +10,6 @@ div.puzzle-list {
 }
 
 div.puzzle-box {
-	background: black;
 	display: flex;
 	height: 15em;
 	flex: 0 0 15em;
@@ -18,8 +17,16 @@ div.puzzle-box {
 	text-align: center;
 }
 
+div.puzzle-available {
+	background: DarkSlateGrey;
+}
+
+div.puzzle-done {
+	background: SlateGrey;
+}
+
 a.puzzle-link {
-	color: white;
+	color: White;
 	margin: auto;
 	font-size: x-large;
 }

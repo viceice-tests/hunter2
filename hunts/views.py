@@ -88,6 +88,9 @@ class EpisodeContent(LoginRequiredMixin, TeamMixin, View):
             admin
         ):
             puzzles = episode.unlocked_puzzles(request.team)
+            for puzzle in puzzles:
+                puzzle.done = puzzle.answered_by(request.team)
+
             return TemplateResponse(
                 request,
                 'hunts/episode_content.html',
