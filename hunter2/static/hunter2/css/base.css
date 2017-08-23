@@ -11,6 +11,7 @@ div.puzzle-list {
 
 div.puzzle-box {
 	background: black;
+	display: flex;
 	height: 15em;
 	flex: 0 0 15em;
 	margin: 1em;
