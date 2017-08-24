@@ -22,15 +22,19 @@ from . import utils
 from .runtimes.registry import RuntimesRegistry as rr
 
 import events
+import hunter2
 import teams
 
 
-class Index(View):
-    def get(self, request):
-        return TemplateResponse(
-            request,
-            'hunts/index.html',
-        )
+class Index(TemplateView):
+    template_name = 'hunts/index.html'
+
+    def get_context_data(self, **kwargs):
+        config = hunter2.models.Configuration.objects.get()
+        return {
+            # TODO: Real content from DB
+            'content': config.index_content,
+        }
 
 
 class Episode(LoginRequiredMixin, TeamMixin, View):
