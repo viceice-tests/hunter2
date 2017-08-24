@@ -17,6 +17,8 @@ eventpatterns = [
     url(r'^$', views.EventIndex.as_view(), name='event'),
     url(r'^about$', views.AboutView.as_view(), name='about'),
     url(r'^rules$', views.RulesView.as_view(), name='rules'),
+    url(r'^help$', views.HelpView.as_view(), name='help'),
+    url(r'^examples$', views.ExamplesView.as_view(), name='examples'),
     url(r'^ep/(?P<episode_number>[1-9]\d*)/', include(episodepatterns)),
 ]
 
