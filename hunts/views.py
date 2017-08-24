@@ -638,6 +638,7 @@ class HelpView(TemplateView):
         })
         return context
 
+
 class ExamplesView(TemplateView):
     template_name = 'hunts/examples.html'
 
