@@ -336,11 +336,13 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         if correct:
             next = episode.next_puzzle(request.team)
             if next:
+                response['text'] = f'to the next puzzle'
                 response['url'] = reverse('puzzle', subdomain=request.subdomain,
                                           kwargs={'event_id': request.event.pk,
                                                   'episode_number': episode_number,
                                                   'puzzle_number': next})
             else:
+                response['text'] = f'back to {episode.name}'
                 response['url'] = reverse('episode', subdomain=request.subdomain,
                                           kwargs={'event_id': request.event.pk,
                                                   'episode_number': episode_number}, )
