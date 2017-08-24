@@ -621,3 +621,34 @@ class RulesView(TemplateView):
             'event_name': self.request.event.name,
         })
         return context
+
+
+class HelpView(TemplateView):
+    template_name = 'hunts/help.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
+        content = Template(self.request.event.help_text).safe_substitute(**files)
+
+        context.update({
+            'content': content,
+            'event_name': self.request.event.name,
+        })
+        return context
+
+class ExamplesView(TemplateView):
+    template_name = 'hunts/examples.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
+        content = Template(self.request.event.examples_text).safe_substitute(**files)
+
+        context.update({
+            'content': content,
+            'event_name': self.request.event.name,
+        })
+        return context
