@@ -1,10 +1,12 @@
 from django.contrib import admin
 
+from .forms import TeamForm
 from . import models
 
 
 @admin.register(models.Team)
 class TeamAdmin(admin.ModelAdmin):
+    form = TeamForm
     ordering = ['at_event', 'name']
     list_display = ('the_name', 'at_event', 'is_admin', 'member_count')
     list_display_links = ('the_name', )
