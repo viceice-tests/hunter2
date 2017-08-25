@@ -79,7 +79,6 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
             request,
             'hunts/episode.html',
             context={
-                'admin': admin,
                 'episode': episode.name,
                 'flavour': flavour,
                 'position': position,
@@ -88,6 +87,34 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
                 'puzzles': puzzles,
             }
         )
+
+
+class EpisodeContent(LoginRequiredMixin, TeamMixin, View):
+    def get(self, request, episode_number):
+        episode = utils.event_episode(request.event, episode_number)
+        admin = rules.is_admin_for_episode(request.user, episode)
+
+        if (
+            episode.started(request.team) and
+            episode.unlocked_by(request.team) or
+            admin
+        ):
+            puzzles = episode.unlocked_puzzles(request.team)
+            for puzzle in puzzles:
+                puzzle.done = puzzle.answered_by(request.team)
+
+            return TemplateResponse(
+                request,
+                'hunts/episode_content.html',
+                context={
+                    'flavour': episode.flavour,
+                    'episode_number': episode_number,
+                    'event_id': request.event.pk,
+                    'puzzles': puzzles,
+                }
+            )
+        else:
+            raise PermissionDenied
 
 
 class EpisodeList(LoginRequiredMixin, View):
@@ -352,6 +379,11 @@ class EventIndex(LoginRequiredMixin, View):
         episodes = models.Episode.objects \
                                  .filter(event=event.id) \
                                  .filter(start_date__lte=timezone.now()) \
+                                 .order_by('start_date')
+
+        # Annotate the episodes with their position in the event.
+        for episode in episodes:
+            episode.index = episode.get_relative_id()
 
         return TemplateResponse(
             request,
@@ -497,11 +529,13 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         if correct:
             next = episode.next_puzzle(request.team)
             if next:
+                response['text'] = f'to the next puzzle'
                 response['url'] = reverse('puzzle', subdomain=request.subdomain,
                                           kwargs={'event_id': request.event.pk,
                                                   'episode_number': episode_number,
                                                   'puzzle_number': next})
             else:
+                response['text'] = f'back to {episode.name}'
                 response['url'] = reverse('episode', subdomain=request.subdomain,
                                           kwargs={'event_id': request.event.pk,
                                                   'episode_number': episode_number}, )

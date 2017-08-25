@@ -34,9 +34,9 @@ function incorrect_answer(guess, timeout, new_hints, unlocks) {
 	answer_button.hide().delay(milliseconds).show(0);
 }
 
-function correct_answer(url) {
+function correct_answer(url, text) {
 	var form = $('.form-inline');
-	form.after('<div id="correct-answer-message">Correct! Taking you to the next puzzle. <a class="puzzle-complete-redirect" href="' + url + '">go right now</a></div>');
+	form.after(`<div id="correct-answer-message">Correct! Taking you ${text}. <a class="puzzle-complete-redirect" href="${url}">go right now</a></div>`);
 	form.remove();
 	setTimeout(function () {window.location.href = url;}, 3000);
 }
@@ -71,7 +71,7 @@ $(function() {
 				last_updated = Date.now();
 				if (data.correct == "true") {
 					button.removeAttr('disabled');
-					correct_answer(data.url);
+					correct_answer(data.url, data.text);
 				} else {
 					incorrect_answer(data.guess, data.timeout, data.new_hints, data.unlocks);
 				}

@@ -51,21 +51,21 @@
 			</div>
 		</nav>
 		{% block debug %}{% endblock %}
-		<div class="container">
+		<div class="container-fluid">
 			{% for announcement in announcements %}
 			<div class="alert {{ announcement.css_type }} fade in">
 				<strong>{{ announcement.title }}</strong> {{ announcement.message }}
 			</div>
 			{% endfor %}
-			<header class="container">
+			<header class="container-fluid">
 				{% block page_header %}{% endblock page_header%}
 			</header>
-			<div id="content" class="container">
+			<div id="content" class="container-fluid">
 			{% block content %}
 				If you're seeing this, contact the site administrators.
 			{% endblock content %}
 			</div>
-			<footer class="container">
+			<footer class="container-fluid">
 				<p>Copyright &copy; 2017 <br />
 				<a href="https://hunter2.theihunt.uk">Hunter2</a></p>
 			</footer>
