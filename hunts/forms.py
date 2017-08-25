@@ -18,7 +18,7 @@ class AnswerForm(forms.ModelForm):
 
         # We are going to check if changing this answer alters progress. But only if there are no other errors.
         if self.errors:
-            return
+            return cleaned_data
 
         # User has ticked the alter progress checkbox
         if cleaned_data.get('alter_progress'):

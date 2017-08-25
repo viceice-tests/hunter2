@@ -7,7 +7,7 @@ coverage==4.4.1
 decorator==4.1.2
 defusedxml==0.5.0
 Django==1.11.3
-git+git://github.com/pennersr/django-allauth.git@f1b5d4bd7216dad9670be22ae0c2ea29ba0fccfa
+git+git://github.com/irconan/django-allauth.git@hunter2_i61
 django-analytical==2.2.2
 django-autocomplete-light==3.2.9
 django-debug-toolbar==1.8
@@ -16,6 +16,7 @@ django-environ==0.4.3
 django-extensions==1.8.1
 django-nested-admin==3.0.19
 django-registration==2.2
+django-solo==1.1.2
 django-sortedm2m==1.4.0
 freezegun==0.3.9
 idna==2.5

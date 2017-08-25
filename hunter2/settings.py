@@ -7,18 +7,19 @@ root = environ.Path(__file__) - 2
 env = environ.Env()
 
 # Default settings which should be overridden by environment variables
-DEBUG             = env.bool      ('H2_DEBUG',         default=False)
-LOG_LEVEL         = env.str       ('H2_LOG_LEVEL',     default='WARNING')
-LANGUAGE_CODE     = env.str       ('H2_LANGUAGE_CODE', default='en-gb')
-PIWIK_DOMAIN_PATH = env.str       ('H2_PIWIK_HOST',    default=None)
-PIWIK_SITE_ID     = env.str       ('H2_PIWIK_SITE',    default='1')
-TIME_ZONE         = env.str       ('H2_TIME_ZONE',     default='Europe/London')
-ALLOWED_HOSTS     = env.list      ('H2_ALLOWED_HOSTS', default=['*'])
-INTERNAL_IPS      = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
-EMAIL_CONFIG      = env.email_url ('H2_EMAIL_URL',     default='smtp://localhost:25')
-EMAIL_DOMAIN      = env.str       ('H2_EMAIL_DOMAIN',  default='hunter2.local')
-ADMINS            = env.list      ('H2_ADMINS',        default=[])
-RAVEN_DSN         = env.str       ('H2_SENTRY_DSN',    default=None)
+DEBUG              = env.bool      ('H2_DEBUG',         default=False)
+DEFAULT_URL_SCHEME = env.str       ('H2_SCHEME',        default='http')
+LOG_LEVEL          = env.str       ('H2_LOG_LEVEL',     default='WARNING')
+LANGUAGE_CODE      = env.str       ('H2_LANGUAGE_CODE', default='en-gb')
+PIWIK_DOMAIN_PATH  = env.str       ('H2_PIWIK_HOST',    default=None)
+PIWIK_SITE_ID      = env.str       ('H2_PIWIK_SITE',    default='1')
+TIME_ZONE          = env.str       ('H2_TIME_ZONE',     default='Europe/London')
+ALLOWED_HOSTS      = env.list      ('H2_ALLOWED_HOSTS', default=['*'])
+INTERNAL_IPS       = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
+EMAIL_CONFIG       = env.email_url ('H2_EMAIL_URL',     default='smtp://localhost:25')
+EMAIL_DOMAIN       = env.str       ('H2_EMAIL_DOMAIN',  default='hunter2.local')
+ADMINS             = env.list      ('H2_ADMINS',        default=[])
+RAVEN_DSN          = env.str       ('H2_SENTRY_DSN',    default=None)
 DATABASES = {
     'default': env.db('H2_DATABASE_URL', default="postgres://postgres:postgres@db:5432/postgres")
 }
@@ -27,7 +28,7 @@ CACHES = {
 }
 USE_SILK = DEBUG and env.bool('H2_SILK', default=False)
 
-if USE_SILK:
+if USE_SILK:  # nocover
     try:
         import silk  # noqa: F401
     except ImportError:
@@ -93,10 +94,11 @@ INSTALLED_APPS = (
     'nested_admin',
     'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',
+    'solo',
     'sortedm2m',
     'subdomains',
 )
-if USE_SILK:
+if USE_SILK:  # nocover
     INSTALLED_APPS = INSTALLED_APPS + ('silk',)
 
 LOGGING = {
@@ -136,14 +138,15 @@ MIDDLEWARE = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.sites.middleware.CurrentSiteMiddleware',
     'subdomains.middleware.SubdomainMiddleware',
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
-if USE_SILK:
+if USE_SILK:  # nocover
     MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
 
-if RAVEN_DSN:
+if RAVEN_DSN:  # nocover
     RAVEN_CONFIG = {
         'dsn': RAVEN_DSN
     }
@@ -157,7 +160,8 @@ SOCIALACCOUNT_PROVIDERS = {
         'SERVERS': [{
             'id': 'steam',
             'name': 'Steam',
-            'openid_url': 'http://steamcommunity.com/openid',
+            'openid_url': 'https://steamcommunity.com/openid',
+            'stateless': True,
         }]
     }
 }
@@ -215,7 +219,7 @@ WSGI_APPLICATION = 'hunter2.wsgi.application'
 
 X_FRAME_OPTIONS = 'DENY'
 
-if USE_SILK:
+if USE_SILK:  # nocover
     SILKY_PYTHON_PROFILER = True
     SILKY_PYTHON_PROFILER_BINARY = True
     # Well, the following path is rubbish but I cba doing it properly for now

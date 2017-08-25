@@ -1,14 +1,6 @@
 from django.http import Http404
 
 
-def current_puzzle(puzzlesets, team):
-    for cs in puzzlesets:
-        for c in cs.puzzles.all():
-            if not c.answered(team):
-                return c
-    return None
-
-
 def event_episode(event, episode_number):
     from .models import Episode
 

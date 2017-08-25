@@ -2,7 +2,8 @@ from django import forms
 from django.contrib import admin
 from django.conf.urls import url
 from django.utils.html import format_html
-from django.db.models import Count
+from django.urls import reverse
+from django.db.models import Count, Sum
 from nested_admin import \
     NestedModelAdmin, \
     NestedStackedInline, \
@@ -71,7 +72,7 @@ class GuessAdmin(admin.ModelAdmin):
 
 @admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdmin):
-    ordering = ('episode', 'pk')
+    ordering = ('episode__start_date', 'start_date', 'pk')
     inlines = [
         FileInline,
         AnswerInline,
@@ -79,7 +80,8 @@ class PuzzleAdmin(NestedModelAdmin):
         UnlockInline,
     ]
     # TODO: once episode is a ForeignKey make it editable
-    list_display = ('the_episode', 'title', 'start_date', 'answers', 'hints', 'unlocks')
+    list_display = ('the_episode', 'title', 'start_date', 'check_flavour', 'headstart_granted', 'answers', 'hints', 'unlocks')
+    list_editable = ('start_date', 'headstart_granted')
     list_display_links = ('title',)
     popup = False
 
@@ -99,6 +101,11 @@ class PuzzleAdmin(NestedModelAdmin):
             url(r'^(?P<puzzle_id>[1-9]\d*)/unlocks/$', self.onlyinlines_view(UnlockInline))
         ] + urls
         return urls
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if db_field.attname == 'headstart_granted':
+            kwargs['widget'] = forms.TextInput(attrs={'size': '8'})
+        return super().formfield_for_dbfield(db_field, **kwargs)
 
     def onlyinlines_view(self, inline):
         """Construct a view that only shows the given inline"""
@@ -154,12 +161,19 @@ class PuzzleAdmin(NestedModelAdmin):
     # Who knows why we can't call this 'episode' but it causes an AttributeError...
     def the_episode(self, obj):
         episode_qs = obj.episode_set
-        if episode_qs:
+        if episode_qs.exists():
             return episode_qs.get().name
 
         return '[no episode set]'
 
     the_episode.short_description = 'episode'
+    the_episode.admin_order_field = 'episode__start_date'
+
+    def check_flavour(self, obj):
+        return bool(obj.flavour)
+
+    check_flavour.short_description = 'tasty?'
+    check_flavour.boolean = True
 
     def answers(self, obj):
         return format_html('<a href="{}/answers/">{}</a>', obj.pk, obj.answer_count)
@@ -173,18 +187,42 @@ class PuzzleAdmin(NestedModelAdmin):
 
 @admin.register(models.Episode)
 class EpisodeAdmin(NestedModelAdmin):
-    list_display = ('event', 'name', 'num_puzzles')
+    ordering = ['start_date', 'pk']
+    list_display = ('event_change', 'name', 'start_date', 'check_flavour', 'num_puzzles', 'total_headstart')
+    list_editable = ('start_date',)
     list_display_links = ('name',)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.annotate(
-            puzzles_count=Count('puzzles', distinct=True)
+            puzzles_count=Count('puzzles', distinct=True),
+            headstart_sum=Sum('puzzles__headstart_granted'),
         )
+
+    def event_change(self, obj):
+        return format_html(
+            '<a href="{}">{}</a>',
+            reverse('admin:events_event_change', args=(obj.event.pk, )),
+            obj.event.name
+        )
+
+    event_change.short_descrption = 'event'
+
+    def check_flavour(self, obj):
+        return bool(obj.flavour)
+
+    check_flavour.short_description = 'tasty?'
+    check_flavour.boolean = True
 
     def num_puzzles(self, obj):
         return obj.puzzles_count
+
     num_puzzles.short_description = 'puzzles'
+
+    def total_headstart(self, obj):
+        return obj.headstart_sum
+
+    total_headstart.short_description = 'headstart granted'
 
 
 @admin.register(models.UserPuzzleData)
@@ -192,5 +230,11 @@ class UserPuzzleDataAdmin(admin.ModelAdmin):
     readonly_fields = ('token', )
 
 
-admin.site.register(models.Announcement)
+@admin.register(models.Announcement)
+class AnnoucementAdmin(admin.ModelAdmin):
+    ordering = ['event', 'puzzle__start_date', 'pk']
+    list_display = ('event', 'puzzle', 'type', 'title', 'message', 'posted')
+    list_display_links = ('title', )
+
+
 admin.site.register(models.TeamPuzzleData)

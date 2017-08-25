@@ -5,7 +5,7 @@
 <html lang="en">
 	<head>
 		{% analytical_head_top %}
-		<title>The iHunt</title>
+		<title>{{ request.site.name }}</title>
 		<meta charset="UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -26,26 +26,26 @@
 	<body>
 		{% analytical_body_top %}
 		<noscript>
-			You do not have JavaScript Enabled. JavaScript is required to access and take part in the iHunt.
+			You do not have JavaScript Enabled. JavaScript is required to access and take part in a hunt.
 		</noscript>
 		<nav class="navbar navbar-inverse">
 			<div class="container-fluid">
 				<div class="collapse navbar-collapse" id="site-navbar-collapse-1">
 					<ul class="nav navbar-nav">
-						{% block topbar %}{% endblock %}
+						{% block topbar_left %}
 						<li class="button"><a href="{% url 'index' 'www' %}">Home</a></li>
-						<li class="button"><a href="{% url 'help' 'www' %}">Help</a></li>
-						<li class="button"><a href="{% url 'faq' 'www' %}">FAQ</a></li>
+						{% endblock %}
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
-						{% block topbar_right %}{% endblock %}
+						{% block topbar_right %}
 						{% if user.is_authenticated %}
-						<li class="button"><a href="{% url 'edit_profile' 'www' %}" id="navUser">{{ user.username }}</a></li>
+						<li class="button"><a href="{% url 'edit_profile' 'www' %}" id="navUser">Account</a></li>
 						<li class="button"><a href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
 						<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
 						{% else %}
 						<li><a href="{% url 'account_login' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a></li>
 						{% endif %}
+						{% endblock %}
 					</ul>
 				</div>
 			</div>
@@ -57,25 +57,19 @@
 				<strong>{{ announcement.title }}</strong> {{ announcement.message }}
 			</div>
 			{% endfor %}
-		<div class="page-header">
-			{% block page_header %}{% endblock page_header%}
-		</div>
-		{% block content %}
-			If you're seeing this, it's all gone wrong!
-		{% endblock content %}
-		</div>
-		<footer class="footer">
-			<div class="container-fluid">
-				<div style="float: left; width: 33%;font-size: 10px;text-align: left;padding-left: 15px;color: #646464;">
-					Riddlers Online: 0 <br />
-					Teams Online: 0
-				</div>
-				<div style="float: left; width: 33%; text-align: center;">
-					Copyright &copy; 2016 <br />
-					<a href="https://www.theihunt.uk">https://www.theihunt.uk</a>
-				</div>
+			<header class="container-fluid">
+				{% block page_header %}{% endblock page_header%}
+			</header>
+			<div id="content" class="container-fluid">
+			{% block content %}
+				If you're seeing this, contact the site administrators.
+			{% endblock content %}
 			</div>
-		</footer>
+			<footer class="container-fluid">
+				<p>Copyright &copy; 2017 <br />
+				<a href="https://hunter2.theihunt.uk">Hunter2</a></p>
+			</footer>
+		</div>
 		{% analytical_body_bottom %}
 	</body>
 </html>

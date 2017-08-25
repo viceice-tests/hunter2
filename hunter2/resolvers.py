@@ -1,11 +1,11 @@
-from .settings import DEBUG
+from . import settings
 
-if DEBUG:
-    from django.urls import reverse as django_reverse
+if settings.DEBUG:
+    from subdomains.utils import reverse as subdomain_reverse
 
     def reverse(*args, **kwargs):
         del kwargs['subdomain']
-        return django_reverse(*args, **kwargs)
+        return subdomain_reverse(*args, **kwargs)
 else:
     from subdomains.utils import reverse
 

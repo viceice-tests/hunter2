@@ -19,6 +19,7 @@ services:
       - H2_EMAIL_URL
       - H2_PIWIK_HOST
       - H2_PIWIK_SITE
+      - H2_SCHEME
       - H2_SENTRY_DSN
     image: ${IMAGE_TAG:-hunter2_app}
     volumes:

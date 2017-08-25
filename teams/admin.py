@@ -1,14 +1,41 @@
 from django.contrib import admin
+
+from .forms import TeamForm
 from . import models
 
 
+@admin.register(models.Team)
 class TeamAdmin(admin.ModelAdmin):
-    pass
+    form = TeamForm
+    ordering = ['at_event', 'name']
+    list_display = ('the_name', 'at_event', 'is_admin', 'member_count')
+    list_display_links = ('the_name', )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related('members', 'members__user')
+
+    def member_count(self, team):
+        return team.members.all().count()
+
+    member_count.short_description = "Members"
+
+    def the_name(self, team):
+        return team.get_verbose_name()
+
+    the_name.short_description = "Name"
+    the_name.admin_order_field = "name"
 
 
+@admin.register(models.UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    pass
+    ordering = ['pk']
+    list_display = ('username', 'seat', 'email')
+    list_display_links = ('username', )
+    list_select_related = ('user', )
 
+    def username(self, profile):
+        return profile.user.username
 
-admin.site.register(models.Team, TeamAdmin)
-admin.site.register(models.UserProfile, UserProfileAdmin)
+    def email(self, profile):
+        return profile.user.email

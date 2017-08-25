@@ -7,8 +7,16 @@
 
 {% block content %}
 <h1>Team</h1>
-{% lorem %}
 {% if team.is_explicit %}
+{% spaceless %}
+<p>You can invite people to join your team.
+{% if request.event.max_team_size %}
+Teams can have up to {{ request.event.max_team_size }} members.
+{% else %}
+There is no maximum team size.
+{% endif %}
+</p>
+{% endspaceless %}
 <h2>Manage your team</h2>
 <h3>{{ team.name }}</h3>
 {% spaceless %}
@@ -63,6 +71,7 @@
 {% endspaceless %}
 {% comment %}{% endif %}{% endcomment %}
 {% else %}
+<p>You can accept a team invite, request to join a team, or create your own team. Once you create or join a team for this event you cannot move to another team.</p>
 <h2>Join a team</h2>
 {% if invites %}
 <div id="inv-div">

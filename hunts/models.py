@@ -16,15 +16,19 @@ import uuid
 
 class Puzzle(models.Model):
     title = models.CharField(max_length=255, unique=True)
+    flavour = models.TextField(
+        blank=True, verbose_name="Flavour text",
+        help_text="Separate flavour text for the puzzle. Should not be required for solving the puzzle")
     runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
+        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC,
+        help_text="Runtime for generating the question content"
     )
-    flavour = models.TextField(blank=True)
     content = models.TextField()
     cb_runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
+        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC, verbose_name="Callback runtime",
+        help_text="Runtime for responding to an AJAX callback for this question, should return JSON"
     )
-    cb_content = models.TextField(blank=True, default='')
+    cb_content = models.TextField(blank=True, default='', verbose_name="Callback content")
     start_date = models.DateTimeField(blank=True, default=timezone.now)
     headstart_granted = models.DurationField(
         default=timedelta(),
@@ -69,6 +73,7 @@ class Puzzle(models.Model):
 
     def answered_by(self, team):
         """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
+        # Select related since get_correct_for() will want it
         guesses = Guess.objects.filter(
             by__in=team.members.all(),
             for_puzzle=self,
@@ -81,6 +86,7 @@ class Puzzle(models.Model):
 
     def first_correct_guesses(self, event):
         """Returns a dictionary of teams to guesses, where the guess is that team's earliest correct, validated guess for this puzzle"""
+        # Select related to avoid a load of queries for answers and teams
         correct_guesses = Guess.objects.filter(
             for_puzzle=self,
         ).order_by(
@@ -108,10 +114,14 @@ class Puzzle(models.Model):
             return None
 
 
+def puzzle_file_path(instance, filename):
+    return 'puzzles/{0}/{1}'.format(instance.puzzle.id, filename)
+
+
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    slug = models.SlugField()
-    file = models.FileField(upload_to='puzzles/')
+    slug = models.SlugField(help_text="Include the URL of the file in puzzle content using $slug or ${slug}.")
+    file = models.FileField(upload_to=puzzle_file_path)
 
     class Meta:
         unique_together = (('puzzle', 'slug'), )
@@ -119,7 +129,7 @@ class PuzzleFile(models.Model):
 
 class Clue(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    text = models.TextField()
+    text = models.TextField(help_text="Text displayed when this clue is unlocked")
 
     class Meta:
         abstract = True
@@ -127,6 +137,9 @@ class Clue(models.Model):
 
 class Hint(Clue):
     time = models.DurationField()
+
+    def __str__(self):
+        return f'Hint unlocked after {self.time}'
 
     def unlocked_by(self, team, data):
         if data.tp_data.start_time:
@@ -144,6 +157,9 @@ class Unlock(Clue):
         )
         return [g for g in guesses if any([u.validate_guess(g) for u in self.unlockanswer_set.all()])]
 
+    def __str__(self):
+        return f'Unlock for {self.puzzle}'
+
 
 class UnlockAnswer(models.Model):
     unlock = models.ForeignKey(Unlock, on_delete=models.CASCADE)
@@ -151,6 +167,12 @@ class UnlockAnswer(models.Model):
         max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
     )
     guess = models.TextField()
+
+    def __str__(self):
+        if self.runtime == rr.STATIC or self.runtime == rr.REGEX:
+            return self.guess
+        else:
+            return '[Using %s]' % self.get_runtime_display()
 
     def validate_guess(self, guess):
         return rr.validate_guess(
@@ -168,7 +190,10 @@ class Answer(models.Model):
     answer = models.TextField()
 
     def __str__(self):
-        return self.answer
+        if self.runtime == rr.STATIC or self.runtime == rr.REGEX:
+            return self.answer
+        else:
+            return '[Using %s]' % self.get_runtime_display()
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -247,10 +272,9 @@ class Guess(models.Model):
         super().save(*args, **kwargs)
 
     def time_on_puzzle(self):
-        team = self.by_team
         data = TeamPuzzleData.objects.filter(
             puzzle=self.for_puzzle,
-            team=team
+            team=self.by_team
         ).get()
         if not data.start_time:
             # This should never happen, but can do with sample data.

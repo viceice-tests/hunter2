@@ -9,7 +9,7 @@ class IFrameRuntime():
         query_params['token'] = user_puzzle_data.token
         url_parts = url_parts._replace(query=urlencode(query_params, doseq=True))
         url = url_parts.geturl()
-        return """<iframe width="100%%" onload="resizeIframe(this)" src="%s"></iframe>
+        return """<iframe width="100%%" frameborder="0" scrolling="no" onload="resizeIframe(this)" src="%s"></iframe>
 <script>
     function resizeIframe(obj) {
         obj.style.height = obj.contentWindow.document.body.scrollHeight + "px";
