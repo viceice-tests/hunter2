@@ -1,3 +1,4 @@
+{% load admin_urls %}
 <div id="guesses-container">
 	<table id="guesses-table">
 	<tr class="guess-viewer-header">
@@ -12,10 +13,16 @@
 	{% for guess in guesses %}
 	<tr class="guess-viewer-guess{% if guess.get_correct_for %} correct{% elif guess.unlocked %} unlocked{% endif %}">
 		<td><a href="?episode={{ guess.episode.id }}">{{ guess.episode.name }}</a></td>
-		<td><a href="?puzzle={{ guess.for_puzzle.id }}">{{ guess.for_puzzle.title }}</a></td>
+		<td>
+			<a href="?puzzle={{ guess.for_puzzle.id }}">{{ guess.for_puzzle.title }}</a>
+			<span class="puzzle-links">
+				(<a href="{% url 'admin:hunts_puzzle_change' guess.for_puzzle.id %}">E</a>
+				<a href="{{ guess.for_puzzle.get_absolute_url }}">V</a>)
+			</span>
+		</td>
 		<td><span class="user">{{ guess.by.user.username }}</span> <span class="team">(<a href="?team={{ guess.by_team.id }}">{{ guess.by_team.name }}</a>)</span></td>
 		<td>{{ guess.by.seat }}</td>
-		<td><span class="guess">{{ guess.guess }}</span></td>
+		<td class="guess">{{ guess.guess }}</td>
 		<td>{{ guess.given }}</td>
 		<td>{{ guess.time_on_puzzle }}</td>
 	</tr>
