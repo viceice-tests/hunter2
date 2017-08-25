@@ -53,6 +53,48 @@ a.puzzle-link {
 	font-size: x-large;
 }
 
+h1 {
+	font-size: 30px;
+}
+
+h2 {
+	font-size: 26px;
+}
+
+h3 {
+	font-size: 21px;
+}
+
+h4 {
+	font-size: 18px;
+}
+
+h5 {
+	font-size 14px;
+}
+
+h6 {
+	font-size: 12px;
+}
+
+hr {
+	margin: 1em 3em 1em 3em;
+	border-top: 1px solid #bbb;
+}
+
+.puzzle-flavour {
+	font-size: 90%;
+	font-style: italic;
+	color: #555;
+}
+
+.flavour-intro {
+	font-size: 100%;
+	font-style: normal;
+	font-weight: bold;
+	color: #333;
+}
+
 *[id$='-error'] {
 	color: red;
 }
