@@ -60,6 +60,8 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
             )
 
         puzzles = episode.unlocked_puzzles(request.team)
+        for puzzle in puzzles:
+            puzzle.done = puzzle.answered_by(request.team)
 
         positions = episode.finished_positions()
         if request.team in positions:
@@ -536,9 +538,9 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
                                                   'puzzle_number': next})
             else:
                 response['text'] = f'back to {episode.name}'
-                response['url'] = reverse('episode', subdomain=request.subdomain,
-                                          kwargs={'event_id': request.event.pk,
-                                                  'episode_number': episode_number}, )
+                response['url'] = reverse('event', subdomain=request.subdomain,
+                                          kwargs={'event_id': request.event.pk})
+                response['url'] += f'#episode-{episode_number}'
         else:
             all_unlocks = models.Unlock.objects.filter(puzzle=puzzle)
             unlocks = []
