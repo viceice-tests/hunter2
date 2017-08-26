@@ -43,3 +43,7 @@
 .guess-viewer-guess .puzzle-links a {
 	font-weight: bold;
 }
+
+.container {
+	width: auto;
+}
