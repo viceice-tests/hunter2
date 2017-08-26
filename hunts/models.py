@@ -286,7 +286,7 @@ class Guess(models.Model):
 
 
 class TeamData(models.Model):
-    team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
+    team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE, unique=True)
     data = JSONField(default={})
 
     class Meta:
@@ -302,6 +302,7 @@ class UserData(models.Model):
     data = JSONField(default={})
 
     class Meta:
+        unique_together = (('event', 'user'), )
         verbose_name_plural = 'User data'
 
     def __str__(self):
@@ -315,6 +316,7 @@ class TeamPuzzleData(models.Model):
     data = JSONField(default={})
 
     class Meta:
+        unique_together = (('puzzle', 'team'), )
         verbose_name_plural = 'Team puzzle data'
 
     def __str__(self):
@@ -328,6 +330,7 @@ class UserPuzzleData(models.Model):
     data = JSONField(default={})
 
     class Meta:
+        unique_together = (('puzzle', 'user'), )
         verbose_name_plural = 'User puzzle data'
 
     def __str__(self):
