@@ -7,14 +7,15 @@
 {% block content %}
 <h1>{{ title }}</h1>
 {% if flavour %}
-<div class="puzzle-flavour">{{ flavour | safe }}</div>
+<!-- This is just flavour text - not related to the puzzle! -->
+<div class="puzzle-flavour"><span class="flavour-intro">Story: </span>{{ flavour | safe }}</div>
 <hr class="flavour-clue-divider">
 {% endif %}
 <!-- CLUE STARTS HERE -->
 {% comment %}Render puzzle text including HTML elements{% endcomment %}
 {{ text | safe }}
 <!-- CLUE ENDS HERE -->
-<h2>Clues</h2>
+<hr />
 <h3>Hints</h3>
 <div id="hints">
 {% for hint in hints %}
