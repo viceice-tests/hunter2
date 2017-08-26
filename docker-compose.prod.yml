@@ -21,6 +21,7 @@ services:
       - H2_PIWIK_SITE
       - H2_SCHEME
       - H2_SENTRY_DSN
+      - UWSGI_WORKERS
     image: ${IMAGE_TAG:-hunter2_app}
     volumes:
       - config:/config
