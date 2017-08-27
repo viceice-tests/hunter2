@@ -410,7 +410,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
         request.puzzle = puzzle
 
         # If episode has not started redirect to episode holding page
-        if episode.started(request.team) and not admin:
+        if not episode.started(request.team) and not admin:
             if request.event:
                 return redirect(
                     'episode',
