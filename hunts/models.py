@@ -286,7 +286,7 @@ class Guess(models.Model):
 
 
 class TeamData(models.Model):
-    team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE, unique=True)
+    team = models.OneToOneField(teams.models.Team, on_delete=models.CASCADE)
     data = JSONField(default={})
 
     class Meta:
