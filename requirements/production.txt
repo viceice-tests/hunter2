@@ -10,6 +10,7 @@ django-enumfields
 django-environ
 django-extensions
 django-nested-admin
+django-sendfile
 django-solo
 django-sortedm2m
 freezegun
