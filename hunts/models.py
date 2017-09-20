@@ -120,7 +120,7 @@ def puzzle_file_path(instance, filename):
 
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    slug = models.SlugField(help_text="Include the URL of the file in puzzle content using $slug or ${slug}.")
+    slug = models.CharField(max_length=50, help_text="Include the URL of the file in puzzle content using $slug or ${slug}.")
     file = models.FileField(upload_to=puzzle_file_path)
 
     class Meta:

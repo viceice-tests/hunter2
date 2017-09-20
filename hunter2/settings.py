@@ -20,6 +20,8 @@ EMAIL_CONFIG       = env.email_url ('H2_EMAIL_URL',     default='smtp://localhos
 EMAIL_DOMAIN       = env.str       ('H2_EMAIL_DOMAIN',  default='hunter2.local')
 ADMINS             = env.list      ('H2_ADMINS',        default=[])
 RAVEN_DSN          = env.str       ('H2_SENTRY_DSN',    default=None)
+SENDFILE_BACKEND   = env.str       ('H2_SENDFILE',      default='sendfile.backends.development')
+
 DATABASES = {
     'default': env.db('H2_DATABASE_URL', default="postgres://postgres:postgres@db:5432/postgres")
 }
@@ -178,6 +180,10 @@ STATICFILES_DIRS = (
 SECURE_BROWSER_XSS_FILTER = True
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+SENDFILE_ROOT = '/uploads'
+
+SENDFILE_URL = '/media'
 
 SITE_ID = 1
 

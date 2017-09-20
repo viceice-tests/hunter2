@@ -6,6 +6,7 @@ puzzlepatterns = [
     url(r'^$', views.Puzzle.as_view(), name='puzzle'),
     url(r'^an$', views.Answer.as_view(), name='answer'),
     url(r'^cb$', views.Callback.as_view(), name='callback'),
+    url(r'^media/(?P<file_slug>\w+)$', views.PuzzleFile.as_view(), name='puzzle_file'),
 ]
 
 episodepatterns = [

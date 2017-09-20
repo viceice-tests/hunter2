@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
@@ -5,16 +6,16 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Prefetch
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views import View
 from django.views.generic import TemplateView
 from hunter2.resolvers import reverse
+from sendfile import sendfile
 from string import Template
 from teams.mixins import TeamMixin
-from collections import defaultdict
 
 from . import models
 from . import rules
@@ -481,6 +482,18 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
         data.save()
 
         return response
+
+
+class PuzzleFile(LoginRequiredMixin, TeamMixin, View):
+    def get(self, request, episode_number, puzzle_number, file_slug):
+        episode, puzzle = utils.event_episode_puzzle(
+            request.event, episode_number, puzzle_number
+        )
+
+        if not puzzle.unlocked_by(request.team):
+            raise PermissionDenied
+        puzzle_file = get_object_or_404(puzzle.puzzlefile_set, slug=file_slug)
+        return sendfile(request, puzzle_file.file.path)
 
 
 class Answer(LoginRequiredMixin, TeamMixin, View):
