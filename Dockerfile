@@ -14,7 +14,7 @@ ARG REQUIREMENTS_VERSION=production
 COPY requirements/${REQUIREMENTS_VERSION}.frozen.txt /usr/src/app/requirements.txt
 COPY hunts/runtimes/lua/luarocks/config.lua /opt/hunter2/luarocks/config-5.2.lua
 
-ARG LUAROCKS_VERSION=2.4.2
+ARG LUAROCKS_VERSION=2.4.3
 ARG LUAROCKS_INSTALL=luarocks-$LUAROCKS_VERSION
 ARG LUAROCKS_TMP_LOC=/tmp/luarocks
 ARG build_deps="gcc lua5.2 lua5.2-dev unzip libimlib2-dev libjson-c-dev"
