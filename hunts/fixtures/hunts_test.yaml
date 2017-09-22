@@ -60,15 +60,22 @@
   pk: 2
   fields:
     user: 2
+- model: teams.userprofile
+  pk: 3
+  fields:
+    user: 3
 - model: teams.team
   pk: 1
   fields: {name: Test Team, at_event: 1, members: [1], is_admin: false}
 - model: teams.team
   pk: 2
   fields: {name: Failure Team, at_event: 1, members: [2], is_admin: false}
+- model: teams.team
+  pk: 3
+  fields: {name: Admin Team, at_event: 1, members: [3], is_admin: true}
 - model: hunts.puzzle
   pk: 1
-  fields: {title: Test Puzzle, runtime: S, content: Test Content, cb_runtime: S,
+  fields: {title: Test Puzzle, flavour: Apple and Raspberry, runtime: S, content: Test Content, cb_runtime: S,
   cb_content: '', headstart_granted: '00:10:00'}
 - model: hunts.puzzle
   pk: 5
@@ -84,7 +91,7 @@
 - model: hunts.unlock
   pk: 1
   fields: {puzzle: 1, text: Test Unlock}
-- model: hunts.unlockguess
+- model: hunts.unlockanswer
   pk: 1
   fields: {unlock: 1, guess: wrong}
 - model: hunts.answer
@@ -104,16 +111,16 @@
   fields: {for_puzzle: 6, runtime: S, answer: correctish}
 - model: hunts.guess
   pk: 1
-  fields: {for_puzzle: 1, by: 1, guess: correct, given: '1970-01-01T00:00:00Z'}
+  fields: {for_puzzle: 1, by: 1, by_team: 1, guess: correct, correct_for: 1, given: '1970-01-01T00:00:00Z'}
 - model: hunts.guess
   pk: 2
-  fields: {for_puzzle: 1, by: 1, guess: correctnot, given: '1970-01-01T00:00:00Z'}
+  fields: {for_puzzle: 1, by: 1, by_team: 1, guess: correctnot, given: '1970-01-01T00:00:00Z'}
 - model: hunts.guess
   pk: 3
-  fields: {for_puzzle: 1, by: 1, guess: incorrect, given: '1970-01-01T00:00:00Z'}
+  fields: {for_puzzle: 1, by: 1, by_team: 1, guess: incorrect, given: '1970-01-01T00:00:00Z'}
 - model: hunts.guess
   pk: 4
-  fields: {for_puzzle: 1, by: 1, guess: wrong, given: '1970-01-01T00:00:00Z'}
+  fields: {for_puzzle: 1, by: 1, by_team: 1, guess: wrong, given: '1970-01-01T00:00:00Z'}
 - model: hunts.episode
   pk: 1
   fields:
@@ -124,16 +131,19 @@
 - model: hunts.puzzle
   pk: 2
   fields: {title: "1 + 1", runtime: S, content: "What is 1 + 1?", cb_runtime: S,
-    cb_content: ''}
+    cb_content: '', headstart_granted: '00:05:00'}
 - model: hunts.unlock
   pk: 2
   fields: {puzzle: 2, text: Close}
-- model: hunts.unlockguess
+- model: hunts.unlockanswer
   pk: 2
   fields: {unlock: 2, guess: 3}
 - model: hunts.answer
   pk: 4
   fields: {for_puzzle: 2, runtime: S, answer: 2}
+- model: hunts.guess
+  pk: 5
+  fields: {for_puzzle: 2, by: 1, by_team: 1, guess: 2, correct_for: 4, given: '1970-01-01T00:00:00Z'}
 - model: hunts.puzzle
   pk: 3
   fields: {title: "2 + 2", runtime: S, content: "What is 2 + 2?", cb_runtime: S,
@@ -141,7 +151,7 @@
 - model: hunts.unlock
   pk: 3
   fields: {puzzle: 3, text: Close}
-- model: hunts.unlockguess
+- model: hunts.unlockanswer
   pk: 3
   fields: {unlock: 3, guess: 4}
 - model: hunts.answer
@@ -154,7 +164,7 @@
 - model: hunts.unlock
   pk: 4
   fields: {puzzle: 4, text: Close}
-- model: hunts.unlockguess
+- model: hunts.unlockanswer
   pk: 4
   fields: {unlock: 4, guess: 5}
 - model: hunts.answer

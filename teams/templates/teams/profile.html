@@ -1,0 +1,38 @@
+{% extends "teams/base.html" %}
+{% load hunter2urls %}
+
+{% block content %}
+<h1>Account</h1>
+<h2>Update your details</h2>
+{% spaceless %}
+<form action="." method="post">
+	{% csrf_token %}
+	{{ user_form.as_p }}
+	{{ profile_formset.as_p }}
+	<button type="submit">Update</button>
+</form>
+{% endspaceless %}
+{% if not steam_linked %}
+<h2>Link your Steam account</h2>
+{% include "socialaccount/snippets/provider_list.html" with process="connect" %}
+{% endif %}
+{% if request.user.has_usable_password %}
+<h2>Change your password</h2>
+{% spaceless %}
+<form action="{% url 'account_change_password' 'www' %}" method="post">
+	{% csrf_token %}
+	{{ password_form.as_p }}
+	<button type="submit">Change password</button>
+</form>
+{% endspaceless %}
+{% else %}
+<h2>Set a password</h2>
+{% spaceless %}
+<form action="{% url 'account_set_password' 'www' %}?next={{ request.get_full_path | urlencode }}" method="post">
+	{% csrf_token %}
+	{{ password_form.as_p }}
+	<button type="submit">Set password</button>
+</form>
+{% endspaceless %}
+{% endif %}
+{% endblock %}

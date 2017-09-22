@@ -22,6 +22,12 @@ docker-compose up -d
 docker-compose run --rm app python manage.py migrate
 ```
 
+To get performance profiling with silk, do:
+```shell
+echo 'H2_SILK=True' >> .env
+docker-compose up -d
+```
+
 If you want minimal data, you can run:
 ```
 docker-compose run --rm app python manage.py createsuperuser
@@ -34,7 +40,8 @@ docker-compose run --rm app python manage.py loaddata hunts/fixtures/hunts_test.
 ```
 
 
-In a production environment (with `DEBUG` disabled) we also need to setup the `Site` object:
+We also need to setup the `Site` object:
 ```
 $ docker-compose run --rm app python manage.py setupsite
 ```
+It's important to set the domain to match the name or IP and port you're using to access the site (eg. 127.0.0.1:8080 for a local docker development instance)

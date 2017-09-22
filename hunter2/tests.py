@@ -1,6 +1,7 @@
 # vim: set fileencoding=utf-8 :
 import os
 import tempfile
+import logging
 from io import StringIO
 
 import builtins
@@ -15,12 +16,15 @@ from .utils import generate_secret_key, load_or_create_secret_key
 
 
 class TestRunner(ColourRunnerMixin, DiscoverRunner):
-    pass
+    def run_tests(self, test_labels, extra_tests=None, **kwargs):
+        # Disable non-critial logging for test runs
+        logging.disable(logging.CRITICAL)
+        return super(TestRunner, self).run_tests(test_labels, extra_tests, **kwargs)
 
 
 # Adapted from:
 # https://github.com/django/django/blob/7588d7e439a5deb7f534bdeb2abe407b937e3c1a/tests/auth_tests/test_management.py
-def mock_inputs(inputs):
+def mock_inputs(inputs):  # nocover
     """
     Decorator to temporarily replace input/getpass to allow interactive
     createsuperuser.
@@ -52,7 +56,7 @@ class MockTTY:
     with mock_inputs.
     """
 
-    def isatty(self):
+    def isatty(self):  # nocover
         return True
 
 
@@ -73,7 +77,7 @@ class MigrationsTests(TestCase):
         except SystemExit as e:
             # The exit code will be 1 when there are no missing migrations
             self.assertEqual(str(e), '1')
-        else:
+        else:  # nocover
             self.fail("There are missing migrations:\n %s" % output.getvalue())
 
 

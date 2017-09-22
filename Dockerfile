@@ -1,9 +1,6 @@
-FROM python:3.6.1
+FROM python:3.6.2
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG LUAROCKS_VERSION=2.4.2
-ARG LUAROCKS_INSTALL=luarocks-$LUAROCKS_VERSION
-ARG LUAROCKS_TMP_LOC=/tmp/luarocks
 
 RUN apt-get update \
  && apt-get -y install \
@@ -13,10 +10,13 @@ RUN apt-get update \
     libjson-c2 \
  && rm -rf /var/lib/apt/lists/*
 
-COPY requirements/frozen.txt /usr/src/app/requirements.txt
+ARG REQUIREMENTS_VERSION=production
+COPY requirements/${REQUIREMENTS_VERSION}.frozen.txt /usr/src/app/requirements.txt
 COPY hunts/runtimes/lua/luarocks/config.lua /opt/hunter2/luarocks/config-5.2.lua
-WORKDIR /usr
 
+ARG LUAROCKS_VERSION=2.4.2
+ARG LUAROCKS_INSTALL=luarocks-$LUAROCKS_VERSION
+ARG LUAROCKS_TMP_LOC=/tmp/luarocks
 ARG build_deps="gcc lua5.2 lua5.2-dev unzip libimlib2-dev libjson-c-dev"
 RUN apt-get update \
  && apt-get -y install ${build_deps} \
@@ -44,7 +44,7 @@ WORKDIR /usr/src/app
 COPY . .
 
 RUN addgroup --gid 500 --system django \
- && adduser --system --shell /sbin/nologin --gid 500 --system --uid 500 django \
+ && adduser --system --home /usr/src/app --shell /sbin/nologin --gid 500 --system --uid 500 django \
  && install -d -g django -o django /config /static /uploads/events /uploads/puzzles
 USER django
 
