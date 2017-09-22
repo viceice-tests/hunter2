@@ -60,6 +60,7 @@ doc:graph:
   dependencies:
     - build:app
   script:
+    - ls -la
     - docker-compose -f docker-compose.check.yml run --rm dot
   artifacts:
     expire_in: 90 days
