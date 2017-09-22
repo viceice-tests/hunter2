@@ -20,7 +20,7 @@ ARG LUAROCKS_TMP_LOC=/tmp/luarocks
 ARG build_deps="gcc lua5.2 lua5.2-dev unzip libimlib2-dev libjson-c-dev"
 RUN apt-get update \
  && apt-get -y install ${build_deps} \
- && pip install -r /usr/src/app/requirements.txt --no-deps \
+ && pip install -r /usr/src/app/requirements.txt --no-deps --no-binary lupa \
  && curl -OL https://luarocks.org/releases/${LUAROCKS_INSTALL}.tar.gz \
  && tar xzf $LUAROCKS_INSTALL.tar.gz \
  && mv $LUAROCKS_INSTALL $LUAROCKS_TMP_LOC \
