@@ -60,7 +60,7 @@ doc:graph:
   dependencies:
     - build:app
   script:
-    - docker-compose -f docker-compose.check.yml run --rm --verbose dot
+    - docker-compose -f docker-compose.check.yml --verbose run --rm dot
   artifacts:
     expire_in: 90 days
     name: models-graph
