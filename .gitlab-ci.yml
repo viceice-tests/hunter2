@@ -31,6 +31,7 @@ build:app:
     IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
   script:
     - docker-compose build $SERVICE
+    - sleep 86400
     - docker-compose run $SERVICE sh -c "python manage.py graph_models -a > models.dot"
     - docker save -o $IMAGE_FILE $IMAGE_TAG
   artifacts:
