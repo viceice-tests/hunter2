@@ -61,13 +61,12 @@ doc:graph:
   dependencies:
     - build:app
   script:
-    - find .
     - docker-compose -f docker-compose.check.yml run --rm dot
   artifacts:
     expire_in: 90 days
     name: models-graph
     paths:
-      - models.svg
+      - diagram/models.svg
 
 test:
   stage: test
