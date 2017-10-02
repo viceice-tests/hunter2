@@ -67,21 +67,6 @@ sandbox.env = {
   type         = _G.type,
   xpcall       = _G.xpcall,
 
-  bit32 = {
-    arshift = _G.bit32.arshift,
-    band    = _G.bit32.band,
-    bnot    = _G.bit32.bnot,
-    bor     = _G.bit32.bor,
-    btest   = _G.bit32.btest,
-    bxor    = _G.bit32.bxor,
-    extract = _G.bit32.extract,
-    lrotate = _G.bit32.lrotate,
-    lshift  = _G.bit32.lshift,
-    replace = _G.bit32.replace,
-    rrotate = _G.bit32.rrotate,
-    rshift  = _G.bit32.rshift,
-  },
-
   -- coroutine = {}
   -- debug = {}
   -- io = {} -- TODO: Implement in restricted sandbox
