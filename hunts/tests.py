@@ -1,4 +1,3 @@
-# vim: set fileencoding=utf-8 :
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.test import TestCase
@@ -12,6 +11,20 @@ from .runtimes.registry import RuntimesRegistry as rr
 
 import datetime
 import freezegun
+
+
+class RegexValidationTests(TestCase):
+    fixtures = ['hunts_test']
+
+    def test_save_answer(self):
+        puzzle = Puzzle.objects.get(pk=1)
+        with self.assertRaises(ValidationError):
+            Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[NotARegex').save()
+
+    def test_save_unlock_guess(self):
+        unlock = Unlock.objects.get(pk=1)
+        with self.assertRaises(ValidationError):
+            UnlockGuess(unlock=unlock, runtime=rr.REGEX, answer='[NotARegex').save()
 
 
 class AnswerValidationTests(TestCase):

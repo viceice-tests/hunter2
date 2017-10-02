@@ -1,5 +1,5 @@
-# vim: set fileencoding=utf-8 :
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -44,7 +44,7 @@ class Puzzle(models.Model):
             rr.check_script(self.runtime, self.content)
             rr.check_script(self.cb_runtime, self.cb_content)
         except SyntaxError as e:
-            raise ValidationError from e
+            raise ValidationError(e) from e
 
 
     def get_absolute_url(self):
@@ -188,7 +188,7 @@ class UnlockAnswer(models.Model):
         try:
             rr.check_script(self.runtime, self.guess)
         except SyntaxError as e:
-            raise ValidationError from e
+            raise ValidationError(e) from e
 
     def validate_guess(self, guess):
         return rr.validate_guess(
@@ -216,7 +216,7 @@ class Answer(models.Model):
         try:
             rr.check_script(self.runtime, self.answer)
         except SyntaxError as e:
-            raise ValidationError from e
+            raise ValidationError(e) from e
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
