@@ -18,10 +18,15 @@ before_script:
   - chmod -R g-w,o-w .
   - ln -s docker-compose.test.yml docker-compose.yml
 
-flake8:
+check:flake8:
   stage: check
   script:
     - docker-compose -f docker-compose.check.yml run --rm flake8 --verbose
+
+check:jshint:
+  stage: check
+  script:
+    - docker-compose -f docker-compose.check.yml run --rm jshint
 
 build:app:
   stage: build

@@ -6,6 +6,10 @@ services:
     image: registry.gitlab.com/rconan/docker-graphviz:0.0.1
     volumes:
       - ${PWD:-.}:/files
+  jshint:
+    image: registry.gitlab.com/rconan/docker-jshint:0.0.4
+    volumes:
+      - ${PWD:-.}:/code
   flake8:
     image: registry.gitlab.com/rconan/docker-flake8:0.0.3
     volumes:
