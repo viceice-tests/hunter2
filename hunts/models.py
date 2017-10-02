@@ -38,6 +38,15 @@ class Puzzle(models.Model):
     def __str__(self):
         return self.title
 
+    def clean(self):
+        super().clean()
+        try:
+            rr.check_script(self.runtime, self.content)
+            rr.check_script(self.cb_runtime, self.cb_content)
+        except SyntaxError as e:
+            raise ValidationError from e
+
+
     def get_absolute_url(self):
         try:
             episode = self.episode_set.get()
@@ -174,6 +183,13 @@ class UnlockAnswer(models.Model):
         else:
             return '[Using %s]' % self.get_runtime_display()
 
+    def clean(self):
+        super().clean()
+        try:
+            rr.check_script(self.runtime, self.guess)
+        except SyntaxError as e:
+            raise ValidationError from e
+
     def validate_guess(self, guess):
         return rr.validate_guess(
             self.runtime,
@@ -194,6 +210,13 @@ class Answer(models.Model):
             return self.answer
         else:
             return '[Using %s]' % self.get_runtime_display()
+
+    def clean(self):
+        super().clean()
+        try:
+            rr.check_script(self.runtime, self.answer)
+        except SyntaxError as e:
+            raise ValidationError from e
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
