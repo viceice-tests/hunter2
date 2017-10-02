@@ -31,15 +31,15 @@ build:app:
     IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
   script:
     - docker-compose build $SERVICE
-    - sleep 86400
-    - docker-compose run $SERVICE sh -c "python manage.py graph_models -a > models.dot"
+    - install -d -m 777 diagram
+    - docker-compose run $SERVICE sh -c "python manage.py graph_models -a > diagram/models.dot"
     - docker save -o $IMAGE_FILE $IMAGE_TAG
   artifacts:
     expire_in: 90 days
     name: app-container
     paths:
       - $IMAGE_FILE
-      - models.dot
+      - diagram/models.dot
 
 build:web:
   stage: build
