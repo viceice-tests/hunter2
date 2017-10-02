@@ -9,6 +9,7 @@ django-debug-toolbar
 django-enumfields
 django-environ
 django-extensions
+django-fullclean
 django-nested-admin
 django-sendfile
 django-solo
