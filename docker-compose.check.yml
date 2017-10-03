@@ -1,6 +1,11 @@
 version: '2.1'
 
 services:
+  dot:
+    command: -v -Tsvg -o/files/diagram/models.svg /files/diagram/models.dot
+    image: registry.gitlab.com/rconan/docker-graphviz:0.0.1
+    volumes:
+      - ${PWD:-.}:/files
   jshint:
     image: registry.gitlab.com/rconan/docker-jshint:0.0.4
     volumes:
