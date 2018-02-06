@@ -1,0 +1,42 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+Django = "<2.0"
+PyYAML = "*"
+colour-runner = "*"
+coverage = "*"
+django-allauth = "*"
+django-analytical = "*"
+django-autocomplete-light = "*"
+django-debug-toolbar = "*"
+django-enumfields = "*"
+django-environ = "*"
+django-extensions = "*"
+django-nested-admin = "*"
+django-sendfile = "*"
+django-solo = "*"
+"django-sortedm2m" = "*"
+freezegun = "*"
+lupa = "*"
+parameterized = "*"
+"psycopg2" = "*"
+raven = "*"
+rules = "*"
+subdomains = "*"
+uWSGI = "*"
+validators = "*"
+wait = "*"
+
+
+[dev-packages]
+
+Django = "<2.0"  # Duplicated due to https://github.com/pypa/pipenv/issues/1220
+django-silk = "*"
+ipython = "*"
+ptpython = "*"
