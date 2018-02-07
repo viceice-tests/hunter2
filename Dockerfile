@@ -35,7 +35,7 @@ RUN apt-get update \
     --force-config \
  && make install \
  && cd - \
- && luarocks install lua-imlib2 0.1-4 \
+ && luarocks install lua-imlib2 dev-2 \
  && luarocks install lua-cjson 2.1.0-1 \
  && apt-get -y purge ${BUILD_DEPS} \
  && apt-get -y --purge autoremove \
