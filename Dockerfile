@@ -22,7 +22,8 @@ RUN apk add --no-cache \
     luarocks5.2 \
     musl-dev \
     postgresql-dev \
- && pip install -r /usr/src/app/requirements.txt --no-deps --no-binary lupa \
+ && pip install --no-deps -r pipenv.txt \
+ && pipenv install --system --deploy \
  && luarocks-5.2 install lua-cjson \
  && luarocks-5.2 install lua-imlib2 \
  && apk del builddeps
