@@ -23,7 +23,7 @@ RUN apk add --no-cache \
     musl-dev \
     postgresql-dev \
  && pip install --no-deps -r pipenv.txt \
- && pipenv install --system --deploy \
+ && pipenv install --system --verbose --deploy \
  && luarocks-5.2 install lua-cjson \
  && luarocks-5.2 install lua-imlib2 \
  && apk del builddeps
