@@ -6,7 +6,7 @@
 {% else %}
 <div class="puzzle-box puzzle-available">
 {% endif %}
-	<a class="puzzle-link" href="{% url 'puzzle' 'www' event_id episode_number forloop.counter %}">{{ puzzle.title }}</a>
+	<a class="puzzle-link" href="{% url 'puzzle' event_id episode_number forloop.counter %}">{{ puzzle.title }}</a>
 </div>
 {% endfor %}
 </div>

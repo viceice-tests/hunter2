@@ -9,7 +9,7 @@
 {% if episodes|length > 0 %}
 <ul id="ep-list" class="nav nav-tabs">
 {% for episode in episodes %}
-<li><a class="episode-link" href="#episode-{{ episode.index }}" data-url="{% url 'episode_content' 'www' event_id=event_id episode_number=episode.index %}" data-toggle="tab">{{ episode.name }}</a></li>
+<li><a class="episode-link" href="#episode-{{ episode.index }}" data-url="{% url 'episode_content' event_id=event_id episode_number=episode.index %}" data-toggle="tab">{{ episode.name }}</a></li>
 {% endfor %}
 </ul>
 <div class="tab-content">
