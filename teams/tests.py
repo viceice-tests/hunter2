@@ -200,6 +200,20 @@ class InviteTests(TestCase):
             }),
             'application/json',
         )
+        self.assertEqual(response.status_code, 403)
+
+
+class RequestTests(TestCase):
+    fixtures = ['teams_test']
+
+    def setUp(self):
+        self.assertTrue(self.client.login(username='test_b', password='hunter2'))
+        response = self.client.post(
+            reverse('request', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            json.dumps({}),
+            'application/json',
+            HTTP_HOST='www.testserver',
+        )
         self.assertEqual(response.status_code, 200)
 
     def test_request_accept(self):
