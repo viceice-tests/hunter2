@@ -184,11 +184,6 @@ SENDFILE_URL = '/media'
 
 SITE_ID = 1
 
-SUBDOMAIN_URLCONFS = {
-    'admin': 'hunter2.urls.admin',
-    'www': 'hunter2.urls.www',
-}
-
 TEMPLATES = [
     {
         'APP_DIRS': True,

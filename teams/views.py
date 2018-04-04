@@ -52,7 +52,7 @@ class CreateTeamView(LoginRequiredMixin, TeamMixin, UpdateView):
     def get_success_url(self):
         event_id = self.request.event.pk
         team_id = self.request.team.pk
-        return reverse('team', subdomain=self.request.subdomain, kwargs={'event_id': event_id, 'team_id': team_id})
+        return reverse('team', kwargs={'event_id': event_id, 'team_id': team_id})
 
 
 class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
@@ -393,4 +393,4 @@ class EditProfileView(LoginRequiredMixin, View):
             if profile_formset.is_valid():
                 created_user.save()
                 profile_formset.save()
-                return HttpResponseRedirect(reverse('edit_profile', subdomain='www'))
+                return HttpResponseRedirect(reverse('edit_profile'))

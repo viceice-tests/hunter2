@@ -546,14 +546,13 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
             next = episode.next_puzzle(request.team)
             if next:
                 response['text'] = f'to the next puzzle'
-                response['url'] = reverse('puzzle', subdomain=request.subdomain,
+                response['url'] = reverse('puzzle',
                                           kwargs={'event_id': request.event.pk,
                                                   'episode_number': episode_number,
                                                   'puzzle_number': next})
             else:
                 response['text'] = f'back to {episode.name}'
-                response['url'] = reverse('event', subdomain=request.subdomain,
-                                          kwargs={'event_id': request.event.pk})
+                response['url'] = reverse('event', kwargs={'event_id': request.event.pk})
                 response['url'] += f'#episode-{episode_number}'
         else:
             all_unlocks = models.Unlock.objects.filter(puzzle=puzzle)

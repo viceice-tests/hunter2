@@ -49,7 +49,7 @@ class Puzzle(models.Model):
             'episode_number': episode.get_relative_id(),
             'puzzle_number': self.get_relative_id()
         }
-        return reverse('puzzle', subdomain='www', kwargs=params)
+        return reverse('puzzle', kwargs=params)
 
     def get_relative_id(self):
         try:

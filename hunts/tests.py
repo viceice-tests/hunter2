@@ -65,17 +65,15 @@ class AnswerSubmissionTest(TestCase):
 
     def test_answer_cooldown(self):
         self.assertTrue(self.client.login(username='test', password='hunter2'))
-        url = reverse('answer', subdomain='www',
-                      kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1},
-                      )
+        url = reverse('answer', kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1})
         with freezegun.freeze_time() as frozen_datetime:
-            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'})
             self.assertEqual(response.status_code, 200)
-            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'})
             self.assertEqual(response.status_code, 429)
             self.assertTrue(b'error' in response.content)
             frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
-            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'})
             self.assertEqual(response.status_code, 200)
 
 
@@ -84,11 +82,11 @@ class PuzzleStartTimeTests(TestCase):
 
     def test_start_times(self):
         self.assertTrue(self.client.login(username='test', password='hunter2'))
-        response = self.client.get('/event/1/ep/1/pz/1/', HTTP_HOST='www.testserver')
+        response = self.client.get('/event/1/ep/1/pz/1/')
         self.assertEqual(response.status_code, 200)
         first_time = TeamPuzzleData.objects.get().start_time
         self.assertIsNot(first_time, None)
-        response = self.client.get('/event/1/ep/1/pz/1/', HTTP_HOST='www.testserver')
+        response = self.client.get('/event/1/ep/1/pz/1/')
         self.assertEqual(response.status_code, 200)
         second_time = TeamPuzzleData.objects.get().start_time
         self.assertEqual(first_time, second_time)
@@ -227,7 +225,7 @@ class AdminTeamTests(TestCase):
     def test_can_view_episode(self):
         self.assertTrue(self.client.login(username='admin', password='hunter2'))
 
-        response = self.client.get(reverse('episode', subdomain='www', kwargs={'event_id': 1, 'episode_number': 1}), HTTP_HOST='www.testserver')
+        response = self.client.get(reverse('episode', kwargs={'event_id': 1, 'episode_number': 1}))
         self.assertEqual(response.status_code, 200)
 
 
@@ -236,7 +234,7 @@ class AdminViewTests(TestCase):
 
     def test_can_view_guesses(self):
         self.assertTrue(self.client.login(username='admin', password='hunter2'))
-        response = self.client.get(reverse('guesses', subdomain='admin', kwargs={'event_id': 1}), HTTP_HOST='admin.testserver')
+        response = self.client.get(reverse('guesses', kwargs={'event_id': 1}))
         self.assertEqual(response.status_code, 200)
 
 
