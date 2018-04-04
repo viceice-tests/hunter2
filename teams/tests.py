@@ -3,9 +3,9 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.views import View
 from django.test import RequestFactory, TestCase
+from django.urls import reverse
 
 from events.models import Event
-from hunter2.resolvers import reverse
 from .mixins import TeamMixin
 from .models import Team, UserProfile
 

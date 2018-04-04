@@ -19,7 +19,6 @@ parameterized
 psycopg2
 raven
 rules
-subdomains
 uwsgi
 validators
 wait

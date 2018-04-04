@@ -10,9 +10,9 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
-from hunter2.resolvers import reverse
 from sendfile import sendfile
 from string import Template
 from teams.mixins import TeamMixin

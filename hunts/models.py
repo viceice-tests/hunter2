@@ -1,13 +1,13 @@
-# vim: set fileencoding=utf-8 :
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.urls import reverse
 from sortedm2m.fields import SortedManyToManyField
-from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
 from enumfields import EnumField, Enum
-from hunter2.resolvers import reverse
+
+from .runtimes.registry import RuntimesRegistry as rr
 
 import events
 import teams

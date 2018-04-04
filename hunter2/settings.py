@@ -98,7 +98,6 @@ INSTALLED_APPS = (
     'rules.apps.AutodiscoverRulesConfig',
     'solo',
     'sortedm2m',
-    'subdomains',
 )
 if USE_SILK:  # nocover
     INSTALLED_APPS = INSTALLED_APPS + ('silk',)
@@ -133,7 +132,6 @@ MIDDLEWARE = (
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'subdomains.middleware.SubdomainURLRoutingMiddleware',
     'django.middleware.common.CommonMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -141,7 +139,6 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
-    'subdomains.middleware.SubdomainMiddleware',
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )

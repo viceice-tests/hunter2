@@ -5,9 +5,9 @@ from django.db.models import Q
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
+from django.urls import reverse
 from django.views import View
 from django.views.generic import UpdateView
-from hunter2.resolvers import reverse
 from . import forms, models
 from .forms import CreateTeamForm, InviteForm, RequestForm
 from .mixins import TeamMixin

@@ -1,6 +1,18 @@
 from django.conf.urls import include, url
-from .. import views
 from django.views.generic import TemplateView
+
+from . import views
+
+eventadminpatterns = [
+    url(r'^episode_list$', views.EpisodeList.as_view(), name='episode_list'),
+    url(r'^guesses$', views.Guesses.as_view(), name='guesses'),
+    url(r'^guesses_content$', views.GuessesContent.as_view(), name='guesses_content'),
+    url(r'^stats$', views.Stats.as_view(), name='stats'),
+    url(r'^stats_content/(?P<episode_id>[a-z0-9]+)$', views.StatsContent.as_view(), name='stats_content'),
+]
+
+urlpatterns = [
+]
 
 puzzlepatterns = [
     url(r'^$', views.Puzzle.as_view(), name='puzzle'),
@@ -42,5 +54,6 @@ urlpatterns = [
     ),
     url(r'^event/$', views.EventDirect.as_view()),
     url(r'^event/(?P<event_id>[1-9]\d*)/', include(eventpatterns)),
+    url(r'^eventadmin/(?P<event_id>[1-9]\d*)/', include(eventadminpatterns)),
     url(r'^puzzle_info$', views.PuzzleInfo.as_view(), name='puzzle_info'),
 ]

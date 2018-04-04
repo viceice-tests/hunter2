@@ -1,9 +1,8 @@
-# vim: set fileencoding=utf-8 :
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
-from hunter2.resolvers import reverse
+from django.urls import reverse
 
 from events.models import Event
 from teams.models import Team, UserProfile
