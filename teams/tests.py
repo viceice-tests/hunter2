@@ -209,10 +209,9 @@ class RequestTests(TestCase):
     def setUp(self):
         self.assertTrue(self.client.login(username='test_b', password='hunter2'))
         response = self.client.post(
-            reverse('request', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('request', kwargs={'event_id': 1, 'team_id': 1}),
             json.dumps({}),
             'application/json',
-            HTTP_HOST='www.testserver',
         )
         self.assertEqual(response.status_code, 200)
 
