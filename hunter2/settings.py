@@ -5,6 +5,8 @@ import logging
 # Load the current environment profile
 root = environ.Path(__file__) - 2
 env = environ.Env()
+env.DB_SCHEMES['postgres'] = 'django_tenants.postgresql_backend'
+env.DB_SCHEMES['postgresql'] = 'django_tenants.postgresql_backend'
 
 # Default settings which should be overridden by environment variables
 DEBUG              = env.bool      ('H2_DEBUG',         default=False)
@@ -66,14 +68,17 @@ AUTHENTICATION_BACKENDS = (
 
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
+
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
-INSTALLED_APPS = (
+SHARED_APPS = (
     # Our apps first to allow us to override third party templates
     # These are in dependency order
     'events',
     'teams',
-    'hunts',
     'hunter2',
     # Third party apps
     # These are in alphabetical order
@@ -85,7 +90,6 @@ INSTALLED_APPS = (
     'dal',
     'dal_select2',
     'debug_toolbar',
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -93,6 +97,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.staticfiles',
     'django_extensions',
+    'django_tenants',
     'nested_admin',
     'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',
@@ -100,7 +105,19 @@ INSTALLED_APPS = (
     'sortedm2m',
 )
 if USE_SILK:  # nocover
-    INSTALLED_APPS = INSTALLED_APPS + ('silk',)
+    SHARED_APPS += ('silk',)
+
+TENANT_APPS = (
+    # Our apps first to allow us to override third party templates
+    # These are in dependency order
+    'hunts',
+    # Third party apps
+    # These are in alphabetical order
+    'django.contrib.admin',
+    'django.contrib.contenttypes',
+)
+
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 LOGGING = {
     'version': 1,
@@ -129,6 +146,7 @@ MEDIA_ROOT = '/uploads/'
 MEDIA_URL = '/media/'
 
 MIDDLEWARE = (
+    'django_tenants.middleware.default.DefaultTenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -204,6 +222,9 @@ TEMPLATES = [
         },
     },
 ]
+
+TENANT_MODEL = 'events.Tenant'
+TENANT_DOMAIN_MODEL = 'events.Domain'
 
 TEST_RUNNER = 'hunter2.tests.TestRunner'
 

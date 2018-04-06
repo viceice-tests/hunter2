@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.core.validators import MinValueValidator
+from django_tenants.models import TenantMixin, DomainMixin
 
 from .fields import SingleTrueBooleanField
 
@@ -14,8 +15,17 @@ class Theme(models.Model):
         return self.name
 
 
+class Tenant(TenantMixin):
+    pass
+
+
+class Domain(DomainMixin):
+    pass
+
+
 class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
     theme = models.ForeignKey(Theme, on_delete=models.CASCADE, related_name='theme')
     current = SingleTrueBooleanField()
     about_text = models.TextField(help_text='Content for the event about page')
