@@ -1,4 +1,4 @@
-FROM python:3.6.4-alpine3.7 AS build
+FROM python:3.6.4-alpine3.7 AS python_build
 
 ARG PIPENV_PARAMS=
 COPY pip.conf /etc/pip.conf
@@ -16,32 +16,36 @@ RUN pip install --no-deps -r pipenv.txt
 RUN pipenv lock ${PIPENV_PARAMS} -r --keep-outdated > requirements.txt
 RUN pip wheel -r requirements.txt -w /wheels
 
-FROM python:3.6.4-alpine3.7
 
-COPY --from=build /usr/src/app/requirements.txt /usr/src/app/
-COPY --from=build /wheels /wheels
+FROM alpine:3.7 AS lua_build
+
 COPY hunts/runtimes/lua/luarocks/config.lua /etc/luarocks/config-5.2.lua
 
-WORKDIR /usr/src/app
-
 RUN apk add --no-cache \
-    curl \
-    lua5.2 \
-    postgresql-client \
-    postgresql-libs \
-    imlib2 \
-    luarocks5.2
-RUN pip install --no-index --find-links=/wheels -r requirements.txt
-RUN apk add --no-cache -t builddeps \
     curl \
     gcc \
     imlib2-dev \
     lua5.2-dev \
     luarocks5.2 \
-    musl-dev \
- && luarocks-5.2 install lua-cjson \
- && luarocks-5.2 install lua-imlib2 \
- && apk del builddeps
+    musl-dev
+RUN luarocks-5.2 install lua-cjson
+RUN luarocks-5.2 install lua-imlib2
+
+
+FROM python:3.6.4-alpine3.7
+
+COPY --from=python_build /usr/src/app/requirements.txt /usr/src/app/
+COPY --from=python_build /wheels /wheels
+
+WORKDIR /usr/src/app
+
+RUN apk add --no-cache \
+    lua5.2 \
+    postgresql-client \
+    postgresql-libs \
+    imlib2
+RUN pip install --no-index --find-links=/wheels -r requirements.txt
+COPY --from=lua_build /opt/hunter2 /opt/hunter2
 
 COPY . .
 
