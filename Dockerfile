@@ -1,6 +1,6 @@
 FROM python:3.6.4-alpine3.7 AS python_build
 
-ARG PIPENV_PARAMS=
+ARG DEVELOPMENT=
 COPY pip.conf /etc/pip.conf
 COPY Pipfile Pipfile.lock pipenv.txt /usr/src/app/
 WORKDIR /usr/src/app
@@ -13,7 +13,8 @@ RUN apk add --no-cache \
     musl-dev \
     postgresql-dev
 RUN pip install --no-deps -r pipenv.txt
-RUN pipenv lock ${PIPENV_PARAMS} -r --keep-outdated > requirements.txt
+RUN pipenv lock -r --keep-outdated > requirements.txt
+RUN [ -z ${DEVELOPMENT} ] || pipenv lock -d -r --keep-outdated >> requirements.txt
 RUN pip wheel -r requirements.txt -w /wheels
 
 
@@ -28,13 +29,12 @@ RUN apk add --no-cache \
     lua5.2-dev \
     luarocks5.2 \
     musl-dev
-RUN luarocks-5.2 install lua-cjson
-RUN luarocks-5.2 install lua-imlib2
+RUN luarocks-5.2 install lua-cjson 2.1.0-1
+RUN luarocks-5.2 install lua-imlib2 dev-2
 
 
 FROM python:3.6.4-alpine3.7
 
-COPY --from=python_build /usr/src/app/requirements.txt /usr/src/app/
 COPY --from=python_build /wheels /wheels
 
 WORKDIR /usr/src/app
@@ -44,7 +44,7 @@ RUN apk add --no-cache \
     postgresql-client \
     postgresql-libs \
     imlib2
-RUN pip install --no-index --find-links=/wheels -r requirements.txt
+RUN python -m wheel install --force /wheels/*.whl
 COPY --from=lua_build /opt/hunter2 /opt/hunter2
 
 COPY . .

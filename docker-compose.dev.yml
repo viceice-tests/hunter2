@@ -11,7 +11,7 @@ services:
     build:
        context: .
        args:
-          PIPENV_PARAMS: --dev
+          DEVELOPMENT: "true"
     command: python manage.py runserver 0.0.0.0:3031
     depends_on:
       - db

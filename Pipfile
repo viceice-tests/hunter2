@@ -36,7 +36,6 @@ wait = "*"
 
 [dev-packages]
 
-Django = "<2.0"  # Duplicated due to https://github.com/pypa/pipenv/issues/1220
 django-silk = "*"
 ipython = "*"
 ptpython = "*"
