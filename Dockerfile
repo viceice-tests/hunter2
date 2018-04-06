@@ -1,29 +1,44 @@
-FROM python:3.6.4-alpine3.7
+FROM python:3.6.4-alpine3.7 AS build
 
 ARG PIPENV_PARAMS=
 COPY pip.conf /etc/pip.conf
 COPY Pipfile Pipfile.lock pipenv.txt /usr/src/app/
+WORKDIR /usr/src/app
+
+RUN apk add --no-cache \
+    gcc \
+    git \
+    linux-headers \
+    lua5.2-dev \
+    musl-dev \
+    postgresql-dev
+RUN pip install --no-deps -r pipenv.txt
+RUN pipenv lock ${PIPENV_PARAMS} -r --keep-outdated > requirements.txt
+RUN pip wheel -r requirements.txt -w /wheels
+
+FROM python:3.6.4-alpine3.7
+
+COPY --from=build /usr/src/app/requirements.txt /usr/src/app/
+COPY --from=build /wheels /wheels
 COPY hunts/runtimes/lua/luarocks/config.lua /etc/luarocks/config-5.2.lua
 
 WORKDIR /usr/src/app
 
 RUN apk add --no-cache \
+    curl \
     lua5.2 \
     postgresql-client \
     postgresql-libs \
     imlib2 \
- && apk add --no-cache -t builddeps \
+    luarocks5.2
+RUN pip install --no-index --find-links=/wheels -r requirements.txt
+RUN apk add --no-cache -t builddeps \
     curl \
     gcc \
-    git \
     imlib2-dev \
-    linux-headers \
     lua5.2-dev \
     luarocks5.2 \
     musl-dev \
-    postgresql-dev \
- && pip install --no-deps -r pipenv.txt \
- && pipenv install --system --verbose --deploy \
  && luarocks-5.2 install lua-cjson \
  && luarocks-5.2 install lua-imlib2 \
  && apk del builddeps
