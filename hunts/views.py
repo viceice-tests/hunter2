@@ -451,7 +451,14 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
 
         files = {
             **{f.slug: f.file.url for f in request.event.eventfile_set.all()},
-            **{f.slug: f.file.url for f in puzzle.puzzlefile_set.all()},
+            **{f.slug: reverse(
+                'puzzle_file',
+                kwargs={
+                    'event_id': request.event.pk,
+                    'episode_number': episode_number,
+                    'puzzle_number': puzzle_number,
+                    'file_slug': f.slug,
+                }) for f in puzzle.puzzlefile_set.all()},
         }  # Puzzle files with matching slugs override hunt counterparts
 
         text = Template(rr.evaluate(
