@@ -1,4 +1,4 @@
-FROM python:3.6.4-alpine3.7 AS python_build
+FROM python:3.6.5-alpine3.7 AS python_build
 
 ARG DEVELOPMENT=
 COPY pip.conf /etc/pip.conf
@@ -33,7 +33,7 @@ RUN luarocks-5.2 install lua-cjson 2.1.0-1
 RUN luarocks-5.2 install lua-imlib2 dev-2
 
 
-FROM python:3.6.4-alpine3.7
+FROM python:3.6.5-alpine3.7
 
 COPY --from=python_build /wheels /wheels
 
