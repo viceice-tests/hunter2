@@ -13,6 +13,7 @@ django-nested-admin
 django-sendfile
 django-solo
 django-sortedm2m
+django-url-tools
 freezegun
 lupa
 parameterized
