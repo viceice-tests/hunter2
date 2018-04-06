@@ -458,7 +458,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
                     'episode_number': episode_number,
                     'puzzle_number': puzzle_number,
                     'file_slug': f.slug,
-                }) for f in puzzle.puzzlefile_set.all()},
+                }, subdomain='www') for f in puzzle.puzzlefile_set.all()},
         }  # Puzzle files with matching slugs override hunt counterparts
 
         text = Template(rr.evaluate(
