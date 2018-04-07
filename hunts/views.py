@@ -441,7 +441,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
 
         answered = puzzle.answered_by(request.team)
         hints = [
-            h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
+            h for h in puzzle.hint_set.all().order_by('time') if h.unlocked_by(request.team, data)
         ]
         unlocks = []
         for u in puzzle.unlock_set.all():
