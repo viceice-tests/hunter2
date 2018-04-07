@@ -212,12 +212,18 @@ class GuessesContent(LoginRequiredMixin, View):
                 if any([a.validate_guess(g) for a in unlockanswers]):
                     g.unlocked = True
 
+        # Grab the current URL (which is not the URL of *this* view) so that we can manipulate the query string
+        # in the template.
+        current_url = reverse('guesses', subdomain=request.subdomain, kwargs={'event_id': request.event.pk})
+        current_url += '?' + request.GET.urlencode()
+
         return TemplateResponse(
             request,
             'hunts/guesses_content.html',
             context={
                 'event_id': request.event.pk,
                 'guesses': guesses,
+                'current_url': current_url
             }
         )
 
