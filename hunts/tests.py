@@ -6,7 +6,7 @@ from hunter2.resolvers import reverse
 
 from events.models import Event
 from teams.models import Team, UserProfile
-from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, UnlockGuess
+from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, UnlockAnswer
 from .runtimes.registry import RuntimesRegistry as rr
 
 import datetime
@@ -18,13 +18,15 @@ class RegexValidationTests(TestCase):
 
     def test_save_answer(self):
         puzzle = Puzzle.objects.get(pk=1)
+        Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[Rr]egex.*').save()
         with self.assertRaises(ValidationError):
             Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[NotARegex').save()
 
-    def test_save_unlock_guess(self):
+    def test_save_unlock_answer(self):
         unlock = Unlock.objects.get(pk=1)
+        UnlockAnswer(unlock=unlock, runtime=rr.REGEX, answer='[Rr]egex.*').save()
         with self.assertRaises(ValidationError):
-            UnlockGuess(unlock=unlock, runtime=rr.REGEX, answer='[NotARegex').save()
+            UnlockAnswer(unlock=unlock, runtime=rr.REGEX, answer='[NotARegex').save()
 
 
 class AnswerValidationTests(TestCase):
