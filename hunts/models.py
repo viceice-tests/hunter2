@@ -309,7 +309,7 @@ class Guess(models.Model):
 
 class TeamData(models.Model):
     team = models.OneToOneField(teams.models.Team, on_delete=models.CASCADE)
-    data = JSONField(default={})
+    data = JSONField(blank=True, null=True)
 
     class Meta:
         verbose_name_plural = 'Team data'
@@ -321,7 +321,7 @@ class TeamData(models.Model):
 class UserData(models.Model):
     event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
     user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
-    data = JSONField(default={})
+    data = JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = (('event', 'user'), )
@@ -334,8 +334,8 @@ class UserData(models.Model):
 class TeamPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
-    start_time = models.DateTimeField(null=True)
-    data = JSONField(default={})
+    start_time = models.DateTimeField(blank=True, null=True)
+    data = JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = (('puzzle', 'team'), )
@@ -349,7 +349,7 @@ class UserPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid.uuid4, editable=False)
-    data = JSONField(default={})
+    data = JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = (('puzzle', 'user'), )

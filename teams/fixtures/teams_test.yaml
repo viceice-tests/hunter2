@@ -1,6 +1,3 @@
-- model: sites.site
-  pk: 1
-  fields: {domain: testserver, name: Test Site}
 - model: events.theme
   pk: 1
   fields: {name: Test Theme, script: '', style: ''}

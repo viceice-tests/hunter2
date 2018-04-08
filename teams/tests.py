@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.views import View
@@ -51,6 +52,11 @@ class TeamRulesTests(TestCase):
 class TeamCreateTests(TestCase):
     fixtures = ['teams_test']
 
+    def setUp(self):
+        site = Site.objects.get()
+        site.domain = 'testserver'
+        site.save()
+
     def test_team_create(self):
         self.assertTrue(self.client.login(username='test_b', password='hunter2'))
         response = self.client.post(
@@ -90,6 +96,9 @@ class InviteTests(TestCase):
     fixtures = ['teams_test']
 
     def setUp(self):
+        site = Site.objects.get()
+        site.domain = 'testserver'
+        site.save()
         self.assertTrue(self.client.login(username='test_a', password='hunter2'))
         response = self.client.post(
             reverse('invite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
@@ -218,6 +227,9 @@ class RequestTests(TestCase):
     fixtures = ['teams_test']
 
     def setUp(self):
+        site = Site.objects.get()
+        site.domain = 'testserver'
+        site.save()
         self.assertTrue(self.client.login(username='test_b', password='hunter2'))
         response = self.client.post(
             reverse('request', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),

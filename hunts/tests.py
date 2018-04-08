@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.contrib.sites.models import Site
 from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
@@ -24,9 +25,9 @@ class RegexValidationTests(TestCase):
 
     def test_save_unlock_answer(self):
         unlock = Unlock.objects.get(pk=1)
-        UnlockAnswer(unlock=unlock, runtime=rr.REGEX, answer='[Rr]egex.*').save()
+        UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[Rr]egex.*').save()
         with self.assertRaises(ValidationError):
-            UnlockAnswer(unlock=unlock, runtime=rr.REGEX, answer='[NotARegex').save()
+            UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[NotARegex').save()
 
 
 class AnswerValidationTests(TestCase):
@@ -75,6 +76,9 @@ class AnswerSubmissionTest(TestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):
+        site = Site.objects.get()
+        site.domain = 'testserver'
+        site.save()
         self.puzzle = Puzzle.objects.get(pk=1)
         self.team = Team.objects.get(pk=1)
         self.data = PuzzleData(self.puzzle, self.team)
@@ -97,6 +101,11 @@ class AnswerSubmissionTest(TestCase):
 
 class PuzzleStartTimeTests(TestCase):
     fixtures = ['hunts_test']
+
+    def setUp(self):
+        site = Site.objects.get()
+        site.domain = 'testserver'
+        site.save()
 
     def test_start_times(self):
         self.assertTrue(self.client.login(username='test', password='hunter2'))
@@ -240,6 +249,11 @@ class ClueDisplayTests(TestCase):
 class AdminTeamTests(TestCase):
     fixtures = ['hunts_test']
 
+    def setUp(self):
+        site = Site.objects.get()
+        site.domain = 'testserver'
+        site.save()
+
     def test_can_view_episode(self):
         self.assertTrue(self.client.login(username='admin', password='hunter2'))
 
@@ -249,6 +263,11 @@ class AdminTeamTests(TestCase):
 
 class AdminViewTests(TestCase):
     fixtures = ['hunts_test']
+
+    def setUp(self):
+        site = Site.objects.get()
+        site.domain = 'testserver'
+        site.save()
 
     def test_can_view_guesses(self):
         self.assertTrue(self.client.login(username='admin', password='hunter2'))
