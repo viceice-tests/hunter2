@@ -17,10 +17,10 @@ class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)
     theme = models.ForeignKey(Theme, on_delete=models.CASCADE, related_name='theme')
     current = SingleTrueBooleanField()
-    about_text = models.TextField(help_text='Content for the event about page')
-    rules_text = models.TextField(help_text='Content for the event rules page')
-    help_text = models.TextField(help_text='Content for the event help page')
-    examples_text = models.TextField(help_text='Content for the example puzzles for this event')
+    about_text = models.TextField(help_text='Content for the event about page', blank=True)
+    rules_text = models.TextField(help_text='Content for the event rules page', blank=True)
+    help_text = models.TextField(help_text='Content for the event help page', blank=True)
+    examples_text = models.TextField(help_text='Content for the example puzzles for this event', blank=True)
     max_team_size = models.IntegerField(default=0, help_text="Maximum size for a team at this event, or 0 for no limit.", validators=[MinValueValidator(0)])
 
     def __str__(self):
