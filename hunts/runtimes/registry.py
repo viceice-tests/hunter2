@@ -26,6 +26,10 @@ class RuntimesRegistry(object):
     }
 
     @staticmethod
+    def check_script(runtime, script):
+        return RuntimesRegistry.REGISTERED_RUNTIMES[runtime].check_script(script)
+
+    @staticmethod
     def evaluate(runtime, script, team_puzzle_data, user_puzzle_data, team_data, user_data):
         return RuntimesRegistry.REGISTERED_RUNTIMES[runtime].evaluate(
             script,
