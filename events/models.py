@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.core.validators import MinValueValidator
 
@@ -26,13 +25,6 @@ class Event(models.Model):
 
     def __str__(self):
         return self.name
-
-    def clean(self):
-        if (
-            self.current and
-            Event.objects.exclude(id=self.id).filter(current=True).count() > 0
-        ):
-            raise ValidationError('There can only be one current event')
 
 
 def event_file_path(instance, filename):

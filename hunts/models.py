@@ -46,7 +46,6 @@ class Puzzle(models.Model):
         except SyntaxError as e:
             raise ValidationError(e) from e
 
-
     def get_absolute_url(self):
         try:
             episode = self.episode_set.get()
