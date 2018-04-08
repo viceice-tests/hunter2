@@ -6,7 +6,7 @@ from hunter2.resolvers import reverse
 
 from events.models import Event
 from teams.models import Team, UserProfile
-from .models import Answer, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, Episode
+from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, UnlockGuess
 from .runtimes.registry import RuntimesRegistry as rr
 
 import datetime

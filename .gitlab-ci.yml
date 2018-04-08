@@ -9,6 +9,7 @@ services:
 stages:
   - check
   - build
+  - doc
   - test
   - release
 
@@ -17,10 +18,15 @@ before_script:
   - chmod -R g-w,o-w .
   - ln -s docker-compose.test.yml docker-compose.yml
 
-flake8:
+check:flake8:
   stage: check
   script:
     - docker-compose -f docker-compose.check.yml run --rm flake8 --verbose
+
+check:jshint:
+  stage: check
+  script:
+    - docker-compose -f docker-compose.check.yml run --rm jshint
 
 build:app:
   stage: build
@@ -30,12 +36,15 @@ build:app:
     IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
   script:
     - docker-compose build $SERVICE
+    - install -d -m 777 diagram
+    - docker-compose run $SERVICE sh -c "python manage.py graph_models -a > diagram/models.dot"
     - docker save -o $IMAGE_FILE $IMAGE_TAG
   artifacts:
     expire_in: 90 days
     name: app-container
     paths:
       - $IMAGE_FILE
+      - diagram/models.dot
 
 build:web:
   stage: build
@@ -51,6 +60,18 @@ build:web:
     name: web-container
     paths:
       - $IMAGE_FILE
+
+doc:graph:
+  stage: doc
+  dependencies:
+    - build:app
+  script:
+    - docker-compose -f docker-compose.check.yml run --rm dot
+  artifacts:
+    expire_in: 90 days
+    name: models-graph
+    paths:
+      - diagram/models.svg
 
 test:
   stage: test

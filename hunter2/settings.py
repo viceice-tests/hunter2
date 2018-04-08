@@ -100,6 +100,7 @@ INSTALLED_APPS = (
     'solo',
     'sortedm2m',
     'subdomains',
+    'url_tools',
 )
 if USE_SILK:  # nocover
     INSTALLED_APPS = INSTALLED_APPS + ('silk',)

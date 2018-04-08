@@ -1,13 +1,15 @@
 function escapeHtml(text) {
-    return text.replace(/[\"&<>]/g, function (a) {
-        return { '"': '&quot;', '&': '&amp;', '<': '&lt;', '>': '&gt;' }[a];
-    });
+	"use strict";
+	return text.replace(/[\"&<>]/g, function (a) {
+		return { '"': '&quot;', '&': '&amp;', '<': '&lt;', '>': '&gt;' }[a];
+	});
 }
 
 function incorrect_answer(guess, timeout, new_hints, unlocks) {
+	"use strict";
 	var hints_div = $('#hints');
 	var n_hints = new_hints.length;
-	for (var i = 0; i < n_hints; i++) {
+	for (let i = 0; i < n_hints; i++) {
 		hints_div.append('<p>' + new_hints[i].time + ': ' + new_hints[i].text + '</p>');
 	}
 
@@ -15,7 +17,7 @@ function incorrect_answer(guess, timeout, new_hints, unlocks) {
 	unlocks_div.empty();
 
 	var n_unlocks = unlocks.length;
-	for (var i = 0; i < n_unlocks; i++) {
+	for (let i = 0; i < n_unlocks; i++) {
 		guesses = unlocks[i].guesses.join(', ');
 		if (unlocks[i].new) {
 			unlocks_div.append('<p class="new-unlock">' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
@@ -35,6 +37,7 @@ function incorrect_answer(guess, timeout, new_hints, unlocks) {
 }
 
 function correct_answer(url, text) {
+	"use strict";
 	var form = $('.form-inline');
 	form.after(`<div id="correct-answer-message">Correct! Taking you ${text}. <a class="puzzle-complete-redirect" href="${url}">go right now</a></div>`);
 	form.remove();
@@ -42,13 +45,15 @@ function correct_answer(url, text) {
 }
 
 function message(message, error) {
+	"use strict";
 	var error_msg = $('<p class="submission-error" title="' + error + '">' + message + '</p>');
-	error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(5000, function(){$(this).remove();})
+	error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(5000, function(){$(this).remove();});
 }
 
 var last_updated = Date.now();
 
 $(function() {
+	"use strict";
 	$('.form-inline').submit(function(e) {
 		e.preventDefault();
 		var form = $(e.target);
@@ -67,7 +72,7 @@ $(function() {
 			data: jQuery.param(data),
 			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
 			success: function(data) {
-				form.children('input[name=answer]')[0].value = ''
+				form.children('input[name=answer]')[0].value = '';
 				last_updated = Date.now();
 				if (data.correct == "true") {
 					button.removeAttr('disabled');
