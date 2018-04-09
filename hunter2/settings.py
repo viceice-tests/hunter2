@@ -68,6 +68,12 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
+FULLCLEAN_WHITELIST = [
+    'events',
+    'hunts',
+    'teams',
+]
+
 INSTALLED_APPS = (
     # Our apps first to allow us to override third party templates
     # These are in dependency order
