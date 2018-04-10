@@ -401,7 +401,7 @@ class Episode(models.Model):
     )
     start_date = models.DateTimeField()
     event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
-    parallel = models.BooleanField(default=False)
+    parallel = models.BooleanField(default=False, help_text='Allow players to answer riddles in this episode in any order they like')
     headstart_from = models.ManyToManyField(
         "self", blank=True,
         help_text='Episodes which should grant a headstart for this episode',
