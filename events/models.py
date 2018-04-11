@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.apps import apps
@@ -30,10 +31,20 @@ class Event(models.Model):
     def finishing_positions(self):
         Episode = apps.get_model('hunts.Episode')
         winning_episodes = Episode.objects.filter(event=self, winning=True)
-        team_times = []
+
+        team_times = defaultdict(list)
         for ep in winning_episodes:
-            team_times += ep.finished_times()
-        return team_times
+            for team, time in ep.finished_times():
+                team_times[team].append(time)
+
+        num_winning_episodes = len(winning_episodes)
+        for team, times in list(team_times.items()):
+            if len(times) < num_winning_episodes:
+                del team_times[team]
+            else:
+                team_times[team] = max(times)
+
+        return sorted(team_times.keys(), key=lambda t: team_times[t])
 
     def team_finishing_position(self, team):
         """Returns the position the team came in, or None if they haven't finished"""
