@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.apps import apps
 
 from .fields import SingleTrueBooleanField
 
@@ -25,6 +26,18 @@ class Event(models.Model):
 
     def __str__(self):
         return self.name
+
+    def finishing_positions(self):
+        Episode = apps.get_model('hunts.Episode')
+        winning_episodes = Episode.objects.filter(event=self, winning=True)
+        team_times = []
+        for ep in winning_episodes:
+            team_times += ep.finished_times()
+        return team_times
+
+    def team_finishing_position(self, team):
+        """Returns the position the team came in, or None if they haven't finished"""
+        raise NotImplemented
 
 
 def event_file_path(instance, filename):

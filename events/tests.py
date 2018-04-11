@@ -4,10 +4,13 @@ from unittest.case import expectedFailure
 
 from django.core.management import CommandError, call_command
 from django.test import TestCase
+from django.utils import timezone
 
 from events.management.commands import createdefaultevent
 from events.models import Event, Theme
 from hunter2.tests import MockTTY, mock_inputs
+from hunts.models import Episode, Puzzle, Answer, Guess
+from teams.models import UserProfile, Team
 
 
 class EventRulesTests(TestCase):
@@ -43,6 +46,44 @@ class EventRulesTests(TestCase):
         event = Event(name="Event Theme", theme=theme, current=False)
         event.save()
         self.assertTrue(event.current, "Only event is not set as current")
+
+
+class EventWinningTests(TestCase):
+    fixtures = ["teams_test"]
+
+    def test_win_two_day_event(self):
+        event = Event.objects.get(pk=1)
+        user1 = UserProfile.objects.get(pk=1)
+        user2 = UserProfile.objects.get(pk=2)
+        team1 = Team.objects.get(pk=1)
+        ep1 = Episode(name="Day 1", event=event, start_date=timezone.now(), winning=True)
+        ep1.save()
+        ep2 = Episode(name="Day 2", event=event, start_date=timezone.now(), winning=True)
+        ep2.save()
+        pz1_1 = Puzzle(title="Puzzle 1", episode=ep1, content="1")
+        pz1_1.save()
+        a1_1 = Answer(for_puzzle=pz1_1, answer="correct")
+        a1_1.save()
+        pz1_2 = Puzzle(title="Puzzle 2", episode=ep1, content="2")
+        pz1_2.save()
+        a1_2 = Answer(for_puzzle=pz1_2, answer="correct")
+        a1_2.save()
+        pz2_1 = Puzzle(title="Puzzle 3", episode=ep2, content="3")
+        pz2_1.save()
+        a2_1 = Answer(for_puzzle=pz2_1, answer="correct")
+        a2_1.save()
+        pz2_2 = Puzzle(title="Puzzle 4", episode=ep2, content="4")
+        pz2_2.save()
+        a2_2 = Answer(for_puzzle=pz2_2, answer="correct")
+        a2_2.save()
+        team2 = Team(at_event=event)
+        team2.save()
+        team2.members.add(user2)
+
+        # No correct answers => noone has finished => no finishing positions!
+        self.assertEqual(event.finishing_positions(), [])
+        self.assertEqual(event.team_finishing_position(team1), None)
+        self.assertEqual(event.team_finishing_position(team2), None)
 
 
 class CreateDefaultEventManagementCommandTests(TestCase):
