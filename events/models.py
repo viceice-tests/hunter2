@@ -15,17 +15,12 @@ class Theme(models.Model):
         return self.name
 
 
-class Tenant(TenantMixin):
-    pass
-
-
 class Domain(DomainMixin):
     pass
 
 
-class Event(models.Model):
+class Event(TenantMixin):
     name = models.CharField(max_length=255, unique=True)
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
     theme = models.ForeignKey(Theme, on_delete=models.CASCADE, related_name='theme')
     current = SingleTrueBooleanField()
     about_text = models.TextField(help_text='Content for the event about page')

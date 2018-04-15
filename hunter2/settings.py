@@ -223,7 +223,7 @@ TEMPLATES = [
     },
 ]
 
-TENANT_MODEL = 'events.Tenant'
+TENANT_MODEL = 'events.Event'
 TENANT_DOMAIN_MODEL = 'events.Domain'
 
 TEST_RUNNER = 'hunter2.tests.TestRunner'
