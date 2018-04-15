@@ -7,10 +7,10 @@ services:
     volumes:
       - ${PWD:-.}:/files
   jshint:
-    image: registry.gitlab.com/rconan/docker-jshint:0.0.4
+    image: registry.gitlab.com/rconan/docker-jshint:2.9.5-0
     volumes:
       - ${PWD:-.}:/code
   flake8:
-    image: registry.gitlab.com/rconan/docker-flake8:0.0.3
+    image: registry.gitlab.com/rconan/docker-flake8:3.5.0-0
     volumes:
       - ${PWD:-.}:/code

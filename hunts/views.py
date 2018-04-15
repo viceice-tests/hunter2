@@ -212,12 +212,18 @@ class GuessesContent(LoginRequiredMixin, View):
                 if any([a.validate_guess(g) for a in unlockanswers]):
                     g.unlocked = True
 
+        # Grab the current URL (which is not the URL of *this* view) so that we can manipulate the query string
+        # in the template.
+        current_url = reverse('guesses', subdomain=request.subdomain, kwargs={'event_id': request.event.pk})
+        current_url += '?' + request.GET.urlencode()
+
         return TemplateResponse(
             request,
             'hunts/guesses_content.html',
             context={
                 'event_id': request.event.pk,
                 'guesses': guesses,
+                'current_url': current_url
             }
         )
 
@@ -435,7 +441,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
 
         answered = puzzle.answered_by(request.team)
         hints = [
-            h for h in puzzle.hint_set.all() if h.unlocked_by(request.team, data)
+            h for h in puzzle.hint_set.all().order_by('time') if h.unlocked_by(request.team, data)
         ]
         unlocks = []
         for u in puzzle.unlock_set.all():
@@ -451,7 +457,14 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
 
         files = {
             **{f.slug: f.file.url for f in request.event.eventfile_set.all()},
-            **{f.slug: f.file.url for f in puzzle.puzzlefile_set.all()},
+            **{f.slug: reverse(
+                'puzzle_file',
+                kwargs={
+                    'event_id': request.event.pk,
+                    'episode_number': episode_number,
+                    'puzzle_number': puzzle_number,
+                    'file_slug': f.slug,
+                }, subdomain='www') for f in puzzle.puzzlefile_set.all()},
         }  # Puzzle files with matching slugs override hunt counterparts
 
         text = Template(rr.evaluate(

@@ -1,5 +1,5 @@
-# vim: set fileencoding=utf-8 :
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -37,6 +37,14 @@ class Puzzle(models.Model):
 
     def __str__(self):
         return self.title
+
+    def clean(self):
+        super().clean()
+        try:
+            rr.check_script(self.runtime, self.content)
+            rr.check_script(self.cb_runtime, self.cb_content)
+        except SyntaxError as e:
+            raise ValidationError(e) from e
 
     def get_absolute_url(self):
         try:
@@ -174,6 +182,13 @@ class UnlockAnswer(models.Model):
         else:
             return '[Using %s]' % self.get_runtime_display()
 
+    def clean(self):
+        super().clean()
+        try:
+            rr.check_script(self.runtime, self.guess)
+        except SyntaxError as e:
+            raise ValidationError(e) from e
+
     def validate_guess(self, guess):
         return rr.validate_guess(
             self.runtime,
@@ -194,6 +209,13 @@ class Answer(models.Model):
             return self.answer
         else:
             return '[Using %s]' % self.get_runtime_display()
+
+    def clean(self):
+        super().clean()
+        try:
+            rr.check_script(self.runtime, self.answer)
+        except SyntaxError as e:
+            raise ValidationError(e) from e
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -287,7 +309,7 @@ class Guess(models.Model):
 
 class TeamData(models.Model):
     team = models.OneToOneField(teams.models.Team, on_delete=models.CASCADE)
-    data = JSONField(default={})
+    data = JSONField(blank=True, null=True)
 
     class Meta:
         verbose_name_plural = 'Team data'
@@ -299,7 +321,7 @@ class TeamData(models.Model):
 class UserData(models.Model):
     event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
     user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
-    data = JSONField(default={})
+    data = JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = (('event', 'user'), )
@@ -312,8 +334,8 @@ class UserData(models.Model):
 class TeamPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
-    start_time = models.DateTimeField(null=True)
-    data = JSONField(default={})
+    start_time = models.DateTimeField(blank=True, null=True)
+    data = JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = (('puzzle', 'team'), )
@@ -327,7 +349,7 @@ class UserPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid.uuid4, editable=False)
-    data = JSONField(default={})
+    data = JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = (('puzzle', 'user'), )
@@ -379,7 +401,7 @@ class Episode(models.Model):
     )
     start_date = models.DateTimeField()
     event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
-    parallel = models.BooleanField(default=False)
+    parallel = models.BooleanField(default=False, help_text='Allow players to answer riddles in this episode in any order they like')
     headstart_from = models.ManyToManyField(
         "self", blank=True,
         help_text='Episodes which should grant a headstart for this episode',

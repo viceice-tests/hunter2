@@ -68,6 +68,12 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
+FULLCLEAN_WHITELIST = [
+    'events',
+    'hunts',
+    'teams',
+]
+
 INSTALLED_APPS = (
     # Our apps first to allow us to override third party templates
     # These are in dependency order
@@ -93,12 +99,14 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.staticfiles',
     'django_extensions',
+    'django_fullclean',
     'nested_admin',
     'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',
     'solo',
     'sortedm2m',
     'subdomains',
+    'url_tools',
 )
 if USE_SILK:  # nocover
     INSTALLED_APPS = INSTALLED_APPS + ('silk',)

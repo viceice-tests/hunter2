@@ -35,6 +35,7 @@ class FileInline(NestedTabularInline):
 
 class HintInline(NestedTabularInline):
     model = models.Hint
+    ordering = ('time',)
     extra = 0
 
     def formfield_for_dbfield(self, db_field, **kwargs):

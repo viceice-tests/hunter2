@@ -1,4 +1,5 @@
 {% load admin_urls %}
+{% load urls %}
 <div id="guesses-container">
 	<table id="guesses-table">
 	<tr class="guess-viewer-header">
@@ -36,17 +37,17 @@
 
 <div class="pagination">
 	<span class="step-links">
-        {% if guesses.has_previous %}
-            <a href="?page={{ guesses.previous_page_number }}">previous</a>
-        {% endif %}
+	{% if guesses.has_previous %}
+		<a href="{% add_params current_url page=guesses.previous_page_number %}">previous</a>
+	{% endif %}
 
-        <span class="current">
-            Page {{ guesses.number }} of {{ guesses.paginator.num_pages }}.
-        </span>
+	<span class="current">
+		Page {{ guesses.number }} of {{ guesses.paginator.num_pages }}.
+	</span>
 
-        {% if guesses.has_next %}
-            <a href="?page={{ guesses.next_page_number }}">next</a>
-        {% endif %}
+	{% if guesses.has_next %}
+		<a href="{% add_params current_url page=guesses.next_page_number %}">next</a>
+	{% endif %}
     </span>
 </div>
 </div>

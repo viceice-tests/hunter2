@@ -22,7 +22,15 @@ class RuntimeSandboxViolationError(Exception):
         self.message = message
 
 
+class RuntimeValidationError(Exception):
+    def __init__(self, message="Runtime validation error"):
+        self.message = message
+
+
 class AbstractRuntime(metaclass=ABCMeta):
+    def check_script(self, script):
+        return True
+
     @abstractmethod
     def evaluate(self, script, team_puzzle_data, user_puzzle_data, team_data, user_data):
         """ABSTRACT"""
