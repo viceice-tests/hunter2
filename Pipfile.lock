@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "17ebe8e83fdf89009f962a05f4d0d9bcb4c4a0085d4ec082e937f2d0e2b88bd1"
+            "sha256": "c364c835ab324ff339e6ec5b427da6d1d90b5827b097afc75177f00aa2e0935b"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -398,23 +398,16 @@
         },
         "django-silk": {
             "hashes": [
-                "sha256:22b69762eee91138a3a58f960b35f18467d685c0db87ae42dca8bd4abef11a21",
-                "sha256:76a4240654642692eb9990f7bd0e4212483e5a58e2fc7ac315860a5544bc5e7d"
+                "sha256:633f356f08c10f8220987a9636f0e6c48d6c9a0bf57c090b204f03a2d7e23e32"
             ],
             "index": "pypi",
-            "version": "==2.0.0"
+            "version": "==0.7.0"
         },
         "docopt": {
             "hashes": [
                 "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491"
             ],
             "version": "==0.6.2"
-        },
-        "gprof2dot": {
-            "hashes": [
-                "sha256:48c1e168c28b8a8eb23bf30fda78fe2ef218269a41505341ec27c27083e47cf4"
-            ],
-            "version": "==2016.10.13"
         },
         "idna": {
             "hashes": [

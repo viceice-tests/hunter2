@@ -1,6 +1,11 @@
 version: '2.1'
 
 services:
+  pipenv:
+    image: python:3.6.5-alpine3.7
+    command: sh -c "cd /code && pip install -r pipenv.txt && pipenv lock"
+    volumes:
+      - ${PWD:-.}:/code
   dot:
     command: -v -Tsvg -o/files/diagram/models.svg /files/diagram/models.dot
     image: registry.gitlab.com/rconan/docker-graphviz:0.0.1

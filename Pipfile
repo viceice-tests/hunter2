@@ -38,6 +38,6 @@ wait = "*"
 
 [dev-packages]
 
-django-silk = "*"
+django-silk = "==0.7.0"
 ipython = "*"
 ptpython = "*"
