@@ -74,6 +74,12 @@ DATABASE_ROUTERS = (
 
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
+FULLCLEAN_WHITELIST = [
+    'events',
+    'hunts',
+    'teams',
+]
+
 SHARED_APPS = (
     # Our apps first to allow us to override third party templates
     # These are in dependency order
@@ -97,12 +103,14 @@ SHARED_APPS = (
     'django.contrib.sites',
     'django.contrib.staticfiles',
     'django_extensions',
+    'django_fullclean',
     'django_tenants',
     'nested_admin',
     'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',
     'solo',
     'sortedm2m',
+    'url_tools',
 )
 if USE_SILK:  # nocover
     SHARED_APPS += ('silk',)

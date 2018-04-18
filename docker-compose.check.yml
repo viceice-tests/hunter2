@@ -1,16 +1,21 @@
 version: '2.1'
 
 services:
+  pipenv:
+    image: python:3.6.5-alpine3.7
+    command: sh -c "cd /code && pip install -r pipenv.txt && pipenv lock"
+    volumes:
+      - ${PWD:-.}:/code
   dot:
     command: -v -Tsvg -o/files/diagram/models.svg /files/diagram/models.dot
     image: registry.gitlab.com/rconan/docker-graphviz:0.0.1
     volumes:
       - ${PWD:-.}:/files
   jshint:
-    image: registry.gitlab.com/rconan/docker-jshint:0.0.4
+    image: registry.gitlab.com/rconan/docker-jshint:2.9.5-0
     volumes:
       - ${PWD:-.}:/code
   flake8:
-    image: registry.gitlab.com/rconan/docker-flake8:0.0.3
+    image: registry.gitlab.com/rconan/docker-flake8:3.5.0-0
     volumes:
       - ${PWD:-.}:/code
