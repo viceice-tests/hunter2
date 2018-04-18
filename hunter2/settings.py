@@ -96,6 +96,7 @@ SHARED_APPS = (
     'dal',
     'dal_select2',
     'debug_toolbar',
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -121,7 +122,6 @@ TENANT_APPS = (
     'hunts',
     # Third party apps
     # These are in alphabetical order
-    'django.contrib.admin',
     'django.contrib.contenttypes',
 )
 
@@ -165,7 +165,6 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
-    'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
 if USE_SILK:  # nocover

@@ -4,7 +4,7 @@ import sys
 from django.core.management import BaseCommand, CommandError
 from django.contrib.sites.models import Site
 
-from ...models import Domain, Event, Tenant, Theme
+from ...models import Domain, Event, Theme
 
 
 # Based on createsuperuser:
@@ -76,12 +76,10 @@ class Command(BaseCommand):
         site_domain = Site.objects.get().domain
         theme = Theme(name=theme_name)
         theme.save()
-        tenant = Tenant(schema_name=subdomain)
-        tenant.save()
-        domain = Domain(domain='.'.join([subdomain, site_domain]), tenant=tenant)
-        domain.save()
-        event = Event(name=event_name, tenant=tenant, theme=theme, current=True)
+        event = Event(name=event_name, schema_name=subdomain, theme=theme, current=True)
         event.save()
+        domain = Domain(domain='.'.join([subdomain, site_domain]), tenant=event)
+        domain.save()
 
         self.stdout.write("Created current event \"{}\" and theme \"{}\"".format(event_name, theme_name))
 

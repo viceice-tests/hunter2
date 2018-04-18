@@ -52,8 +52,7 @@ urlpatterns = [
         TemplateView.as_view(template_name='hunts/help.html'),
         name='help'
     ),
-    url(r'^event/$', views.EventDirect.as_view()),
-    url(r'^event/(?P<event_id>[1-9]\d*)/', include(eventpatterns)),
+    url(r'^hunt/', include(eventpatterns)),
     url(r'^eventadmin/(?P<event_id>[1-9]\d*)/', include(eventadminpatterns)),
     url(r'^puzzle_info$', views.PuzzleInfo.as_view(), name='puzzle_info'),
 ]

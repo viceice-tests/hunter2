@@ -13,9 +13,9 @@ class TeamMixin():
             user.save()
         # TODO: May conflict with assignment of request.team in TeamMiddleware but shouldn't cause problems
         try:
-            request.team = user.team_at(request.event)
+            request.team = user.team_at(request.tenant)
         except ObjectDoesNotExist:
-            request.team = models.Team(name='', at_event=request.event)
+            request.team = models.Team(name='', at_event=request.tenant)
             request.team.save()
             request.team.members.add(user)
         return super().dispatch(request, *args, **kwargs)
