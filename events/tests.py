@@ -123,7 +123,6 @@ class EventWinningTests(TestCase):
 
         # Invalidate Episode 1 guesses, complete Episode 2
         Guess.objects.all().update(guess="incorrect", correct_for=None)
-        self.assertEqual(self.ep1.finished_positions(), [])
         Guess(for_puzzle=self.pz2_1, by=self.user1, guess="correct").save()
         Guess(for_puzzle=self.pz2_1, by=self.user2, guess="correct").save()
         g = Guess(for_puzzle=self.pz2_2, by=self.user1, guess="correct")
