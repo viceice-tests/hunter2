@@ -13,6 +13,7 @@ from . import runtimes as rr
 import datetime
 import freezegun
 
+
 class StaticValidationTests(TestCase):
     fixtures = ['hunts_test']
 
@@ -39,6 +40,7 @@ class StaticValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
         self.assertFalse(answer.validate_guess(guess))
+
 
 class RegexValidationTests(TestCase):
     fixtures = ['hunts_test']
@@ -70,6 +72,7 @@ class RegexValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
         self.assertFalse(answer.validate_guess(guess))
+
 
 class LuaValidationTests(TestCase):
     fixtures = ['hunts_test']

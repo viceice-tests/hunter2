@@ -1,5 +1,3 @@
-# vim: set fileencoding=utf-8 :
-
 class AbstractRuntime:
     def check_script(self, script):
         return True
