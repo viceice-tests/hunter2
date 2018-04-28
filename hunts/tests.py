@@ -13,24 +13,7 @@ from .runtimes.registry import RuntimesRegistry as rr
 import datetime
 import freezegun
 
-
-class RegexValidationTests(TestCase):
-    fixtures = ['hunts_test']
-
-    def test_save_answer(self):
-        puzzle = Puzzle.objects.get(pk=1)
-        Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[Rr]egex.*').save()
-        with self.assertRaises(ValidationError):
-            Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[NotARegex').save()
-
-    def test_save_unlock_answer(self):
-        unlock = Unlock.objects.get(pk=1)
-        UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[Rr]egex.*').save()
-        with self.assertRaises(ValidationError):
-            UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[NotARegex').save()
-
-
-class AnswerValidationTests(TestCase):
+class StaticValidationTests(TestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):
@@ -49,6 +32,26 @@ class AnswerValidationTests(TestCase):
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
         self.assertFalse(answer.validate_guess(guess))
 
+class RegexValidationTests(TestCase):
+    fixtures = ['hunts_test']
+
+    def setUp(self):
+        self.puzzle = Puzzle.objects.get(pk=1)
+        self.team = Team.objects.get(pk=1)
+        self.data = PuzzleData(self.puzzle, self.team)
+
+    def test_regex_save_answer(self):
+        puzzle = Puzzle.objects.get(pk=1)
+        Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[Rr]egex.*').save()
+        with self.assertRaises(ValidationError):
+            Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[NotARegex').save()
+
+    def test_regex_save_unlock_answer(self):
+        unlock = Unlock.objects.get(pk=1)
+        UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[Rr]egex.*').save()
+        with self.assertRaises(ValidationError):
+            UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[NotARegex').save()
+
     def test_regex_answers(self):
         answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.REGEX)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
@@ -59,6 +62,14 @@ class AnswerValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
         self.assertFalse(answer.validate_guess(guess))
+
+class LuaValidationTests(TestCase):
+    fixtures = ['hunts_test']
+
+    def setUp(self):
+        self.puzzle = Puzzle.objects.get(pk=1)
+        self.team = Team.objects.get(pk=1)
+        self.data = PuzzleData(self.puzzle, self.team)
 
     def test_lua_answers(self):
         answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.LUA)
