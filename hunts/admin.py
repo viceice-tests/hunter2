@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib import admin
 from django.conf.urls import url
+from django.utils.functional import curry
 from django.utils.html import format_html
 from django.urls import reverse
 from django.db.models import Count, Sum
@@ -9,7 +10,7 @@ from nested_admin import \
     NestedStackedInline, \
     NestedTabularInline
 from . import models
-from .forms import AnswerForm
+from .forms import AnswerForm, UnlockAnswerFormSet
 
 
 def make_textinput(field, db_field, kwdict):
@@ -43,13 +44,40 @@ class HintInline(NestedTabularInline):
         return super().formfield_for_dbfield(db_field, **kwargs)
 
 
-class UnlockAnswerInline(NestedStackedInline):
+class UnlockAnswerInline(NestedTabularInline):
     model = models.UnlockAnswer
     extra = 0
+    formset = UnlockAnswerFormSet
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('guess', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
+
+    # Pre-population of inline formset from GET params based on
+    # https://stackoverflow.com/questions/442040/pre-populate-an-inline-formset
+    def get_formset(self, request, obj=None, **kwargs):
+        initial = []
+        if request.method == 'GET' and 'guess' in request.GET:
+            initial.append({
+                'guess': request.GET['guess']
+            })
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.__init__ = curry(formset.__init__, initial=initial)
+        return formset
+
+
+@admin.register(models.Unlock)
+class UnlockAdmin(NestedModelAdmin):
+    inlines = [
+        UnlockAnswerInline,
+    ]
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        make_textinput('text', db_field, kwargs)
+        return super().formfield_for_dbfield(db_field, **kwargs)
+
+    def has_module_permission(self, request):
+        return False
 
 
 class UnlockInline(NestedStackedInline):
