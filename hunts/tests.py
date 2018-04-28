@@ -19,7 +19,7 @@ class HomePageTests(TestCase):
 
     def test_load_homepage(self):
         url = reverse('index', subdomain='www')
-        response = self.client.get(url)
+        response = self.client.get(url, HTTP_HOST='www.testserver')
         self.assertEqual(response.status_code, 200)
 
 
