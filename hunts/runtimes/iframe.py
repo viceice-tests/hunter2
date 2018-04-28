@@ -1,10 +1,12 @@
 # vim: set fileencoding=utf-8 :
 from urllib.parse import parse_qs, urlencode, urlparse
 
-from . import AbstractRuntime
-
+from .abstract import AbstractRuntime
 
 class IFrameRuntime(AbstractRuntime):
+    def check_script(self, script):
+        pass
+
     def evaluate(self, url, team_puzzle_data, user_puzzle_data, team_data, user_data):
         url_parts = urlparse(url)
         query_params = parse_qs(url_parts.query)

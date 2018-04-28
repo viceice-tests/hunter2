@@ -2,7 +2,8 @@
 import os
 import sys
 
-from .. import AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
+from ..abstract import AbstractRuntime
+from ..exceptions import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
 
 # TODO: Replace this with proper DLFCN support in the docker python version
 orig_dlflags = sys.getdlopenflags()

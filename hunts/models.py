@@ -4,10 +4,10 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from sortedm2m.fields import SortedManyToManyField
-from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
 from enumfields import EnumField, Enum
 from hunter2.resolvers import reverse
+from . import runtimes as rr
 
 import events
 import teams
@@ -41,8 +41,8 @@ class Puzzle(models.Model):
     def clean(self):
         super().clean()
         try:
-            rr.check_script(self.runtime, self.content)
-            rr.check_script(self.cb_runtime, self.cb_content)
+            rr.RUNTIMES[self.runtime]().check_script(self.content)
+            rr.RUNTIMES[self.cb_runtime]().check_script(self.cb_content)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
@@ -185,13 +185,12 @@ class UnlockAnswer(models.Model):
     def clean(self):
         super().clean()
         try:
-            rr.check_script(self.runtime, self.guess)
+            rr.RUNTIMES[self.runtime]().check_script(self.guess)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
     def validate_guess(self, guess):
-        return rr.validate_guess(
-            self.runtime,
+        return rr.RUNTIMES[self.runtime]().validate_guess(
             self.guess,
             guess.guess,
         )
@@ -213,7 +212,7 @@ class Answer(models.Model):
     def clean(self):
         super().clean()
         try:
-            rr.check_script(self.runtime, self.answer)
+            rr.RUNTIMES[self.runtime]().check_script(self.answer)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
@@ -234,8 +233,7 @@ class Answer(models.Model):
         super().delete(*args, **kwargs)
 
     def validate_guess(self, guess):
-        return rr.validate_guess(
-            self.runtime,
+        return rr.RUNTIMES[self.runtime]().validate_guess(
             self.answer,
             guess.guess,
         )

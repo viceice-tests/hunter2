@@ -1,7 +1,7 @@
 # vim: set fileencoding=utf-8 :
 import re
 
-from . import AbstractRuntime
+from .abstract import AbstractRuntime
 
 
 class RegexRuntime(AbstractRuntime):
