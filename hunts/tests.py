@@ -21,6 +21,14 @@ class StaticValidationTests(TestCase):
         self.team = Team.objects.get(pk=1)
         self.data = PuzzleData(self.puzzle, self.team)
 
+    def test_static_save_answer(self):
+        puzzle = Puzzle.objects.get(pk=1)
+        Answer(for_puzzle=puzzle, runtime=rr.STATIC, answer='answer').save()
+
+    def test_static_save_unlock_answer(self):
+        unlock = Unlock.objects.get(pk=1)
+        UnlockAnswer(unlock=unlock, runtime=rr.STATIC, guess='unlock').save()
+
     def test_static_answers(self):
         answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.STATIC)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
@@ -70,6 +78,18 @@ class LuaValidationTests(TestCase):
         self.puzzle = Puzzle.objects.get(pk=1)
         self.team = Team.objects.get(pk=1)
         self.data = PuzzleData(self.puzzle, self.team)
+
+    def test_lua_save_answer(self):
+        puzzle = Puzzle.objects.get(pk=1)
+        Answer(for_puzzle=puzzle, runtime=rr.LUA, answer='''return {} == nil''').save()
+        with self.assertRaises(ValidationError):
+            Answer(for_puzzle=puzzle, runtime=rr.LUA, answer='''@''').save()
+
+    def test_lua_save_unlock_answer(self):
+        unlock = Unlock.objects.get(pk=1)
+        UnlockAnswer(unlock=unlock, runtime=rr.LUA, guess='''return {} == nil''').save()
+        with self.assertRaises(ValidationError):
+            UnlockAnswer(unlock=unlock, runtime=rr.LUA, guess='''@''').save()
 
     def test_lua_answers(self):
         answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.LUA)
