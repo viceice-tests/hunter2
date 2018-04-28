@@ -1,16 +1,26 @@
-# vim: set fileencoding=utf-8 :
 from io import StringIO
 from unittest.case import expectedFailure
 
 from django.core.management import CommandError, call_command
 from django.test import TestCase
+from django_tenants.test.cases import TenantTestCase
 
-from events.management.commands import createdefaultevent
+from events.management.commands import createevent
 from events.models import Event, Theme
 from hunter2.tests import MockTTY, mock_inputs
 
 
-class EventRulesTests(TestCase):
+class EventTestCase(TenantTestCase):
+
+    @classmethod
+    def setup_tenant(cls, tenant):
+        theme = Theme(name='Test Theme')
+        theme.save()
+        tenant.name = 'Test Event'
+        tenant.theme = theme
+
+
+class EventRulesTests(EventTestCase):
 
     def test_only_one_current_event(self):
         # Ensure that we only have one event set as current
@@ -48,21 +58,22 @@ class EventRulesTests(TestCase):
 class CreateDefaultEventManagementCommandTests(TestCase):
     TEST_EVENT_NAME = "Custom Event"
     TEST_THEME_NAME = "Custom Theme"
+    TEST_SUBDOMAIN = 'custom'
 
     def test_no_event_name_argument(self):
         output = StringIO()
-        with self.assertRaisesMessage(CommandError, "You must use --theme and --event with --noinput."):
-            call_command('createdefaultevent', interactive=False, theme_name="Test Theme", stdout=output)
+        with self.assertRaisesMessage(CommandError, "You must use --event, --subdomain and --theme with --noinput."):
+            call_command('createevent', interactive=False, theme_name="Test Theme", stdout=output)
 
     def test_no_theme_name_argument(self):
         output = StringIO()
-        with self.assertRaisesMessage(CommandError, "You must use --theme and --event with --noinput."):
-            call_command('createdefaultevent', interactive=False, event_name="Test Event", stdout=output)
+        with self.assertRaisesMessage(CommandError, "You must use --event, --subdomain and --theme with --noinput."):
+            call_command('createevent', interactive=False, event_name="Test Event", stdout=output)
 
     def test_non_interactive_usage(self):
         output = StringIO()
         call_command(
-            'createdefaultevent',
+            'createevent',
             interactive=False,
             event_name=self.TEST_EVENT_NAME,
             theme_name=self.TEST_THEME_NAME,
@@ -81,12 +92,13 @@ class CreateDefaultEventManagementCommandTests(TestCase):
 
     @mock_inputs({
         'event': TEST_EVENT_NAME,
-        'theme': TEST_THEME_NAME
+        'theme': TEST_THEME_NAME,
+        'subdomain': TEST_SUBDOMAIN,
     })
     def test_interactive_usage(self):
         output = StringIO()
         call_command(
-            'createdefaultevent',
+            'createevent',
             interactive=True,
             stdout=output,
             stdin=MockTTY(),
@@ -94,7 +106,7 @@ class CreateDefaultEventManagementCommandTests(TestCase):
         command_output = output.getvalue().strip()
         self.assertEqual(command_output, "Created current event \"{}\" and theme \"{}\"".format(
             self.TEST_EVENT_NAME,
-            self.TEST_THEME_NAME
+            self.TEST_THEME_NAME,
         ))
 
         theme = Theme.objects.get(name=self.TEST_THEME_NAME)
@@ -104,31 +116,32 @@ class CreateDefaultEventManagementCommandTests(TestCase):
 
     @mock_inputs({
         'event': "",
-        'theme': ""
+        'theme': "",
+        'subdomain': "",
     })
     def test_default_interactive_usage(self):
         output = StringIO()
         call_command(
-            'createdefaultevent',
+            'createevent',
             interactive=True,
             stdout=output,
             stdin=MockTTY(),
         )
         command_output = output.getvalue().strip()
         self.assertEqual(command_output, "Created current event \"{}\" and theme \"{}\"".format(
-            createdefaultevent.Command.DEFAULT_EVENT_NAME,
-            createdefaultevent.Command.DEFAULT_THEME_NAME
+            createevent.Command.DEFAULT_EVENT_NAME,
+            createevent.Command.DEFAULT_THEME_NAME
         ))
 
-        theme = Theme.objects.get(name=createdefaultevent.Command.DEFAULT_THEME_NAME)
+        theme = Theme.objects.get(name=createevent.Command.DEFAULT_THEME_NAME)
         self.assertIsNotNone(theme)
-        event = Event.objects.get(name=createdefaultevent.Command.DEFAULT_EVENT_NAME, theme=theme.id, current=True)
+        event = Event.objects.get(name=createevent.Command.DEFAULT_EVENT_NAME, theme=theme.id, current=True)
         self.assertIsNotNone(event)
 
     def test_only_one_current_event(self):
         output = StringIO()
         call_command(
-            'createdefaultevent',
+            'createevent',
             interactive=False,
             event_name=self.TEST_EVENT_NAME + "1",
             theme_name=self.TEST_THEME_NAME + "1",
@@ -142,7 +155,7 @@ class CreateDefaultEventManagementCommandTests(TestCase):
 
         output = StringIO()
         call_command(
-            'createdefaultevent',
+            'createevent',
             interactive=False,
             event_name=self.TEST_EVENT_NAME + "2",
             theme_name=self.TEST_THEME_NAME + "2",

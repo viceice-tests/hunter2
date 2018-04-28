@@ -1,11 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.contrib.sites.models import Site
 from django.db import transaction
-from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
 
 from events.models import Event
+from events.tests import EventTestCase
 from teams.models import Team, UserProfile
 from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, UnlockAnswer
 from .runtimes.registry import RuntimesRegistry as rr
@@ -14,7 +14,7 @@ import datetime
 import freezegun
 
 
-class RegexValidationTests(TestCase):
+class RegexValidationTests(EventTestCase):
     fixtures = ['hunts_test']
 
     def test_save_answer(self):
@@ -30,7 +30,7 @@ class RegexValidationTests(TestCase):
             UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[NotARegex').save()
 
 
-class AnswerValidationTests(TestCase):
+class AnswerValidationTests(EventTestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):
@@ -72,7 +72,7 @@ class AnswerValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess))
 
 
-class AnswerSubmissionTest(TestCase):
+class AnswerSubmissionTest(EventTestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):
@@ -97,7 +97,7 @@ class AnswerSubmissionTest(TestCase):
             self.assertEqual(response.status_code, 200)
 
 
-class PuzzleStartTimeTests(TestCase):
+class PuzzleStartTimeTests(EventTestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):
@@ -117,7 +117,7 @@ class PuzzleStartTimeTests(TestCase):
         self.assertEqual(first_time, second_time)
 
 
-class EpisodeBehaviourTest(TestCase):
+class EpisodeBehaviourTest(EventTestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):
@@ -195,7 +195,7 @@ class EpisodeBehaviourTest(TestCase):
         self.assertEqual(self.parallel_episode.get_puzzle(puzzle4.get_relative_id()), puzzle4)
 
 
-class EpisodeSequenceTests(TestCase):
+class EpisodeSequenceTests(EventTestCase):
     fixtures = ['hunts_episodesequence']
 
     def setUp(self):
@@ -220,7 +220,7 @@ class EpisodeSequenceTests(TestCase):
         self.assertTrue(self.episode2.unlocked_by(self.team))
 
 
-class ClueDisplayTests(TestCase):
+class ClueDisplayTests(EventTestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):
@@ -244,7 +244,7 @@ class ClueDisplayTests(TestCase):
         self.assertFalse(unlock.unlocked_by(fail_team))
 
 
-class AdminTeamTests(TestCase):
+class AdminTeamTests(EventTestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):
@@ -259,7 +259,7 @@ class AdminTeamTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class AdminViewTests(TestCase):
+class AdminViewTests(EventTestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):
@@ -273,7 +273,7 @@ class AdminViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class ProgressionTests(TestCase):
+class ProgressionTests(EventTestCase):
     fixtures = ['hunts_progression']
 
     def setUp(self):
@@ -372,7 +372,7 @@ class ProgressionTests(TestCase):
         self.assertEqual(puzzle1.first_correct_guesses(self.event)[self.team1], first_correct_guess)
 
 
-class CorrectnessCacheTests(TestCase):
+class CorrectnessCacheTests(EventTestCase):
     fixtures = ['hunts_progression']
 
     def setUp(self):
@@ -437,7 +437,7 @@ class CorrectnessCacheTests(TestCase):
         self.assertTrue(self.puzzle2.answered_by(self.team2))
 
 
-class GuessTeamDenormalisationTests(TestCase):
+class GuessTeamDenormalisationTests(EventTestCase):
     fixtures = ['hunts_progression']
 
     def setUp(self):

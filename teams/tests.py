@@ -3,10 +3,11 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.views import View
-from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from django_tenants.test.client import TenantRequestFactory
 
 from events.models import Event
+from events.tests import EventTestCase
 from .mixins import TeamMixin
 from .models import Team, UserProfile
 
@@ -19,7 +20,7 @@ class EmptyTeamView(TeamMixin, View):
         return HttpResponse()
 
 
-class TeamRulesTests(TestCase):
+class TeamRulesTests(EventTestCase):
     fixtures = ['teams_test']
 
     def test_max_team_size(self):
@@ -49,7 +50,7 @@ class TeamRulesTests(TestCase):
             team2.members.add(user1)
 
 
-class TeamCreateTests(TestCase):
+class TeamCreateTests(EventTestCase):
     fixtures = ['teams_test']
 
     def setUp(self):
@@ -80,7 +81,7 @@ class TeamCreateTests(TestCase):
             Team(name='Test A', at_event=old_event).save()
 
     def test_automatic_creation(self):
-        factory = RequestFactory()
+        factory = TenantRequestFactory()
         request = factory.get('/irrelevant')  # Path is not used because we call the view function directly
         request.tenant = events.models.Event.objects.get(pk=1)
         request.user = User.objects.get(pk=4)
@@ -91,7 +92,7 @@ class TeamCreateTests(TestCase):
         Team.objects.get(members=profile)
 
 
-class InviteTests(TestCase):
+class InviteTests(EventTestCase):
     fixtures = ['teams_test']
 
     def setUp(self):
@@ -212,7 +213,7 @@ class InviteTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
-class RequestTests(TestCase):
+class RequestTests(EventTestCase):
     fixtures = ['teams_test']
 
     def setUp(self):

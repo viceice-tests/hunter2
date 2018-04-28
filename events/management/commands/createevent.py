@@ -61,7 +61,7 @@ class Command(BaseCommand):
         subdomain = options['subdomain']
 
         if not options['interactive']:
-            if not theme_name or not event_name:
+            if not event_name or not theme_name or not subdomain:
                 raise CommandError("You must use --event, --subdomain and --theme with --noinput.")
 
         while event_name is None:

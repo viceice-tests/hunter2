@@ -1,9 +1,9 @@
-- model: events.theme
-  pk: 1
-  fields: {name: Test Theme, script: '', style: ''}
 - model: events.event
   pk: 1
-  fields: {name: Test Event, theme: 1, current: true, max_team_size: 2}
+  fields: {name: Test Event, schema_name: test, theme: 1, current: true}
+- model: events.domain
+  pk: 1
+  fields: {domain: test.testserver, tenant: 1}
 - model: auth.user
   pk: 1
   fields:
