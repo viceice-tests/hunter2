@@ -2,6 +2,9 @@ version: '2.1'
 
 services:
   pipenv:
+    environment:
+      - http_proxy
+      - https_proxy
     image: python:3.6.5-alpine3.7
     command: sh -c "cd /code && pip install -r pipenv.txt && pipenv lock"
     volumes:
