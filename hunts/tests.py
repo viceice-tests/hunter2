@@ -14,6 +14,15 @@ import datetime
 import freezegun
 
 
+class HomePageTests(EventTestCase):
+    fixtures = ['hunts_test']
+
+    def test_load_homepage(self):
+        url = reverse('index', subdomain='www')
+        response = self.client.get(url, HTTP_HOST='www.testserver')
+        self.assertEqual(response.status_code, 200)
+
+
 class RegexValidationTests(EventTestCase):
     fixtures = ['hunts_test']
 

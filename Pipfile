@@ -11,19 +11,19 @@ Django = "<2.0"
 PyYAML = "*"
 colour-runner = "*"
 coverage = "*"
-django-allauth = { git = "https://github.com/irconan/django-allauth.git", ref = "0.35.0-stateless" }
+django-allauth = { git = "https://github.com/riconnon/django-allauth.git", ref = "0.35.0-stateless" }
 django-analytical = "*"
 django-autocomplete-light = "*"
 django-debug-toolbar = "*"
 django-enumfields = "*"
 django-environ = "*"
 django-extensions = "*"
-django-fullclean = { git = "https://github.com/irconan/django-fullclean.git", ref = "0.0.4+whitelist" }
+django-fullclean = { git = "https://github.com/riconnon/django-fullclean.git", ref = "0.0.4+whitelist" }
 django-nested-admin = "*"
 django-sendfile = "*"
 django-solo = "*"
 django-sortedm2m = "*"
-django-tenants = { git = "https://github.com/irconan/django-tenants.git", ref = "v1.3.4+1" }
+django-tenants = { git = "https://github.com/riconnon/django-tenants.git", ref = "v1.3.4+1" }
 django-url-tools = { git = "https://bitbucket.org/nlaurance/django-url-tools.git", ref = "17352a9" }
 freezegun = "*"
 lupa = "*"

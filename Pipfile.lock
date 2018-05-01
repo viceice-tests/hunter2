@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d09e727da5156baac790c6423b45e12150ae583aed235820df789fd8ff35d6dd"
+            "sha256": "d7230c5071c0eeec53551740e24e083015b15d9e36599d4340c877e88c449670"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -88,7 +88,7 @@
             "version": "==1.11.12"
         },
         "django-allauth": {
-            "git": "https://github.com/irconan/django-allauth.git",
+            "git": "https://github.com/riconnon/django-allauth.git",
             "ref": "0.35.0-stateless"
         },
         "django-analytical": {
@@ -138,7 +138,7 @@
             "version": "==2.0.7"
         },
         "django-fullclean": {
-            "git": "https://github.com/irconan/django-fullclean.git",
+            "git": "https://github.com/riconnon/django-fullclean.git",
             "ref": "0.0.4+whitelist"
         },
         "django-nested-admin": {
@@ -171,7 +171,7 @@
             "version": "==1.5.0"
         },
         "django-tenants": {
-            "git": "https://github.com/irconan/django-tenants.git",
+            "git": "https://github.com/riconnon/django-tenants.git",
             "ref": "v1.3.4+1"
         },
         "django-url-tools": {
