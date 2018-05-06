@@ -2,12 +2,24 @@ from io import StringIO
 from unittest.case import expectedFailure
 
 from django.core.management import CommandError, call_command
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django_tenants.test.cases import TenantTestCase
 
 from events.management.commands import createevent
 from events.models import Event, Theme
 from hunter2.tests import MockTTY, mock_inputs
+
+
+class EventAwareTestCase(TransactionTestCase):
+    @classmethod
+    def tearDownClass(cls):
+        for event in Event.objects.all():
+            event.activate()
+            print('START Deleting f{event}')
+            event.delete(force_drop=True)
+            print('DONE deleting f{event}')
+            event.deactivate()
+        super().tearDownClass()
 
 
 class EventTestCase(TenantTestCase):
@@ -20,15 +32,15 @@ class EventTestCase(TenantTestCase):
         tenant.theme = theme
 
 
-class EventRulesTests(EventTestCase):
+class EventRulesTests(EventAwareTestCase):
 
     def test_only_one_current_event(self):
         # Ensure that we only have one event set as current
         theme = Theme(name="Test Theme")
         theme.save()
-        event1 = Event(name="Event Theme1", theme=theme, current=True)
+        event1 = Event(name="Event 1", theme=theme, current=True, schema_name='ev1')
         event1.save()
-        event2 = Event(name="Event Theme2", theme=theme, current=True)
+        event2 = Event(name="Event 2", theme=theme, current=True, schema_name='ev2')
         event2.save()
         self.assertEqual(len(Event.objects.filter(current=True)), 1, "More than one event is set as current")
         self.assertEqual(Event.objects.get(current=True), event2, "Last added event is not current")
@@ -38,9 +50,9 @@ class EventRulesTests(EventTestCase):
         # Ensure that we only have one event set as current after deleting the current test
         theme = Theme(name="Test Theme")
         theme.save()
-        event1 = Event(name="Event Theme1", theme=theme, current=True)
+        event1 = Event(name="Event 1", theme=theme, current=True, schema_name='ev1')
         event1.save()
-        event2 = Event(name="Event Theme2", theme=theme, current=True)
+        event2 = Event(name="Event 2", theme=theme, current=True, schema_name='ev2')
         event2.save()
         event2.delete()
         self.assertEqual(len(Event.objects.filter(current=True)), 1, "No current event set")
@@ -50,7 +62,7 @@ class EventRulesTests(EventTestCase):
         # If we only have one event is should be set as current by default, regardless if set as current
         theme = Theme(name="Test Theme")
         theme.save()
-        event = Event(name="Event Theme", theme=theme, current=False)
+        event = Event(name="Event", theme=theme, current=False, schema_name='ev')
         event.save()
         self.assertTrue(event.current, "Only event is not set as current")
 
