@@ -7,8 +7,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [('teams', '0004_userprofile_seat'), ('teams', '0005_auto_20170801_2322')]
-
     dependencies = [
         ('teams', '0003_auto_20170425_1400'),
     ]
