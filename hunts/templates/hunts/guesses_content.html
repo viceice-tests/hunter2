@@ -31,7 +31,8 @@
 		<td class="guess">
 			{{ guess.guess }}
 			<span class="shortcuts">
-				(<a href="{% url 'admin:hunts_unlock_add' %}?puzzle={{ guess.for_puzzle.id }}&guess={{ guess.guess|urlencode }}">U</a>)
+				(<a href="{% url 'admin:hunts_answer_add' %}?for_puzzle={{ guess.for_puzzle.id }}&answer={{ guess.guess|urlencode }}">A</a>
+				<a href="{% url 'admin:hunts_unlock_add' %}?puzzle={{ guess.for_puzzle.id }}&guess={{ guess.guess|urlencode }}">U</a>)
 			</span>
 		</td>
 		<td>{{ guess.given }}</td>

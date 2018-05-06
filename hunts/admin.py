@@ -18,6 +18,17 @@ def make_textinput(field, db_field, kwdict):
         kwdict['widget'] = forms.Textarea(attrs={'rows': 1})
 
 
+@admin.register(models.Answer)
+class AnswerAdmin(NestedModelAdmin):
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        make_textinput('answer', db_field, kwargs)
+        return super().formfield_for_dbfield(db_field, **kwargs)
+
+    # Do not show this on the admin index for any user
+    def has_module_permission(self, request):
+        return False
+
+
 class AnswerInline(NestedStackedInline):
     model = models.Answer
     fields = ('alter_progress', 'answer', 'runtime')
@@ -76,6 +87,7 @@ class UnlockAdmin(NestedModelAdmin):
         make_textinput('text', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
 
+    # Do not show this on the admin index for any user
     def has_module_permission(self, request):
         return False
 
