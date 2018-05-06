@@ -16,7 +16,7 @@
 		<td><a href="?episode={{ guess.episode.id }}">{{ guess.episode.name }}</a></td>
 		<td>
 			<a href="?puzzle={{ guess.for_puzzle.id }}">{{ guess.for_puzzle.title }}</a>
-			<span class="puzzle-links">
+			<span class="shortcuts">
 				(<a href="{% url 'admin:hunts_puzzle_change' guess.for_puzzle.id %}">E</a>
 				<a href="{{ guess.for_puzzle.get_absolute_url }}">V</a>)
 			</span>
@@ -30,7 +30,7 @@
 		<td>{{ guess.by.seat }}</td>
 		<td class="guess">
 			{{ guess.guess }}
-			<span class="guess-links">
+			<span class="shortcuts">
 				(<a href="{% url 'admin:hunts_unlock_add' %}?puzzle={{ guess.for_puzzle.id }}&guess={{ guess.guess|urlencode }}">U</a>)
 			</span>
 		</td>
