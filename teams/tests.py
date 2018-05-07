@@ -5,10 +5,11 @@ from django.http import HttpResponse
 from django.views import View
 from django.test import RequestFactory, TestCase
 
+from accounts.models import UserProfile
 from events.models import Event
 from hunter2.resolvers import reverse
 from .mixins import TeamMixin
-from .models import Team, UserProfile
+from .models import Team
 
 import events
 import json
