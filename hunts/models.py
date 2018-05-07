@@ -381,13 +381,13 @@ class PuzzleData:
                 puzzle=puzzle, user=user
             )
 
-    def save(self):
-        self.t_data.save()
-        self.tp_data.save()
+    def save(self, *args, **kwargs):
+        self.t_data.save(*args, **kwargs)
+        self.tp_data.save(*args, **kwargs)
         if self.u_data:
-            self.u_data.save()
+            self.u_data.save(*args, **kwargs)
         if self.up_data:
-            self.up_data.save()
+            self.up_data.save(*args, **kwargs)
 
 
 class Episode(models.Model):
