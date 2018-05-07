@@ -320,7 +320,7 @@ class TeamData(models.Model):
 
 
 class UserData(models.Model):
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING)
     user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
     data = JSONField(blank=True, null=True)
 
@@ -401,7 +401,7 @@ class Episode(models.Model):
         symmetrical=False,
     )
     start_date = models.DateTimeField()
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING)
     parallel = models.BooleanField(default=False, help_text='Allow players to answer riddles in this episode in any order they like')
     headstart_from = models.ManyToManyField(
         "self", blank=True,
@@ -538,7 +538,7 @@ class AnnouncementType(Enum):
 
 
 class Announcement(models.Model):
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='announcements')
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING, related_name='announcements')
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE, related_name='announcements', null=True, blank=True)
     title = models.CharField(max_length=255)
     posted = models.DateTimeField(auto_now_add=True)

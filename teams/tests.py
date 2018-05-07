@@ -7,7 +7,7 @@ from django.urls import reverse
 from django_tenants.test.client import TenantRequestFactory
 
 from events.models import Event
-from events.tests import EventTestCase
+from events.test import EventTestCase
 from .mixins import TeamMixin
 from .models import Team, UserProfile
 
@@ -53,11 +53,6 @@ class TeamRulesTests(EventTestCase):
 class TeamCreateTests(EventTestCase):
     fixtures = ['teams_test']
 
-    def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
-
     def test_team_create(self):
         self.assertTrue(self.client.login(username='test_b', password='hunter2'))
         response = self.client.post(
@@ -81,7 +76,7 @@ class TeamCreateTests(EventTestCase):
             Team(name='Test A', at_event=old_event).save()
 
     def test_automatic_creation(self):
-        factory = TenantRequestFactory()
+        factory = TenantRequestFactory(self.tenant)
         request = factory.get('/irrelevant')  # Path is not used because we call the view function directly
         request.tenant = events.models.Event.objects.get(pk=1)
         request.user = User.objects.get(pk=4)
@@ -217,9 +212,6 @@ class RequestTests(EventTestCase):
     fixtures = ['teams_test']
 
     def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
         self.assertTrue(self.client.login(username='test_b', password='hunter2'))
         response = self.client.post(
             reverse('request', kwargs={'event_id': 1, 'team_id': 1}),

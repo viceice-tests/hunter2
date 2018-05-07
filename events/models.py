@@ -19,6 +19,7 @@ class Domain(DomainMixin):
 
 
 class Event(TenantMixin):
+    auto_drop_schema = True
     name = models.CharField(max_length=255, unique=True)
     theme = models.ForeignKey(Theme, on_delete=models.CASCADE, related_name='theme')
     current = SingleTrueBooleanField()
@@ -30,6 +31,9 @@ class Event(TenantMixin):
 
     def __str__(self):
         return self.name
+
+    def save(self, verbosity=0, *args, **kwargs):
+        super().save(verbosity, *args, **kwargs)
 
 
 def event_file_path(instance, filename):

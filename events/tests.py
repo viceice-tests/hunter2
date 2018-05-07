@@ -2,34 +2,11 @@ from io import StringIO
 from unittest.case import expectedFailure
 
 from django.core.management import CommandError, call_command
-from django.test import TestCase, TransactionTestCase
-from django_tenants.test.cases import TenantTestCase
-
-from events.management.commands import createevent
-from events.models import Event, Theme
 from hunter2.tests import MockTTY, mock_inputs
 
-
-class EventAwareTestCase(TransactionTestCase):
-    @classmethod
-    def tearDownClass(cls):
-        for event in Event.objects.all():
-            event.activate()
-            print('START Deleting f{event}')
-            event.delete(force_drop=True)
-            print('DONE deleting f{event}')
-            event.deactivate()
-        super().tearDownClass()
-
-
-class EventTestCase(TenantTestCase):
-
-    @classmethod
-    def setup_tenant(cls, tenant):
-        theme = Theme(name='Test Theme')
-        theme.save()
-        tenant.name = 'Test Event'
-        tenant.theme = theme
+from .management.commands import createevent
+from .models import Event, Theme
+from .test import EventAwareTestCase
 
 
 class EventRulesTests(EventAwareTestCase):
@@ -67,7 +44,7 @@ class EventRulesTests(EventAwareTestCase):
         self.assertTrue(event.current, "Only event is not set as current")
 
 
-class CreateDefaultEventManagementCommandTests(TestCase):
+class CreateEventManagementCommandTests(EventAwareTestCase):
     TEST_EVENT_NAME = "Custom Event"
     TEST_THEME_NAME = "Custom Theme"
     TEST_SUBDOMAIN = 'custom'
@@ -89,6 +66,7 @@ class CreateDefaultEventManagementCommandTests(TestCase):
             interactive=False,
             event_name=self.TEST_EVENT_NAME,
             theme_name=self.TEST_THEME_NAME,
+            subdomain=self.TEST_SUBDOMAIN,
             stdout=output
         )
         command_output = output.getvalue().strip()
@@ -157,6 +135,7 @@ class CreateDefaultEventManagementCommandTests(TestCase):
             interactive=False,
             event_name=self.TEST_EVENT_NAME + "1",
             theme_name=self.TEST_THEME_NAME + "1",
+            subdomain=self.TEST_SUBDOMAIN + "1",
             stdout=output
         )
         command_output = output.getvalue().strip()
@@ -171,6 +150,7 @@ class CreateDefaultEventManagementCommandTests(TestCase):
             interactive=False,
             event_name=self.TEST_EVENT_NAME + "2",
             theme_name=self.TEST_THEME_NAME + "2",
+            subdomain=self.TEST_SUBDOMAIN + "2",
             stdout=output
         )
         command_output = output.getvalue().strip()
