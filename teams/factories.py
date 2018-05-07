@@ -1,5 +1,4 @@
 import unicodedata
-from datetime import datetime, timezone
 
 import factory
 import pytz

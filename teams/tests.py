@@ -5,8 +5,6 @@ from django.http import HttpResponse
 from django.views import View
 from django.test import RequestFactory, TestCase
 
-import teams
-from events.models import Event
 from hunter2.resolvers import reverse
 from .mixins import TeamMixin
 from .models import Team, UserProfile
