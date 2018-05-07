@@ -11,14 +11,15 @@ from hunter2.tests import MockTTY, mock_inputs
 
 from . import factories
 
+
 class EventRulesTests(TestCase):
 
     def test_only_one_current_event(self):
         # Ensure that we only have one event set as current
-        event1 = factories.EventFactory(current=True)
-        event2 = factories.EventFactory(current=True)
+        factories.EventFactory(current=True)
+        event = factories.EventFactory(current=True)
         self.assertEqual(len(Event.objects.filter(current=True)), 1, "More than one event is set as current")
-        self.assertEqual(Event.objects.get(current=True), event2, "Last added event is not current")
+        self.assertEqual(Event.objects.get(current=True), event, "Last added event is not current")
 
     @expectedFailure  # TODO: Currently fails but non-critical
     def test_only_remaining_event_is_current(self):
