@@ -5,10 +5,14 @@ from django.http import HttpResponse
 from django.views import View
 from django.test import RequestFactory, TestCase
 
+import teams
 from events.models import Event
 from hunter2.resolvers import reverse
 from .mixins import TeamMixin
 from .models import Team, UserProfile
+
+from teams.factories import UserProfileFactory, TeamFactory
+from events.factories import EventFactory
 
 import events
 import json
@@ -20,33 +24,30 @@ class EmptyTeamView(TeamMixin, View):
 
 
 class TeamRulesTests(TestCase):
-    fixtures = ['teams_test']
-
     def test_max_team_size(self):
-        event = Event.objects.get(pk=1)
-        team  = Team.objects.get(pk=1)
+        event = EventFactory(max_team_size=2)
+        team  = TeamFactory(at_event=event)
 
         # Add 3 users to a team when that max is less than that.
         self.assertLess(event.max_team_size, 3)
-        user1 = UserProfile.objects.get(pk=1)
-        user2 = UserProfile.objects.get(pk=2)
-        user3 = UserProfile.objects.get(pk=3)
+        user1 = UserProfileFactory()
+        user2 = UserProfileFactory()
+        user3 = UserProfileFactory()
 
         with self.assertRaises(ValidationError):
             team.members.add(user1)
             team.members.add(user2)
             team.members.add(user3)
 
-    def test_one_team_per_member(self):
-        event = Event.objects.get(pk=1)
-        team1 = Team.objects.get(pk=1)
-        team2 = Team(name="Team2", at_event=event)
-        team2.save()
-        user1 = UserProfile.objects.get(pk=1)
+    def test_one_team_per_member_per_event(self):
+        event = EventFactory()
+        team1 = TeamFactory(at_event=event)
+        team2 = TeamFactory(at_event=event)
+        user = UserProfileFactory()
 
         with self.assertRaises(ValidationError):
-            team1.members.add(user1)
-            team2.members.add(user1)
+            team1.members.add(user)
+            team2.members.add(user)
 
 
 class TeamCreateTests(TestCase):
