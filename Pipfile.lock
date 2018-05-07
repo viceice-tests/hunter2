@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "af576e8fa91577602d9ef50a8c0002913b8542fbf2232b8e4a87790857d699e0"
+            "sha256": "9e5ce75e14607a73725169c3197763c0e672284b5d3098e2eb201084bfa0a276"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -81,11 +81,11 @@
         },
         "django": {
             "hashes": [
-                "sha256:056fe5b9e1f8f7fed9bb392919d64f6b33b3a71cfb0f170a90ee277a6ed32bc2",
-                "sha256:4d398c7b02761e234bbde490aea13ea94cb539ceeb72805b72303f348682f2eb"
+                "sha256:18986bcffe69653a84eaf1faa1fa5a7eded32cee41cfecc77fdc65a3e046404d",
+                "sha256:46adfe8e0abe4d1f026c1086889970b611aec492784fbdfbdaabc2457360a4a5"
             ],
             "index": "pypi",
-            "version": "==1.11.12"
+            "version": "==1.11.13"
         },
         "django-allauth": {
             "git": "https://github.com/riconnon/django-allauth.git",
@@ -173,6 +173,21 @@
         "django-url-tools": {
             "git": "https://bitbucket.org/nlaurance/django-url-tools.git",
             "ref": "17352a9"
+        },
+        "factory-boy": {
+            "hashes": [
+                "sha256:6f25cc4761ac109efd503f096e2ad99421b1159f01a29dbb917359dcd68e08ca",
+                "sha256:d552cb872b310ae78bd7429bf318e42e1e903b1a109e899a523293dfa762ea4f"
+            ],
+            "index": "pypi",
+            "version": "==2.11.1"
+        },
+        "faker": {
+            "hashes": [
+                "sha256:226d8fa67a8cf8b4007aab721f67639f130e9cfdc53a7095a2290ebb07a65c71",
+                "sha256:48fed4b4a191e2b42ad20c14115f1c6d36d338b80192075d7573f0f42d7fb321"
+            ],
+            "version": "==0.8.13"
         },
         "freezegun": {
             "hashes": [
@@ -331,6 +346,13 @@
             "index": "pypi",
             "version": "==2.1.1"
         },
+        "text-unidecode": {
+            "hashes": [
+                "sha256:5a1375bb2ba7968740508ae38d92e1f889a0832913cb1c447d5e2046061a396d",
+                "sha256:801e38bd550b943563660a91de8d4b6fa5df60a542be9093f7abf819f86050cc"
+            ],
+            "version": "==1.2"
+        },
         "uwsgi": {
             "hashes": [
                 "sha256:3dc2e9b48db92b67bfec1badec0d3fdcc0771316486c5efa3217569da3528bf2"
@@ -390,11 +412,11 @@
         },
         "django": {
             "hashes": [
-                "sha256:056fe5b9e1f8f7fed9bb392919d64f6b33b3a71cfb0f170a90ee277a6ed32bc2",
-                "sha256:4d398c7b02761e234bbde490aea13ea94cb539ceeb72805b72303f348682f2eb"
+                "sha256:18986bcffe69653a84eaf1faa1fa5a7eded32cee41cfecc77fdc65a3e046404d",
+                "sha256:46adfe8e0abe4d1f026c1086889970b611aec492784fbdfbdaabc2457360a4a5"
             ],
             "index": "pypi",
-            "version": "==1.11.12"
+            "version": "==1.11.13"
         },
         "django-silk": {
             "hashes": [
