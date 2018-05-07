@@ -30,24 +30,20 @@ class TeamRulesTests(TestCase):
 
         # Add 3 users to a team when that max is less than that.
         self.assertLess(event.max_team_size, 3)
-        user1 = UserProfileFactory()
-        user2 = UserProfileFactory()
-        user3 = UserProfileFactory()
+        users = UserProfileFactory.create_batch(3)
 
         with self.assertRaises(ValidationError):
-            team.members.add(user1)
-            team.members.add(user2)
-            team.members.add(user3)
+            for user in users:
+                team.members.add(user)
 
     def test_one_team_per_member_per_event(self):
         event = EventFactory()
-        team1 = TeamFactory(at_event=event)
-        team2 = TeamFactory(at_event=event)
+        teams = TeamFactory.create_batch(2, at_event=event)
         user = UserProfileFactory()
 
         with self.assertRaises(ValidationError):
-            team1.members.add(user)
-            team2.members.add(user)
+            teams[0].members.add(user)
+            teams[1].members.add(user)
 
 
 class TeamCreateTests(TestCase):
