@@ -36,11 +36,11 @@
 	/*max-height: 4em;*/
 }
 
-.guess-viewer-guess .puzzle-links {
+.guess-viewer-guess .shortcuts {
 	font-size: 75%;
 }
 
-.guess-viewer-guess .puzzle-links a {
+.guess-viewer-guess .shortcuts a {
 	font-weight: bold;
 }
 
