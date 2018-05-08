@@ -107,6 +107,21 @@ class AnswerSubmissionTest(TestCase):
             response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
             self.assertEqual(response.status_code, 200)
 
+    def test_answer_after_end(self):
+        self.assertTrue(self.client.login(username='test', password='hunter2'))
+        url = reverse('answer', subdomain='www',
+                      kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1},
+                      )
+        with freezegun.freeze_time() as frozen_datetime:
+            event = Event.objects.get()
+            event.end_date = timezone.now() + datetime.timedelta(seconds=5)
+            event.save()
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            self.assertEqual(response.status_code, 200)
+            frozen_datetime.tick(delta=datetime.timedelta(seconds=10))
+            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            self.assertEqual(response.status_code, 400)
+
 
 class PuzzleStartTimeTests(TestCase):
     fixtures = ['hunts_test']

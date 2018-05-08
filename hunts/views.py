@@ -427,8 +427,10 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
 
         data = models.PuzzleData(puzzle, request.team, request.user.profile)
 
+        now = timezone.now()
+
         if not data.tp_data.start_time:
-            data.tp_data.start_time = timezone.now()
+            data.tp_data.start_time = now
 
         answered = puzzle.answered_by(request.team)
         hints = [
@@ -469,12 +471,15 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
 
         flavour = Template(puzzle.flavour).safe_substitute(**files)
 
+        ended = request.event.end_date < now
+
         response = TemplateResponse(
             request,
             'hunts/puzzle.html',
             context={
                 'answered': answered,
                 'admin': admin,
+                'ended': ended,
                 'hints': hints,
                 'title': puzzle.title,
                 'flavour': flavour,
@@ -506,6 +511,8 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
             request.event, episode_number, puzzle_number
         )
 
+        now = timezone.now()
+
         minimum_time = timedelta(seconds=5)
         try:
             latest_guess = models.Guess.objects.filter(
@@ -517,8 +524,11 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         except IndexError:
             pass
         else:
-            if latest_guess.given + minimum_time > timezone.now():
+            if latest_guess.given + minimum_time > now:
                 return JsonResponse({'error': 'too fast'}, status=429)
+
+        if request.event.end_date < now:
+            return JsonResponse({'error': 'event is over'}, status=400)
 
         data = models.PuzzleData(puzzle, request.team)
 
@@ -527,7 +537,7 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
             last_updated = datetime.fromtimestamp(int(last_updated) // 1000, timezone.utc)
             new_hints = puzzle.hint_set.filter(
                 time__gt=(last_updated - data.tp_data.start_time),
-                time__lt=(timezone.now() - data.tp_data.start_time),
+                time__lt=(now - data.tp_data.start_time),
             )
             new_hints = [{'time': str(hint.time), 'text': hint.text} for hint in new_hints]
         else:
@@ -576,7 +586,7 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
                                 'new': guess in correct_guesses})
 
             response['guess'] = given_answer
-            response['timeout'] = str(timezone.now() + minimum_time)
+            response['timeout'] = str(now + minimum_time)
             response['new_hints'] = new_hints
             response['unlocks'] = unlocks
         response['correct'] = str(correct).lower()

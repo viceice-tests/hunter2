@@ -73,7 +73,10 @@ class TeamCreateTests(TestCase):
 
     def test_team_name_uniqueness(self):
         old_event = events.models.Event.objects.get(pk=1)
-        new_event = events.models.Event(name='New Event', theme=old_event.theme, current=False)
+        new_event = events.models.Event(
+            name='New Event', theme=old_event.theme,
+            end_date=old_event.end_date, current=False
+        )
         new_event.save()
         # Check that the new event team does not raise a validation error
         Team(name='Test A', at_event=new_event).save()
