@@ -3,11 +3,13 @@ from django.http import HttpResponse
 from django.views import View
 from django.test import RequestFactory, TestCase
 
+from accounts.models import UserProfile
 from hunter2.resolvers import reverse
 from .mixins import TeamMixin
-from .models import Team, UserProfile
+from .models import Team
 
-from teams.factories import UserFactory, UserProfileFactory, TeamFactory, SiteFactory
+from accounts.factories import UserFactory, UserProfileFactory, SiteFactory
+from teams.factories import TeamFactory
 from events.factories import EventFactory
 
 import json
