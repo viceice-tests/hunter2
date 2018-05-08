@@ -9,7 +9,7 @@ from hunter2.resolvers import reverse
 from .mixins import TeamMixin
 from .models import Team, UserProfile
 
-from teams.factories import UserProfileFactory, TeamFactory
+from teams.factories import UserFactory, UserProfileFactory, TeamFactory
 from events.factories import EventFactory
 
 import events
@@ -45,43 +45,50 @@ class TeamRulesTests(TestCase):
 
 
 class TeamCreateTests(TestCase):
-    fixtures = ['teams_test']
-
     def setUp(self):
         site = Site.objects.get()
         site.domain = 'testserver'
         site.save()
 
     def test_team_create(self):
-        self.assertTrue(self.client.login(username='test_b', password='hunter2'))
+
+        password = "hunter2"
+        event = EventFactory()
+        creator = UserProfileFactory(user__password=password)
+        team_template = TeamFactory.build()
+
+        self.assertTrue(self.client.login(username=creator.user.username, password=password))
         response = self.client.post(
-            reverse('create_team', kwargs={'event_id': 1}, subdomain='www'),
+            reverse('create_team', kwargs={'event_id': event.id}, subdomain='www'),
             {
-                'name': 'Test Team',
+                'name': team_template.name,
             },
             HTTP_HOST='www.testserver',
         )
         self.assertEqual(response.status_code, 302)
-        creator = UserProfile.objects.get(pk=2)
-        team = Team.objects.get(name='Test Team')
+        team = Team.objects.get(name=team_template.name)
         self.assertTrue(creator in team.members.all())
 
     def test_team_name_uniqueness(self):
-        old_event = events.models.Event.objects.get(pk=1)
-        new_event = events.models.Event(name='New Event', theme=old_event.theme, current=False)
-        new_event.save()
+        old_event = EventFactory()
+        new_event = EventFactory(theme=old_event.theme, current=False)
+        team1 = TeamFactory(at_event=old_event)
+
         # Check that the new event team does not raise a validation error
-        Team(name='Test A', at_event=new_event).save()
+        TeamFactory(name=team1.name, at_event=new_event)
+
+        # Check that creating a team with the same name on the old event is not allowed.
         with self.assertRaises(ValidationError):
-            Team(name='Test A', at_event=old_event).save()
+            TeamFactory(name=team1.name, at_event=old_event)
 
     def test_automatic_creation(self):
         factory = RequestFactory()
         request = factory.get('/irrelevant')  # Path is not used because we call the view function directly
-        request.event = events.models.Event.objects.get(pk=1)
-        request.user = User.objects.get(pk=4)
+        request.event = EventFactory()
+        request.user = UserFactory()
         view = EmptyTeamView.as_view()
         response = view(request)
+
         self.assertEqual(response.status_code, 200)
         profile = UserProfile.objects.get(user=request.user)
         Team.objects.get(members=profile)
