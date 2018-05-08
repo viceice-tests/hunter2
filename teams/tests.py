@@ -1,5 +1,3 @@
-from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.views import View
@@ -12,7 +10,6 @@ from .models import Team, UserProfile
 from teams.factories import UserFactory, UserProfileFactory, TeamFactory, SiteFactory
 from events.factories import EventFactory
 
-import events
 import json
 
 
