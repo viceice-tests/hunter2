@@ -23,7 +23,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     first_name = factory.Faker('first_name')
     last_name = factory.Faker('last_name')
-    password = factory.Faker('password')
+    password = factory.PostGeneration(lambda user, create, extracted: user.set_password(extracted or factory.Faker('password').generate({})))
 
     # Fixed values, can be overridden manually on creation.
     is_active = True
