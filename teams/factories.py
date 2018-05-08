@@ -3,8 +3,17 @@ import unicodedata
 import factory
 import pytz
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 
 from events import factories
+
+
+class SiteFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Site
+
+    domain = factory.Faker('domain_name')
+    name = factory.Faker('domain_word')
 
 
 class UserProfileFactory(factory.django.DjangoModelFactory):

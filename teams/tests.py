@@ -9,7 +9,7 @@ from hunter2.resolvers import reverse
 from .mixins import TeamMixin
 from .models import Team, UserProfile
 
-from teams.factories import UserFactory, UserProfileFactory, TeamFactory
+from teams.factories import UserFactory, UserProfileFactory, TeamFactory, SiteFactory
 from events.factories import EventFactory
 
 import events
@@ -45,13 +45,8 @@ class TeamRulesTests(TestCase):
 
 
 class TeamCreateTests(TestCase):
-    def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
-
     def test_team_create(self):
-
+        site = SiteFactory()
         password = "hunter2"
         event = EventFactory()
         creator = UserProfileFactory(user__password=password)
@@ -63,7 +58,7 @@ class TeamCreateTests(TestCase):
             {
                 'name': team_template.name,
             },
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(site.domain),
         )
         self.assertEqual(response.status_code, 302)
         team = Team.objects.get(name=team_template.name)
@@ -95,262 +90,260 @@ class TeamCreateTests(TestCase):
 
 
 class InviteTests(TestCase):
-    fixtures = ['teams_test']
+    @classmethod
+    def setUpTestData(cls):
+        cls.site = SiteFactory()
+        cls.event = EventFactory(max_team_size=2)
+        cls.password = "hunter2"
+        cls.team_admin = UserProfileFactory(user__password=cls.password)
+        cls.invitee = UserProfileFactory(user__password=cls.password)
+        cls.team = TeamFactory(at_event=cls.event, members={cls.team_admin})
 
     def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
-        self.assertTrue(self.client.login(username='test_a', password='hunter2'))
+        # Crete an invite for the "invitee" user using the "team_admin" account.
+        self.assertTrue(self.client.login(username=self.team_admin.user.username, password=self.password))
         response = self.client.post(
-            reverse('invite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('invite', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 2
+                'user': self.invitee.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 200)
 
     def test_invite_accept(self):
-        self.assertTrue(self.client.login(username='test_b', password='hunter2'))
+        self.assertTrue(self.client.login(username=self.invitee.user.username, password=self.password))
         response = self.client.post(
-            reverse('acceptinvite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('acceptinvite', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({}),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 200)
-        user = UserProfile.objects.get(pk=2)
-        team = Team.objects.get(pk=1)
-        self.assertTrue(user in team.members.all())
-        self.assertFalse(user in team.invites.all())
+        self.assertTrue(self.invitee in self.team.members.all())
+        self.assertFalse(self.invitee in self.team.invites.all())
 
         # Now try to invite to a full team
-        self.assertTrue(self.client.login(username='test_a', password='hunter2'))
+        invitee2 = UserProfileFactory(user__password=self.password)
+        self.assertTrue(self.client.login(username=self.invitee.user.username, password=self.password))
         response = self.client.post(
-            reverse('invite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('invite', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 3
+                'user': invitee2.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
-        user = UserProfile.objects.get(pk=3)
         self.assertEqual(response.status_code, 400)
-        self.assertFalse(user in team.members.all())
-        self.assertFalse(user in team.invites.all())
+        self.assertFalse(invitee2 in self.team.members.all())
+        self.assertFalse(invitee2 in self.team.invites.all())
 
         # Now bypass the invitation mechanism to add an invite anyway and
         # check it can't be accepted
-        team.invites.add(user)
-        self.assertTrue(self.client.login(username='test_c', password='hunter2'))
+        self.team.invites.add(invitee2)
+        self.assertTrue(self.client.login(username=invitee2.user.username, password=self.password))
         response = self.client.post(
-            reverse('acceptinvite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('acceptinvite', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({}),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 400)
-        self.assertFalse(user in team.members.all())
+        self.assertFalse(invitee2 in self.team.members.all())
         # Finally check we cleaned up the invite after failing
-        self.assertFalse(user in team.invites.all())
+        self.assertFalse(invitee2 in self.team.invites.all())
 
     def test_invite_cancel(self):
         response = self.client.post(
-            reverse('cancelinvite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('cancelinvite', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 2
+                'user': self.invitee.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 200)
-        user = UserProfile.objects.get(pk=2)
-        team = Team.objects.get(pk=1)
-        self.assertFalse(user in team.members.all())
-        self.assertFalse(user in team.invites.all())
+        self.assertFalse(self.invitee in self.team.members.all())
+        self.assertFalse(self.invitee in self.team.invites.all())
 
     def test_invite_deny(self):
-        self.assertTrue(self.client.login(username='test_b', password='hunter2'))
+        self.assertTrue(self.client.login(username=self.invitee.user.username, password=self.password))
         response = self.client.post(
-            reverse('denyinvite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('denyinvite', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({}),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 200)
-        user = UserProfile.objects.get(pk=2)
-        team = Team.objects.get(pk=1)
-        self.assertFalse(user in team.members.all())
-        self.assertFalse(user in team.invites.all())
+        self.assertFalse(self.invitee in self.team.members.all())
+        self.assertFalse(self.invitee in self.team.invites.all())
 
     def test_invite_views_forbidden(self):
         self.client.logout()
         response = self.client.post(
-            reverse('invite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('invite', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 1
+                'user': self.team_admin.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 403)
         response = self.client.post(
-            reverse('cancelinvite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('cancelinvite', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 1
+                'user': self.team_admin.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 403)
         response = self.client.post(
-            reverse('acceptinvite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('acceptinvite', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 1
+                'user': self.team_admin.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 403)
         response = self.client.post(
-            reverse('denyinvite', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('denyinvite', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 1
+                'user': self.team_admin.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 403)
 
 
 class RequestTests(TestCase):
-    fixtures = ['teams_test']
+    @classmethod
+    def setUpTestData(cls):
+        cls.site = SiteFactory()
+        cls.event = EventFactory(max_team_size=2)
+        cls.password = "hunter2"
+        cls.team_admin = UserProfileFactory(user__password=cls.password)
+        cls.requestee = UserProfileFactory(user__password=cls.password)
+        cls.team = TeamFactory(at_event=cls.event, members={cls.team_admin})
 
     def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
-        self.assertTrue(self.client.login(username='test_b', password='hunter2'))
+        # The "requestee" is requesting a place on "team".
+        self.assertTrue(self.client.login(username=self.requestee.user.username, password=self.password))
         response = self.client.post(
-            reverse('request', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('request', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({}),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 200)
 
     def test_request_accept(self):
-        self.assertTrue(self.client.login(username='test_a', password='hunter2'))
+        self.assertTrue(self.client.login(username=self.team_admin.user.username, password=self.password))
         response = self.client.post(
-            reverse('acceptrequest', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('acceptrequest', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 2
+                'user': self.requestee.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 200)
-        user = UserProfile.objects.get(pk=2)
-        team = Team.objects.get(pk=1)
-        self.assertTrue(user in team.members.all())
-        self.assertFalse(user in team.requests.all())
+        self.assertTrue(self.requestee in self.team.members.all())
+        self.assertFalse(self.requestee in self.team.requests.all())
 
         # Now try to send a request to the full team
-        self.assertTrue(self.client.login(username='test_c', password='hunter2'))
+        requestee2 = UserProfileFactory(user__password=self.password)
+        self.assertTrue(self.client.login(username=requestee2.user.username, password=self.password))
         response = self.client.post(
-            reverse('request', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('request', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({}),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 400)
-        user = UserProfile.objects.get(pk=3)
-        self.assertFalse(user in team.members.all())
-        self.assertFalse(user in team.requests.all())
+        self.assertFalse(requestee2 in self.team.members.all())
+        self.assertFalse(requestee2 in self.team.requests.all())
 
         # Now bypass the request mechanism to add a request anyway and
         # check it can't be accepted
-        team.requests.add(user)
-        self.assertTrue(self.client.login(username='test_a', password='hunter2'))
+        self.team.requests.add(requestee2)
+        self.assertTrue(self.client.login(username=self.team_admin.user.username, password=self.password))
         response = self.client.post(
-            reverse('acceptrequest', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('acceptrequest', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 3
+                'user': requestee2.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 400)
-        self.assertFalse(user in team.members.all())
+        self.assertFalse(requestee2 in self.team.members.all())
         # Finally check we cleaned up the request after failing
-        self.assertFalse(user in team.requests.all())
+        self.assertFalse(requestee2 in self.team.requests.all())
 
     def test_request_cancel(self):
         response = self.client.post(
-            reverse('cancelrequest', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('cancelrequest', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({}),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 200)
-        user = UserProfile.objects.get(pk=2)
-        team = Team.objects.get(pk=1)
-        self.assertFalse(user in team.members.all())
-        self.assertFalse(user in team.requests.all())
+        self.assertFalse(self.requestee in self.team.members.all())
+        self.assertFalse(self.requestee in self.team.requests.all())
 
     def test_request_deny(self):
-        self.assertTrue(self.client.login(username='test_a', password='hunter2'))
+        self.assertTrue(self.client.login(username=self.team_admin.user.username, password=self.password))
         response = self.client.post(
-            reverse('denyrequest', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('denyrequest', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 2
+                'user': self.requestee.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 200)
-        user = UserProfile.objects.get(pk=2)
-        team = Team.objects.get(pk=1)
-        self.assertFalse(user in team.members.all())
-        self.assertFalse(user in team.requests.all())
+        self.assertFalse(self.requestee in self.team.members.all())
+        self.assertFalse(self.requestee in self.team.requests.all())
 
     def test_request_views_forbidden(self):
         self.client.logout()
         response = self.client.post(
-            reverse('request', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('request', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 1
+                'user': self.team_admin.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 403)
         response = self.client.post(
-            reverse('cancelrequest', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('cancelrequest', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 1
+                'user': self.team_admin.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 403)
         response = self.client.post(
-            reverse('acceptrequest', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('acceptrequest', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 1
+                'user': self.team_admin.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 403)
         response = self.client.post(
-            reverse('denyrequest', kwargs={'event_id': 1, 'team_id': 1}, subdomain='www'),
+            reverse('denyrequest', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': 1
+                'user': self.team_admin.id
             }),
             'application/json',
-            HTTP_HOST='www.testserver',
+            HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 403)
