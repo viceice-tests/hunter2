@@ -41,9 +41,9 @@
 						{% if user.is_authenticated %}
 						<li class="button"><a href="{% url 'edit_profile' 'www' %}" id="navUser">Account</a></li>
 						<li class="button"><a href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
-						<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
+						<form id="logoutForm" action="{% url 'account_logout' 'www' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
 						{% else %}
-						<li><a href="{% url 'account_login' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a></li>
+						<li><a href="{% url 'account_login' 'www' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a></li>
 						{% endif %}
 						{% endblock %}
 					</ul>

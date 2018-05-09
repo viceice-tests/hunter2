@@ -1,13 +1,12 @@
-from allauth.account.forms import ChangePasswordForm, SetPasswordForm
 from dal import autocomplete
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.views import View
 from django.views.generic import UpdateView
 from hunter2.resolvers import reverse
+from accounts.models import UserProfile
 from . import forms, models
 from .forms import CreateTeamForm, InviteForm, RequestForm
 from .mixins import TeamMixin
@@ -23,21 +22,6 @@ class TeamAutoComplete(LoginRequiredMixin, autocomplete.Select2QuerySetView):
 
         if self.q:
             qs = qs.filter(name__istartswith=self.q)
-
-        return qs
-
-
-class UserProfileAutoComplete(LoginRequiredMixin, autocomplete.Select2QuerySetView):
-    raise_exception = True
-
-    def get_queryset(self):
-        qs = models.UserProfile.objects.exclude(pk=self.request.user.profile.pk).order_by('user__username')
-
-        if self.q:
-            qs = qs.filter(
-                Q(user__username__istartswith=self.q) |
-                Q(user__email__istartswith=self.q)
-            )
 
         return qs
 
@@ -117,8 +101,8 @@ class Invite(LoginRequiredMixin, TeamMixin, View):
                 'message': 'Must be a member to invite to a team',
             }, status=403)
         try:
-            user = models.UserProfile.objects.get(pk=data['user'])
-        except models.UserProfile.DoesNotExist:
+            user = UserProfile.objects.get(pk=data['user'])
+        except UserProfile.DoesNotExist:
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User does not exist',
@@ -158,8 +142,8 @@ class CancelInvite(LoginRequiredMixin, TeamMixin, View):
                 'message': 'Must be a team member to cancel an invite',
             }, status=403)
         try:
-            user = models.UserProfile.objects.get(pk=data['user'])
-        except models.UserProfile.DoesNotExist:
+            user = UserProfile.objects.get(pk=data['user'])
+        except UserProfile.DoesNotExist:
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User does not exist',
@@ -294,8 +278,8 @@ class AcceptRequest(LoginRequiredMixin, TeamMixin, View):
                 'message': 'Must be a team member to accept an request',
             }, status=403)
         try:
-            user = models.UserProfile.objects.get(pk=data['user'])
-        except models.UserProfile.DoesNotExist:
+            user = UserProfile.objects.get(pk=data['user'])
+        except UserProfile.DoesNotExist:
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User does not exist',
@@ -346,8 +330,8 @@ class DenyRequest(LoginRequiredMixin, TeamMixin, View):
                 'message': 'Must be a team member to deny an request',
             }, status=403)
         try:
-            user = models.UserProfile.objects.get(pk=data['user'])
-        except models.UserProfile.DoesNotExist:
+            user = UserProfile.objects.get(pk=data['user'])
+        except UserProfile.DoesNotExist:
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User does not exist',
@@ -364,33 +348,3 @@ class DenyRequest(LoginRequiredMixin, TeamMixin, View):
             'result': 'OK',
             'message': 'Request denied',
         })
-
-
-class EditProfileView(LoginRequiredMixin, View):
-
-    def get(self, request):
-        user_form = forms.UserForm(instance=request.user)
-        password_form = ChangePasswordForm(user=request.user) if request.user.has_usable_password() else SetPasswordForm(user=request.user)
-        profile_formset = forms.UserProfileFormset(instance=request.user)
-        steam_linked = request.user.socialaccount_set.exists()  # This condition breaks down if we support multiple social accounts.
-        context = {
-            'user_form': user_form,
-            'password_form': password_form,
-            'profile_formset': profile_formset,
-            'steam_linked': steam_linked,
-        }
-        return TemplateResponse(
-            request,
-            'teams/profile.html',
-            context=context,
-        )
-
-    def post(self, request):
-        user_form = forms.UserForm(request.POST, instance=request.user)
-        if user_form.is_valid():
-            created_user = user_form.save(commit=False)
-            profile_formset = forms.UserProfileFormset(request.POST, instance=created_user)
-            if profile_formset.is_valid():
-                created_user.save()
-                profile_formset.save()
-                return HttpResponseRedirect(reverse('edit_profile', subdomain='www'))

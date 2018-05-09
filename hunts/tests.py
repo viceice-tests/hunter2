@@ -5,13 +5,23 @@ from django.test import TestCase
 from django.utils import timezone
 from hunter2.resolvers import reverse
 
+from accounts.models import UserProfile
 from events.models import Event
-from teams.models import Team, UserProfile
+from teams.models import Team
 from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, UnlockAnswer
 from .runtimes.registry import RuntimesRegistry as rr
 
 import datetime
 import freezegun
+
+
+class HomePageTests(TestCase):
+    fixtures = ['hunts_test']
+
+    def test_load_homepage(self):
+        url = reverse('index', subdomain='www')
+        response = self.client.get(url, HTTP_HOST='www.testserver')
+        self.assertEqual(response.status_code, 200)
 
 
 class RegexValidationTests(TestCase):

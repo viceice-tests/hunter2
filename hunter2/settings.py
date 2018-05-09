@@ -56,7 +56,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
-ACCOUNT_SIGNUP_FORM_CLASS = 'teams.forms.UserProfileForm'
+ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.UserProfileForm'
 
 AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -68,9 +68,16 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
+FULLCLEAN_WHITELIST = [
+    'events',
+    'hunts',
+    'teams',
+]
+
 INSTALLED_APPS = (
     # Our apps first to allow us to override third party templates
     # These are in dependency order
+    'accounts',
     'events',
     'teams',
     'hunts',

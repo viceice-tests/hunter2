@@ -1,7 +1,7 @@
 function updateGuesses(force) {
 	"use strict";
 	if (force || $('#auto-update').prop('checked')) {
-		$('#fill-me-up-you-slut').load('guesses_content' + window.location.search + ' #guesses-container');
+		$('#guesses-container').load('guesses_content' + window.location.search + ' #guesses-container');
 		setTimeout(updateGuesses, 5000);
 	}
 }
