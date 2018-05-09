@@ -64,7 +64,7 @@ class Command(BaseCommand):
             if not theme_name or not event_name or not end_date:
                 raise CommandError("You must use --theme, --event and --enddate with --noinput.")
             try:
-                end_date = date_parser.parse(end_date)
+                end_date = date_parser.parse(end_date, default=timezone.now())  # TZ from default
             except ValueError as e:
                 raise CommandError("End date is not a valid date.") from e
 
@@ -77,7 +77,7 @@ class Command(BaseCommand):
         while end_date is None:
             in_data = self.get_input_data("End date", default=self._default_end_date())
             try:
-                end_date = date_parser.parse(in_data)
+                end_date = date_parser.parse(in_data, default=timezone.now())  # TZ from default
             except ValueError:
                 continue
 
