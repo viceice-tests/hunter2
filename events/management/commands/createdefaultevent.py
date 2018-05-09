@@ -79,6 +79,7 @@ class Command(BaseCommand):
             try:
                 end_date = date_parser.parse(in_data, default=timezone.now())  # TZ from default
             except ValueError:
+                self.stderr.write(f'"{in_data}" is not a valid date')
                 continue
 
         theme = Theme(name=theme_name)
