@@ -1,3 +1,4 @@
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.views import View
@@ -45,7 +46,9 @@ class TeamRulesTests(TestCase):
 
 class TeamCreateTests(TestCase):
     def test_team_create(self):
-        site = SiteFactory()
+        SiteFactory.create()
+        site = Site.objects.get_current()
+
         password = "hunter2"
         event = EventFactory()
         creator = UserProfileFactory(user__password=password)
@@ -91,7 +94,8 @@ class TeamCreateTests(TestCase):
 class InviteTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.site = SiteFactory()
+        SiteFactory.create()
+        cls.site = Site.objects.get_current()
         cls.event = EventFactory(max_team_size=2)
         cls.password = "hunter2"
         cls.team_admin = UserProfileFactory(user__password=cls.password)
@@ -221,16 +225,17 @@ class InviteTests(TestCase):
 class RequestTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.site = SiteFactory()
+        SiteFactory.create()
+        cls.site = Site.objects.get_current()
         cls.event = EventFactory(max_team_size=2)
         cls.password = "hunter2"
         cls.team_admin = UserProfileFactory(user__password=cls.password)
-        cls.requestee = UserProfileFactory(user__password=cls.password)
+        cls.applicant = UserProfileFactory(user__password=cls.password)
         cls.team = TeamFactory(at_event=cls.event, members={cls.team_admin})
 
     def setUp(self):
-        # The "requestee" is requesting a place on "team".
-        self.assertTrue(self.client.login(username=self.requestee.user.username, password=self.password))
+        # The "applicant" is requesting a place on "team".
+        self.assertTrue(self.client.login(username=self.applicant.user.username, password=self.password))
         response = self.client.post(
             reverse('request', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({}),
@@ -244,18 +249,18 @@ class RequestTests(TestCase):
         response = self.client.post(
             reverse('acceptrequest', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': self.requestee.id
+                'user': self.applicant.id
             }),
             'application/json',
             HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(self.requestee in self.team.members.all())
-        self.assertFalse(self.requestee in self.team.requests.all())
+        self.assertTrue(self.applicant in self.team.members.all())
+        self.assertFalse(self.applicant in self.team.requests.all())
 
         # Now try to send a request to the full team
-        requestee2 = UserProfileFactory(user__password=self.password)
-        self.assertTrue(self.client.login(username=requestee2.user.username, password=self.password))
+        applicant2 = UserProfileFactory(user__password=self.password)
+        self.assertTrue(self.client.login(username=applicant2.user.username, password=self.password))
         response = self.client.post(
             reverse('request', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({}),
@@ -263,25 +268,25 @@ class RequestTests(TestCase):
             HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 400)
-        self.assertFalse(requestee2 in self.team.members.all())
-        self.assertFalse(requestee2 in self.team.requests.all())
+        self.assertFalse(applicant2 in self.team.members.all())
+        self.assertFalse(applicant2 in self.team.requests.all())
 
         # Now bypass the request mechanism to add a request anyway and
         # check it can't be accepted
-        self.team.requests.add(requestee2)
+        self.team.requests.add(applicant2)
         self.assertTrue(self.client.login(username=self.team_admin.user.username, password=self.password))
         response = self.client.post(
             reverse('acceptrequest', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': requestee2.id
+                'user': applicant2.id
             }),
             'application/json',
             HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 400)
-        self.assertFalse(requestee2 in self.team.members.all())
+        self.assertFalse(applicant2 in self.team.members.all())
         # Finally check we cleaned up the request after failing
-        self.assertFalse(requestee2 in self.team.requests.all())
+        self.assertFalse(applicant2 in self.team.requests.all())
 
     def test_request_cancel(self):
         response = self.client.post(
@@ -291,22 +296,22 @@ class RequestTests(TestCase):
             HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(self.requestee in self.team.members.all())
-        self.assertFalse(self.requestee in self.team.requests.all())
+        self.assertFalse(self.applicant in self.team.members.all())
+        self.assertFalse(self.applicant in self.team.requests.all())
 
     def test_request_deny(self):
         self.assertTrue(self.client.login(username=self.team_admin.user.username, password=self.password))
         response = self.client.post(
             reverse('denyrequest', kwargs={'event_id': self.event.id, 'team_id': self.team.id}, subdomain='www'),
             json.dumps({
-                'user': self.requestee.id
+                'user': self.applicant.id
             }),
             'application/json',
             HTTP_HOST='www.{}'.format(self.site.domain),
         )
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(self.requestee in self.team.members.all())
-        self.assertFalse(self.requestee in self.team.requests.all())
+        self.assertFalse(self.applicant in self.team.members.all())
+        self.assertFalse(self.applicant in self.team.requests.all())
 
     def test_request_views_forbidden(self):
         self.client.logout()
