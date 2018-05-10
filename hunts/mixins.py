@@ -45,7 +45,7 @@ class PuzzleUnlockedMixin():
         request.episode, request.puzzle = utils.event_episode_puzzle(request.event, episode_number, puzzle_number)
         request.admin = rules.is_admin_for_puzzle(request.user, request.puzzle)
 
-        if not request.episode.started(request.team) and not request.episode.unlocked_by(request.team) and not request.admin:
+        if (not request.episode.started(request.team) or not request.episode.unlocked_by(request.team)) and not request.admin:
             if request.is_ajax():
                 raise PermissionDenied
             return redirect(f'{request.event.get_absolute_url()}#episode-{episode_number}')
