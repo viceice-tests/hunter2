@@ -24,6 +24,7 @@ django-sendfile = "*"
 django-solo = "*"
 django-sortedm2m = "*"
 django-url-tools = { git = "https://bitbucket.org/nlaurance/django-url-tools.git", ref = "17352a9" }
+factory_boy = "*"
 freezegun = "*"
 lupa = "*"
 parameterized = "*"
