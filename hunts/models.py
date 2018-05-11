@@ -73,6 +73,11 @@ class Puzzle(models.Model):
 
         return puzzle_number
 
+    # Takes the team parameter for compatability with Episode.started()
+    # Will be useful if we add puzzle head starts later
+    def started(self, team):
+        return self.start_date < timezone.now()
+
     def unlocked_by(self, team):
         # Is this puzzle playable?
         # TODO: Make it not depend on a team. So single player puzzles work.
@@ -414,6 +419,13 @@ class Episode(models.Model):
 
     def __str__(self):
         return f'{self.event.name} - {self.name}'
+
+    def get_absolute_url(self):
+        params = {
+            'event_id': self.event.pk,
+            'episode_number': self.get_relative_id(),
+        }
+        return reverse('episode', subdomain='www', kwargs=params)
 
     def follows(self, episode):
         """Does this episode follow the provied episode by one or more prequel relationships?"""
