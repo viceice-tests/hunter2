@@ -25,6 +25,7 @@ django-solo = "*"
 django-sortedm2m = "*"
 django-tenants = { git = "https://github.com/riconnon/django-tenants.git", ref = "v1.3.4+1" }
 django-url-tools = { git = "https://bitbucket.org/nlaurance/django-url-tools.git", ref = "17352a9" }
+factory_boy = "*"
 freezegun = "*"
 lupa = "*"
 parameterized = "*"

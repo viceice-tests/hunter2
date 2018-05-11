@@ -7,40 +7,30 @@ from hunter2.tests import MockTTY, mock_inputs
 from .management.commands import createevent
 from .models import Event, Theme
 from .test import EventAwareTestCase
+from . import factories
 
 
 class EventRulesTests(EventAwareTestCase):
 
     def test_only_one_current_event(self):
         # Ensure that we only have one event set as current
-        theme = Theme(name="Test Theme")
-        theme.save()
-        event1 = Event(name="Event 1", theme=theme, current=True, schema_name='ev1')
-        event1.save()
-        event2 = Event(name="Event 2", theme=theme, current=True, schema_name='ev2')
-        event2.save()
+        factories.EventFactory(current=True)
+        event = factories.EventFactory(current=True)
         self.assertEqual(len(Event.objects.filter(current=True)), 1, "More than one event is set as current")
-        self.assertEqual(Event.objects.get(current=True), event2, "Last added event is not current")
+        self.assertEqual(Event.objects.get(current=True), event, "Last added event is not current")
 
     @expectedFailure  # TODO: Currently fails but non-critical
     def test_only_remaining_event_is_current(self):
         # Ensure that we only have one event set as current after deleting the current test
-        theme = Theme(name="Test Theme")
-        theme.save()
-        event1 = Event(name="Event 1", theme=theme, current=True, schema_name='ev1')
-        event1.save()
-        event2 = Event(name="Event 2", theme=theme, current=True, schema_name='ev2')
-        event2.save()
+        event1 = factories.EventFactory(current=True)
+        event2 = factories.EventFactory(current=True)
         event2.delete()
         self.assertEqual(len(Event.objects.filter(current=True)), 1, "No current event set")
         self.assertEqual(Event.objects.get(current=True), event1, "Only remaining event is not current")
 
     def test_current_by_default_event(self):
         # If we only have one event is should be set as current by default, regardless if set as current
-        theme = Theme(name="Test Theme")
-        theme.save()
-        event = Event(name="Event", theme=theme, current=False, schema_name='ev')
-        event.save()
+        event = factories.EventFactory(current=False)
         self.assertTrue(event.current, "Only event is not set as current")
 
 

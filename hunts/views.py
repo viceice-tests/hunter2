@@ -9,6 +9,7 @@ from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonRespon
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
+from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.views import View
@@ -19,7 +20,7 @@ from teams.mixins import TeamMixin
 
 from . import models
 from . import rules
-from . import utils
+from .mixins import EpisodeUnlockedMixin, PuzzleUnlockedMixin
 from .runtimes.registry import RuntimesRegistry as rr
 
 import events
@@ -38,33 +39,13 @@ class Index(TemplateView):
         }
 
 
-class Episode(LoginRequiredMixin, TeamMixin, View):
+class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
     def get(self, request, episode_number):
-        episode = utils.event_episode(request.tenant, episode_number)
-        admin = rules.is_admin_for_episode(request.user, episode)
-
-        if not episode.started(request.team) and not admin:
-            return TemplateResponse(
-                request,
-                'hunts/episodenotstarted.html',
-                context={
-                    'episode': episode.name,
-                    'startdate': episode.start_date - episode.headstart_applied(request.team),
-                    'headstart': episode.headstart_applied(request.team),
-                }
-            )
-
-        # TODO: May need caching of progress to avoid DB load
-        if not episode.unlocked_by(request.team):
-            return TemplateResponse(
-                request, 'hunts/episodelocked.html', status=403
-            )
-
-        puzzles = episode.unlocked_puzzles(request.team)
+        puzzles = request.episode.unlocked_puzzles(request.team)
         for puzzle in puzzles:
             puzzle.done = puzzle.answered_by(request.team)
 
-        positions = episode.finished_positions()
+        positions = request.episode.finished_positions()
         if request.team in positions:
             position = positions.index(request.team)
             if position < 3:
@@ -76,13 +57,13 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
             position = None
 
         files = {f.slug: f.file.url for f in request.tenant.eventfile_set.all()}
-        flavour = Template(episode.flavour).safe_substitute(**files)
+        flavour = Template(request.episode.flavour).safe_substitute(**files)
 
         return TemplateResponse(
             request,
             'hunts/episode.html',
             context={
-                'episode': episode.name,
+                'episode': request.episode.name,
                 'flavour': flavour,
                 'position': position,
                 'episode_number': episode_number,
@@ -92,32 +73,22 @@ class Episode(LoginRequiredMixin, TeamMixin, View):
         )
 
 
-class EpisodeContent(LoginRequiredMixin, TeamMixin, View):
+class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
     def get(self, request, episode_number):
-        episode = utils.event_episode(request.tenant, episode_number)
-        admin = rules.is_admin_for_episode(request.user, episode)
+        puzzles = request.episode.unlocked_puzzles(request.team)
+        for puzzle in puzzles:
+            puzzle.done = puzzle.answered_by(request.team)
 
-        if (
-            episode.started(request.team) and
-            episode.unlocked_by(request.team) or
-            admin
-        ):
-            puzzles = episode.unlocked_puzzles(request.team)
-            for puzzle in puzzles:
-                puzzle.done = puzzle.answered_by(request.team)
-
-            return TemplateResponse(
-                request,
-                'hunts/episode_content.html',
-                context={
-                    'flavour': episode.flavour,
-                    'episode_number': episode_number,
-                    'event_id': request.tenant.pk,
-                    'puzzles': puzzles,
-                }
-            )
-        else:
-            raise PermissionDenied
+        return TemplateResponse(
+            request,
+            'hunts/episode_content.html',
+            context={
+                'flavour': request.episode.flavour,
+                'episode_number': episode_number,
+                'event_id': request.event.pk,
+                'puzzles': puzzles,
+            }
+        )
 
 
 class EpisodeList(LoginRequiredMixin, View):
@@ -406,33 +377,9 @@ class EventIndex(LoginRequiredMixin, View):
         )
 
 
-class Puzzle(LoginRequiredMixin, TeamMixin, View):
+class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
     def get(self, request, episode_number, puzzle_number):
-        episode, puzzle = utils.event_episode_puzzle(
-            request.tenant, episode_number, puzzle_number
-        )
-        admin = rules.is_admin_for_puzzle(request.user, puzzle)
-
-        # Make the puzzle available on the request object
-        request.puzzle = puzzle
-
-        # If episode has not started redirect to episode holding page
-        if not episode.started(request.team) and not admin:
-            if request.tenant:
-                return redirect(
-                    'episode',
-                    event_id=request.tenant.pk,
-                    episode_number=episode_number,
-                )
-            else:
-                return redirect('episode', episode_number=episode_number)
-
-        # TODO: May need caching of progress to avoid DB load
-        if not puzzle.unlocked_by(request.team):
-            if not (admin and request.GET.get('preview')):
-                return TemplateResponse(
-                    request, 'hunts/puzzlelocked.html', status=403
-                )
+        puzzle = request.puzzle
 
         data = models.PuzzleData(puzzle, request.team, request.user.profile)
 
@@ -483,7 +430,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
             'hunts/puzzle.html',
             context={
                 'answered': answered,
-                'admin': admin,
+                'admin': request.admin,
                 'hints': hints,
                 'title': puzzle.title,
                 'flavour': flavour,
@@ -497,28 +444,20 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
         return response
 
 
-class PuzzleFile(LoginRequiredMixin, TeamMixin, View):
+class PuzzleFile(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
     def get(self, request, episode_number, puzzle_number, file_slug):
-        episode, puzzle = utils.event_episode_puzzle(
-            request.tenant, episode_number, puzzle_number
-        )
-
-        if not puzzle.unlocked_by(request.team):
-            raise PermissionDenied
-        puzzle_file = get_object_or_404(puzzle.puzzlefile_set, slug=file_slug)
+        puzzle_file = get_object_or_404(request.puzzle.puzzlefile_set, slug=file_slug)
         return sendfile(request, puzzle_file.file.path)
 
 
-class Answer(LoginRequiredMixin, TeamMixin, View):
+class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
     def post(self, request, episode_number, puzzle_number):
-        episode, puzzle = utils.event_episode_puzzle(
-            request.tenant, episode_number, puzzle_number
-        )
+        now = timezone.now()
 
         minimum_time = timedelta(seconds=5)
         try:
             latest_guess = models.Guess.objects.filter(
-                for_puzzle=puzzle,
+                for_puzzle=request.puzzle,
                 by=request.user.profile
             ).order_by(
                 '-given'
@@ -526,37 +465,40 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         except IndexError:
             pass
         else:
-            if latest_guess.given + minimum_time > timezone.now():
+            if latest_guess.given + minimum_time > now:
                 return JsonResponse({'error': 'too fast'}, status=429)
+        try:
+            given_answer = request.POST['answer']
+        except MultiValueDictKeyError as e:
+            return JsonResponse({'error': 'no answer given'}, status=400)
 
-        data = models.PuzzleData(puzzle, request.team)
+        data = models.PuzzleData(request.puzzle, request.team)
 
         last_updated = request.POST.get('last_updated')
         if last_updated and data.tp_data.start_time:
             last_updated = datetime.fromtimestamp(int(last_updated) // 1000, timezone.utc)
-            new_hints = puzzle.hint_set.filter(
+            new_hints = request.puzzle.hint_set.filter(
                 time__gt=(last_updated - data.tp_data.start_time),
-                time__lt=(timezone.now() - data.tp_data.start_time),
+                time__lt=(now - data.tp_data.start_time),
             )
             new_hints = [{'time': str(hint.time), 'text': hint.text} for hint in new_hints]
         else:
             new_hints = []
 
         # Put answer in DB
-        given_answer = request.POST['answer']
         guess = models.Guess(
             guess=given_answer,
-            for_puzzle=puzzle,
+            for_puzzle=request.puzzle,
             by=request.user.profile
         )
         guess.save()
 
-        correct = any([a.validate_guess(guess) for a in puzzle.answer_set.all()])
+        correct = any([a.validate_guess(guess) for a in request.puzzle.answer_set.all()])
 
         # Build the response JSON depending on whether the answer was correct
         response = {}
         if correct:
-            next = episode.next_puzzle(request.team)
+            next = request.episode.next_puzzle(request.team)
             if next:
                 response['text'] = f'to the next puzzle'
                 response['url'] = reverse('puzzle',
@@ -564,11 +506,11 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
                                                   'episode_number': episode_number,
                                                   'puzzle_number': next})
             else:
-                response['text'] = f'back to {episode.name}'
+                response['text'] = f'back to {request.episode.name}'
                 response['url'] = reverse('event', kwargs={'event_id': request.tenant.pk})
                 response['url'] += f'#episode-{episode_number}'
         else:
-            all_unlocks = models.Unlock.objects.filter(puzzle=puzzle)
+            all_unlocks = models.Unlock.objects.filter(puzzle=request.puzzle)
             unlocks = []
             for u in all_unlocks:
                 correct_guesses = u.unlocked_by(request.team)
@@ -584,7 +526,7 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
                                 'new': guess in correct_guesses})
 
             response['guess'] = given_answer
-            response['timeout'] = str(timezone.now() + minimum_time)
+            response['timeout'] = str(now + minimum_time)
             response['new_hints'] = new_hints
             response['unlocks'] = unlocks
         response['correct'] = str(correct).lower()
@@ -592,23 +534,19 @@ class Answer(LoginRequiredMixin, TeamMixin, View):
         return JsonResponse(response)
 
 
-class Callback(LoginRequiredMixin, TeamMixin, View):
+class Callback(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
     def post(self, request, episode_number, puzzle_number):
         if request.content_type != 'application/json':
             return HttpResponse(status=415)
         if 'application/json' not in request.META['HTTP_ACCEPT']:
             return HttpResponse(status=406)
 
-        episode, puzzle = utils.event_episode_puzzle(
-            request.tenant, episode_number, puzzle_number
-        )
-
-        data = models.PuzzleData(puzzle, request.team, request.user)
+        data = models.PuzzleData(request.puzzle, request.team, request.user.profile)
 
         response = HttpResponse(
             rr.evaluate(
-                runtime=puzzle.cb_runtime,
-                script=puzzle.cb_content,
+                runtime=request.puzzle.cb_runtime,
+                script=request.puzzle.cb_content,
                 team_puzzle_data=data.tp_data,
                 user_puzzle_data=data.up_data,
                 team_data=data.t_data,

@@ -1,5 +1,6 @@
+from accounts.models import UserProfile
 from events.models import Event
-from .models import Team, UserProfile
+from .models import Team
 
 
 class TeamMiddleware(object):

@@ -1,12 +1,14 @@
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.db import transaction
 from django.utils import timezone
 from django.urls import reverse
 
+from accounts.models import UserProfile
 from events.models import Event
 from events.test import EventTestCase
-from teams.models import Team, UserProfile
+from teams.models import Team
 from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, UnlockAnswer
 from .runtimes.registry import RuntimesRegistry as rr
 
@@ -18,8 +20,8 @@ class HomePageTests(EventTestCase):
     fixtures = ['hunts_test']
 
     def test_load_homepage(self):
-        url = reverse('index', subdomain='www')
-        response = self.client.get(url, HTTP_HOST='www.testserver')
+        url = reverse('index')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
 
@@ -91,18 +93,27 @@ class AnswerSubmissionTest(EventTestCase):
         self.puzzle = Puzzle.objects.get(pk=1)
         self.team = Team.objects.get(pk=1)
         self.data = PuzzleData(self.puzzle, self.team)
+        user = User.objects.get(pk=1)
+        self.client.force_login(user)
+        self.url = reverse(
+            'answer',
+            kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1},
+        )
+
+    def test_no_answer_given(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error'], 'no answer given')
 
     def test_answer_cooldown(self):
-        self.assertTrue(self.client.login(username='test', password='hunter2'))
-        url = reverse('answer', kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1})
         with freezegun.freeze_time() as frozen_datetime:
-            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'})
+            response = self.client.post(self.url, {'last_updated': '0', 'answer': 'incorrect'})
             self.assertEqual(response.status_code, 200)
-            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'})
+            response = self.client.post(self.url, {'last_updated': '0', 'answer': 'incorrect'})
             self.assertEqual(response.status_code, 429)
             self.assertTrue(b'error' in response.content)
             frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
-            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'})
+            response = self.client.post(self.url, {'last_updated': '0', 'answer': 'incorrect'})
             self.assertEqual(response.status_code, 200)
 
 
@@ -116,14 +127,76 @@ class PuzzleStartTimeTests(EventTestCase):
 
     def test_start_times(self):
         self.assertTrue(self.client.login(username='test', password='hunter2'))
-        response = self.client.get('/event/1/ep/1/pz/1/')
+        url = reverse('puzzle', kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1})
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         first_time = TeamPuzzleData.objects.get().start_time
         self.assertIsNot(first_time, None)
-        response = self.client.get('/event/1/ep/1/pz/1/')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         second_time = TeamPuzzleData.objects.get().start_time
         self.assertEqual(first_time, second_time)
+
+
+class PuzzleAccessTests(EventTestCase):
+    fixtures = ['hunts_test']
+
+    def setUp(self):
+        site = Site.objects.get()
+        site.domain = 'testserver'
+        site.save()
+
+    def test_puzzle_view_authorisation(self):
+        self.assertTrue(self.client.login(username='test', password='hunter2'))
+
+        event_id = 1
+        episode_number = 1
+
+        def _check_load_callback_answer(puzzle_number, expected_response):
+            kwargs = {
+                'event_id': event_id,
+                'episode_number': episode_number,
+                'puzzle_number': puzzle_number,
+            }
+
+            # Load
+            response = self.client.get(reverse('puzzle', kwargs=kwargs))
+            self.assertEqual(response.status_code, expected_response)
+
+            # Callback
+            response = self.client.post(
+                reverse('callback', kwargs=kwargs),
+                content_type='application/json',
+                HTTP_ACCEPT='application/json',
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
+            self.assertEqual(response.status_code, expected_response)
+
+            # Answer
+            response = self.client.post(
+                reverse('answer', kwargs=kwargs),
+                {'answer': 'sekrits'},
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+            self.assertEqual(response.status_code, expected_response)
+
+        # This test submits two answers on the same puzzle so we have to jump forward 5 seconds
+        with freezegun.freeze_time() as frozen_datetime:
+            # Can load, callback and answer the first two puzzles
+            _check_load_callback_answer(1, 200)
+            _check_load_callback_answer(2, 200)
+            # Can't load, callback or answer the third puzzle
+            _check_load_callback_answer(3, 403)
+            frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
+            # Answer the second puzzle
+            response = self.client.post(
+                reverse('answer', kwargs={'event_id': event_id, 'episode_number': episode_number, 'puzzle_number': 2}),
+                {'answer': 'correct'},
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+            self.assertEqual(response.status_code, 200)
+            # Can now load, callback and answer the third puzzle
+            _check_load_callback_answer(3, 200)
 
 
 class EpisodeBehaviourTest(EventTestCase):
@@ -210,11 +283,11 @@ class EpisodeSequenceTests(EventTestCase):
     def setUp(self):
         self.episode1 = Episode.objects.get(pk=1)
         self.episode2 = Episode.objects.get(pk=2)
+        self.episode2.prequels.add(self.episode1)
         self.team = Team.objects.get(pk=1)
         self.user = self.team.members.get(pk=1)
 
     def test_episode_prequel_validation(self):
-        self.episode2.prequels.add(self.episode1)
         # Because we intentionally throw exceptions we need to use transaction.atomic() to avoid a TransactionManagementError
         with self.assertRaises(ValidationError), transaction.atomic():
             self.episode1.prequels.add(self.episode1)
@@ -222,11 +295,37 @@ class EpisodeSequenceTests(EventTestCase):
             self.episode1.prequels.add(self.episode2)
 
     def test_episode_unlocking(self):
-        self.episode2.prequels.add(self.episode1)
-        self.assertTrue(self.episode1.unlocked_by(self.team))
-        self.assertFalse(self.episode2.unlocked_by(self.team))
+        self.assertTrue(self.client.login(username='test', password='hunter2'))
+
+        # Can load first episode
+        response = self.client.get(reverse('episode', kwargs={'event_id': 1, 'episode_number': 1}))
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(
+            reverse('episode_content', kwargs={'event_id': 1, 'episode_number': 1}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # Can't load second episode
+        response = self.client.get(reverse('episode', kwargs={'event_id': 1, 'episode_number': 2}))
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(
+            reverse('episode_content', kwargs={'event_id': 1, 'episode_number': 2}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 403)
+
+        # Unlock second episode
         Guess(for_puzzle=self.episode1.get_puzzle(1), by=self.user, guess="correct").save()
-        self.assertTrue(self.episode2.unlocked_by(self.team))
+
+        # Can now load second episode
+        response = self.client.get(reverse('episode', kwargs={'event_id': 1, 'episode_number': 2}))
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(
+            reverse('episode_content', kwargs={'event_id': 1, 'episode_number': 2}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
 
 
 class ClueDisplayTests(EventTestCase):
