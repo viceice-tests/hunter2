@@ -9,6 +9,7 @@ from datetime import timedelta
 from enumfields import EnumField, Enum
 from hunter2.resolvers import reverse
 
+import accounts
 import events
 import teams
 import uuid
@@ -71,6 +72,11 @@ class Puzzle(models.Model):
                 break
 
         return puzzle_number
+
+    # Takes the team parameter for compatability with Episode.started()
+    # Will be useful if we add puzzle head starts later
+    def started(self, team):
+        return self.start_date < timezone.now()
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
@@ -243,7 +249,7 @@ class Answer(models.Model):
 
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    by = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
+    by = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
     by_team = models.ForeignKey(teams.models.Team, on_delete=models.PROTECT)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
@@ -320,7 +326,7 @@ class TeamData(models.Model):
 
 class UserData(models.Model):
     event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
-    user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
+    user = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
     data = JSONField(blank=True, null=True)
 
     class Meta:
@@ -347,7 +353,7 @@ class TeamPuzzleData(models.Model):
 
 class UserPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    user = models.ForeignKey(teams.models.UserProfile, on_delete=models.CASCADE)
+    user = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid.uuid4, editable=False)
     data = JSONField(blank=True, null=True)
 
@@ -413,6 +419,13 @@ class Episode(models.Model):
 
     def __str__(self):
         return f'{self.event.name} - {self.name}'
+
+    def get_absolute_url(self):
+        params = {
+            'event_id': self.event.pk,
+            'episode_number': self.get_relative_id(),
+        }
+        return reverse('episode', subdomain='www', kwargs=params)
 
     def follows(self, episode):
         """Does this episode follow the provied episode by one or more prequel relationships?"""
