@@ -1,4 +1,5 @@
 {% load analytical %}
+{% load raven %}
 {% load staticfiles %}
 {% load hunter2urls %}
 <!DOCTYPE html>
@@ -9,6 +10,9 @@
 		<meta charset="UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+		<script src="https://cdn.ravenjs.com/3.24.2/raven.min.js" integrity="sha256-aQcL/lJFlqXoaB8IUpqp21jpU+SAjUm9WFRxJmroQKc=" crossorigin="anonymous"></script>
+		<script>Raven.config('{% sentry_public_dsn "https" %}').install()</script>
 
 		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
 

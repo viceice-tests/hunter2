@@ -10,7 +10,7 @@ from accounts.factories import SiteFactory, UserFactory, UserProfileFactory
 from accounts.models import UserProfile
 from events.factories import EventFactory
 from hunter2.resolvers import reverse
-from teams.factories import TeamFactory
+from .factories import TeamFactory
 from .mixins import TeamMixin
 from .models import Team
 
