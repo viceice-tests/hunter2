@@ -1,13 +1,14 @@
 # vim: set fileencoding=utf-8 :
 from unittest import TestCase
 
+from django.test import SimpleTestCase
 from parameterized import parameterized
 
 from .. import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
 from . import LuaRuntime
 
 
-class LuaRuntimeTestCase(TestCase):
+class LuaRuntimeTestCase(SimpleTestCase):
     def test_evaluate(self):
         lua_runtime = LuaRuntime()
         lua_script = '''return "Hello World"'''
@@ -47,7 +48,7 @@ class LuaRuntimeTestCase(TestCase):
         self.assertRegex(context.exception.message, ".*error_message$")
 
 
-class LuaSandboxTestCase(TestCase):
+class LuaSandboxTestCase(SimpleTestCase):
     # Functions that we do not want to expose to our sandbox
     PROTECTED_FUNCTIONS = [
         'collectgarbage',
@@ -114,7 +115,7 @@ class LuaSandboxTestCase(TestCase):
             lua_runtime._sandbox_run(lua_script)
 
 
-class LuaSandboxLibrariesTestCase(TestCase):
+class LuaSandboxLibrariesTestCase(SimpleTestCase):
     # Functions that we do not want to expose to our sandbox
     SUPPORTED_LIBRARIES = [
         'cjson',
