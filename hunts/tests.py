@@ -4,6 +4,8 @@ from django.contrib.sites.models import Site
 from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
+
+from .factories import PuzzleFactory, HintFactory, PuzzleFileFactory, UnlockFactory, UnlockAnswerFactory, AnswerFactory
 from hunter2.resolvers import reverse
 
 from accounts.models import UserProfile
@@ -14,6 +16,27 @@ from .runtimes.registry import RuntimesRegistry as rr
 
 import datetime
 import freezegun
+
+
+class FactoryTests(TestCase):
+
+    def test_puzzle_factory_default_construction(self):
+        PuzzleFactory.create()
+
+    def test_puzzle_file_factory_default_construction(self):
+        PuzzleFileFactory.create()
+
+    def test_hint_factory_default_construction(self):
+        HintFactory.create()
+
+    def test_unlock_factory_default_construction(self):
+        UnlockFactory.create()
+
+    def test_unlock_answer_factory_default_construction(self):
+        UnlockAnswerFactory.create()
+
+    def test_answer_factory_default_construction(self):
+        AnswerFactory.create()
 
 
 class HomePageTests(TestCase):
