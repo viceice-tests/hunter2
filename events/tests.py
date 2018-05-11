@@ -1,15 +1,26 @@
-# vim: set fileencoding=utf-8 :
 from io import StringIO
 from unittest.case import expectedFailure
 
 from django.core.management import CommandError, call_command
 from django.test import TestCase
 
+from events.factories import EventFactory, EventFileFactory, ThemeFactory
 from events.management.commands import createdefaultevent
 from events.models import Event, Theme
 from hunter2.tests import MockTTY, mock_inputs
-
 from . import factories
+
+
+class FactoryTests(TestCase):
+
+    def test_theme_factory_default_construction(self):
+        ThemeFactory.create()
+
+    def test_event_factory_default_construction(self):
+        EventFactory.create()
+
+    def test_event_file_factory_default_construction(self):
+        EventFileFactory.create()
 
 
 class EventRulesTests(TestCase):

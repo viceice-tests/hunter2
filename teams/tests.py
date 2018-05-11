@@ -1,19 +1,24 @@
+import json
+
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
-from django.views import View
 from django.test import RequestFactory, TestCase
+from django.views import View
 
+from accounts.factories import SiteFactory, UserFactory, UserProfileFactory
 from accounts.models import UserProfile
+from events.factories import EventFactory
 from hunter2.resolvers import reverse
+from teams.factories import TeamFactory
 from .mixins import TeamMixin
 from .models import Team
 
-from accounts.factories import UserFactory, UserProfileFactory, SiteFactory
-from teams.factories import TeamFactory
-from events.factories import EventFactory
 
-import json
+class FactoryTests(TestCase):
+
+    def test_team_factory_default_construction(self):
+        TeamFactory.create()
 
 
 class EmptyTeamView(TeamMixin, View):
