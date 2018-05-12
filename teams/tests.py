@@ -1,4 +1,3 @@
-from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.views import View
@@ -7,9 +6,8 @@ from django_tenants.test.client import TenantRequestFactory
 
 from accounts.factories import UserFactory, UserProfileFactory
 from accounts.models import UserProfile
-from events.factories import EventFactory, SiteFactory
 from events.models import Event
-from events.test import EventAwareTestCase, EventTestCase
+from events.test import EventTestCase
 from .factories import TeamFactory
 from .mixins import TeamMixin
 from .models import Team
@@ -49,7 +47,6 @@ class TeamRulesTests(EventTestCase):
 
 class TeamCreateTests(EventTestCase):
     def test_team_create(self):
-        event = self.tenant
         creator = UserProfileFactory()
         team_template = TeamFactory.build()
 

@@ -1,4 +1,3 @@
-from django.core.management import call_command
 from django.test import TransactionTestCase
 from django_tenants.test.cases import FastTenantTestCase
 from django_tenants.test.client import TenantClient

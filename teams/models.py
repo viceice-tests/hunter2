@@ -41,7 +41,7 @@ class Team(models.Model):
     def save(self, *args, **kwargs):
         # We don't want to use '' as our empty value because we would trip over the uniqueness constraint
         if self.name == '':
-            self.name == None
+            self.name = None
         return super().save(*args, **kwargs)
 
     def get_absolute_url(self):

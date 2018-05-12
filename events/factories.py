@@ -1,14 +1,15 @@
 import factory
-import sys
 
 from faker import Faker
 from faker.providers import BaseProvider
+
 
 class SchemaNameProvider(BaseProvider):
     def schema_name(self,):
         name = self.generator.format('domain_word')
         name = name.replace('-', '')
         return name
+
 
 factory.Faker.add_provider(SchemaNameProvider)
 
