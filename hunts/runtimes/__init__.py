@@ -16,6 +16,7 @@ RUNTIME_CHOICES = (
     (STATIC, 'Static Runtime'),
 )
 
+
 class Runtimes:
     runtimes = {
         IFRAME: IFrameRuntime,
@@ -27,5 +28,6 @@ class Runtimes:
     def __getitem__(self, key):
         # Return an instantiated copy of the requested runtime
         return self.runtimes[key]()
+
 
 runtimes = Runtimes()
