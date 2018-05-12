@@ -85,7 +85,7 @@ class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
             context={
                 'flavour': request.episode.flavour,
                 'episode_number': episode_number,
-                'event_id': request.event.pk,
+                'event_id': request.tenant.pk,
                 'puzzles': puzzles,
             }
         )
