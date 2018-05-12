@@ -1,40 +1,18 @@
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 from hunter2.resolvers import reverse
 
+import accounts
 import events
-
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    seat = models.CharField(
-        max_length=12,
-        blank=True,
-        default='',
-        help_text='Enter your seat so we can find you easily if you get stuck. (To help you, not to mock you <3)'
-    )
-
-    def __str__(self):
-        if self.seat:
-            return f'{self.user.username} @{self.seat}'
-        else:
-            return f'{self.user.username}'
-
-    def is_on_explicit_team(self, event):
-        return self.teams.filter(at_event=event).exclude(name='').exists()
-
-    def team_at(self, event):
-        return self.teams.get(at_event=event)
 
 
 class Team(models.Model):
     name = models.CharField(blank=True, max_length=100)
     at_event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='teams')
     is_admin = models.BooleanField(default=False)
-    members = models.ManyToManyField(UserProfile, blank=True, related_name='teams')
-    invites = models.ManyToManyField(UserProfile, blank=True, related_name='team_invites')
-    requests = models.ManyToManyField(UserProfile, blank=True, related_name='team_requests')
+    members = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='teams')
+    invites = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='team_invites')
+    requests = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='team_requests')
 
     def __str__(self):
         return '%s @%s' % (self.get_verbose_name(), self.at_event)
@@ -58,13 +36,13 @@ class Team(models.Model):
         ):
             raise ValidationError('There can only be one admin team per event')
 
-    def save(self):
+    def save(self, *args, **kwargs):
         if self.name != '':
             conflicts = Team.objects.filter(name=self.name, at_event=self.at_event)
             conflicts = conflicts.exclude(pk=self.id)
             if conflicts.exists():
                 raise ValidationError('Cannot have multiple teams with the same non-empty name at an event')
-        return super().save()
+        return super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse('team', subdomain='www', kwargs={'event_id': self.at_event.pk, 'team_id': self.pk})
