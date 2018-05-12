@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from parameterized import parameterized
 
-from .. import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
+from ..exceptions import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
 from . import LuaRuntime
 
 
