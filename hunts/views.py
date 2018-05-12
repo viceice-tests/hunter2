@@ -20,7 +20,7 @@ from teams.mixins import TeamMixin
 from . import models
 from . import rules
 from . import utils
-from . import runtimes as rr
+from . import runtimes
 
 import events
 import hunter2
@@ -467,7 +467,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, View):
                 }, subdomain='www') for f in puzzle.puzzlefile_set.all()},
         }  # Puzzle files with matching slugs override hunt counterparts
 
-        text = Template(rr.RUNTIMES[puzzle.runtime]().evaluate(
+        text = Template(runtimes.runtimes[puzzle.runtime].evaluate(
             script=puzzle.content,
             team_puzzle_data=data.tp_data,
             user_puzzle_data=data.up_data,
@@ -606,7 +606,7 @@ class Callback(LoginRequiredMixin, TeamMixin, View):
         data = models.PuzzleData(puzzle, request.team, request.user)
 
         response = HttpResponse(
-            rr.RUNTIMES[puzzle.cb_runtime]().evaluate(
+            runtimes.runtimes[puzzle.cb_runtime].evaluate(
                 script=puzzle.cb_content,
                 team_puzzle_data=data.tp_data,
                 user_puzzle_data=data.up_data,

@@ -8,7 +8,7 @@ from hunter2.resolvers import reverse
 from events.models import Event
 from teams.models import Team, UserProfile
 from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, UnlockAnswer
-from . import runtimes as rr
+from . import runtimes
 
 import datetime
 import freezegun
@@ -24,14 +24,14 @@ class StaticValidationTests(TestCase):
 
     def test_static_save_answer(self):
         puzzle = Puzzle.objects.get(pk=1)
-        Answer(for_puzzle=puzzle, runtime=rr.STATIC, answer='answer').save()
+        Answer(for_puzzle=puzzle, runtime=runtimes.STATIC, answer='answer').save()
 
     def test_static_save_unlock_answer(self):
         unlock = Unlock.objects.get(pk=1)
-        UnlockAnswer(unlock=unlock, runtime=rr.STATIC, guess='unlock').save()
+        UnlockAnswer(unlock=unlock, runtime=runtimes.STATIC, guess='unlock').save()
 
     def test_static_answers(self):
-        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.STATIC)
+        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=runtimes.STATIC)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
         self.assertTrue(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
@@ -52,18 +52,18 @@ class RegexValidationTests(TestCase):
 
     def test_regex_save_answer(self):
         puzzle = Puzzle.objects.get(pk=1)
-        Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[Rr]egex.*').save()
+        Answer(for_puzzle=puzzle, runtime=runtimes.REGEX, answer='[Rr]egex.*').save()
         with self.assertRaises(ValidationError):
-            Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[NotARegex').save()
+            Answer(for_puzzle=puzzle, runtime=runtimes.REGEX, answer='[NotARegex').save()
 
     def test_regex_save_unlock_answer(self):
         unlock = Unlock.objects.get(pk=1)
-        UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[Rr]egex.*').save()
+        UnlockAnswer(unlock=unlock, runtime=runtimes.REGEX, guess='[Rr]egex.*').save()
         with self.assertRaises(ValidationError):
-            UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[NotARegex').save()
+            UnlockAnswer(unlock=unlock, runtime=runtimes.REGEX, guess='[NotARegex').save()
 
     def test_regex_answers(self):
-        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.REGEX)
+        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=runtimes.REGEX)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
         self.assertTrue(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
@@ -84,18 +84,18 @@ class LuaValidationTests(TestCase):
 
     def test_lua_save_answer(self):
         puzzle = Puzzle.objects.get(pk=1)
-        Answer(for_puzzle=puzzle, runtime=rr.LUA, answer='''return {} == nil''').save()
+        Answer(for_puzzle=puzzle, runtime=runtimes.LUA, answer='''return {} == nil''').save()
         with self.assertRaises(ValidationError):
-            Answer(for_puzzle=puzzle, runtime=rr.LUA, answer='''@''').save()
+            Answer(for_puzzle=puzzle, runtime=runtimes.LUA, answer='''@''').save()
 
     def test_lua_save_unlock_answer(self):
         unlock = Unlock.objects.get(pk=1)
-        UnlockAnswer(unlock=unlock, runtime=rr.LUA, guess='''return {} == nil''').save()
+        UnlockAnswer(unlock=unlock, runtime=runtimes.LUA, guess='''return {} == nil''').save()
         with self.assertRaises(ValidationError):
-            UnlockAnswer(unlock=unlock, runtime=rr.LUA, guess='''@''').save()
+            UnlockAnswer(unlock=unlock, runtime=runtimes.LUA, guess='''@''').save()
 
     def test_lua_answers(self):
-        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.LUA)
+        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=runtimes.LUA)
         guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
         self.assertTrue(answer.validate_guess(guess))
         guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()

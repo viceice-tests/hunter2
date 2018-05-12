@@ -16,9 +16,16 @@ RUNTIME_CHOICES = (
     (STATIC, 'Static Runtime'),
 )
 
-RUNTIMES = {
-    IFRAME: IFrameRuntime,
-    LUA:    LuaRuntime,
-    REGEX:  RegexRuntime,
-    STATIC: StaticRuntime,
-}
+class Runtimes:
+    runtimes = {
+        IFRAME: IFrameRuntime,
+        LUA:    LuaRuntime,
+        REGEX:  RegexRuntime,
+        STATIC: StaticRuntime,
+    }
+
+    def __getitem__(self, key):
+        # Return an instantiated copy of the requested runtime
+        return self.runtimes[key]()
+
+runtimes = Runtimes()
