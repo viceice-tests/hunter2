@@ -97,7 +97,7 @@ class AnswerSubmissionTest(EventTestCase):
         self.client.force_login(user)
         self.url = reverse(
             'answer',
-            kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1},
+            kwargs={'episode_number': 1, 'puzzle_number': 1},
         )
 
     def test_no_answer_given(self):
@@ -127,7 +127,7 @@ class PuzzleStartTimeTests(EventTestCase):
 
     def test_start_times(self):
         self.assertTrue(self.client.login(username='test', password='hunter2'))
-        url = reverse('puzzle', kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1})
+        url = reverse('puzzle', kwargs={'episode_number': 1, 'puzzle_number': 1})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         first_time = TeamPuzzleData.objects.get().start_time
@@ -149,12 +149,10 @@ class PuzzleAccessTests(EventTestCase):
     def test_puzzle_view_authorisation(self):
         self.assertTrue(self.client.login(username='test', password='hunter2'))
 
-        event_id = 1
         episode_number = 1
 
         def _check_load_callback_answer(puzzle_number, expected_response):
             kwargs = {
-                'event_id': event_id,
                 'episode_number': episode_number,
                 'puzzle_number': puzzle_number,
             }
@@ -190,7 +188,7 @@ class PuzzleAccessTests(EventTestCase):
             frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
             # Answer the second puzzle
             response = self.client.post(
-                reverse('answer', kwargs={'event_id': event_id, 'episode_number': episode_number, 'puzzle_number': 2}),
+                reverse('answer', kwargs={'episode_number': episode_number, 'puzzle_number': 2}),
                 {'answer': 'correct'},
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest'
             )
@@ -298,19 +296,19 @@ class EpisodeSequenceTests(EventTestCase):
         self.assertTrue(self.client.login(username='test', password='hunter2'))
 
         # Can load first episode
-        response = self.client.get(reverse('episode', kwargs={'event_id': 1, 'episode_number': 1}))
+        response = self.client.get(reverse('episode', kwargs={'episode_number': 1}))
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
-            reverse('episode_content', kwargs={'event_id': 1, 'episode_number': 1}),
+            reverse('episode_content', kwargs={'episode_number': 1}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
 
         # Can't load second episode
-        response = self.client.get(reverse('episode', kwargs={'event_id': 1, 'episode_number': 2}))
+        response = self.client.get(reverse('episode', kwargs={'episode_number': 2}))
         self.assertEqual(response.status_code, 403)
         response = self.client.get(
-            reverse('episode_content', kwargs={'event_id': 1, 'episode_number': 2}),
+            reverse('episode_content', kwargs={'episode_number': 2}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 403)
@@ -319,10 +317,10 @@ class EpisodeSequenceTests(EventTestCase):
         Guess(for_puzzle=self.episode1.get_puzzle(1), by=self.user, guess="correct").save()
 
         # Can now load second episode
-        response = self.client.get(reverse('episode', kwargs={'event_id': 1, 'episode_number': 2}))
+        response = self.client.get(reverse('episode', kwargs={'episode_number': 2}))
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
-            reverse('episode_content', kwargs={'event_id': 1, 'episode_number': 2}),
+            reverse('episode_content', kwargs={'episode_number': 2}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
@@ -363,7 +361,7 @@ class AdminTeamTests(EventTestCase):
     def test_can_view_episode(self):
         self.assertTrue(self.client.login(username='admin', password='hunter2'))
 
-        response = self.client.get(reverse('episode', kwargs={'event_id': 1, 'episode_number': 1}))
+        response = self.client.get(reverse('episode', kwargs={'episode_number': 1}))
         self.assertEqual(response.status_code, 200)
 
 
@@ -377,7 +375,7 @@ class AdminViewTests(EventTestCase):
 
     def test_can_view_guesses(self):
         self.assertTrue(self.client.login(username='admin', password='hunter2'))
-        response = self.client.get(reverse('guesses', kwargs={'event_id': 1}))
+        response = self.client.get(reverse('guesses'))
         self.assertEqual(response.status_code, 200)
 
 
