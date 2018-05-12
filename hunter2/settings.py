@@ -85,7 +85,6 @@ SHARED_APPS = (
     # These are in dependency order
     'accounts',
     'events',
-    'teams',
     'hunter2',
     # Third party apps
     # These are in alphabetical order
@@ -120,6 +119,7 @@ if USE_SILK:  # nocover
 TENANT_APPS = (
     # Our apps first to allow us to override third party templates
     # These are in dependency order
+    'teams',
     'hunts',
     # Third party apps
     # These are in alphabetical order

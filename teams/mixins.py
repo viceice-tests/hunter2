@@ -16,7 +16,7 @@ class TeamMixin():
         try:
             request.team = user.team_at(request.tenant)
         except ObjectDoesNotExist:
-            request.team = Team(name='', at_event=request.tenant)
+            request.team = Team(at_event=request.tenant)
             request.team.save()
             request.team.members.add(user)
         return super().dispatch(request, *args, **kwargs)

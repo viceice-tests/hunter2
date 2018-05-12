@@ -37,7 +37,7 @@ class CreateTeamView(LoginRequiredMixin, TeamMixin, UpdateView):
     def get_success_url(self):
         event_id = self.request.tenant.pk
         team_id = self.request.team.pk
-        return reverse('team', kwargs={'event_id': event_id, 'team_id': team_id})
+        return reverse('team', kwargs={'team_id': team_id})
 
 
 class ManageTeamView(LoginRequiredMixin, TeamMixin, View):

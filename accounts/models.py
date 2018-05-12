@@ -18,7 +18,7 @@ class UserProfile(models.Model):
             return f'{self.user.username}'
 
     def is_on_explicit_team(self, event):
-        return self.teams.filter(at_event=event).exclude(name='').exists()
+        return self.teams.filter(at_event=event).exclude(name=None).exists()
 
     def team_at(self, event):
         return self.teams.get(at_event=event)

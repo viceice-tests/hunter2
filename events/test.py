@@ -1,8 +1,10 @@
 from django.core.management import call_command
 from django.test import TransactionTestCase
 from django_tenants.test.cases import FastTenantTestCase
+from django_tenants.test.client import TenantClient
 
-from .models import Event, Theme
+from .factories import ThemeFactory
+from .models import Event
 
 
 class EventAwareTestCase(TransactionTestCase):
@@ -14,15 +16,12 @@ class EventAwareTestCase(TransactionTestCase):
 
 
 class EventTestCase(FastTenantTestCase):
-
-    def setUp(self):
-        if self.fixtures:
-            call_command('tenant_command', 'loaddata', *self.fixtures,
-                         **{'verbosity': 0, 'schema_name': self.tenant.schema_name})
+    def _pre_setup(self):
+        super()._pre_setup()
+        self.client = TenantClient(self.tenant)
 
     @classmethod
     def setup_tenant(cls, tenant):
-        theme = Theme(name='Test Theme')
-        theme.save()
+        theme = ThemeFactory()
         tenant.name = 'Test Event'
         tenant.theme = theme
