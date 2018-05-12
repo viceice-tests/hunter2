@@ -21,6 +21,5 @@ eventpatterns = [
 
 urlpatterns = [
     url(r'^hunt/', include(eventpatterns)),
-    url(r'^profile/$', views.EditProfileView.as_view(), name='edit_profile'),
     url(r'^team_autocomplete$', views.TeamAutoComplete.as_view(), name='team_autocomplete'),
 ]
