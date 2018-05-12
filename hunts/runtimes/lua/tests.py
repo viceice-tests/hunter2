@@ -1,6 +1,3 @@
-# vim: set fileencoding=utf-8 :
-from unittest import TestCase
-
 from django.test import SimpleTestCase
 from parameterized import parameterized
 
