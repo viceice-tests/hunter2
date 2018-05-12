@@ -7,8 +7,9 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.defaults import page_not_found, server_error, bad_request, permission_denied
 from django.views.csrf import csrf_failure
 
-from teams.urls import urlpatterns as teams_patterns
+from accounts.urls import urlpatterns as accounts_patterns
 from hunts.urls import urlpatterns as hunts_patterns
+from teams.urls import urlpatterns as teams_patterns
 
 from . import settings
 
@@ -25,7 +26,9 @@ urlpatterns = [
 ] \
     + staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
-    + hunts_patterns + teams_patterns
+    + accounts_patterns \
+    + hunts_patterns \
+    + teams_patterns
 
 if settings.DEBUG:
 
