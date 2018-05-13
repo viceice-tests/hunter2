@@ -74,6 +74,7 @@ class FactoryTests(TestCase):
     def test_announcement_factory_default_construction(self):
         AnnouncementFactory.create()
 
+
 class HomePageTests(TestCase):
     def test_load_homepage(self):
         # Need one default event.
@@ -96,44 +97,41 @@ class RegexValidationTests(TestCase):
 
 
 class AnswerValidationTests(TestCase):
-    fixtures = ['hunts_test']
-
     def setUp(self):
-        self.puzzle = Puzzle.objects.get(pk=1)
-        self.team = Team.objects.get(pk=1)
-        self.data = PuzzleData(self.puzzle, self.team)
+        self.puzzle = PuzzleFactory()
+        self.team = TeamFactory()
 
     def test_static_answers(self):
-        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.STATIC)
-        guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
+        answer = AnswerFactory(for_puzzle=self.puzzle, runtime=rr.STATIC, answer='correct')
+        guess = GuessFactory(guess='correct', for_puzzle=self.puzzle)
         self.assertTrue(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='correctnot', for_puzzle=self.puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='incorrect', for_puzzle=self.puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='wrong', for_puzzle=self.puzzle)
         self.assertFalse(answer.validate_guess(guess))
 
     def test_regex_answers(self):
-        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.REGEX)
-        guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
+        answer = AnswerFactory(for_puzzle=self.puzzle, runtime=rr.REGEX, answer='cor+ect')
+        guess = GuessFactory(guess='correct', for_puzzle=self.puzzle)
         self.assertTrue(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='correctnot', for_puzzle=self.puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='incorrect', for_puzzle=self.puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='wrong', for_puzzle=self.puzzle)
         self.assertFalse(answer.validate_guess(guess))
 
     def test_lua_answers(self):
-        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.LUA)
-        guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
+        answer = AnswerFactory(for_puzzle=self.puzzle, runtime=rr.LUA, answer='''return guess == "correct"''')
+        guess = GuessFactory(guess='correct', for_puzzle=self.puzzle)
         self.assertTrue(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='correctnot', for_puzzle=self.puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='incorrect', for_puzzle=self.puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='wrong', for_puzzle=self.puzzle)
         self.assertFalse(answer.validate_guess(guess))
 
 

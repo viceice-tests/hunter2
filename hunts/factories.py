@@ -9,7 +9,6 @@ from faker import Faker
 
 from accounts.factories import UserProfileFactory
 from events.factories import EventFactory
-from teams.models import Team
 from teams.factories import TeamFactory
 from .models import AnnouncementType
 from .runtimes.registry import RuntimesRegistry as rr
@@ -105,7 +104,6 @@ class GuessFactory(factory.django.DjangoModelFactory):
         # A Guess can only be made by a User who is on a Team at an Event.
         # We need to ensure that there is this consistency:
         # UserProfile(by) <-> Team <-> Event <-> Episode <-> Puzzle(for_puzzle)
-
         # TODO: This is a hack as it creates an orphan team from the original declaration.
         obj.by_team = TeamFactory(at_event=obj.for_puzzle.episode_set.get().event, members=obj.by)
 
@@ -117,8 +115,9 @@ class DataFactory(factory.django.DjangoModelFactory):
     data = factory.LazyFunction(lambda: json.dumps(Faker().pydict(
         10,
         True,
-        'str', 'str', 'str', 'str', 'float','int', 'int',
+        'str', 'str', 'str', 'str', 'float', 'int', 'int',
     )))
+
 
 class TeamDataFactory(DataFactory):
     class Meta:
@@ -157,7 +156,7 @@ class UserPuzzleDataFactory(DataFactory):
 
 
 class EpisodeFactory(factory.django.DjangoModelFactory):
-    class  Meta:
+    class Meta:
         model = 'hunts.Episode'
 
     name = factory.Faker('sentence')
@@ -205,7 +204,7 @@ class AnnouncementFactory(factory.django.DjangoModelFactory):
         model = 'hunts.Announcement'
 
     event = factory.SubFactory(EventFactory)
-    puzzle = factory.SubFactory(PuzzleFactory) #TODO: Generate without puzzle as well.
+    puzzle = factory.SubFactory(PuzzleFactory)  # TODO: Generate without puzzle as well.
     title = factory.Faker('sentence')
     posted = factory.Faker('date_time_this_month', tzinfo=pytz.utc)
     message = factory.Faker('text')

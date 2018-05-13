@@ -246,6 +246,7 @@ class Answer(models.Model):
             guess.guess,
         )
 
+
 class GuessManager(models.Manager):
     def create(self, *args, **kwargs):
         # Need to override the manager for Guesses to not attempt to set the by_team
@@ -255,6 +256,7 @@ class GuessManager(models.Manager):
         self._for_write = True
         obj.save(force_insert=True, using=self.db, update_team=False)
         return obj
+
 
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
