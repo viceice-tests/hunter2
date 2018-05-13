@@ -310,11 +310,12 @@ class AcceptRequest(LoginRequiredMixin, TeamMixin, View):
         user.team_invites.remove(*user.team_invites.filter(at_event=request.event))
         user.team_requests.remove(*user.team_requests.filter(at_event=request.event))
         team.members.add(user)
+        seat = user.attendance_at(request.event).seat
         return JsonResponse({
             'result': 'OK',
             'message': 'Request accepted',
             'username': user.user.username,
-            'seat': user.seat,
+            'seat': seat,
         })
 
 

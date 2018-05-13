@@ -21,7 +21,6 @@ class UserProfileFactory(factory.django.DjangoModelFactory):
     # We pass in profile=None to prevent UserFactory from creating another profile
     # (this disables the RelatedFactory)
     user = factory.SubFactory('accounts.factories.UserFactory', profile=None)
-    seat = factory.Faker('bothify', text='?? ##', letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 
 
 class UserFactory(factory.django.DjangoModelFactory):
