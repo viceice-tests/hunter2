@@ -53,7 +53,7 @@ class StaticValidationTests(EventTestCase):
         self.assertFalse(answer.validate_guess(guess))
 
 
-class RegexValidationTests(TestCase):
+class RegexValidationTests(EventTestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):
@@ -85,7 +85,7 @@ class RegexValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess))
 
 
-class LuaValidationTests(TestCase):
+class LuaValidationTests(EventTestCase):
     fixtures = ['hunts_test']
 
     def setUp(self):

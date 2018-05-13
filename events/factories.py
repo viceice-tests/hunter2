@@ -49,7 +49,6 @@ class DomainFactory(factory.django.DjangoModelFactory):
 class EventFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'events.Event'
-        django_get_or_create = ('name',)
 
     name = factory.Sequence(lambda n: 'Test Event %d' % n)
     schema_name = factory.Faker('schema_name')
