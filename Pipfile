@@ -11,7 +11,7 @@ Django = "<2.0"
 PyYAML = "*"
 colour-runner = "*"
 coverage = "*"
-django-allauth = { git = "https://github.com/riconnon/django-allauth.git", ref = "0.35.0-stateless" }
+django-allauth = { git = "https://github.com/riconnon/django-allauth.git", ref = "0.36.0+stateless" }
 django-analytical = "*"
 django-autocomplete-light = "*"
 django-debug-toolbar = "*"
@@ -24,7 +24,7 @@ django-sendfile = "*"
 django-solo = "*"
 django-sortedm2m = "*"
 django-tenants = { git = "https://github.com/riconnon/django-tenants.git", ref = "v1.3.4+1" }
-django-url-tools = { git = "https://bitbucket.org/nlaurance/django-url-tools.git", ref = "17352a9" }
+django-url-tools-py3 = "*"
 factory_boy = "*"
 freezegun = "*"
 lupa = "*"

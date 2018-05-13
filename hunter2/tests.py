@@ -71,13 +71,10 @@ class MigrationsTests(TestCase):
                 'makemigrations',
                 interactive=False,
                 dry_run=True,
-                exit_code=True,
+                check_changes=True,
                 stdout=output
             )
         except SystemExit as e:
-            # The exit code will be 1 when there are no missing migrations
-            self.assertEqual(str(e), '1')
-        else:  # nocover
             self.fail("There are missing migrations:\n %s" % output.getvalue())
 
 
