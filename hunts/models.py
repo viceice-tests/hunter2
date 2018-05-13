@@ -246,6 +246,15 @@ class Answer(models.Model):
             guess.guess,
         )
 
+class GuessManager(models.Manager):
+    def create(self, *args, **kwargs):
+        # Need to override the manager for Guesses to not attempt to set the by_team
+        # parameter on default construction.
+        # Existing code from models.Manager.create()
+        obj = self.model(**kwargs)
+        self._for_write = True
+        obj.save(force_insert=True, using=self.db, update_team=False)
+        return obj
 
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
@@ -256,6 +265,7 @@ class Guess(models.Model):
     # The following two fields cache whether the guess is correct. Do not use them directly.
     correct_for = models.ForeignKey(Answer, blank=True, null=True, on_delete=models.SET_NULL)
     correct_current = models.BooleanField(default=False)
+    objects = GuessManager()
 
     class Meta:
         verbose_name_plural = 'Guesses'
@@ -270,7 +280,6 @@ class Guess(models.Model):
     def get_correct_for(self):
         """Get the first answer this guess is correct for, if such exists."""
         if not self.correct_current:
-            self._evaluate_correctness()
             self.save(update_team=False)
 
         return self.correct_for
