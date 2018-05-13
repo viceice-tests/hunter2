@@ -616,11 +616,11 @@ class GuessTeamDenormalisationTests(TestCase):
         guess2.save()
 
         # Swap teams and check the guesses update
-        self.team1.members = []
-        self.team2.members = [self.user1]
+        self.team1.members.set([])
+        self.team2.members.set([self.user1])
         self.team1.save()
         self.team2.save()
-        self.team1.members = [self.user2]
+        self.team1.members.set([self.user2])
         self.team1.save()
 
         guess1.refresh_from_db()
