@@ -1,3 +1,5 @@
+import collections
+
 import factory
 
 from events import factories
@@ -17,5 +19,5 @@ class TeamFactory(factory.django.DjangoModelFactory):
             return
 
         if extracted:
-            for member in extracted:
+            for member in (extracted if isinstance(extracted, collections.Iterable) else (extracted,)):
                 self.members.add(member)

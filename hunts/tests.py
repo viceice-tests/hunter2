@@ -1,21 +1,36 @@
-from django.core.exceptions import ValidationError
+import datetime
+
+import freezegun
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
 
-from .factories import PuzzleFactory, HintFactory, PuzzleFileFactory, UnlockFactory, UnlockAnswerFactory, AnswerFactory
-from hunter2.resolvers import reverse
-
 from accounts.models import UserProfile
+from events.factories import EventFactory
 from events.models import Event
+from hunter2.resolvers import reverse
+from teams.factories import TeamFactory
 from teams.models import Team
-from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, UnlockAnswer
+from .factories import (
+    AnnouncementFactory,
+    AnswerFactory,
+    EpisodeFactory,
+    GuessFactory,
+    HintFactory,
+    PuzzleFactory,
+    PuzzleFileFactory,
+    TeamDataFactory,
+    TeamPuzzleDataFactory,
+    UnlockAnswerFactory,
+    UnlockFactory,
+    UserDataFactory,
+    UserPuzzleDataFactory,
+)
+from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock
 from .runtimes.registry import RuntimesRegistry as rr
-
-import datetime
-import freezegun
 
 
 class FactoryTests(TestCase):
@@ -38,30 +53,46 @@ class FactoryTests(TestCase):
     def test_answer_factory_default_construction(self):
         AnswerFactory.create()
 
+    def test_guess_factory_default_construction(self):
+        GuessFactory.create()
+
+    def test_team_data_factory_default_construction(self):
+        TeamDataFactory.create()
+
+    def test_user_data_factory_default_construction(self):
+        UserDataFactory.create()
+
+    def test_team_puzzle_data_factory_default_construction(self):
+        TeamPuzzleDataFactory.create()
+
+    def test_user_puzzle_data_factory_default_construction(self):
+        UserPuzzleDataFactory.create()
+
+    def test_episode_factory_default_construction(self):
+        EpisodeFactory.create()
+
+    def test_announcement_factory_default_construction(self):
+        AnnouncementFactory.create()
 
 class HomePageTests(TestCase):
-    fixtures = ['hunts_test']
-
     def test_load_homepage(self):
+        # Need one default event.
+        EventFactory.create()
         url = reverse('index', subdomain='www')
         response = self.client.get(url, HTTP_HOST='www.testserver')
         self.assertEqual(response.status_code, 200)
 
 
 class RegexValidationTests(TestCase):
-    fixtures = ['hunts_test']
-
     def test_save_answer(self):
-        puzzle = Puzzle.objects.get(pk=1)
-        Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[Rr]egex.*').save()
+        AnswerFactory.create(runtime=rr.REGEX, answer='[Rr]egex.*')
         with self.assertRaises(ValidationError):
-            Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[NotARegex').save()
+            AnswerFactory.create(runtime=rr.REGEX, answer='[NotARegex')
 
     def test_save_unlock_answer(self):
-        unlock = Unlock.objects.get(pk=1)
-        UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[Rr]egex.*').save()
+        UnlockAnswerFactory(runtime=rr.REGEX, guess='[Rr]egex.*').save()
         with self.assertRaises(ValidationError):
-            UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[NotARegex').save()
+            UnlockAnswerFactory(runtime=rr.REGEX, guess='[NotARegex')
 
 
 class AnswerValidationTests(TestCase):
