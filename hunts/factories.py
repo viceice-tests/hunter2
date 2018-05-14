@@ -11,7 +11,7 @@ from accounts.factories import UserProfileFactory
 from events.factories import EventFactory
 from teams.factories import TeamFactory
 from .models import AnnouncementType
-from .runtimes.registry import RuntimesRegistry as rr
+from . import runtimes
 
 
 class PuzzleFactory(factory.django.DjangoModelFactory):
@@ -21,10 +21,10 @@ class PuzzleFactory(factory.django.DjangoModelFactory):
     title = factory.Faker('sentence')
     flavour = factory.Faker('text')
 
-    runtime = rr.STATIC
+    runtime = runtimes.STATIC
     content = factory.Faker('text')
 
-    cb_runtime = rr.STATIC
+    cb_runtime = runtimes.STATIC
     cb_content = ""
 
     start_date = factory.Faker('date_time_this_month', tzinfo=pytz.utc)
@@ -69,7 +69,7 @@ class UnlockAnswerFactory(factory.django.DjangoModelFactory):
         model = 'hunts.UnlockAnswer'
 
     unlock = factory.SubFactory(UnlockFactory)
-    runtime = rr.STATIC
+    runtime = runtimes.STATIC
     guess = factory.Faker('word')
 
 
@@ -78,7 +78,7 @@ class AnswerFactory(factory.django.DjangoModelFactory):
         model = 'hunts.Answer'
 
     for_puzzle = factory.SubFactory(PuzzleFactory)
-    runtime = rr.STATIC
+    runtime = runtimes.STATIC
     answer = factory.Faker('word')
 
 

@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 from parameterized import parameterized
 
-from .. import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
+from ..exceptions import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
 from . import LuaRuntime
 
 

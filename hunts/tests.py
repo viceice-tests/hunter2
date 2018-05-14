@@ -12,7 +12,6 @@ from accounts.models import UserProfile
 from events.factories import EventFactory
 from events.models import Event
 from hunter2.resolvers import reverse
-from teams.factories import TeamFactory
 from teams.models import Team
 from .factories import (
     AnnouncementFactory,
@@ -30,7 +29,7 @@ from .factories import (
     UserPuzzleDataFactory,
 )
 from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock
-from .runtimes.registry import RuntimesRegistry as rr
+from . import runtimes
 
 
 class FactoryTests(TestCase):
@@ -84,54 +83,68 @@ class HomePageTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class RegexValidationTests(TestCase):
-    def test_save_answer(self):
-        AnswerFactory.create(runtime=rr.REGEX, answer='[Rr]egex.*')
-        with self.assertRaises(ValidationError):
-            AnswerFactory.create(runtime=rr.REGEX, answer='[NotARegex')
+class StaticValidationTests(TestCase):
+    def test_static_save_answer(self):
+        AnswerFactory(runtime=runtimes.STATIC, answer='answer')
 
-    def test_save_unlock_answer(self):
-        UnlockAnswerFactory(runtime=rr.REGEX, guess='[Rr]egex.*').save()
-        with self.assertRaises(ValidationError):
-            UnlockAnswerFactory(runtime=rr.REGEX, guess='[NotARegex')
-
-
-class AnswerValidationTests(TestCase):
-    def setUp(self):
-        self.puzzle = PuzzleFactory()
-        self.team = TeamFactory()
+    def test_static_save_unlock_answer(self):
+        UnlockAnswerFactory(runtime=runtimes.STATIC, guess='unlock')
 
     def test_static_answers(self):
-        answer = AnswerFactory(for_puzzle=self.puzzle, runtime=rr.STATIC, answer='correct')
-        guess = GuessFactory(guess='correct', for_puzzle=self.puzzle)
+        answer = AnswerFactory(runtime=runtimes.STATIC, answer='correct')
+        guess = GuessFactory(guess='correct', for_puzzle=answer.for_puzzle)
         self.assertTrue(answer.validate_guess(guess))
-        guess = GuessFactory(guess='correctnot', for_puzzle=self.puzzle)
+        guess = GuessFactory(guess='correctnot', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = GuessFactory(guess='incorrect', for_puzzle=self.puzzle)
+        guess = GuessFactory(guess='incorrect', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = GuessFactory(guess='wrong', for_puzzle=self.puzzle)
+        guess = GuessFactory(guess='wrong', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
+
+
+class RegexValidationTests(TestCase):
+    def test_regex_save_answer(self):
+        AnswerFactory(runtime=runtimes.REGEX, answer='[Rr]egex.*')
+        with self.assertRaises(ValidationError):
+            AnswerFactory(runtime=runtimes.REGEX, answer='[NotARegex')
+
+    def test_regex_save_unlock_answer(self):
+        UnlockAnswerFactory(runtime=runtimes.REGEX, guess='[Rr]egex.*')
+        with self.assertRaises(ValidationError):
+            UnlockAnswerFactory(runtime=runtimes.REGEX, guess='[NotARegex')
 
     def test_regex_answers(self):
-        answer = AnswerFactory(for_puzzle=self.puzzle, runtime=rr.REGEX, answer='cor+ect')
-        guess = GuessFactory(guess='correct', for_puzzle=self.puzzle)
+        answer = AnswerFactory(runtime=runtimes.REGEX, answer='cor+ect')
+        guess = GuessFactory(guess='correct', for_puzzle=answer.for_puzzle)
         self.assertTrue(answer.validate_guess(guess))
-        guess = GuessFactory(guess='correctnot', for_puzzle=self.puzzle)
+        guess = GuessFactory(guess='correctnot', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = GuessFactory(guess='incorrect', for_puzzle=self.puzzle)
+        guess = GuessFactory(guess='incorrect', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = GuessFactory(guess='wrong', for_puzzle=self.puzzle)
+        guess = GuessFactory(guess='wrong', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
 
+
+class LuaValidationTests(TestCase):
+    def test_lua_save_answer(self):
+        AnswerFactory(runtime=runtimes.LUA, answer='''return {} == nil''')
+        with self.assertRaises(ValidationError):
+            AnswerFactory(runtime=runtimes.LUA, answer='''@''')
+
+    def test_lua_save_unlock_answer(self):
+        UnlockAnswerFactory(runtime=runtimes.LUA, guess='''return {} == nil''')
+        with self.assertRaises(ValidationError):
+            UnlockAnswerFactory(runtime=runtimes.LUA, guess='''@''')
+
     def test_lua_answers(self):
-        answer = AnswerFactory(for_puzzle=self.puzzle, runtime=rr.LUA, answer='''return guess == "correct"''')
-        guess = GuessFactory(guess='correct', for_puzzle=self.puzzle)
+        answer = AnswerFactory(runtime=runtimes.LUA, answer='''return guess == "correct"''')
+        guess = GuessFactory(guess='correct', for_puzzle=answer.for_puzzle)
         self.assertTrue(answer.validate_guess(guess))
-        guess = GuessFactory(guess='correctnot', for_puzzle=self.puzzle)
+        guess = GuessFactory(guess='correctnot', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = GuessFactory(guess='incorrect', for_puzzle=self.puzzle)
+        guess = GuessFactory(guess='incorrect', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = GuessFactory(guess='wrong', for_puzzle=self.puzzle)
+        guess = GuessFactory(guess='wrong', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
 
 
@@ -634,11 +647,11 @@ class GuessTeamDenormalisationTests(TestCase):
         guess2.save()
 
         # Swap teams and check the guesses update
-        self.team1.members = []
-        self.team2.members = [self.user1]
+        self.team1.members.set([])
+        self.team2.members.set([self.user1])
         self.team1.save()
         self.team2.save()
-        self.team1.members = [self.user2]
+        self.team1.members.set([self.user2])
         self.team1.save()
 
         guess1.refresh_from_db()
