@@ -85,27 +85,15 @@ class AnswerFactory(factory.django.DjangoModelFactory):
 class GuessFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'hunts.Guess'
-        exclude = ('update_team',)
-
+    # A Guess can only be made by a User who is on a Team at an Event.
+    # We need to ensure that there is this consistency:
+    # UserProfile(by) <-> Team <-> Event <-> Episode <-> Puzzle(for_puzzle)
     by = factory.SubFactory(UserProfileFactory)
-    by_team = factory.SubFactory(TeamFactory)
+    by_team = factory.LazyAttribute(lambda o: TeamFactory(at_event=o.for_puzzle.episode_set.get().event, members=o.by))
     for_puzzle = factory.SubFactory(PuzzleFactory)
     guess = factory.Faker('sentence')
     given = factory.Faker('date_time_this_month', tzinfo=pytz.utc)
-
-    # by_team, correct_for and correct_current are all handled internally.
-
-    @factory.post_generation
-    def update_team(obj, create, extracted, **kwargs):
-        if not create:
-            # Simple build, do nothing.
-            return
-
-        # A Guess can only be made by a User who is on a Team at an Event.
-        # We need to ensure that there is this consistency:
-        # UserProfile(by) <-> Team <-> Event <-> Episode <-> Puzzle(for_puzzle)
-        # TODO: This is a hack as it creates an orphan team from the original declaration.
-        obj.by_team = TeamFactory(at_event=obj.for_puzzle.episode_set.get().event, members=obj.by)
+    # correct_for and correct_current are all handled internally.
 
 
 class DataFactory(factory.django.DjangoModelFactory):
