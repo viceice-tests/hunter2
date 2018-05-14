@@ -1,41 +1,33 @@
 # vim: set fileencoding=utf-8 :
-from abc import ABCMeta, abstractmethod
+from hunts.runtimes.iframe import IFrameRuntime
+from hunts.runtimes.lua import LuaRuntime
+from hunts.runtimes.regex import RegexRuntime
+from hunts.runtimes.static import StaticRuntime
+
+IFRAME = 'I'
+LUA    = 'L'
+REGEX  = 'R'
+STATIC = 'S'
+
+RUNTIME_CHOICES = (
+    (IFRAME, 'IFrame Runtime'),
+    (LUA,    'Lua Runtime'),
+    (REGEX,  'Regex Runtime'),
+    (STATIC, 'Static Runtime'),
+)
 
 
-class RuntimeExecutionError(Exception):
-    def __init__(self, message):
-        self.message = message
+class Runtimes:
+    runtimes = {
+        IFRAME: IFrameRuntime,
+        LUA:    LuaRuntime,
+        REGEX:  RegexRuntime,
+        STATIC: StaticRuntime,
+    }
+
+    def __getitem__(self, key):
+        # Return an instantiated copy of the requested runtime
+        return self.runtimes[key]()
 
 
-class RuntimeMemoryExceededError(Exception):
-    def __init__(self, message="Runtime memory limit exceeded"):
-        self.message = message
-
-
-class RuntimeExecutionTimeExceededError(Exception):
-    def __init__(self, message="Runtime time limit exceeded"):
-        self.message = message
-
-
-class RuntimeSandboxViolationError(Exception):
-    def __init__(self, message="Runtime sandbox violation"):
-        self.message = message
-
-
-class RuntimeValidationError(Exception):
-    def __init__(self, message="Runtime validation error"):
-        self.message = message
-
-
-class AbstractRuntime(metaclass=ABCMeta):
-    def check_script(self, script):
-        return True
-
-    @abstractmethod
-    def evaluate(self, script, team_puzzle_data, user_puzzle_data, team_data, user_data):
-        """ABSTRACT"""
-
-    @abstractmethod
-    # TODO: Consider changing to allow returning a result and unlock hints for this puzzle.
-    def validate_guess(self, validator, guess):
-        """ABSTRACT"""
+runtimes = Runtimes()

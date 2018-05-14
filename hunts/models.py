@@ -4,10 +4,10 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from sortedm2m.fields import SortedManyToManyField
-from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
 from enumfields import EnumField, Enum
 from hunter2.resolvers import reverse
+from . import runtimes
 
 import accounts
 import events
@@ -21,12 +21,12 @@ class Puzzle(models.Model):
         blank=True, verbose_name="Flavour text",
         help_text="Separate flavour text for the puzzle. Should not be required for solving the puzzle")
     runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC,
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC,
         help_text="Runtime for generating the question content"
     )
     content = models.TextField()
     cb_runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC, verbose_name="Callback runtime",
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC, verbose_name="Callback runtime",
         help_text="Runtime for responding to an AJAX callback for this question, should return JSON"
     )
     cb_content = models.TextField(blank=True, default='', verbose_name="Callback content")
@@ -42,8 +42,8 @@ class Puzzle(models.Model):
     def clean(self):
         super().clean()
         try:
-            rr.check_script(self.runtime, self.content)
-            rr.check_script(self.cb_runtime, self.cb_content)
+            runtimes.runtimes[self.runtime].check_script(self.content)
+            runtimes.runtimes[self.cb_runtime].check_script(self.cb_content)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
@@ -178,12 +178,12 @@ class Unlock(Clue):
 class UnlockAnswer(models.Model):
     unlock = models.ForeignKey(Unlock, on_delete=models.CASCADE)
     runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC
     )
     guess = models.TextField()
 
     def __str__(self):
-        if self.runtime == rr.STATIC or self.runtime == rr.REGEX:
+        if self.runtime == runtimes.STATIC or self.runtime == runtimes.REGEX:
             return self.guess
         else:
             return '[Using %s]' % self.get_runtime_display()
@@ -191,13 +191,12 @@ class UnlockAnswer(models.Model):
     def clean(self):
         super().clean()
         try:
-            rr.check_script(self.runtime, self.guess)
+            runtimes.runtimes[self.runtime].check_script(self.guess)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
     def validate_guess(self, guess):
-        return rr.validate_guess(
-            self.runtime,
+        return runtimes.runtimes[self.runtime].validate_guess(
             self.guess,
             guess.guess,
         )
@@ -206,12 +205,12 @@ class UnlockAnswer(models.Model):
 class Answer(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC
     )
     answer = models.TextField()
 
     def __str__(self):
-        if self.runtime == rr.STATIC or self.runtime == rr.REGEX:
+        if self.runtime == runtimes.STATIC or self.runtime == runtimes.REGEX:
             return self.answer
         else:
             return '[Using %s]' % self.get_runtime_display()
@@ -219,7 +218,7 @@ class Answer(models.Model):
     def clean(self):
         super().clean()
         try:
-            rr.check_script(self.runtime, self.answer)
+            runtimes.runtimes[self.runtime].check_script(self.answer)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
@@ -240,8 +239,7 @@ class Answer(models.Model):
         super().delete(*args, **kwargs)
 
     def validate_guess(self, guess):
-        return rr.validate_guess(
-            self.runtime,
+        return runtimes.runtimes[self.runtime].validate_guess(
             self.answer,
             guess.guess,
         )
@@ -387,13 +385,13 @@ class PuzzleData:
                 puzzle=puzzle, user=user
             )
 
-    def save(self):
-        self.t_data.save()
-        self.tp_data.save()
+    def save(self, *args, **kwargs):
+        self.t_data.save(*args, **kwargs)
+        self.tp_data.save(*args, **kwargs)
         if self.u_data:
-            self.u_data.save()
+            self.u_data.save(*args, **kwargs)
         if self.up_data:
-            self.up_data.save()
+            self.up_data.save(*args, **kwargs)
 
 
 class Episode(models.Model):
