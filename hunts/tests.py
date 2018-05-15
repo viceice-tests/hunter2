@@ -187,21 +187,23 @@ class AnswerSubmissionTests(TestCase):
 
 
 class PuzzleStartTimeTests(TestCase):
-    fixtures = ['hunts_test']
-
-    def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
+    @classmethod
+    def setUpTestData(cls):
+        SiteFactory.create()
+        cls.site = Site.objects.get_current()
+        cls.puzzle = PuzzleFactory()
+        cls.episode = cls.puzzle.episode_set.get()
+        cls.event = cls.episode.event
+        cls.user = UserProfileFactory()
+        cls.team = TeamFactory(at_event=cls.event, members={cls.user})
 
     def test_start_times(self):
-        self.assertTrue(self.client.login(username='test', password='hunter2'))
-        url = reverse('puzzle', subdomain='www', kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1})
-        response = self.client.get(url, HTTP_HOST='www.testserver')
+        self.client.force_login(self.user.user)
+        response = self.client.get(self.puzzle.get_absolute_url(), HTTP_HOST=f'www.{self.site.domain}')
         self.assertEqual(response.status_code, 200)
         first_time = TeamPuzzleData.objects.get().start_time
         self.assertIsNot(first_time, None)
-        response = self.client.get(url, HTTP_HOST='www.testserver')
+        response = self.client.get(self.puzzle.get_absolute_url(), HTTP_HOST=f'www.{self.site.domain}')
         self.assertEqual(response.status_code, 200)
         second_time = TeamPuzzleData.objects.get().start_time
         self.assertEqual(first_time, second_time)
