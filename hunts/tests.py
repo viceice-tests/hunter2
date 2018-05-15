@@ -8,10 +8,12 @@ from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
 
+from accounts.factories import SiteFactory, UserProfileFactory
 from accounts.models import UserProfile
 from events.factories import EventFactory
 from events.models import Event
 from hunter2.resolvers import reverse
+from teams.factories import TeamFactory
 from teams.models import Team
 from .factories import (
     AnnouncementFactory,
@@ -148,25 +150,27 @@ class LuaValidationTests(TestCase):
         self.assertFalse(answer.validate_guess(guess))
 
 
-class AnswerSubmissionTest(TestCase):
-    fixtures = ['hunts_test']
+class AnswerSubmissionTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        SiteFactory.create()
+        cls.site = Site.objects.get_current()
+        cls.puzzle = PuzzleFactory()
+        cls.episode = cls.puzzle.episode_set.get()
+        cls.event = cls.episode.event
+        cls.user = UserProfileFactory()
+        cls.team = TeamFactory(at_event=cls.event, members={cls.user})
+        cls.url = reverse('answer', subdomain='www', kwargs={
+            'event_id': cls.event.id,
+            'episode_number': cls.episode.get_relative_id(),
+            'puzzle_number': cls.puzzle.get_relative_id()
+        },)
 
     def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
-        self.puzzle = Puzzle.objects.get(pk=1)
-        self.team = Team.objects.get(pk=1)
-        self.data = PuzzleData(self.puzzle, self.team)
-        user = User.objects.get(pk=1)
-        self.client.force_login(user)
-        self.url = reverse(
-            'answer', subdomain='www',
-            kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1},
-        )
+        self.client.force_login(self.user.user)
 
     def test_no_answer_given(self):
-        response = self.client.post(self.url, HTTP_HOST='www.testserver')
+        response = self.client.post(self.url, HTTP_HOST=f'www.{self.site.domain}')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['error'], 'no answer given')
 
