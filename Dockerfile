@@ -58,7 +58,7 @@ VOLUME ["/config", "/static", "/uploads/events", "/uploads/puzzles"]
 
 EXPOSE 3031
 
-ENV UWSGI_UWSGI_SOCKET 3031
+ENV UWSGI_SOCKET :3031
 ENV UWSGI_ENABLE_THREADS True
 ENV UWSGI_MASTER True
 ENV UWSGI_VACUUM True
