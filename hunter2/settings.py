@@ -101,6 +101,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django_extensions',
     'django_fullclean',
+    'django_uwsgi',
     'nested_admin',
     'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',
