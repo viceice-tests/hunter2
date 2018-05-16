@@ -57,4 +57,15 @@ USER django
 VOLUME ["/config", "/static", "/uploads/events", "/uploads/puzzles"]
 
 EXPOSE 3031
-CMD ["uwsgi", "--ini", "/usr/src/app/uwsgi.ini"]
+
+ENV UWSGI_UWSGI_SOCKET 3031
+ENV UWSGI_ENABLE_THREADS True
+ENV UWSGI_MASTER True
+ENV UWSGI_VACUUM True
+ENV UWSGI_UID 500
+ENV UWSGI_GID 500
+ENV UWSGI_CHDIR /usr/src/app
+ENV UWSGI_MODULE hunter2.wsgi:application
+
+ENTRYPOINT ["python", "manage.py"]
+CMD ["runuwsgi"]
