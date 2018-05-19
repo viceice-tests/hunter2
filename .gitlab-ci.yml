@@ -22,11 +22,13 @@ check:flake8:
   stage: check
   script:
     - docker-compose -f docker-compose.check.yml run --rm flake8 --verbose
+  allow_failure: true
 
 check:jshint:
   stage: check
   script:
     - docker-compose -f docker-compose.check.yml run --rm jshint
+  allow_failure: true
 
 build:app:
   stage: build
@@ -72,6 +74,7 @@ doc:graph:
     name: models-graph
     paths:
       - diagram/models.svg
+  allow_failure: true
 
 test:
   stage: test
