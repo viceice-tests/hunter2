@@ -39,7 +39,7 @@ build:app:
   script:
     - docker-compose build $SERVICE
     - install -d -m 777 diagram
-    - docker-compose run $SERVICE --entrypoint "sh" "-c python manage.py graph_models -a > diagram/models.dot"
+    - docker-compose run --entrypoint "sh" $SERVICE -c "python manage.py graph_models -a > diagram/models.dot"
     - docker save -o $IMAGE_FILE $IMAGE_TAG
   artifacts:
     expire_in: 90 days

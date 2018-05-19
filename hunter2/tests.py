@@ -19,7 +19,7 @@ from .utils import generate_secret_key, load_or_create_secret_key
 
 class TestRunner(ColourRunnerMixin, DiscoverRunner):
 
-    def __init__(self, run_coverage = False, **kwargs):
+    def __init__(self, run_coverage=False, **kwargs):
         self.run_coverage = run_coverage
         super().__init__(**kwargs)
 
@@ -31,7 +31,6 @@ class TestRunner(ColourRunnerMixin, DiscoverRunner):
             help="Run tests with coverage")
         super().add_arguments(parser)
 
-
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         # Disable non-critial logging for test runs
         logging.disable(logging.CRITICAL)
@@ -40,7 +39,7 @@ class TestRunner(ColourRunnerMixin, DiscoverRunner):
         if self.run_coverage:
             coverage.start()
 
-        result =  super().run_tests(test_labels, extra_tests, **kwargs)
+        result = super().run_tests(test_labels, extra_tests, **kwargs)
 
         if self.run_coverage:
             coverage.stop()
