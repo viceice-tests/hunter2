@@ -5,11 +5,12 @@ from random import choice
 
 import factory
 import pytz
+from django.db.models import signals
 from faker import Faker
 
 from accounts.factories import UserProfileFactory
 from events.factories import EventFactory
-from teams.factories import TeamFactory
+from teams.factories import TeamFactory, TeamMemberFactory
 from .models import AnnouncementType
 from . import runtimes
 
@@ -30,8 +31,29 @@ class PuzzleFactory(factory.django.DjangoModelFactory):
     start_date = factory.Faker('date_time_this_month', tzinfo=pytz.utc)
     headstart_granted = factory.Faker('time_delta', end_datetime=timedelta(minutes=60))
 
-    # This puzzle needs to be part of an episode
-    episode_set = factory.RelatedFactory('hunts.factories.EpisodeFactory', 'puzzles')
+    # This puzzle needs to be part of an episode & have at least one answer
+    # episode_set = factory.RelatedFactory('hunts.factories.EpisodeFactory', 'puzzles')
+    answer_set = factory.RelatedFactory('hunts.factories.AnswerFactory', 'for_puzzle')
+
+    @factory.post_generation
+    def answers(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for answer in (extracted if isinstance(extracted, collections.Iterable) else (extracted,)):
+                self.answer_set.add(answer)
+
+    @factory.post_generation
+    @factory.django.mute_signals(signals.m2m_changed)
+    def episode(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            self.episode_set.set({extracted}, clear=True)
+        else:
+            self.episode_set.set({EpisodeFactory()}, clear=True)
 
 
 class PuzzleFileFactory(factory.django.DjangoModelFactory):
@@ -77,7 +99,7 @@ class AnswerFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'hunts.Answer'
 
-    for_puzzle = factory.SubFactory(PuzzleFactory)
+    for_puzzle = factory.SubFactory(PuzzleFactory, answer_set=None)
     runtime = runtimes.STATIC
     answer = factory.Faker('word')
 
@@ -85,15 +107,23 @@ class AnswerFactory(factory.django.DjangoModelFactory):
 class GuessFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'hunts.Guess'
+        exclude = ('event',)
+
+    class Params:
+        correct = factory.Trait(
+            guess = factory.LazyAttribute(lambda o: o.for_puzzle.answer_set.get().answer)
+        )
+
     # A Guess can only be made by a User who is on a Team at an Event.
     # We need to ensure that there is this consistency:
     # UserProfile(by) <-> Team <-> Event <-> Episode <-> Puzzle(for_puzzle)
-    by = factory.SubFactory(UserProfileFactory)
-    by_team = factory.LazyAttribute(lambda o: TeamFactory(at_event=o.for_puzzle.episode_set.get().event, members=o.by))
     for_puzzle = factory.SubFactory(PuzzleFactory)
+    event = factory.LazyAttribute(lambda o: o.for_puzzle.episode_set.get().event)
+    by = factory.LazyAttribute(lambda o: TeamMemberFactory(team__at_event=o.event))
     guess = factory.Faker('sentence')
-    given = factory.Faker('date_time_this_month', tzinfo=pytz.utc)
-    # correct_for and correct_current are all handled internally.
+    given = factory.Faker('past_datetime', start_date='-1d', tzinfo=pytz.utc)
+    # by_team, correct_for and correct_current are all handled internally.
+
 
 
 class DataFactory(factory.django.DjangoModelFactory):

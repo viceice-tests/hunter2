@@ -21,7 +21,7 @@ class EventFactory(factory.django.DjangoModelFactory):
     rules_text = factory.Faker('text')
     help_text = factory.Faker('text')
     examples_text = factory.Faker('text')
-    max_team_size = factory.Faker('random_int', min=0, max=10)
+    max_team_size = factory.Faker('random_int', min=1, max=10)
 
 
 class EventFileFactory(factory.django.DjangoModelFactory):

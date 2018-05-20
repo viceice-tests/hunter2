@@ -290,7 +290,7 @@ class Guess(models.Model):
                 self.correct_for = answer
                 return
 
-    def save(self, *args, update_team=True, **kwargs):
+    def save(self, *args, **kwargs):
         if not self.by_team:
             self.by_team = self.get_team()
         self._evaluate_correctness()
