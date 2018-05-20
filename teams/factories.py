@@ -24,6 +24,7 @@ class TeamFactory(factory.django.DjangoModelFactory):
             for member in (extracted if isinstance(extracted, collections.Iterable) else (extracted,)):
                 self.members.add(member)
 
+
 class TeamMemberFactory(UserProfileFactory):
     class Meta:
         exclude = ('team',)

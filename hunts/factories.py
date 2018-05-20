@@ -111,7 +111,7 @@ class GuessFactory(factory.django.DjangoModelFactory):
 
     class Params:
         correct = factory.Trait(
-            guess = factory.LazyAttribute(lambda o: o.for_puzzle.answer_set.get().answer)
+            guess=factory.LazyAttribute(lambda o: o.for_puzzle.answer_set.get().answer)
         )
 
     # A Guess can only be made by a User who is on a Team at an Event.
@@ -123,7 +123,6 @@ class GuessFactory(factory.django.DjangoModelFactory):
     guess = factory.Faker('sentence')
     given = factory.Faker('past_datetime', start_date='-1d', tzinfo=pytz.utc)
     # by_team, correct_for and correct_current are all handled internally.
-
 
 
 class DataFactory(factory.django.DjangoModelFactory):
