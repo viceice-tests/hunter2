@@ -1,7 +1,6 @@
-# vim: set fileencoding=utf-8 :
+import logging
 import os
 import tempfile
-import logging
 from io import StringIO
 
 import builtins
@@ -19,7 +18,7 @@ class TestRunner(ColourRunnerMixin, DiscoverRunner):
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         # Disable non-critial logging for test runs
         logging.disable(logging.CRITICAL)
-        return super(TestRunner, self).run_tests(test_labels, extra_tests, **kwargs)
+        return super().run_tests(test_labels, extra_tests, **kwargs)
 
 
 # Adapted from:
