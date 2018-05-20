@@ -22,13 +22,11 @@ check:flake8:
   stage: check
   script:
     - docker-compose -f docker-compose.check.yml run --rm flake8 --verbose
-  allow_failure: true
 
 check:jshint:
   stage: check
   script:
     - docker-compose -f docker-compose.check.yml run --rm jshint
-  allow_failure: true
 
 build:app:
   stage: build
@@ -74,7 +72,6 @@ doc:graph:
     name: models-graph
     paths:
       - diagram/models.svg
-  allow_failure: true
 
 test:
   stage: test
@@ -87,7 +84,9 @@ test:
   script:
     - docker load -i $IMAGE_FILE
     - install -d -m 777 coverage
-    - docker-compose run $SERVICE test --coverage -v 2
+    - docker-compose run --entrypoint "python" $SERVICE -Wd -m coverage run --source . manage.py test -v 2
+    - docker-compose run --entrypoint "python" $SERVICE -m coverage html
+    - docker-compose run --entrypoint "python" $SERVICE -m coverage report
   artifacts:
     expire_in: 180 days
     name: coverage

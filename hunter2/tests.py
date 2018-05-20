@@ -1,12 +1,9 @@
-# vim: set fileencoding=utf-8 :
+import logging
 import os
 import tempfile
-import logging
 from io import StringIO
 
 import builtins
-
-from coverage import Coverage
 from colour_runner.django_runner import ColourRunnerMixin
 from django.contrib.sites.models import Site
 from django.core.management import CommandError, call_command
@@ -18,35 +15,10 @@ from .utils import generate_secret_key, load_or_create_secret_key
 
 
 class TestRunner(ColourRunnerMixin, DiscoverRunner):
-
-    def __init__(self, run_coverage=False, **kwargs):
-        self.run_coverage = run_coverage
-        super().__init__(**kwargs)
-
-    @classmethod
-    def add_arguments(cls, parser):
-        parser.add_argument(
-            '--coverage',
-            action='store_true', dest='run_coverage',
-            help="Run tests with coverage")
-        super().add_arguments(parser)
-
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         # Disable non-critial logging for test runs
         logging.disable(logging.CRITICAL)
-        coverage = Coverage()
-
-        if self.run_coverage:
-            coverage.start()
-
-        result = super().run_tests(test_labels, extra_tests, **kwargs)
-
-        if self.run_coverage:
-            coverage.stop()
-            coverage.html_report()
-            coverage.report()
-
-        return result
+        return super().run_tests(test_labels, extra_tests, **kwargs)
 
 
 # Adapted from:
