@@ -1,4 +1,5 @@
 import datetime
+import random
 
 import freezegun
 from django.contrib.sites.models import Site
@@ -190,26 +191,28 @@ class AnswerSubmissionTests(TestCase):
 
 
 class PuzzleStartTimeTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        SiteFactory.create()
-        cls.site = Site.objects.get_current()
-        cls.puzzle = PuzzleFactory()
-        cls.episode = cls.puzzle.episode_set.get()
-        cls.event = cls.episode.event
-        cls.user = UserProfileFactory()
-        cls.team = TeamFactory(at_event=cls.event, members={cls.user})
-
     def test_start_times(self):
+        SiteFactory.create()
+        self.site = Site.objects.get_current()
+        self.puzzle = PuzzleFactory()
+        self.episode = self.puzzle.episode_set.get()
+        self.event = self.episode.event
+        self.user = UserProfileFactory()
+        self.team = TeamFactory(at_event=self.event, members={self.user})
+
         self.client.force_login(self.user.user)
+
         response = self.client.get(self.puzzle.get_absolute_url(), HTTP_HOST=f'www.{self.site.domain}')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, msg='Puzzle is accessible on absolute url')
+
         first_time = TeamPuzzleData.objects.get().start_time
-        self.assertIsNot(first_time, None)
+        self.assertIsNot(first_time, None, msg='Start time is set on first access to a puzzle')
+
         response = self.client.get(self.puzzle.get_absolute_url(), HTTP_HOST=f'www.{self.site.domain}')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, msg='Puzzle is accessible on absolute url')
+
         second_time = TeamPuzzleData.objects.get().start_time
-        self.assertEqual(first_time, second_time)
+        self.assertEqual(first_time, second_time, msg='Start time does not alter on subsequent access')
 
 
 class PuzzleAccessTests(TestCase):
@@ -298,7 +301,7 @@ class PuzzleAccessTests(TestCase):
 class EpisodeBehaviourTests(TestCase):
     def test_reuse_puzzle(self):
         puzzles = PuzzleFactory.create_batch(2)
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValidationError, msg='Reusing a puzzle raises a ValidationError'):
             puzzles[0].episode_set.get().puzzles.add(puzzles[1])
 
     def test_linear_episodes_are_linear(self):
@@ -309,32 +312,35 @@ class EpisodeBehaviourTests(TestCase):
 
         # TODO: Scramble puzzle order before starting (so they are not in the order they were created).
 
-        # Check we can start and that it is a parallel episode.
-        self.assertTrue(linear_episode.unlocked_by(team))
-        self.assertFalse(linear_episode.parallel)
+        # Check we can start and that it is a linear episode.
+        self.assertTrue(linear_episode.unlocked_by(team), msg='Episode is unlocked by team')
+        self.assertFalse(linear_episode.parallel, msg='Episode is not set as parallel')
 
         for i in range(1, linear_episode.puzzles.count()):
-            # Test we have unlocked the question, but not answered (non-should be answered).
-            self.assertTrue(linear_episode.get_puzzle(i).unlocked_by(team))
-            self.assertFalse(linear_episode.get_puzzle(i).answered_by(team))
+            # Test we have unlocked the question, but not answered it yet.
+            self.assertTrue(linear_episode.get_puzzle(i).unlocked_by(team), msg=f'Puzzle[{i}] is unlocked')
+            self.assertFalse(linear_episode.get_puzzle(i).answered_by(team), msg=f'Puzzle[{i}] is not answered')
 
             # Test that we have not unlocked the next puzzle before answering.
             if i < linear_episode.puzzles.count():
-                self.assertFalse(linear_episode.get_puzzle(i + 1).unlocked_by(team))
+                self.assertFalse(linear_episode.get_puzzle(i + 1).unlocked_by(team), msg=f'Puzzle[{i + 1}] is not unlocked until previous puzzle answered')
 
             # Answer the question and assert that it's now answered.
             GuessFactory.create(for_puzzle=linear_episode.get_puzzle(i), by=user, correct=True)
-            self.assertTrue(linear_episode.get_puzzle(i).answered_by(team))
+            self.assertTrue(linear_episode.get_puzzle(i).answered_by(team), msg=f'Correct guess has answered puzzle[{i}]')
 
     def test_can_see_all_parallel_puzzles(self):
         parallel_episode = EpisodeFactory(parallel=True)
         PuzzleFactory.create_batch(5, episode=parallel_episode)
         team = TeamFactory(at_event=parallel_episode.event)
 
+        # Check we can start and that it is a parallel episode.
         self.assertTrue(parallel_episode.unlocked_by(team))
         self.assertTrue(parallel_episode.parallel)
+
+        # Ensure all puzzles in a parallel episode are unlocked.
         for puzzle in parallel_episode.puzzles.all():
-            self.assertTrue(puzzle.unlocked_by(team), msg=puzzle)
+            self.assertTrue(puzzle.unlocked_by(team), msg='Puzzle unlocked in parallel episode')
 
     # def test_headstarts(self):
     #     self.assertEqual(self.linear_episode.headstart_granted(self.team),
@@ -346,24 +352,60 @@ class EpisodeBehaviourTests(TestCase):
     #     self.assertEqual(self.linear_episode.headstart_granted(self.team), datetime.timedelta(minutes=15))
     #     # Test that headstart does not apply in the wrong direction
     #     self.assertEqual(self.linear_episode.headstart_applied(self.team), datetime.timedelta(minutes=0))
-    #
-    # def test_next_puzzle(self):
-    #     self.assertEqual(self.linear_episode.next_puzzle(self.team), 2)
-    #     Guess(for_puzzle=self.linear_episode.get_puzzle(2), by=self.user, guess="correct").save()
-    #     self.assertEqual(self.linear_episode.next_puzzle(self.team), 3)
-    #     Guess(for_puzzle=self.linear_episode.get_puzzle(3), by=self.user, guess="correctish").save()
-    #     self.assertEqual(self.linear_episode.next_puzzle(self.team), None)
-    #
-    #     self.assertEqual(self.parallel_episode.next_puzzle(self.team), None)
-    #     Guess(for_puzzle=self.parallel_episode.get_puzzle(2), by=self.user, guess="4").save()
-    #     self.assertTrue(self.parallel_episode.get_puzzle(2).answered_by(self.team))
-    #     self.assertEqual(self.parallel_episode.next_puzzle(self.team), 3)
+
+    def test_next_linear_puzzle(self):
+        linear_episode = EpisodeFactory(parallel=False)
+        PuzzleFactory.create_batch(10, episode=linear_episode)
+        user = UserProfileFactory()
+        team = TeamFactory(at_event=linear_episode.event, members=user)
+
+        # TODO: Scramble puzzle order before starting (so they are not in the order they were created).
+
+        # Check we can start and that it is a linear episode.
+        self.assertTrue(linear_episode.unlocked_by(team), msg='Episode is unlocked by team')
+        self.assertFalse(linear_episode.parallel, msg='Episode is not set as parallel')
+
+        for i in range(1, linear_episode.puzzles.count()):
+            # Test we have unlocked the question, but not answered it yet.
+            self.assertEqual(linear_episode.next_puzzle(team), i + 1, msg=f'Puzzle[{i}]\'s next puzzle is Puzzle[{i + 1}]')
+
+            # Answer the question and assert that it's now answered.
+            GuessFactory.create(for_puzzle=linear_episode.get_puzzle(i), by=user, correct=True)
+            self.assertTrue(linear_episode.get_puzzle(i).answered_by(team), msg=f'Correct guess has answered puzzle[{i}]')
+
+    def test_next_parallel_puzzle(self):
+        parallel_episode = EpisodeFactory(parallel=True)
+        PuzzleFactory.create_batch(10, episode=parallel_episode)
+        user = UserProfileFactory()
+        team = TeamFactory(at_event=parallel_episode.event, members=user)
+
+        # TODO: Scramble puzzle order before starting (so they are not in the order they were created).
+
+        # Check we can start and that it is a linear episode.
+        self.assertTrue(parallel_episode.unlocked_by(team), msg='Episode is unlocked by team')
+        self.assertTrue(parallel_episode.parallel, msg='Episode is not set as parallel')
+
+        # Answer all questions in a random order.
+        answer_order = list(range(1, parallel_episode.puzzles.count()))
+        random.shuffle(answer_order)
+
+        for i in answer_order:
+            # Should be no 'next' puzzle for parallel episodes, unless there is just one left.
+            # TODO: Check that this is the behaviour that we want, never having a next seems more logical.
+            if i != answer_order[-1]:
+                self.assertIsNone(parallel_episode.next_puzzle(team), msg='Parallel puzzle has no next puzzle')
+            else:
+                self.assertEqual(parallel_episode.next_puzzle(team), i, msg='Last unanswered is next puzzle in parallel episode')
+
+            # Answer the question and assert that it's now answered.
+            GuessFactory.create(for_puzzle=parallel_episode.get_puzzle(i), by=user, correct=True)
+            self.assertTrue(parallel_episode.get_puzzle(i).answered_by(team), msg=f'Correct guess has answered puzzle[{i}]')
 
     def test_puzzle_numbers(self):
         for episode in EpisodeFactory.create_batch(5):
             for i, puzzle in enumerate(PuzzleFactory.create_batch(5, episode=episode)):
-                self.assertEqual(puzzle.get_relative_id(), i + 1)
-                self.assertEqual(episode.get_puzzle(puzzle.get_relative_id()), puzzle)
+                self.assertEqual(puzzle.get_relative_id(), i + 1, msg='Relative ID should match index in episode')
+                self.assertEqual(episode.get_puzzle(puzzle.get_relative_id()), puzzle, msg='A Puzzle\'s relative ID should retrieve it from its Episode')
 
 
 class EpisodeSequenceTests(TestCase):
