@@ -365,9 +365,9 @@ class EpisodeBehaviourTests(TestCase):
         self.assertTrue(linear_episode.unlocked_by(team), msg='Episode is unlocked by team')
         self.assertFalse(linear_episode.parallel, msg='Episode is not set as parallel')
 
-        for i in range(1, linear_episode.puzzles.count()):
+        for i in range(1, linear_episode.puzzles.count() + 1):
             # Test we have unlocked the question, but not answered it yet.
-            self.assertEqual(linear_episode.next_puzzle(team), i + 1, msg=f'Puzzle[{i}]\'s next puzzle is Puzzle[{i + 1}]')
+            self.assertEqual(linear_episode.next_puzzle(team), i, msg=f'Puzzle[{i}]\'s next puzzle is Puzzle[{i + 1}]')
 
             # Answer the question and assert that it's now answered.
             GuessFactory.create(for_puzzle=linear_episode.get_puzzle(i), by=user, correct=True)
@@ -386,20 +386,21 @@ class EpisodeBehaviourTests(TestCase):
         self.assertTrue(parallel_episode.parallel, msg='Episode is not set as parallel')
 
         # Answer all questions in a random order.
-        answer_order = list(range(1, parallel_episode.puzzles.count()))
+        answer_order = list(range(1, parallel_episode.puzzles.count() + 1))
         random.shuffle(answer_order)
 
         for i in answer_order:
             # Should be no 'next' puzzle for parallel episodes, unless there is just one left.
             # TODO: Check that this is the behaviour that we want, never having a next seems more logical.
             if i != answer_order[-1]:
-                self.assertIsNone(parallel_episode.next_puzzle(team), msg='Parallel puzzle has no next puzzle')
+                self.assertIsNone(parallel_episode.next_puzzle(team), msg='Parallel episode has no next puzzle')
             else:
                 self.assertEqual(parallel_episode.next_puzzle(team), i, msg='Last unanswered is next puzzle in parallel episode')
 
             # Answer the question and assert that it's now answered.
             GuessFactory.create(for_puzzle=parallel_episode.get_puzzle(i), by=user, correct=True)
             self.assertTrue(parallel_episode.get_puzzle(i).answered_by(team), msg=f'Correct guess has answered puzzle[{i}]')
+        self.assertIsNone(parallel_episode.next_puzzle(team), msg='Parallel episode has no next puzzle when all puzzles are answered')
 
     def test_puzzle_numbers(self):
         for episode in EpisodeFactory.create_batch(5):
