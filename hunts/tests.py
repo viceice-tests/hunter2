@@ -258,7 +258,7 @@ class PuzzleAccessTests(TestCase):
             # Answer
             response = self.client.post(
                 reverse('answer', subdomain='www', kwargs=kwargs),
-                {'answer': puzzle.answer_set.get().answer},
+                {'answer': 'NOT_CORRECT'},  # Deliberately incorrect answer
                 HTTP_HOST=http_host,
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest'
             )
