@@ -66,12 +66,13 @@ class Puzzle(models.Model):
         except Episode.DoesNotExist:
             raise ValueError("Puzzle %s is not on an episode and so has no relative id" % self.title)
 
-        for i, p in enumerate(episode.puzzles.values('pk')):
-            if self.pk == p['pk']:
-                puzzle_number = i + 1
-                break
+        puzzles = episode.puzzles.all()
 
-        return puzzle_number
+        for i, p in enumerate(puzzles, start=1):
+            if self.pk == p.pk:
+                return i
+
+        raise RuntimeError("Could not find Puzzle pk when iterating episode's puzzle list")
 
     # Takes the team parameter for compatability with Episode.started()
     # Will be useful if we add puzzle head starts later
