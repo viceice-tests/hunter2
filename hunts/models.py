@@ -446,11 +446,11 @@ class Episode(models.Model):
             unlocked = None
             for i, puzzle in enumerate(self.puzzles.all()):
                 if not puzzle.answered_by(team):
-                    if unlocked is None:
+                    if unlocked is None:  # If this is the first not unlocked puzzle, it might be the "next puzzle"
                         unlocked = i + 1
-                    else:
+                    else:  # We've found a second not unlocked puzzle, we can terminate early and return None
                         return None
-            return unlocked
+            return unlocked  # This is either None, if we found no unlocked puzzles, or the one puzzle we found above
         else:
             for i, puzzle in enumerate(self.puzzles.all()):
                 if not puzzle.answered_by(team):

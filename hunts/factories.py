@@ -5,7 +5,6 @@ from random import choice
 
 import factory
 import pytz
-from django.db.models import signals
 from faker import Faker
 
 from accounts.factories import UserProfileFactory
