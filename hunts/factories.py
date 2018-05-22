@@ -45,15 +45,14 @@ class PuzzleFactory(factory.django.DjangoModelFactory):
                 self.answer_set.add(answer)
 
     @factory.post_generation
-    @factory.django.mute_signals(signals.m2m_changed)
     def episode(self, create, extracted, **kwargs):
         if not create:
             return
 
         if extracted:
-            self.episode_set.set({extracted}, clear=True)
+            extracted.puzzles.add(self)
         else:
-            self.episode_set.set({EpisodeFactory()}, clear=True)
+            EpisodeFactory().puzzles.add(self)
 
 
 class PuzzleFileFactory(factory.django.DjangoModelFactory):
