@@ -423,14 +423,14 @@ class EpisodeBehaviourTests(TestCase):
 
 
 class EpisodeSequenceTests(TestCase):
-    fixtures = ['hunts_episodesequence']
-
-    def setUp(self):
-        self.episode1 = Episode.objects.get(pk=1)
-        self.episode2 = Episode.objects.get(pk=2)
-        self.episode2.prequels.add(self.episode1)
-        self.team = Team.objects.get(pk=1)
-        self.user = self.team.members.get(pk=1)
+    @classmethod
+    def setUpTestData(cls):
+        SiteFactory.create()
+        cls.site = Site.objects.get_current()
+        cls.event = EventFactory()
+        cls.episode1 = EpisodeFactory(event=cls.event)
+        cls.episode2 = EpisodeFactory(event=cls.event, prequels=cls.episode1)
+        cls.user = TeamMemberFactory(team__at_event=cls.event)
 
     def test_episode_prequel_validation(self):
         # Because we intentionally throw exceptions we need to use transaction.atomic() to avoid a TransactionManagementError
@@ -440,37 +440,49 @@ class EpisodeSequenceTests(TestCase):
             self.episode1.prequels.add(self.episode2)
 
     def test_episode_unlocking(self):
-        self.assertTrue(self.client.login(username='test', password='hunter2'))
+        puzzle = PuzzleFactory(episode=self.episode1)
+
+        self.client.force_login(self.user.user)
+        http_host = f'www.{self.site.domain}'
 
         # Can load first episode
-        response = self.client.get(reverse('episode', subdomain='www', kwargs={'event_id': 1, 'episode_number': 1}), HTTP_HOST='www.testserver')
+        response = self.client.get(
+            reverse('episode', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode1.get_relative_id()}),
+            HTTP_HOST=http_host
+        )
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
-            reverse('episode_content', subdomain='www', kwargs={'event_id': 1, 'episode_number': 1}),
-            HTTP_HOST='www.testserver',
+            reverse('episode_content', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode1.get_relative_id()}),
+            HTTP_HOST=http_host,
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
 
         # Can't load second episode
-        response = self.client.get(reverse('episode', subdomain='www', kwargs={'event_id': 1, 'episode_number': 2}), HTTP_HOST='www.testserver')
+        response = self.client.get(
+            reverse('episode', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
+            HTTP_HOST=http_host
+        )
         self.assertEqual(response.status_code, 403)
         response = self.client.get(
-            reverse('episode_content', subdomain='www', kwargs={'event_id': 1, 'episode_number': 2}),
-            HTTP_HOST='www.testserver',
+            reverse('episode_content', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
+            HTTP_HOST=http_host,
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 403)
 
         # Unlock second episode
-        Guess(for_puzzle=self.episode1.get_puzzle(1), by=self.user, guess="correct").save()
+        GuessFactory(for_puzzle=puzzle, by=self.user, correct=True)
 
         # Can now load second episode
-        response = self.client.get(reverse('episode', subdomain='www', kwargs={'event_id': 1, 'episode_number': 2}), HTTP_HOST='www.testserver')
+        response = self.client.get(
+            reverse('episode', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
+            HTTP_HOST=http_host
+        )
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
-            reverse('episode_content', subdomain='www', kwargs={'event_id': 1, 'episode_number': 2}),
-            HTTP_HOST='www.testserver',
+            reverse('episode_content', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
+            HTTP_HOST=http_host,
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
