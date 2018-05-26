@@ -703,31 +703,27 @@ class CorrectnessCacheTests(TestCase):
 
 
 class GuessTeamDenormalisationTests(TestCase):
-    fixtures = ['hunts_progression']
-
-    def setUp(self):
-        self.team1   = Team.objects.get(pk=1)
-        self.team2   = Team.objects.get(pk=2)
-        self.user1   = self.team1.members.get()
-        self.user2   = self.team2.members.get()
-        self.episode = Episode.objects.get(pk=1)
-        self.puzzle1 = self.episode.get_puzzle(1)
-        self.puzzle2 = self.episode.get_puzzle(2)
-        self.answer1 = self.puzzle1.answer_set.get()
+    @classmethod
+    def setUpTestData(cls):
+        cls.episode = EpisodeFactory()
+        cls.user1 = UserProfileFactory()
+        cls.user2 = UserProfileFactory()
+        cls.team1 = TeamFactory(at_event=cls.episode.event, members={cls.user1})
+        cls.team2 = TeamFactory(at_event=cls.episode.event, members={cls.user2})
+        cls.puzzle1 = PuzzleFactory(episode=cls.episode)
+        cls.puzzle2 = PuzzleFactory(episode=cls.episode)
 
     def test_adding_guess(self):
-        guess1 = Guess(for_puzzle=self.puzzle1, by=self.user1, guess="incorrect")
-        guess2 = Guess(for_puzzle=self.puzzle2, by=self.user2, guess="incorrect")
-        guess1.save()
-        guess2.save()
-        self.assertEqual(guess1.by_team, self.team1)
-        self.assertEqual(guess2.by_team, self.team2)
+        guess1 = GuessFactory(for_puzzle=self.puzzle1, by=self.user1, correct=False)
+        guess2 = GuessFactory(for_puzzle=self.puzzle2, by=self.user2, correct=False)
+
+        # Check by_team denormalisation.
+        self.assertEqual(guess1.by_team, self.team1, "by_team denormalisation consistent with user's team")
+        self.assertEqual(guess2.by_team, self.team2, "by_team denormalisation consistent with user's team")
 
     def test_join_team_updates_guesses(self):
-        guess1 = Guess(for_puzzle=self.puzzle1, by=self.user1, guess="incorrect")
-        guess2 = Guess(for_puzzle=self.puzzle2, by=self.user2, guess="incorrect")
-        guess1.save()
-        guess2.save()
+        guess1 = GuessFactory(for_puzzle=self.puzzle1, by=self.user1, correct=False)
+        guess2 = GuessFactory(for_puzzle=self.puzzle2, by=self.user2, correct=False)
 
         # Swap teams and check the guesses update
         self.team1.members.set([])
@@ -737,7 +733,8 @@ class GuessTeamDenormalisationTests(TestCase):
         self.team1.members.set([self.user2])
         self.team1.save()
 
+        # Refresh the retrieved Guesses and ensure they are consistent.
         guess1.refresh_from_db()
         guess2.refresh_from_db()
-        self.assertEqual(guess1.by_team, self.team2)
-        self.assertEqual(guess2.by_team, self.team1)
+        self.assertEqual(guess1.by_team, self.team2, "by_team denormalisation consistent with user's team")
+        self.assertEqual(guess2.by_team, self.team1, "by_team denormalisation consistent with user's team")
