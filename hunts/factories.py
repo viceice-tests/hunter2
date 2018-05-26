@@ -79,16 +79,18 @@ class HintFactory(factory.django.DjangoModelFactory):
 class UnlockFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'hunts.Unlock'
+        exclude = ('answer',)
 
     puzzle = factory.SubFactory(PuzzleFactory)
     text = factory.Faker('sentence')
+    answer = factory.RelatedFactory('hunts.factories.UnlockAnswerFactory', 'unlock')
 
 
 class UnlockAnswerFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'hunts.UnlockAnswer'
 
-    unlock = factory.SubFactory(UnlockFactory)
+    unlock = factory.SubFactory(UnlockFactory, answer=None)
     runtime = runtimes.STATIC
     guess = factory.Faker('word')
 

@@ -30,7 +30,7 @@ from .factories import (
     UserDataFactory,
     UserPuzzleDataFactory,
 )
-from .models import Answer, Episode, Guess, Hint, PuzzleData, TeamPuzzleData, Unlock
+from .models import Answer, Episode, Guess, PuzzleData, TeamPuzzleData
 from . import runtimes
 
 
@@ -489,27 +489,36 @@ class EpisodeSequenceTests(TestCase):
 
 
 class ClueDisplayTests(TestCase):
-    fixtures = ['hunts_test']
-
-    def setUp(self):
-        user = UserProfile.objects.get(pk=1)
-        self.puzzle = Puzzle.objects.get(pk=1)
-        self.team = Team.objects.get(pk=1)
-        self.data = PuzzleData(self.puzzle, self.team, user)
+    @classmethod
+    def setUpTestData(cls):
+        cls.episode = EpisodeFactory()
+        cls.user = UserProfileFactory()
+        cls.puzzle = PuzzleFactory(episode=cls.episode)
+        cls.team = TeamFactory(at_event=cls.episode.event, members={cls.user})
+        cls.data = PuzzleData(cls.puzzle, cls.team, cls.user)  # Don't actually need to use a factory here.
 
     def test_hint_display(self):
-        hint = Hint.objects.get()
-        self.assertFalse(hint.unlocked_by(self.team, self.data))
-        self.data.tp_data.start_time = timezone.now() + datetime.timedelta(minutes=-5)
-        self.assertFalse(hint.unlocked_by(self.team, self.data))
-        self.data.tp_data.start_time = timezone.now() + datetime.timedelta(minutes=-10)
-        self.assertTrue(hint.unlocked_by(self.team, self.data))
+        hint = HintFactory(puzzle=self.puzzle)
+
+        with freezegun.freeze_time() as frozen_datetime:
+            self.data.tp_data.start_time = timezone.now()
+            self.assertFalse(hint.unlocked_by(self.team, self.data), "Hint not unlocked by team at start")
+
+            frozen_datetime.tick(hint.time / 2)
+            self.assertFalse(hint.unlocked_by(self.team, self.data), "Hint not unlocked by less than hint time duration.")
+
+            frozen_datetime.tick(hint.time)
+            self.assertTrue(hint.unlocked_by(self.team, self.data), "Hint unlocked by team after required time elapsed.")
 
     def test_unlock_display(self):
-        unlock = Unlock.objects.get(pk=1)
-        self.assertTrue(unlock.unlocked_by(self.team))
-        fail_team = Team.objects.get(pk=2)
-        self.assertFalse(unlock.unlocked_by(fail_team))
+        other_team = TeamFactory(at_event=self.episode.event)
+
+        unlock = UnlockFactory(puzzle=self.puzzle)
+        GuessFactory.create(for_puzzle=self.puzzle, by=self.user, guess=unlock.unlockanswer_set.get().guess)
+
+        # Check can only be seen by the correct teams.
+        self.assertTrue(unlock.unlocked_by(self.team), "Unlock should be visible not it's been guessed")
+        self.assertFalse(unlock.unlocked_by(other_team), "Unlock should not be visible to other team")
 
 
 class AdminTeamTests(TestCase):
