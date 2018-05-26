@@ -30,7 +30,7 @@ from .factories import (
     UserDataFactory,
     UserPuzzleDataFactory,
 )
-from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock
+from .models import Answer, Episode, Guess, Hint, PuzzleData, TeamPuzzleData, Unlock
 from . import runtimes
 
 
