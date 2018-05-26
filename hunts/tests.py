@@ -339,16 +339,32 @@ class EpisodeBehaviourTests(TestCase):
         for puzzle in parallel_episode.puzzles.all():
             self.assertTrue(puzzle.unlocked_by(team), msg='Puzzle unlocked in parallel episode')
 
-    # def test_headstarts(self):
-    #     self.assertEqual(self.linear_episode.headstart_granted(self.team),
-    #                      self.parallel_episode.headstart_applied(self.team))
-    #     self.assertEqual(self.linear_episode.headstart_granted(self.team), datetime.timedelta(minutes=10))
-    #     Guess(for_puzzle=self.linear_episode.get_puzzle(2), by=self.user, guess="correct").save()
-    #     self.assertEqual(self.linear_episode.headstart_granted(self.team),
-    #                      self.parallel_episode.headstart_applied(self.team))
-    #     self.assertEqual(self.linear_episode.headstart_granted(self.team), datetime.timedelta(minutes=15))
-    #     # Test that headstart does not apply in the wrong direction
-    #     self.assertEqual(self.linear_episode.headstart_applied(self.team), datetime.timedelta(minutes=0))
+    def test_headstarts(self):
+        # TODO: Replace with episode sequence factory?
+        episode1 = EpisodeFactory()
+        episode2 = EpisodeFactory(event=episode1.event, headstart_from=episode1)
+        PuzzleFactory.create_batch(10, episode=episode1)
+        user = UserProfileFactory()
+        team = TeamFactory(at_event=episode1.event, members=user)
+
+        # Check that the headstart granted is the sum of the puzzle headstarts
+        headstart = datetime.timedelta()
+        self.assertEqual(episode1.headstart_granted(team), datetime.timedelta(minutes=0), "No headstart when puzzles unanswered")
+
+        for i in range(1, episode1.puzzles.count() + 1):
+            # Start answering puzzles
+            GuessFactory.create(for_puzzle=episode1.get_puzzle(i), by=user, correct=True)
+            self.assertTrue(episode1.get_puzzle(i).answered_by(team), msg=f'Correct guess has answered puzzle[{i}]')
+
+            # Check headstart summing logic.
+            headstart += episode1.get_puzzle(i).headstart_granted
+            self.assertEqual(episode1.headstart_granted(team), headstart, "Episode headstart is sum of answered puzzle headstarts")
+
+        # All of these headstarts should be applied to the second episode.
+        self.assertEqual(episode2.headstart_applied(team), headstart)
+
+        # Test that headstart does not apply in the wrong direction
+        self.assertEqual(episode1.headstart_applied(team), datetime.timedelta(minutes=0))
 
     def test_next_linear_puzzle(self):
         linear_episode = EpisodeFactory(parallel=False)
