@@ -13,7 +13,7 @@ from accounts.models import UserProfile
 from events.factories import EventFactory
 from events.models import Event
 from hunter2.resolvers import reverse
-from teams.factories import TeamFactory
+from teams.factories import TeamFactory, TeamMemberFactory
 from teams.models import Team
 from .factories import (
     AnnouncementFactory,
@@ -162,8 +162,7 @@ class AnswerSubmissionTests(TestCase):
         cls.puzzle = PuzzleFactory()
         cls.episode = cls.puzzle.episode_set.get()
         cls.event = cls.episode.event
-        cls.user = UserProfileFactory()
-        cls.team = TeamFactory(at_event=cls.event, members={cls.user})
+        cls.user = TeamMemberFactory(team__at_event=cls.event)
         cls.url = reverse('answer', subdomain='www', kwargs={
             'event_id': cls.event.id,
             'episode_number': cls.episode.get_relative_id(),
@@ -197,8 +196,7 @@ class PuzzleStartTimeTests(TestCase):
         self.puzzle = PuzzleFactory()
         self.episode = self.puzzle.episode_set.get()
         self.event = self.episode.event
-        self.user = UserProfileFactory()
-        self.team = TeamFactory(at_event=self.event, members={self.user})
+        self.user = TeamMemberFactory(team__at_event=self.event)
 
         self.client.force_login(self.user.user)
 
@@ -223,8 +221,7 @@ class PuzzleAccessTests(TestCase):
         cls.episode = EpisodeFactory(parallel=False)
         cls.puzzles = PuzzleFactory.create_batch(3, episode=cls.episode)
         cls.event = cls.episode.event
-        cls.user = UserProfileFactory()
-        cls.team = TeamFactory(at_event=cls.event, members=cls.user)
+        cls.user = TeamMemberFactory(team__at_event=cls.event)
 
     def test_puzzle_view_authorisation(self):
         http_host = f'www.{self.site.domain}'
@@ -316,7 +313,7 @@ class EpisodeBehaviourTests(TestCase):
         self.assertTrue(linear_episode.unlocked_by(team), msg='Episode is unlocked by team')
         self.assertFalse(linear_episode.parallel, msg='Episode is not set as parallel')
 
-        for i in range(1, linear_episode.puzzles.count()):
+        for i in range(1, linear_episode.puzzles.count() + 1):
             # Test we have unlocked the question, but not answered it yet.
             self.assertTrue(linear_episode.get_puzzle(i).unlocked_by(team), msg=f'Puzzle[{i}] is unlocked')
             self.assertFalse(linear_episode.get_puzzle(i).answered_by(team), msg=f'Puzzle[{i}] is not answered')
