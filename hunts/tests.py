@@ -513,31 +513,28 @@ class ClueDisplayTests(TestCase):
 
 
 class AdminTeamTests(TestCase):
-    fixtures = ['hunts_test']
-
-    def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
+    @classmethod
+    def setUpTestData(cls):
+        SiteFactory.create()
+        cls.site = Site.objects.get_current()
+        cls.event = EventFactory()
+        cls.episode = EpisodeFactory(event=cls.event)
+        cls.admin_user = UserProfileFactory()
+        cls.admin_team = TeamFactory(at_event=cls.event, is_admin=True, members={cls.admin_user})
 
     def test_can_view_episode(self):
-        self.assertTrue(self.client.login(username='admin', password='hunter2'))
-
-        response = self.client.get(reverse('episode', subdomain='www', kwargs={'event_id': 1, 'episode_number': 1}), HTTP_HOST='www.testserver')
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(
+            reverse('episode', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode.get_relative_id()}),
+            HTTP_HOST=f'www.{self.site.domain}')
         self.assertEqual(response.status_code, 200)
 
-
-class AdminViewTests(TestCase):
-    fixtures = ['hunts_test']
-
-    def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
-
     def test_can_view_guesses(self):
-        self.assertTrue(self.client.login(username='admin', password='hunter2'))
-        response = self.client.get(reverse('guesses', subdomain='admin', kwargs={'event_id': 1}), HTTP_HOST='admin.testserver')
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(
+            reverse('guesses', subdomain='admin', kwargs={'event_id': self.event.id}),
+            HTTP_HOST=f'admin.{self.site.domain}'
+        )
         self.assertEqual(response.status_code, 200)
 
 
