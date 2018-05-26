@@ -36,47 +36,60 @@ from . import runtimes
 
 class FactoryTests(TestCase):
 
-    def test_puzzle_factory_default_construction(self):
+    @staticmethod
+    def test_puzzle_factory_default_construction():
         PuzzleFactory.create()
 
-    def test_puzzle_file_factory_default_construction(self):
+    @staticmethod
+    def test_puzzle_file_factory_default_construction():
         PuzzleFileFactory.create()
 
-    def test_hint_factory_default_construction(self):
+    @staticmethod
+    def test_hint_factory_default_construction():
         HintFactory.create()
 
-    def test_unlock_factory_default_construction(self):
+    @staticmethod
+    def test_unlock_factory_default_construction():
         UnlockFactory.create()
 
-    def test_unlock_answer_factory_default_construction(self):
+    @staticmethod
+    def test_unlock_answer_factory_default_construction():
         UnlockAnswerFactory.create()
 
-    def test_answer_factory_default_construction(self):
+    @staticmethod
+    def test_answer_factory_default_construction():
         AnswerFactory.create()
 
-    def test_guess_factory_default_construction(self):
+    @staticmethod
+    def test_guess_factory_default_construction():
         GuessFactory.create()
 
     def test_guess_factory_correct(self):
         guess = GuessFactory(correct=True)
         self.assertEqual(guess.guess, guess.for_puzzle.answer_set.get().answer)
 
-    def test_team_data_factory_default_construction(self):
+    @staticmethod
+    def test_team_data_factory_default_construction():
         TeamDataFactory.create()
 
-    def test_user_data_factory_default_construction(self):
+    @staticmethod
+    def test_user_data_factory_default_construction():
         UserDataFactory.create()
 
-    def test_team_puzzle_data_factory_default_construction(self):
+    @staticmethod
+    def test_team_puzzle_data_factory_default_construction():
         TeamPuzzleDataFactory.create()
 
-    def test_user_puzzle_data_factory_default_construction(self):
+    @staticmethod
+    def test_user_puzzle_data_factory_default_construction():
         UserPuzzleDataFactory.create()
 
-    def test_episode_factory_default_construction(self):
+    @staticmethod
+    def test_episode_factory_default_construction():
         EpisodeFactory.create()
 
-    def test_announcement_factory_default_construction(self):
+    @staticmethod
+    def test_announcement_factory_default_construction():
         AnnouncementFactory.create()
 
 
@@ -90,10 +103,12 @@ class HomePageTests(TestCase):
 
 
 class StaticValidationTests(TestCase):
-    def test_static_save_answer(self):
+    @staticmethod
+    def test_static_save_answer():
         AnswerFactory(runtime=runtimes.STATIC, answer='answer')
 
-    def test_static_save_unlock_answer(self):
+    @staticmethod
+    def test_static_save_unlock_answer():
         UnlockAnswerFactory(runtime=runtimes.STATIC, guess='unlock')
 
     def test_static_answers(self):
@@ -236,30 +251,30 @@ class PuzzleAccessTests(TestCase):
             }
 
             # Load
-            response = self.client.get(
+            resp = self.client.get(
                 reverse('puzzle', subdomain='www', kwargs=kwargs),
                 HTTP_HOST=http_host,
             )
-            self.assertEqual(response.status_code, expected_response)
+            self.assertEqual(resp.status_code, expected_response)
 
             # Callback
-            response = self.client.post(
+            resp = self.client.post(
                 reverse('callback', subdomain='www', kwargs=kwargs),
                 content_type='application/json',
                 HTTP_ACCEPT='application/json',
                 HTTP_HOST=http_host,
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest',
             )
-            self.assertEqual(response.status_code, expected_response)
+            self.assertEqual(resp.status_code, expected_response)
 
             # Answer
-            response = self.client.post(
+            resp = self.client.post(
                 reverse('answer', subdomain='www', kwargs=kwargs),
                 {'answer': 'NOT_CORRECT'},  # Deliberately incorrect answer
                 HTTP_HOST=http_host,
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest'
             )
-            self.assertEqual(response.status_code, expected_response)
+            self.assertEqual(resp.status_code, expected_response)
 
         # This test submits two answers on the same puzzle so we have to jump forward 5 seconds
         with freezegun.freeze_time() as frozen_datetime:
