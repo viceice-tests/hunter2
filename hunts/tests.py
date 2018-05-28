@@ -92,10 +92,13 @@ class FactoryTests(TestCase):
 
 class HomePageTests(TestCase):
     def test_load_homepage(self):
+        SiteFactory.create()
+        self.site = Site.objects.get_current()
+
         # Need one default event.
         EventFactory.create()
         url = reverse('index', subdomain='www')
-        response = self.client.get(url, HTTP_HOST='www.testserver')
+        response = self.client.get(url, HTTP_HOST=f'www.{self.site.domain}')
         self.assertEqual(response.status_code, 200)
 
 
