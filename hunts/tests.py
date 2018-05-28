@@ -9,12 +9,10 @@ from django.test import TestCase
 from django.utils import timezone
 
 from accounts.factories import SiteFactory, UserProfileFactory
-from accounts.models import UserProfile
 from events.factories import EventFactory
-from events.models import Event
 from hunter2.resolvers import reverse
 from teams.factories import TeamFactory, TeamMemberFactory
-from teams.models import Team
+from . import runtimes
 from .factories import (
     AnnouncementFactory,
     AnswerFactory,
@@ -30,8 +28,7 @@ from .factories import (
     UserDataFactory,
     UserPuzzleDataFactory,
 )
-from .models import Answer, Episode, Guess, PuzzleData, TeamPuzzleData
-from . import runtimes
+from .models import PuzzleData, TeamPuzzleData
 
 
 class FactoryTests(TestCase):
@@ -563,49 +560,50 @@ class AdminTeamTests(TestCase):
 
 
 class ProgressionTests(TestCase):
-    fixtures = ['hunts_progression']
-
-    def setUp(self):
-        self.user1   = UserProfile.objects.get(pk=1)
-        self.user2   = UserProfile.objects.get(pk=2)
-        self.team1   = Team.objects.get(pk=1)
-        self.team2   = Team.objects.get(pk=2)
-        self.event   = Event.objects.get(current=True)
-        self.episode = Episode.objects.get(pk=1)
+    @classmethod
+    def setUpTestData(cls):
+        cls.episode = EpisodeFactory()
+        cls.event = cls.episode.event
+        cls.user1 = UserProfileFactory()
+        cls.user2 = UserProfileFactory()
+        cls.team1 = TeamFactory(at_event=cls.event, members={cls.user1})
+        cls.team2 = TeamFactory(at_event=cls.event, members={cls.user2})
 
     def test_answered_by_ordering(self):
-        puzzle1 = self.episode.get_puzzle(1)
+        puzzle1 = PuzzleFactory(episode=self.episode)
 
-        # Submit two correct answers, 1 an hour after the other.
-        future_time = timezone.now() + datetime.timedelta(hours=1)
-        guess1 = Guess(for_puzzle=puzzle1, by=self.user1, guess="correct")
-        guess2 = Guess(for_puzzle=puzzle1, by=self.user1, guess="correct")
-        guess1.save()
-        guess2.save()
-        guess1.given = future_time
-        guess1.save()
+        # Submit two correct answers, 1 an hour after the other
+        with freezegun.freeze_time() as frozen_datetime:
+            guess1 = GuessFactory(for_puzzle=puzzle1, by=self.user1, correct=True)
+            frozen_datetime.tick(datetime.timedelta(hours=1))
+            guess2 = GuessFactory(for_puzzle=puzzle1, by=self.user1, correct=True)
 
-        # Ensure the first given answer is reported first
-        self.assertEqual(len(puzzle1.answered_by(self.team1)), 2)
-        self.assertEqual(puzzle1.answered_by(self.team1)[0], guess2)
-        self.assertEqual(puzzle1.answered_by(self.team1)[1], guess1)
+            # Fudge another before the first to test ordering.
+            frozen_datetime.tick(datetime.timedelta(hours=-2))
+            guess3 = GuessFactory(for_puzzle=puzzle1, by=self.user1, correct=True)
+
+            # Ensure the first given answer is reported first
+            self.assertEqual(len(puzzle1.answered_by(self.team1)), 3)
+            self.assertEqual(puzzle1.answered_by(self.team1)[0], guess3)
+            self.assertEqual(puzzle1.answered_by(self.team1)[1], guess1)
+            self.assertEqual(puzzle1.answered_by(self.team1)[2], guess2)
 
     def test_episode_finishing(self):
+        # Ensure at least one puzzle in episode.
+        puzzles = PuzzleFactory.create_batch(3, episode=self.episode)
+
         # Check episode has not been completed
         self.assertFalse(self.episode.finished_by(self.team1))
 
         # Team 1 answer all questions correctly
-        Guess(for_puzzle=self.episode.get_puzzle(1), by=self.user1, guess="correct").save()
-        Guess(for_puzzle=self.episode.get_puzzle(2), by=self.user1, guess="correct").save()
-        Guess(for_puzzle=self.episode.get_puzzle(3), by=self.user1, guess="correctish").save()
+        for puzzle in puzzles:
+            GuessFactory.create(for_puzzle=puzzle, by=self.user1, correct=True)
 
         # Ensure this team has finished the episode
         self.assertTrue(self.episode.finished_by(self.team1))
 
     def test_finish_positions(self):
-        puzzle1 = self.episode.get_puzzle(1)
-        puzzle2 = self.episode.get_puzzle(2)
-        puzzle3 = self.episode.get_puzzle(3)
+        puzzle1, puzzle2, puzzle3 = PuzzleFactory.create_batch(3, episode=self.episode)
 
         # Check there are no winners to begin with
         self.assertFalse(self.episode.finished_by(self.team1))
@@ -613,8 +611,8 @@ class ProgressionTests(TestCase):
         self.assertEqual(len(self.episode.finished_positions()), 0)
 
         # Answer all the questions correctly for both teams with team 1 ahead to begin with then falling behind
-        Guess(for_puzzle=puzzle1, by=self.user1, guess="correct").save()
-        Guess(for_puzzle=puzzle2, by=self.user1, guess="correct").save()
+        GuessFactory.create(for_puzzle=puzzle1, by=self.user1, correct=True)
+        GuessFactory.create(for_puzzle=puzzle2, by=self.user1, correct=True)
 
         # Check only the first team has finished the first questions
         self.assertEqual(len(puzzle1.finished_teams(self.event)), 1)
@@ -623,16 +621,16 @@ class ProgressionTests(TestCase):
         self.assertEqual(puzzle1.position(self.team2), None)
 
         # Team 2 completes all answers
-        Guess(for_puzzle=puzzle1, by=self.user2, guess="correct").save()
-        Guess(for_puzzle=puzzle2, by=self.user2, guess="correct").save()
-        Guess(for_puzzle=puzzle3, by=self.user2, guess="correctish").save()
+        GuessFactory.create(for_puzzle=puzzle1, by=self.user2, correct=True)
+        GuessFactory.create(for_puzzle=puzzle2, by=self.user2, correct=True)
+        GuessFactory.create(for_puzzle=puzzle3, by=self.user2, correct=True)
 
         # Ensure this team has finished the questions and is listed as first in the finished teams
         self.assertEqual(len(self.episode.finished_positions()), 1)
         self.assertEqual(self.episode.finished_positions()[0], self.team2)
 
         # Team 1 finishes as well.
-        Guess(for_puzzle=puzzle3, by=self.user1, guess="correctish").save()
+        GuessFactory(for_puzzle=puzzle3, by=self.user1, correct=True)
 
         # Ensure both teams have finished, and are ordered correctly
         self.assertEqual(len(self.episode.finished_positions()), 2)
@@ -640,39 +638,36 @@ class ProgressionTests(TestCase):
         self.assertEqual(self.episode.finished_positions()[1], self.team1)
 
     def test_guesses(self):
-        puzzle1 = self.episode.get_puzzle(1)
+        puzzle1 = PuzzleFactory(episode=self.episode)
 
         # Single incorrect guess
-        Guess(for_puzzle=puzzle1, by=self.user1, guess="wrong").save()
+        GuessFactory(for_puzzle=puzzle1, by=self.user1, correct=False)
 
         # Check we have no correct answers
         self.assertEqual(len(puzzle1.first_correct_guesses(self.event)), 0)
 
         # Add two correct guesses after each other
-        first_correct_guess = Guess(for_puzzle=puzzle1, by=self.user1, guess="correct")
-        first_correct_guess.save()
-        future_time = timezone.now() + datetime.timedelta(hours=1)
-        second_correct_guess = Guess(for_puzzle=puzzle1, by=self.user1, guess="correct")
-        second_correct_guess.save()
-        second_correct_guess.given = future_time
-        second_correct_guess.save()
+        with freezegun.freeze_time() as frozen_datetime:
+            first_correct_guess = GuessFactory(for_puzzle=puzzle1, by=self.user1, correct=True)
+            frozen_datetime.tick(datetime.timedelta(hours=1))
+            GuessFactory.create(for_puzzle=puzzle1, by=self.user1, correct=True)
 
         # Ensure that the first correct guess is correctly returned
         self.assertEqual(puzzle1.first_correct_guesses(self.event)[self.team1], first_correct_guess)
 
 
 class CorrectnessCacheTests(TestCase):
-    fixtures = ['hunts_progression']
-
-    def setUp(self):
-        self.user1   = UserProfile.objects.get(pk=1)
-        self.user2   = UserProfile.objects.get(pk=2)
-        self.team1   = Team.objects.get(pk=1)
-        self.team2   = Team.objects.get(pk=2)
-        self.episode = Episode.objects.get(pk=1)
-        self.puzzle1 = self.episode.get_puzzle(1)
-        self.puzzle2 = self.episode.get_puzzle(2)
-        self.answer1 = self.puzzle1.answer_set.get()
+    @classmethod
+    def setUpTestData(cls):
+        cls.episode = EpisodeFactory()
+        cls.event = cls.episode.event
+        cls.user1 = UserProfileFactory()
+        cls.user2 = UserProfileFactory()
+        cls.team1 = TeamFactory(at_event=cls.event, members={cls.user1})
+        cls.team2 = TeamFactory(at_event=cls.event, members={cls.user2})
+        cls.puzzle1 = PuzzleFactory(episode=cls.episode)
+        cls.puzzle2 = PuzzleFactory(episode=cls.episode)
+        cls.answer1 = cls.puzzle1.answer_set.get()
 
     def test_changing_answers(self):
         # Check starting state
@@ -680,19 +675,17 @@ class CorrectnessCacheTests(TestCase):
         self.assertFalse(self.puzzle2.answered_by(self.team2))
 
         # Add a correct guess and check it is marked correct
-        guess1 = Guess(for_puzzle=self.puzzle1, by=self.user1, guess="correct")
-        guess1.save()
+        guess1 = GuessFactory(for_puzzle=self.puzzle1, by=self.user1, correct=True)
         self.assertTrue(guess1.correct_current)
         self.assertTrue(self.puzzle1.answered_by(self.team1))
 
         # Add an incorrect guess and check
-        guess2 = Guess(for_puzzle=self.puzzle2, by=self.user2, guess="correct?")
-        guess2.save()
+        guess2 = GuessFactory(for_puzzle=self.puzzle2, by=self.user2, correct=False)
         self.assertTrue(guess2.correct_current)
         self.assertFalse(self.puzzle2.answered_by(self.team2))
 
         # Alter the answer and check only the first guess is invalidated
-        self.answer1.answer = "correct!"
+        self.answer1.answer = AnswerFactory.build().answer
         self.answer1.save()
         guess1.refresh_from_db()
         guess2.refresh_from_db()
@@ -702,7 +695,7 @@ class CorrectnessCacheTests(TestCase):
         self.assertFalse(self.puzzle1.answered_by(self.team1))
 
         # Update the first guess and check
-        guess1.guess = "correct!"
+        guess1.guess = self.answer1.answer
         guess1.save()
         self.assertTrue(self.puzzle1.answered_by(self.team1))
 
@@ -716,7 +709,7 @@ class CorrectnessCacheTests(TestCase):
         self.assertFalse(self.puzzle1.answered_by(self.team1))
 
         # Add an answer that matches guess 2 and check
-        Answer(for_puzzle=self.puzzle2, runtime='S', answer='correct?').save()
+        AnswerFactory(for_puzzle=self.puzzle2, runtime=runtimes.STATIC, answer=guess2.guess).save()
         guess1.refresh_from_db()
         guess2.refresh_from_db()
         self.assertTrue(guess1.correct_current)
