@@ -260,7 +260,7 @@ class Guess(models.Model):
         verbose_name_plural = 'Guesses'
 
     def __str__(self):
-        return f'"{self.guess}" by {self.by} ({self.by_team})'
+        return f'"{self.guess}" by {self.by} ({self.by_team}) @ {self.given}'
 
     def get_team(self):
         event = self.for_puzzle.episode_set.get().event
