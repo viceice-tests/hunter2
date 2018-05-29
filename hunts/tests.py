@@ -106,21 +106,21 @@ class HomePageTests(TestCase):
 class StaticValidationTests(TestCase):
     @staticmethod
     def test_static_save_answer():
-        AnswerFactory(runtime=runtimes.STATIC, answer='answer')
+        AnswerFactory(runtime=runtimes.STATIC)
 
     @staticmethod
     def test_static_save_unlock_answer():
-        UnlockAnswerFactory(runtime=runtimes.STATIC, guess='unlock')
+        UnlockAnswerFactory(runtime=runtimes.STATIC)
 
     def test_static_answers(self):
-        answer = AnswerFactory(runtime=runtimes.STATIC, answer='correct')
-        guess = GuessFactory(guess='correct', for_puzzle=answer.for_puzzle)
+        answer = AnswerFactory(runtime=runtimes.STATIC)
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=True)
         self.assertTrue(answer.validate_guess(guess))
-        guess = GuessFactory(guess='correctnot', for_puzzle=answer.for_puzzle)
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=False)
         self.assertFalse(answer.validate_guess(guess))
-        guess = GuessFactory(guess='incorrect', for_puzzle=answer.for_puzzle)
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=False)
         self.assertFalse(answer.validate_guess(guess))
-        guess = GuessFactory(guess='wrong', for_puzzle=answer.for_puzzle)
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=False)
         self.assertFalse(answer.validate_guess(guess))
 
 
