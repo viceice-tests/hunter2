@@ -27,9 +27,11 @@ class PuzzleFactory(factory.django.DjangoModelFactory):
     title = factory.Faker('sentence')
     flavour = factory.Faker('text')
 
+    # TODO: Consider extending to use other runtimes as well.
     runtime = runtimes.STATIC
     content = factory.Faker('text')
 
+    # TODO: Use other runtimes when we are testing callbacks.
     cb_runtime = runtimes.STATIC
     cb_content = ""
 
