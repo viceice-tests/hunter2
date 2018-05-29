@@ -19,6 +19,11 @@ class PuzzleFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'hunts.Puzzle'
 
+    class Params:
+        not_started = factory.Trait(
+            start_data=factory.Faker('date_time_this_month', before_now=False, after_now=True, tzinfo=pytz.utc)
+        )
+
     title = factory.Faker('sentence')
     flavour = factory.Faker('text')
 
@@ -235,6 +240,11 @@ class UserPuzzleDataFactory(DataFactory):
 class EpisodeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'hunts.Episode'
+
+    class Params:
+        not_started = factory.Trait(
+            start_data=factory.Faker('date_time_this_month', before_now=False, after_now=True, tzinfo=pytz.utc)
+        )
 
     name = factory.Faker('sentence')
     flavour = factory.Faker('text')
