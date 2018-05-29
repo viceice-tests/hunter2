@@ -37,7 +37,7 @@ build:app:
   script:
     - docker-compose build $SERVICE
     - install -d -m 777 diagram
-    - docker-compose run $SERVICE sh -c "python manage.py graph_models -a > diagram/models.dot"
+    - docker-compose run --entrypoint "sh" $SERVICE -c "python manage.py graph_models -a > diagram/models.dot"
     - docker save -o $IMAGE_FILE $IMAGE_TAG
   artifacts:
     expire_in: 90 days
@@ -84,9 +84,9 @@ test:
   script:
     - docker load -i $IMAGE_FILE
     - install -d -m 777 coverage
-    - docker-compose run $SERVICE python -Wd -m coverage run --source . manage.py test -v 2
-    - docker-compose run $SERVICE python -m coverage html
-    - docker-compose run $SERVICE python -m coverage report
+    - docker-compose run --entrypoint "python" $SERVICE -Wd -m coverage run --source . manage.py test -v 2
+    - docker-compose run --entrypoint "python" $SERVICE -m coverage html
+    - docker-compose run --entrypoint "python" $SERVICE -m coverage report
   artifacts:
     expire_in: 180 days
     name: coverage

@@ -203,6 +203,17 @@ class AnswerSubmissionTests(TestCase):
             response = self.client.post(self.url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST=f'www.{self.site.domain}')
             self.assertEqual(response.status_code, 200)
 
+    def test_answer_after_end(self):
+        self.client.force_login(self.user.user)
+        with freezegun.freeze_time() as frozen_datetime:
+            self.event.end_date = timezone.now() + datetime.timedelta(seconds=5)
+            self.event.save()
+            response = self.client.post(self.url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST=f'www.{self.site.domain}')
+            self.assertEqual(response.status_code, 200)
+            frozen_datetime.tick(delta=datetime.timedelta(seconds=10))
+            response = self.client.post(self.url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST=f'www.{self.site.domain}')
+            self.assertEqual(response.status_code, 400)
+
 
 class PuzzleStartTimeTests(TestCase):
     def test_start_times(self):

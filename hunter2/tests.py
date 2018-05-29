@@ -1,8 +1,7 @@
-# vim: set fileencoding=utf-8 :
+import logging
 import os
 import random
 import tempfile
-import logging
 from io import StringIO
 
 import builtins
@@ -28,7 +27,7 @@ class TestRunner(ColourRunnerMixin, DiscoverRunner):
             random.seed(random_seed)
             Faker().seed(random.random())
 
-        return super(TestRunner, self).run_tests(test_labels, extra_tests, **kwargs)
+        return super().run_tests(test_labels, extra_tests, **kwargs)
 
 
 # Adapted from:

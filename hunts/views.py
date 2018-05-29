@@ -138,7 +138,7 @@ class GuessesContent(LoginRequiredMixin, View):
         # in the template, and we select and prefetch related objects so as not to perform any extra
         # queries.
         all_guesses = models.Guess.objects.filter(
-            for_puzzle__in=puzzles
+            for_puzzle__in=puzzles,
         ).order_by(
             '-given'
         ).select_related(
@@ -219,6 +219,9 @@ class StatsContent(LoginRequiredMixin, View):
         if not admin:
             raise PermissionDenied
 
+        now = timezone.now()
+        end_time = min(now, request.event.end_date) + timedelta(minutes=10)
+
         # TODO select and prefetch all the things
         episodes = models.Episode.objects.filter(event=request.event).order_by('start_date')
         if episode_id != 'all':
@@ -240,24 +243,15 @@ class StatsContent(LoginRequiredMixin, View):
         # We use Guess.correct_for (i.e. the cache) because otherwise we perform a query for every
         # (team, puzzle) pair i.e. a butt-ton. This comes at the cost of possibly seeing
         # a team doing worse than it really is.
-        all_guesses = models.Guess.objects.filter(for_puzzle__in=puzzles, correct_for__isnull=False).select_related('for_puzzle', 'by_team')
+        all_guesses = models.Guess.objects.filter(
+            for_puzzle__in=puzzles,
+            correct_for__isnull=False,
+        ).select_related('for_puzzle', 'by_team')
         correct_guesses = defaultdict(dict)
         for guess in all_guesses:
             team_guesses = correct_guesses[guess.for_puzzle]
             if guess.by_team not in team_guesses or guess.given < team_guesses[guess.by_team].given:
                 team_guesses[guess.by_team] = guess
-
-        try:
-            # The time of the latest correct guess, plus some padding which I cba to add in JS
-            end_time = max([
-                guess.given
-                for team_guesses in correct_guesses.values()
-                for guess in team_guesses.values()
-                if guess
-            ]) + timedelta(minutes=10)
-        except ValueError:
-            # No guesses yet
-            end_time = timezone.now() + timedelta(minutes=10)
 
         # Get when each team started each puzzle, and in how much time they solved each puzzle if they did.
         puzzle_datas = models.TeamPuzzleData.objects.filter(puzzle__in=puzzles, team__in=all_teams).select_related('puzzle', 'team')
@@ -269,9 +263,6 @@ class StatsContent(LoginRequiredMixin, View):
                 solved_times[data.puzzle].append(correct_guesses[data.puzzle][data.team].given - data.start_time)
             else:
                 start_times[data.team][data.puzzle] = data.start_time
-
-        # TODO: use something more intelligent here. Episode end time once we have it...
-        now = timezone.now()
 
         # How long a team has been on a puzzle.
         stuckness = {
@@ -383,8 +374,10 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         data = models.PuzzleData(puzzle, request.team, request.user.profile)
 
+        now = timezone.now()
+
         if not data.tp_data.start_time:
-            data.tp_data.start_time = timezone.now()
+            data.tp_data.start_time = now
 
         answered = puzzle.answered_by(request.team)
         hints = [
@@ -424,12 +417,15 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         flavour = Template(puzzle.flavour).safe_substitute(**files)
 
+        ended = request.event.end_date < now
+
         response = TemplateResponse(
             request,
             'hunts/puzzle.html',
             context={
                 'answered': answered,
                 'admin': request.admin,
+                'ended': ended,
                 'hints': hints,
                 'title': puzzle.title,
                 'flavour': flavour,
@@ -453,6 +449,8 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
     def post(self, request, episode_number, puzzle_number):
         now = timezone.now()
 
+        now = timezone.now()
+
         minimum_time = timedelta(seconds=5)
         try:
             latest_guess = models.Guess.objects.filter(
@@ -470,6 +468,9 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             given_answer = request.POST['answer']
         except MultiValueDictKeyError as e:
             return JsonResponse({'error': 'no answer given'}, status=400)
+
+        if request.event.end_date < now:
+            return JsonResponse({'error': 'event is over'}, status=400)
 
         data = models.PuzzleData(request.puzzle, request.team)
 

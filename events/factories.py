@@ -1,4 +1,5 @@
 import factory
+import pytz
 
 
 class ThemeFactory(factory.django.DjangoModelFactory):
@@ -22,6 +23,7 @@ class EventFactory(factory.django.DjangoModelFactory):
     help_text = factory.Faker('text')
     examples_text = factory.Faker('text')
     max_team_size = factory.Faker('random_int', min=1, max=10)
+    end_date = factory.Faker('date_time_between', start_date='+1h', end_date='+3y', tzinfo=pytz.utc)
 
 
 class EventFileFactory(factory.django.DjangoModelFactory):

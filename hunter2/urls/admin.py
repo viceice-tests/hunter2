@@ -18,6 +18,7 @@ admin_patterns = [
     url(r'^accounts/', include('allauth.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^nested_admin/', include('nested_admin.urls')),
+    url(r'^admin/uwsgi/', include('django_uwsgi.urls')),
 ] \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) \

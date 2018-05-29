@@ -73,7 +73,7 @@ class TeamCreateTests(TestCase):
 
     def test_team_name_uniqueness(self):
         old_event = EventFactory()
-        new_event = EventFactory(theme=old_event.theme, current=False)
+        new_event = EventFactory(current=False)
         team1 = TeamFactory(at_event=old_event)
 
         # Check that the new event team does not raise a validation error
