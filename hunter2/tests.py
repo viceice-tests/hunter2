@@ -24,7 +24,7 @@ class TestRunner(ColourRunnerMixin, DiscoverRunner):
 
         # Seed the random generators extracting the seed used
         # https://stackoverflow.com/a/5012617/393688
-        random_seed = os.getenv('H2_RANDOM_SEED', random.randrange(sys.maxsize))
+        random_seed = os.getenv('H2_TEST_SEED', random.randrange(sys.maxsize))
         random.seed(random_seed)
         Faker().seed(random.randrange(sys.maxsize))
         print(f'Testing Seed: {random_seed}')
