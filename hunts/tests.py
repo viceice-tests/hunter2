@@ -343,7 +343,7 @@ class PuzzleAccessTests(TestCase):
                     'episode_number': self.episode.get_relative_id(),
                     'puzzle_number': self.puzzles[1].get_relative_id()}),
                 {
-                    'answer': self.puzzles[1].answer_set.get().answer
+                    'answer': GuessFactory.build(for_puzzle=self.puzzles[1], correct=True).guess
                 },
                 HTTP_HOST=self.http_host,
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest'
