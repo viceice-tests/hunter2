@@ -731,7 +731,7 @@ class CorrectnessCacheTests(TestCase):
         self.assertFalse(self.puzzle2.answered_by(self.team2))
 
         # Alter the answer and check only the first guess is invalidated
-        self.answer1.answer = AnswerFactory.build().answer
+        self.answer1.answer = AnswerFactory.build(runtime=self.answer1.runtime).answer
         self.answer1.save()
         guess1.refresh_from_db()
         guess2.refresh_from_db()
@@ -741,7 +741,7 @@ class CorrectnessCacheTests(TestCase):
         self.assertFalse(self.puzzle1.answered_by(self.team1))
 
         # Update the first guess and check
-        guess1.guess = self.answer1.answer
+        guess1.guess = GuessFactory.build(for_puzzle=self.puzzle1, correct=True).guess
         guess1.save()
         self.assertTrue(self.puzzle1.answered_by(self.team1))
 
