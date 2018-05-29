@@ -5,6 +5,7 @@ import tempfile
 from io import StringIO
 
 import builtins
+import sys
 from colour_runner.django_runner import ColourRunnerMixin
 from django.contrib.sites.models import Site
 from django.core.management import CommandError, call_command
@@ -21,11 +22,12 @@ class TestRunner(ColourRunnerMixin, DiscoverRunner):
         # Disable non-critial logging for test runs
         logging.disable(logging.CRITICAL)
 
-        # Seed the random generators
-        random_seed = os.environ.get('H2_RANDOM_SEED')
-        if random_seed:
-            random.seed(random_seed)
-            Faker().seed(random.random())
+        # Seed the random generators extracting the seed used
+        # https://stackoverflow.com/a/5012617/393688
+        random_seed = os.getenv('H2_RANDOM_SEED', random.randrange(sys.maxsize))
+        random.seed(random_seed)
+        Faker().seed(random.randrange(sys.maxsize))
+        print(f'Testing Seed: {random_seed}')
 
         return super().run_tests(test_labels, extra_tests, **kwargs)
 
