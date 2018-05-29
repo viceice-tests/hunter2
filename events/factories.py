@@ -35,5 +35,5 @@ class EventFileFactory(factory.django.DjangoModelFactory):
     slug = factory.Faker('slug')
     file = factory.django.FileField(
         filename=factory.Faker('file_name'),
-        data=factory.Faker('binary', length=factory.Faker('random-int', min=1, max=1048576))
+        data=factory.Faker('binary')
     )

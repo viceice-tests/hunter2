@@ -66,12 +66,13 @@ class Puzzle(models.Model):
         except Episode.DoesNotExist:
             raise ValueError("Puzzle %s is not on an episode and so has no relative id" % self.title)
 
-        for i, p in enumerate(episode.puzzles.values('pk')):
-            if self.pk == p['pk']:
-                puzzle_number = i + 1
-                break
+        puzzles = episode.puzzles.all()
 
-        return puzzle_number
+        for i, p in enumerate(puzzles, start=1):
+            if self.pk == p.pk:
+                return i
+
+        raise RuntimeError("Could not find Puzzle pk when iterating episode's puzzle list")
 
     # Takes the team parameter for compatability with Episode.started()
     # Will be useful if we add puzzle head starts later
@@ -248,7 +249,7 @@ class Answer(models.Model):
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
-    by_team = models.ForeignKey(teams.models.Team, on_delete=models.PROTECT)
+    by_team = models.ForeignKey(teams.models.Team, on_delete=models.SET_NULL, null=True, blank=True)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
     # The following two fields cache whether the guess is correct. Do not use them directly.
@@ -259,7 +260,7 @@ class Guess(models.Model):
         verbose_name_plural = 'Guesses'
 
     def __str__(self):
-        return f'"{self.guess}" by {self.by} ({self.by_team})'
+        return f'"{self.guess}" by {self.by} ({self.by_team}) @ {self.given}'
 
     def get_team(self):
         event = self.for_puzzle.episode_set.get().event
@@ -268,8 +269,7 @@ class Guess(models.Model):
     def get_correct_for(self):
         """Get the first answer this guess is correct for, if such exists."""
         if not self.correct_current:
-            self._evaluate_correctness()
-            self.save(update_team=False)
+            self.save()
 
         return self.correct_for
 
@@ -291,8 +291,8 @@ class Guess(models.Model):
                 self.correct_for = answer
                 return
 
-    def save(self, *args, update_team=True, **kwargs):
-        if update_team:
+    def save(self, *args, **kwargs):
+        if not self.by_team:
             self.by_team = self.get_team()
         self._evaluate_correctness()
         super().save(*args, **kwargs)
@@ -446,11 +446,11 @@ class Episode(models.Model):
             unlocked = None
             for i, puzzle in enumerate(self.puzzles.all()):
                 if not puzzle.answered_by(team):
-                    if unlocked is None:
+                    if unlocked is None:  # If this is the first not unlocked puzzle, it might be the "next puzzle"
                         unlocked = i + 1
-                    else:
+                    else:  # We've found a second not unlocked puzzle, we can terminate early and return None
                         return None
-            return unlocked
+            return unlocked  # This is either None, if we found no unlocked puzzles, or the one puzzle we found above
         else:
             for i, puzzle in enumerate(self.puzzles.all()):
                 if not puzzle.answered_by(team):

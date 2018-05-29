@@ -1,14 +1,17 @@
 import logging
 import os
+import random
 import tempfile
 from io import StringIO
 
 import builtins
+import sys
 from colour_runner.django_runner import ColourRunnerMixin
 from django.contrib.sites.models import Site
 from django.core.management import CommandError, call_command
 from django.test import TestCase, override_settings
 from django.test.runner import DiscoverRunner
+from faker import Faker
 
 from hunter2.management.commands import setupsite
 from .utils import generate_secret_key, load_or_create_secret_key
@@ -18,6 +21,14 @@ class TestRunner(ColourRunnerMixin, DiscoverRunner):
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         # Disable non-critial logging for test runs
         logging.disable(logging.CRITICAL)
+
+        # Seed the random generators extracting the seed used
+        # https://stackoverflow.com/a/5012617/393688
+        random_seed = os.getenv('H2_TEST_SEED', random.randrange(sys.maxsize))
+        random.seed(random_seed)
+        Faker().seed(random.randrange(sys.maxsize))
+        print(f'Testing Seed: {random_seed}')
+
         return super().run_tests(test_labels, extra_tests, **kwargs)
 
 

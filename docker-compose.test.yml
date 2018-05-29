@@ -12,6 +12,7 @@ services:
       - db
     environment:
       - H2_DEBUG
+      - H2_TEST_SEED
       - H2_SENDFILE=sendfile.backends.nginx
     image: ${IMAGE_TAG:-hunter2_app}
     volumes:

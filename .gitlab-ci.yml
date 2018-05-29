@@ -84,7 +84,7 @@ test:
   script:
     - docker load -i $IMAGE_FILE
     - install -d -m 777 coverage
-    - docker-compose run --entrypoint "python" $SERVICE -Wd -m coverage run --source . manage.py test -v 2
+    - docker-compose run -e H2_TEST_SEED=0 --entrypoint "python" $SERVICE -Wd -m coverage run --source . manage.py test -v 2
     - docker-compose run --entrypoint "python" $SERVICE -m coverage html
     - docker-compose run --entrypoint "python" $SERVICE -m coverage report
   artifacts:
