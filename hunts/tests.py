@@ -94,11 +94,12 @@ class HomePageTests(TestCase):
     def test_load_homepage(self):
         SiteFactory.create()
         self.site = Site.objects.get_current()
+        self.http_host = f'www.{self.site.domain}'
 
         # Need one default event.
         EventFactory.create()
         url = reverse('index', subdomain='www')
-        response = self.client.get(url, HTTP_HOST=f'www.{self.site.domain}')
+        response = self.client.get(url, HTTP_HOST=self.http_host)
         self.assertEqual(response.status_code, 200)
 
 
@@ -183,6 +184,7 @@ class AnswerSubmissionTests(TestCase):
             'episode_number': cls.episode.get_relative_id(),
             'puzzle_number': cls.puzzle.get_relative_id()
         },)
+        cls.http_host = f'www.{cls.site.domain}'
 
     def setUp(self):
         self.client.force_login(self.user.user)
@@ -194,13 +196,22 @@ class AnswerSubmissionTests(TestCase):
 
     def test_answer_cooldown(self):
         with freezegun.freeze_time() as frozen_datetime:
-            response = self.client.post(self.url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST=f'www.{self.site.domain}')
+            response = self.client.post(self.url, {
+                'last_updated': '0',
+                'answer': GuessFactory.build(for_puzzle=self.puzzle, correct=False).guess
+            }, HTTP_HOST=self.http_host)
             self.assertEqual(response.status_code, 200)
-            response = self.client.post(self.url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST=f'www.{self.site.domain}')
+            response = self.client.post(self.url, {
+                'last_updated': '0',
+                'answer': GuessFactory.build(for_puzzle=self.puzzle, correct=False).guess
+            }, HTTP_HOST=self.http_host)
             self.assertEqual(response.status_code, 429)
             self.assertTrue(b'error' in response.content)
             frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
-            response = self.client.post(self.url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST=f'www.{self.site.domain}')
+            response = self.client.post(self.url, {
+                'last_updated': '0',
+                'answer': GuessFactory.build(for_puzzle=self.puzzle, correct=False).guess
+            }, HTTP_HOST=self.http_host)
             self.assertEqual(response.status_code, 200)
 
     def test_answer_after_end(self):
@@ -208,10 +219,16 @@ class AnswerSubmissionTests(TestCase):
         with freezegun.freeze_time() as frozen_datetime:
             self.event.end_date = timezone.now() + datetime.timedelta(seconds=5)
             self.event.save()
-            response = self.client.post(self.url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST=f'www.{self.site.domain}')
+            response = self.client.post(self.url, {
+                'last_updated': '0',
+                'answer': GuessFactory.build(for_puzzle=self.puzzle, correct=False).guess
+            }, HTTP_HOST=self.http_host)
             self.assertEqual(response.status_code, 200)
             frozen_datetime.tick(delta=datetime.timedelta(seconds=10))
-            response = self.client.post(self.url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST=f'www.{self.site.domain}')
+            response = self.client.post(self.url, {
+                'last_updated': '0',
+                'answer': GuessFactory.build(for_puzzle=self.puzzle, correct=False).guess
+            }, HTTP_HOST=self.http_host)
             self.assertEqual(response.status_code, 400)
 
 
@@ -223,16 +240,17 @@ class PuzzleStartTimeTests(TestCase):
         self.episode = self.puzzle.episode_set.get()
         self.event = self.episode.event
         self.user = TeamMemberFactory(team__at_event=self.event)
+        self.http_host = f'www.{self.site.domain}'
 
         self.client.force_login(self.user.user)
 
-        response = self.client.get(self.puzzle.get_absolute_url(), HTTP_HOST=f'www.{self.site.domain}')
+        response = self.client.get(self.puzzle.get_absolute_url(), HTTP_HOST=self.http_host)
         self.assertEqual(response.status_code, 200, msg='Puzzle is accessible on absolute url')
 
         first_time = TeamPuzzleData.objects.get().start_time
         self.assertIsNot(first_time, None, msg='Start time is set on first access to a puzzle')
 
-        response = self.client.get(self.puzzle.get_absolute_url(), HTTP_HOST=f'www.{self.site.domain}')
+        response = self.client.get(self.puzzle.get_absolute_url(), HTTP_HOST=self.http_host)
         self.assertEqual(response.status_code, 200, msg='Puzzle is accessible on absolute url')
 
         second_time = TeamPuzzleData.objects.get().start_time
@@ -248,10 +266,9 @@ class PuzzleAccessTests(TestCase):
         cls.puzzles = PuzzleFactory.create_batch(3, episode=cls.episode)
         cls.event = cls.episode.event
         cls.user = TeamMemberFactory(team__at_event=cls.event)
+        cls.http_host = f'www.{cls.site.domain}'
 
     def test_puzzle_view_authorisation(self):
-        http_host = f'www.{self.site.domain}'
-
         self.client.force_login(self.user.user)
 
         def _check_load_callback_answer(puzzle, expected_response):
@@ -264,7 +281,7 @@ class PuzzleAccessTests(TestCase):
             # Load
             resp = self.client.get(
                 reverse('puzzle', subdomain='www', kwargs=kwargs),
-                HTTP_HOST=http_host,
+                HTTP_HOST=self.http_host,
             )
             self.assertEqual(resp.status_code, expected_response)
 
@@ -273,7 +290,7 @@ class PuzzleAccessTests(TestCase):
                 reverse('callback', subdomain='www', kwargs=kwargs),
                 content_type='application/json',
                 HTTP_ACCEPT='application/json',
-                HTTP_HOST=http_host,
+                HTTP_HOST=self.http_host,
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest',
             )
             self.assertEqual(resp.status_code, expected_response)
@@ -282,7 +299,7 @@ class PuzzleAccessTests(TestCase):
             resp = self.client.post(
                 reverse('answer', subdomain='www', kwargs=kwargs),
                 {'answer': 'NOT_CORRECT'},  # Deliberately incorrect answer
-                HTTP_HOST=http_host,
+                HTTP_HOST=self.http_host,
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest'
             )
             self.assertEqual(resp.status_code, expected_response)
@@ -313,7 +330,7 @@ class PuzzleAccessTests(TestCase):
                 {
                     'answer': self.puzzles[1].answer_set.get().answer
                 },
-                HTTP_HOST=http_host,
+                HTTP_HOST=self.http_host,
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest'
             )
             self.assertEqual(response.status_code, 200)
@@ -457,6 +474,7 @@ class EpisodeSequenceTests(TestCase):
         cls.episode1 = EpisodeFactory(event=cls.event)
         cls.episode2 = EpisodeFactory(event=cls.event, prequels=cls.episode1)
         cls.user = TeamMemberFactory(team__at_event=cls.event)
+        cls.http_host = f'www.{cls.site.domain}'
 
     def test_episode_prequel_validation(self):
         # Because we intentionally throw exceptions we need to use transaction.atomic() to avoid a TransactionManagementError
@@ -469,17 +487,16 @@ class EpisodeSequenceTests(TestCase):
         puzzle = PuzzleFactory(episode=self.episode1)
 
         self.client.force_login(self.user.user)
-        http_host = f'www.{self.site.domain}'
 
         # Can load first episode
         response = self.client.get(
             reverse('episode', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode1.get_relative_id()}),
-            HTTP_HOST=http_host
+            HTTP_HOST=self.http_host
         )
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
             reverse('episode_content', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode1.get_relative_id()}),
-            HTTP_HOST=http_host,
+            HTTP_HOST=self.http_host,
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
@@ -487,12 +504,12 @@ class EpisodeSequenceTests(TestCase):
         # Can't load second episode
         response = self.client.get(
             reverse('episode', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
-            HTTP_HOST=http_host
+            HTTP_HOST=self.http_host
         )
         self.assertEqual(response.status_code, 403)
         response = self.client.get(
             reverse('episode_content', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
-            HTTP_HOST=http_host,
+            HTTP_HOST=self.http_host,
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 403)
@@ -503,12 +520,12 @@ class EpisodeSequenceTests(TestCase):
         # Can now load second episode
         response = self.client.get(
             reverse('episode', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
-            HTTP_HOST=http_host
+            HTTP_HOST=self.http_host
         )
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
             reverse('episode_content', subdomain='www', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
-            HTTP_HOST=http_host,
+            HTTP_HOST=self.http_host,
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
