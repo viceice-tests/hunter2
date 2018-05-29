@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
+from parameterized import parameterized
 
 from accounts.factories import SiteFactory, UserProfileFactory
 from events.factories import EventFactory
@@ -32,6 +33,12 @@ from .models import PuzzleData, TeamPuzzleData
 
 
 class FactoryTests(TestCase):
+    # TODO: Consider reworking RUNTIME_CHOICES so this can be used.
+    ANSWER_RUNTIMES = [
+        ("static", runtimes.STATIC),
+        ("regex", runtimes.REGEX),
+        ("lua",  runtimes.LUA)
+    ]
 
     @staticmethod
     def test_puzzle_factory_default_construction():
@@ -61,9 +68,17 @@ class FactoryTests(TestCase):
     def test_guess_factory_default_construction():
         GuessFactory.create()
 
-    def test_guess_factory_correct(self):
-        guess = GuessFactory(correct=True)
-        self.assertEqual(guess.guess, guess.for_puzzle.answer_set.get().answer)
+    @parameterized.expand(ANSWER_RUNTIMES)
+    def test_guess_factory_correct_guess_generation(self, _, runtime):
+        answer = AnswerFactory(runtime=runtime)
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=True)
+        self.assertTrue(answer.for_puzzle.answered_by(guess.by_team), "Puzzle answered by correct guess")
+
+    @parameterized.expand(ANSWER_RUNTIMES)
+    def test_guess_factory_incorrect_guess_generation(self, _, runtime):
+        answer = AnswerFactory(runtime=runtime)
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=False)
+        self.assertFalse(answer.for_puzzle.answered_by(guess.by_team), "Puzzle not answered by incorrect guess")
 
     @staticmethod
     def test_team_data_factory_default_construction():
