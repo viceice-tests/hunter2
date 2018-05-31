@@ -33,7 +33,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     last_login = factory.LazyAttribute(lambda o: factory.Faker('date_time_between_dates', datetime_start=o.date_joined, tzinfo=pytz.utc).generate({}))
 
     # We pass in 'user' to link the generated Profile to our just-generated User
-    # This will call ProfileFactory(user=our_new_user), thus skipping the SubFactory.
+    # This will call UserProfileFactory(user=our_new_user), thus skipping the SubFactory.
     profile = factory.RelatedFactory(UserProfileFactory, 'user')
 
     @factory.lazy_attribute_sequence

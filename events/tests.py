@@ -2,12 +2,26 @@ from io import StringIO
 from unittest.case import expectedFailure
 
 from django.core.management import CommandError, call_command
-from hunter2.tests import MockTTY, mock_inputs
+from django.test import TestCase
 
-from .management.commands import createevent
-from .models import Event, Theme
-from .test import EventAwareTestCase
+from events.factories import EventFactory, EventFileFactory, ThemeFactory
+from events.models import Event, Theme
+from hunter2.tests import MockTTY, mock_inputs
 from . import factories
+from .management.commands import createevent
+from .test import EventAwareTestCase
+
+
+class FactoryTests(EventTestCase):
+
+    def test_theme_factory_default_construction(self):
+        ThemeFactory.create()
+
+    def test_event_factory_default_construction(self):
+        EventFactory.create()
+
+    def test_event_file_factory_default_construction(self):
+        EventFileFactory.create()
 
 
 class EventRulesTests(EventAwareTestCase):
@@ -38,16 +52,57 @@ class CreateEventManagementCommandTests(EventAwareTestCase):
     TEST_EVENT_NAME = "Custom Event"
     TEST_THEME_NAME = "Custom Theme"
     TEST_SUBDOMAIN = 'custom'
+    TEST_EVENT_END_DATE = "Monday at 18:00"
+    INVALID_END_DATE = "18:00 on the second Sunday after Pentecost"
 
     def test_no_event_name_argument(self):
         output = StringIO()
-        with self.assertRaisesMessage(CommandError, "You must use --event, --subdomain and --theme with --noinput."):
-            call_command('createevent', interactive=False, theme_name="Test Theme", stdout=output)
+        with self.assertRaisesMessage(CommandError, "You must use --theme, --event, --subdomain and --enddate with --noinput."):
+            call_command(
+                'createevent',
+                interactive=False,
+                subdomain=self.TEST_SUBDOMAIN,
+                theme_name="Test Theme",
+                end_date=self.TEST_EVENT_END_DATE,
+                stdout=output
+            )
 
     def test_no_theme_name_argument(self):
         output = StringIO()
-        with self.assertRaisesMessage(CommandError, "You must use --event, --subdomain and --theme with --noinput."):
-            call_command('createevent', interactive=False, event_name="Test Event", stdout=output)
+        with self.assertRaisesMessage(CommandError, "You must use --theme, --event, --subdomain and --enddate with --noinput."):
+            call_command(
+                'createevent',
+                interactive=False,
+                subdomain=self.TEST_SUBDOMAIN,
+                event_name="Test Event",
+                end_date=self.TEST_EVENT_END_DATE,
+                stdout=output
+            )
+
+    def test_no_end_date_argument(self):
+        output = StringIO()
+        with self.assertRaisesMessage(CommandError, "You must use --theme, --event, --subdomain and --enddate with --noinput."):
+            call_command(
+                'createevent',
+                interactive=False,
+                subdomain=self.TEST_SUBDOMAIN,
+                event_name="Test Event",
+                theme_name="Test Theme",
+                stdout=output
+            )
+
+    def test_invalid_date(self):
+        output = StringIO()
+        with self.assertRaisesMessage(CommandError, "End date is not a valid date."):
+            call_command(
+                'createevent',
+                interactive=False,
+                event_name=self.TEST_EVENT_NAME,
+                theme_name=self.TEST_THEME_NAME,
+                subdomain=self.TEST_SUBDOMAIN,
+                end_date=self.INVALID_END_DATE,
+                stdout=output
+            )
 
     def test_non_interactive_usage(self):
         output = StringIO()
@@ -57,6 +112,7 @@ class CreateEventManagementCommandTests(EventAwareTestCase):
             event_name=self.TEST_EVENT_NAME,
             theme_name=self.TEST_THEME_NAME,
             subdomain=self.TEST_SUBDOMAIN,
+            end_date=self.TEST_EVENT_END_DATE,
             stdout=output
         )
         command_output = output.getvalue().strip()
@@ -126,6 +182,7 @@ class CreateEventManagementCommandTests(EventAwareTestCase):
             event_name=self.TEST_EVENT_NAME + "1",
             theme_name=self.TEST_THEME_NAME + "1",
             subdomain=self.TEST_SUBDOMAIN + "1",
+            end_date=self.TEST_EVENT_END_DATE,
             stdout=output
         )
         command_output = output.getvalue().strip()
@@ -141,6 +198,7 @@ class CreateEventManagementCommandTests(EventAwareTestCase):
             event_name=self.TEST_EVENT_NAME + "2",
             theme_name=self.TEST_THEME_NAME + "2",
             subdomain=self.TEST_SUBDOMAIN + "2",
+            end_date=self.TEST_EVENT_END_DATE,
             stdout=output
         )
         command_output = output.getvalue().strip()

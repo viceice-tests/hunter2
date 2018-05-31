@@ -106,6 +106,7 @@ SHARED_APPS = (
     'django_extensions',
     'django_fullclean',
     'django_tenants',
+    'django_uwsgi',
     'nested_admin',
     'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',

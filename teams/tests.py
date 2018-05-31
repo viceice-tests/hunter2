@@ -1,18 +1,26 @@
+import json
+
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
-from django.views import View
+from django.test import TestCase
 from django.urls import reverse
+from django.views import View
 from django_tenants.test.client import TenantRequestFactory
 
 from accounts.factories import UserFactory, UserProfileFactory
 from accounts.models import UserProfile
+from events.factories import EventFactory
 from events.models import Event
 from events.test import EventTestCase
 from .factories import TeamFactory
 from .mixins import TeamMixin
 from .models import Team
 
-import json
+
+class FactoryTests(EventTestCase):
+
+    def test_team_factory_default_construction(self):
+        TeamFactory.create()
 
 
 class EmptyTeamView(TeamMixin, View):
@@ -60,6 +68,18 @@ class TeamCreateTests(EventTestCase):
         self.assertEqual(response.status_code, 302)
         team = Team.objects.get(name=team_template.name)
         self.assertTrue(creator in team.members.all())
+
+    def test_team_name_uniqueness(self):
+        old_event = EventFactory()
+        new_event = EventFactory(current=False)
+        team1 = TeamFactory(at_event=old_event)
+
+        # Check that the new event team does not raise a validation error
+        TeamFactory(name=team1.name, at_event=new_event)
+
+        # Check that creating a team with the same name on the old event is not allowed.
+        with self.assertRaises(ValidationError):
+            TeamFactory(name=team1.name, at_event=old_event)
 
     def test_automatic_creation(self):
         factory = TenantRequestFactory(self.tenant)
