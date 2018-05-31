@@ -2,7 +2,6 @@ import json
 
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
-from django.test import TestCase
 from django.urls import reverse
 from django.views import View
 from django_tenants.test.client import TenantRequestFactory
