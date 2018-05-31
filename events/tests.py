@@ -2,14 +2,13 @@ from io import StringIO
 from unittest.case import expectedFailure
 
 from django.core.management import CommandError, call_command
-from django.test import TestCase
 
 from events.factories import EventFactory, EventFileFactory, ThemeFactory
 from events.models import Event, Theme
 from hunter2.tests import MockTTY, mock_inputs
 from . import factories
 from .management.commands import createevent
-from .test import EventAwareTestCase
+from .test import EventAwareTestCase, EventTestCase
 
 
 class FactoryTests(EventTestCase):
