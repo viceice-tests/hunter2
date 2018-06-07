@@ -1,4 +1,3 @@
--- vim: set fileencoding=utf-8 :
 local sandbox = {}
 
 -- Allowed sandbox modules

@@ -1,4 +1,3 @@
-# vim: set fileencoding=utf-8 :
 import re
 
 from .abstract import AbstractRuntime

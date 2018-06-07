@@ -1,4 +1,3 @@
-# vim: set fileencoding=utf-8 :
 from hunts.runtimes.iframe import IFrameRuntime
 from hunts.runtimes.lua import LuaRuntime
 from hunts.runtimes.regex import RegexRuntime

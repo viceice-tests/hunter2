@@ -1,4 +1,3 @@
-# vim: set fileencoding=utf-8 :
 from django.core.exceptions import ObjectDoesNotExist
 
 from accounts.models import UserProfile
