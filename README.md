@@ -49,7 +49,8 @@ It's important to set the domain to match the name or IP and port you're using t
 
 Copyright
 =======
-Hunter 2 is a platform for running online puzzle hunts.
+Hunter 2 is a platform for running online puzzle hunts. Further information can be found at https://www.hunter2.app/
+
 Copyright (C) 2017-2018  The Hunter 2 contributors.
 
 Hunter 2 is free software: you can redistribute it and/or modify it under the terms of the GNU Aferro General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
