@@ -49,7 +49,7 @@ It's important to set the domain to match the name or IP and port you're using t
 
 Copyright
 =======
-Hunter 2 is a platform for running online puzzle hunts. Further information can be found at https://www.hunter2.app/
+Hunter 2 is a platform for running online puzzle hunts. Further information can be found at https://www.hunter2.app/ including details of contributors.
 
 Copyright (C) 2017-2018  The Hunter 2 contributors.
 
