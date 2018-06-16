@@ -15,7 +15,8 @@ RUN apk add --no-cache \
 RUN pip install --no-deps -r pipenv.txt
 RUN pipenv lock -r --keep-outdated > requirements.txt
 RUN [ -z ${DEVELOPMENT} ] || pipenv lock -d -r --keep-outdated >> requirements.txt
-RUN pip wheel -r requirements.txt -w /wheels
+# Even though requirements.txt includes all dependencies it's parsed in order so we need --no-deps to avoid unwanted updates.
+RUN pip wheel --no-deps -r requirements.txt -w /wheels
 
 
 FROM alpine:3.7 AS lua_build
