@@ -150,6 +150,7 @@ class CreateEventManagementCommandTests(EventAwareTestCase):
         self.assertIsNotNone(event)
 
     @mock_inputs({
+        'end date': "",
         'event': "",
         'theme': "",
         'subdomain': "",

@@ -1,8 +1,11 @@
 import factory
 import pytz
 
+from django.db import connection
 from faker import Faker
 from faker.providers import BaseProvider
+
+from .models import Event
 
 
 class SchemaNameProvider(BaseProvider):
@@ -63,6 +66,18 @@ class EventFactory(factory.django.DjangoModelFactory):
     end_date = factory.Faker('date_time_between', start_date='+1h', end_date='+3y', tzinfo=pytz.utc)
 
     domain = factory.RelatedFactory(DomainFactory, 'tenant', subdomain=schema_name)
+
+    @classmethod
+    def _create(cls, *args, **kwargs):
+        if connection.schema_name != 'public':
+            event = Event.objects.get()  # In some badly written tests this would throw MultipleObjectsReturned.
+            for k, v in kwargs.items():
+                if k in ('about_text', 'rules_text', 'help_text', 'examples_text', 'max_team_size', 'end_date'):
+                    setattr(event, k, v)
+            event.save()
+            return event
+        else:
+            return super()._create(*args, **kwargs)
 
 
 class EventFileFactory(factory.django.DjangoModelFactory):

@@ -10,7 +10,7 @@ from accounts.factories import UserFactory, UserProfileFactory
 from accounts.models import UserProfile
 from events.factories import EventFactory
 from events.models import Event
-from events.test import EventTestCase
+from events.test import EventAwareTestCase, EventTestCase
 from .factories import TeamFactory
 from .mixins import TeamMixin
 from .models import Team
@@ -25,6 +25,25 @@ class FactoryTests(EventTestCase):
 class EmptyTeamView(TeamMixin, View):
     def get(self, request, *args, **kwargs):
         return HttpResponse()
+
+
+class TeamMultiEventTests(EventAwareTestCase):
+    def test_team_name_uniqueness(self):
+        old_event = EventFactory()
+        new_event = EventFactory(current=False)
+
+        old_event.activate()
+        team1 = TeamFactory(at_event=old_event)
+
+        # Check that creating a team with the same name on the old event is not allowed.
+        with self.assertRaises(ValidationError):
+            TeamFactory(name=team1.name, at_event=old_event)
+
+        new_event.activate()
+        # Check that the new event team does not raise a validation error
+        TeamFactory(name=team1.name, at_event=new_event)
+
+        new_event.deactivate()
 
 
 class TeamRulesTests(EventTestCase):
@@ -67,18 +86,6 @@ class TeamCreateTests(EventTestCase):
         self.assertEqual(response.status_code, 302)
         team = Team.objects.get(name=team_template.name)
         self.assertTrue(creator in team.members.all())
-
-    def test_team_name_uniqueness(self):
-        old_event = EventFactory()
-        new_event = EventFactory(current=False)
-        team1 = TeamFactory(at_event=old_event)
-
-        # Check that the new event team does not raise a validation error
-        TeamFactory(name=team1.name, at_event=new_event)
-
-        # Check that creating a team with the same name on the old event is not allowed.
-        with self.assertRaises(ValidationError):
-            TeamFactory(name=team1.name, at_event=old_event)
 
     def test_automatic_creation(self):
         factory = TenantRequestFactory(self.tenant)

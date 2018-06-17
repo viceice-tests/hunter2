@@ -54,7 +54,6 @@ class Puzzle(models.Model):
             return ''
 
         params = {
-            'event_id': episode.event.pk,
             'episode_number': episode.get_relative_id(),
             'puzzle_number': self.get_relative_id()
         }

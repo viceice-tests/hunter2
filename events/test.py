@@ -1,4 +1,5 @@
 from django.test import TransactionTestCase
+from django.utils import timezone
 from django_tenants.test.cases import FastTenantTestCase
 from django_tenants.test.client import TenantClient
 
@@ -22,5 +23,6 @@ class EventTestCase(FastTenantTestCase):
     @classmethod
     def setup_tenant(cls, tenant):
         theme = ThemeFactory()
+        tenant.end_date = timezone.now()
         tenant.name = 'Test Event'
         tenant.theme = theme

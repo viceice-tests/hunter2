@@ -78,6 +78,9 @@ class Command(BaseCommand):
             except ValueError as e:
                 raise CommandError("End date is not a valid date.") from e
 
+        while event_name is None:
+            event_name = self.get_input_data("Event name", default=self.DEFAULT_EVENT_NAME)
+
         while theme_name is None:
             theme_name = self.get_input_data("Theme name", default=self.DEFAULT_THEME_NAME)
 

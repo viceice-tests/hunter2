@@ -10,6 +10,7 @@ from parameterized import parameterized
 
 from accounts.factories import UserProfileFactory
 from events.factories import EventFactory
+from events.models import Event
 from events.test import EventTestCase
 from teams.factories import TeamFactory, TeamMemberFactory
 from . import runtimes
@@ -181,20 +182,16 @@ class LuaValidationTests(EventTestCase):
         self.assertFalse(answer.validate_guess(guess))
 
 
-class AnswerSubmissionTest(EventTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.puzzle = PuzzleFactory()
-        cls.episode = cls.puzzle.episode_set.get()
-        cls.event = cls.episode.event
-        cls.user = TeamMemberFactory(team__at_event=cls.event)
-        cls.url = reverse('answer', kwargs={
-            'event_id': cls.event.id,
-            'episode_number': cls.episode.get_relative_id(),
-            'puzzle_number': cls.puzzle.get_relative_id()
-        },)
-
+class AnswerSubmissionTests(EventTestCase):
     def setUp(self):
+        self.puzzle = PuzzleFactory()
+        self.episode = self.puzzle.episode_set.get()
+        self.event = self.episode.event
+        self.user = TeamMemberFactory(team__at_event=self.event)
+        self.url = reverse('answer', kwargs={
+            'episode_number': self.episode.get_relative_id(),
+            'puzzle_number': self.puzzle.get_relative_id()
+        },)
         self.client.force_login(self.user.user)
 
     def test_no_answer_given(self):
@@ -263,12 +260,11 @@ class PuzzleStartTimeTests(EventTestCase):
 
 
 class PuzzleAccessTests(EventTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.episode = EpisodeFactory(parallel=False)
-        cls.puzzles = PuzzleFactory.create_batch(3, episode=cls.episode)
-        cls.event = cls.episode.event
-        cls.user = TeamMemberFactory(team__at_event=cls.event)
+    def setUp(self):
+        self.episode = EpisodeFactory(parallel=False)
+        self.puzzles = PuzzleFactory.create_batch(3, episode=self.episode)
+        self.event = self.episode.event
+        self.user = TeamMemberFactory(team__at_event=self.event)
 
     def test_puzzle_view_authorisation(self):
         self.client.force_login(self.user.user)
@@ -460,12 +456,11 @@ class EpisodeBehaviourTest(EventTestCase):
 
 
 class EpisodeSequenceTests(EventTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.event = EventFactory()
-        cls.episode1 = EpisodeFactory(event=cls.event)
-        cls.episode2 = EpisodeFactory(event=cls.event, prequels=cls.episode1)
-        cls.user = TeamMemberFactory(team__at_event=cls.event)
+    def setUp(self):
+        self.event = self.tenant
+        self.episode1 = EpisodeFactory(event=self.event)
+        self.episode2 = EpisodeFactory(event=self.event, prequels=self.episode1)
+        self.user = TeamMemberFactory(team__at_event=self.event)
 
     def test_episode_prequel_validation(self):
         # Because we intentionally throw exceptions we need to use transaction.atomic() to avoid a TransactionManagementError
@@ -482,22 +477,22 @@ class EpisodeSequenceTests(EventTestCase):
         # Can load first episode
 
         response = self.client.get(
-            reverse('episode', kwargs={'event_id': self.event.id, 'episode_number': self.episode1.get_relative_id()}),
+            reverse('episode', kwargs={'episode_number': self.episode1.get_relative_id()}),
         )
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
-            reverse('episode_content', kwargs={'event_id': self.event.id, 'episode_number': self.episode1.get_relative_id()}),
+            reverse('episode_content', kwargs={'episode_number': self.episode1.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
 
         # Can't load second episode
         response = self.client.get(
-            reverse('episode', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
+            reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
         )
         self.assertEqual(response.status_code, 403)
         response = self.client.get(
-            reverse('episode_content', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
+            reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 403)
@@ -507,24 +502,23 @@ class EpisodeSequenceTests(EventTestCase):
 
         # Can now load second episode
         response = self.client.get(
-            reverse('episode', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
+            reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
         )
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
-            reverse('episode_content', kwargs={'event_id': self.event.id, 'episode_number': self.episode2.get_relative_id()}),
+            reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
 
 
 class ClueDisplayTests(EventTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.episode = EpisodeFactory()
-        cls.user = UserProfileFactory()
-        cls.puzzle = PuzzleFactory(episode=cls.episode)
-        cls.team = TeamFactory(at_event=cls.episode.event, members={cls.user})
-        cls.data = PuzzleData(cls.puzzle, cls.team, cls.user)  # Don't actually need to use a factory here.
+    def setUp(self):
+        self.episode = EpisodeFactory()
+        self.user = UserProfileFactory()
+        self.puzzle = PuzzleFactory(episode=self.episode)
+        self.team = TeamFactory(at_event=self.episode.event, members={self.user})
+        self.data = PuzzleData(self.puzzle, self.team, self.user)  # Don't actually need to use a factory here.
 
     def test_hint_display(self):
         hint = HintFactory(puzzle=self.puzzle)
@@ -551,35 +545,33 @@ class ClueDisplayTests(EventTestCase):
 
 
 class AdminTeamTests(EventTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.event = EventFactory()
-        cls.episode = EpisodeFactory(event=cls.event)
-        cls.admin_user = UserProfileFactory()
-        cls.admin_team = TeamFactory(at_event=cls.event, is_admin=True, members={cls.admin_user})
+    def setUp(self):
+        self.event = self.tenant
+        self.episode = EpisodeFactory(event=self.event)
+        self.admin_user = UserProfileFactory()
+        self.admin_team = TeamFactory(at_event=self.event, is_admin=True, members={self.admin_user})
 
     def test_can_view_episode(self):
         self.client.force_login(self.admin_user.user)
         response = self.client.get(
-            reverse('episode', kwargs={'event_id': self.event.id, 'episode_number': self.episode.get_relative_id()}),
+            reverse('episode', kwargs={'episode_number': self.episode.get_relative_id()}),
         )
         self.assertEqual(response.status_code, 200)
 
     def test_can_view_guesses(self):
-        self.assertTrue(self.client.login(username='admin', password='hunter2'))
+        self.client.force_login(self.admin_user.user)
         response = self.client.get(reverse('guesses'))
         self.assertEqual(response.status_code, 200)
 
 
 class ProgressionTests(EventTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.episode = EpisodeFactory()
-        cls.event = cls.episode.event
-        cls.user1 = UserProfileFactory()
-        cls.user2 = UserProfileFactory()
-        cls.team1 = TeamFactory(at_event=cls.event, members={cls.user1})
-        cls.team2 = TeamFactory(at_event=cls.event, members={cls.user2})
+    def setUp(self):
+        self.episode = EpisodeFactory()
+        self.event = self.episode.event
+        self.user1 = UserProfileFactory()
+        self.user2 = UserProfileFactory()
+        self.team1 = TeamFactory(at_event=self.event, members={self.user1})
+        self.team2 = TeamFactory(at_event=self.event, members={self.user2})
 
     def test_answered_by_ordering(self):
         puzzle1 = PuzzleFactory(episode=self.episode)
@@ -669,17 +661,16 @@ class ProgressionTests(EventTestCase):
 
 
 class CorrectnessCacheTests(EventTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.episode = EpisodeFactory()
-        cls.event = cls.episode.event
-        cls.user1 = UserProfileFactory()
-        cls.user2 = UserProfileFactory()
-        cls.team1 = TeamFactory(at_event=cls.event, members={cls.user1})
-        cls.team2 = TeamFactory(at_event=cls.event, members={cls.user2})
-        cls.puzzle1 = PuzzleFactory(episode=cls.episode)
-        cls.puzzle2 = PuzzleFactory(episode=cls.episode)
-        cls.answer1 = cls.puzzle1.answer_set.get()
+    def setUp(self):
+        self.episode = EpisodeFactory()
+        self.event = self.episode.event
+        self.user1 = UserProfileFactory()
+        self.user2 = UserProfileFactory()
+        self.team1 = TeamFactory(at_event=self.event, members={self.user1})
+        self.team2 = TeamFactory(at_event=self.event, members={self.user2})
+        self.puzzle1 = PuzzleFactory(episode=self.episode)
+        self.puzzle2 = PuzzleFactory(episode=self.episode)
+        self.answer1 = self.puzzle1.answer_set.get()
 
     def test_changing_answers(self):
         # Check starting state
@@ -732,15 +723,14 @@ class CorrectnessCacheTests(EventTestCase):
 
 
 class GuessTeamDenormalisationTests(EventTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.episode = EpisodeFactory()
-        cls.user1 = UserProfileFactory()
-        cls.user2 = UserProfileFactory()
-        cls.team1 = TeamFactory(at_event=cls.episode.event, members={cls.user1})
-        cls.team2 = TeamFactory(at_event=cls.episode.event, members={cls.user2})
-        cls.puzzle1 = PuzzleFactory(episode=cls.episode)
-        cls.puzzle2 = PuzzleFactory(episode=cls.episode)
+    def setUp(self):
+        self.episode = EpisodeFactory()
+        self.user1 = UserProfileFactory()
+        self.user2 = UserProfileFactory()
+        self.team1 = TeamFactory(at_event=self.episode.event, members={self.user1})
+        self.team2 = TeamFactory(at_event=self.episode.event, members={self.user2})
+        self.puzzle1 = PuzzleFactory(episode=self.episode)
+        self.puzzle2 = PuzzleFactory(episode=self.episode)
 
     def test_adding_guess(self):
         guess1 = GuessFactory(for_puzzle=self.puzzle1, by=self.user1, correct=False)

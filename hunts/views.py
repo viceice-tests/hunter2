@@ -220,7 +220,7 @@ class StatsContent(LoginRequiredMixin, View):
             raise PermissionDenied
 
         now = timezone.now()
-        end_time = min(now, request.event.end_date) + timedelta(minutes=10)
+        end_time = min(now, request.tenant.end_date) + timedelta(minutes=10)
 
         # TODO select and prefetch all the things
         episodes = models.Episode.objects.filter(event=request.tenant).order_by('start_date')
@@ -417,7 +417,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         flavour = Template(puzzle.flavour).safe_substitute(**files)
 
-        ended = request.event.end_date < now
+        ended = request.tenant.end_date < now
 
         response = TemplateResponse(
             request,
@@ -469,7 +469,7 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         except MultiValueDictKeyError as e:
             return JsonResponse({'error': 'no answer given'}, status=400)
 
-        if request.event.end_date < now:
+        if request.tenant.end_date < now:
             return JsonResponse({'error': 'event is over'}, status=400)
 
         data = models.PuzzleData(request.puzzle, request.team)
@@ -501,10 +501,7 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             next = request.episode.next_puzzle(request.team)
             if next:
                 response['text'] = f'to the next puzzle'
-                response['url'] = reverse('puzzle',
-                                          kwargs={'event_id': request.tenant.pk,
-                                                  'episode_number': episode_number,
-                                                  'puzzle_number': next})
+                response['url'] = reverse('puzzle', kwargs={'episode_number': episode_number, 'puzzle_number': next})
             else:
                 response['text'] = f'back to {request.episode.name}'
                 response['url'] = reverse('event', kwargs={'event_id': request.tenant.pk})

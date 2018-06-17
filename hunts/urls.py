@@ -53,6 +53,6 @@ urlpatterns = [
         name='help'
     ),
     url(r'^hunt/', include(eventpatterns)),
-    url(r'^eventadmin/(?P<event_id>[1-9]\d*)/', include(eventadminpatterns)),
+    url(r'^huntadmin/', include(eventadminpatterns)),
     url(r'^puzzle_info$', views.PuzzleInfo.as_view(), name='puzzle_info'),
 ]
