@@ -10,7 +10,6 @@ from parameterized import parameterized
 
 from accounts.factories import UserProfileFactory
 from events.factories import EventFactory
-from events.models import Event
 from events.test import EventTestCase
 from teams.factories import TeamFactory, TeamMemberFactory
 from . import runtimes
