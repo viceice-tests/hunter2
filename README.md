@@ -36,7 +36,6 @@ docker-compose run --rm app createdefaultevent
 ```
 `dev.hunter2.local` is the default event subdomain. If you are working with more events add more names here.
 
-<<<<<<< HEAD
 To create the base objects run the following:
 ```
 docker-compose run --rm app python manage.py setupsite
