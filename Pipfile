@@ -23,6 +23,7 @@ django-nested-admin = "*"
 django-sendfile = "*"
 django-solo = "*"
 django-sortedm2m = "*"
+django-tenants = { git = "https://github.com/riconnon/django-tenants.git", ref = "v1.3.4+1" }
 django-url-tools-py3 = "*"
 django-uwsgi = "*"
 factory_boy = "*"

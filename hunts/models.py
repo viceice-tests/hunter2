@@ -3,10 +3,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.urls import reverse
 from sortedm2m.fields import SortedManyToManyField
 from datetime import timedelta
 from enumfields import EnumField, Enum
-from hunter2.resolvers import reverse
 from . import runtimes
 
 import accounts
@@ -54,11 +54,10 @@ class Puzzle(models.Model):
             return ''
 
         params = {
-            'event_id': episode.event.pk,
             'episode_number': episode.get_relative_id(),
             'puzzle_number': self.get_relative_id()
         }
-        return reverse('puzzle', subdomain='www', kwargs=params)
+        return reverse('puzzle', kwargs=params)
 
     def get_relative_id(self):
         try:
@@ -323,7 +322,7 @@ class TeamData(models.Model):
 
 
 class UserData(models.Model):
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING)
     user = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
     data = JSONField(blank=True, null=True)
 
@@ -404,7 +403,7 @@ class Episode(models.Model):
         symmetrical=False,
     )
     start_date = models.DateTimeField()
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING)
     parallel = models.BooleanField(default=False, help_text='Allow players to answer riddles in this episode in any order they like')
     headstart_from = models.ManyToManyField(
         "self", blank=True,
@@ -548,7 +547,7 @@ class AnnouncementType(Enum):
 
 
 class Announcement(models.Model):
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='announcements')
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING, related_name='announcements')
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE, related_name='announcements', null=True, blank=True)
     title = models.CharField(max_length=255)
     posted = models.DateTimeField(auto_now_add=True)

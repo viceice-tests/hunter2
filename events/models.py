@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django_tenants.models import TenantMixin, DomainMixin
 
 from .fields import SingleTrueBooleanField
 
@@ -13,7 +14,12 @@ class Theme(models.Model):
         return self.name
 
 
-class Event(models.Model):
+class Domain(DomainMixin):
+    pass
+
+
+class Event(TenantMixin):
+    auto_drop_schema = True
     name = models.CharField(max_length=255, unique=True)
     theme = models.ForeignKey(Theme, on_delete=models.CASCADE, related_name='theme')
     current = SingleTrueBooleanField()
@@ -26,6 +32,9 @@ class Event(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, verbosity=0, *args, **kwargs):
+        super().save(verbosity, *args, **kwargs)
 
 
 def event_file_path(instance, filename):

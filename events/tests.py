@@ -2,16 +2,16 @@ from io import StringIO
 from unittest.case import expectedFailure
 
 from django.core.management import CommandError, call_command
-from django.test import TestCase
 
 from events.factories import EventFactory, EventFileFactory, ThemeFactory
-from events.management.commands import createdefaultevent
 from events.models import Event, Theme
 from hunter2.tests import MockTTY, mock_inputs
 from . import factories
+from .management.commands import createevent
+from .test import EventAwareTestCase, EventTestCase
 
 
-class FactoryTests(TestCase):
+class FactoryTests(EventTestCase):
 
     def test_theme_factory_default_construction(self):
         ThemeFactory.create()
@@ -23,7 +23,7 @@ class FactoryTests(TestCase):
         EventFileFactory.create()
 
 
-class EventRulesTests(TestCase):
+class EventRulesTests(EventAwareTestCase):
 
     def test_only_one_current_event(self):
         # Ensure that we only have one event set as current
@@ -47,35 +47,58 @@ class EventRulesTests(TestCase):
         self.assertTrue(event.current, "Only event is not set as current")
 
 
-class CreateDefaultEventManagementCommandTests(TestCase):
+class CreateEventManagementCommandTests(EventAwareTestCase):
     TEST_EVENT_NAME = "Custom Event"
     TEST_THEME_NAME = "Custom Theme"
+    TEST_SUBDOMAIN = 'custom'
     TEST_EVENT_END_DATE = "Monday at 18:00"
     INVALID_END_DATE = "18:00 on the second Sunday after Pentecost"
 
     def test_no_event_name_argument(self):
         output = StringIO()
-        with self.assertRaisesMessage(CommandError, "You must use --theme, --event and --enddate with --noinput."):
-            call_command('createdefaultevent', interactive=False, theme_name="Test Theme", end_date=self.TEST_EVENT_END_DATE, stdout=output)
+        with self.assertRaisesMessage(CommandError, "You must use --theme, --event, --subdomain and --enddate with --noinput."):
+            call_command(
+                'createevent',
+                interactive=False,
+                subdomain=self.TEST_SUBDOMAIN,
+                theme_name="Test Theme",
+                end_date=self.TEST_EVENT_END_DATE,
+                stdout=output
+            )
 
     def test_no_theme_name_argument(self):
         output = StringIO()
-        with self.assertRaisesMessage(CommandError, "You must use --theme, --event and --enddate with --noinput."):
-            call_command('createdefaultevent', interactive=False, event_name="Test Event", end_date=self.TEST_EVENT_END_DATE, stdout=output)
+        with self.assertRaisesMessage(CommandError, "You must use --theme, --event, --subdomain and --enddate with --noinput."):
+            call_command(
+                'createevent',
+                interactive=False,
+                subdomain=self.TEST_SUBDOMAIN,
+                event_name="Test Event",
+                end_date=self.TEST_EVENT_END_DATE,
+                stdout=output
+            )
 
     def test_no_end_date_argument(self):
         output = StringIO()
-        with self.assertRaisesMessage(CommandError, "You must use --theme, --event and --enddate with --noinput."):
-            call_command('createdefaultevent', interactive=False, event_name="Test Event", theme_name="Test Theme", stdout=output)
+        with self.assertRaisesMessage(CommandError, "You must use --theme, --event, --subdomain and --enddate with --noinput."):
+            call_command(
+                'createevent',
+                interactive=False,
+                subdomain=self.TEST_SUBDOMAIN,
+                event_name="Test Event",
+                theme_name="Test Theme",
+                stdout=output
+            )
 
     def test_invalid_date(self):
         output = StringIO()
         with self.assertRaisesMessage(CommandError, "End date is not a valid date."):
             call_command(
-                'createdefaultevent',
+                'createevent',
                 interactive=False,
                 event_name=self.TEST_EVENT_NAME,
                 theme_name=self.TEST_THEME_NAME,
+                subdomain=self.TEST_SUBDOMAIN,
                 end_date=self.INVALID_END_DATE,
                 stdout=output
             )
@@ -83,10 +106,11 @@ class CreateDefaultEventManagementCommandTests(TestCase):
     def test_non_interactive_usage(self):
         output = StringIO()
         call_command(
-            'createdefaultevent',
+            'createevent',
             interactive=False,
             event_name=self.TEST_EVENT_NAME,
             theme_name=self.TEST_THEME_NAME,
+            subdomain=self.TEST_SUBDOMAIN,
             end_date=self.TEST_EVENT_END_DATE,
             stdout=output
         )
@@ -104,11 +128,12 @@ class CreateDefaultEventManagementCommandTests(TestCase):
     @mock_inputs({
         'event': TEST_EVENT_NAME,
         'theme': TEST_THEME_NAME,
+        'subdomain': TEST_SUBDOMAIN,
     })
     def test_interactive_usage(self):
         output = StringIO()
         call_command(
-            'createdefaultevent',
+            'createevent',
             interactive=True,
             stdout=output,
             stdin=MockTTY(),
@@ -116,7 +141,7 @@ class CreateDefaultEventManagementCommandTests(TestCase):
         command_output = output.getvalue().strip()
         self.assertEqual(command_output, "Created current event \"{}\" and theme \"{}\"".format(
             self.TEST_EVENT_NAME,
-            self.TEST_THEME_NAME
+            self.TEST_THEME_NAME,
         ))
 
         theme = Theme.objects.get(name=self.TEST_THEME_NAME)
@@ -125,35 +150,38 @@ class CreateDefaultEventManagementCommandTests(TestCase):
         self.assertIsNotNone(event)
 
     @mock_inputs({
+        'end date': "",
         'event': "",
-        'theme': ""
+        'theme': "",
+        'subdomain': "",
     })
     def test_default_interactive_usage(self):
         output = StringIO()
         call_command(
-            'createdefaultevent',
+            'createevent',
             interactive=True,
             stdout=output,
             stdin=MockTTY(),
         )
         command_output = output.getvalue().strip()
         self.assertEqual(command_output, "Created current event \"{}\" and theme \"{}\"".format(
-            createdefaultevent.Command.DEFAULT_EVENT_NAME,
-            createdefaultevent.Command.DEFAULT_THEME_NAME
+            createevent.Command.DEFAULT_EVENT_NAME,
+            createevent.Command.DEFAULT_THEME_NAME
         ))
 
-        theme = Theme.objects.get(name=createdefaultevent.Command.DEFAULT_THEME_NAME)
+        theme = Theme.objects.get(name=createevent.Command.DEFAULT_THEME_NAME)
         self.assertIsNotNone(theme)
-        event = Event.objects.get(name=createdefaultevent.Command.DEFAULT_EVENT_NAME, theme=theme.id, current=True)
+        event = Event.objects.get(name=createevent.Command.DEFAULT_EVENT_NAME, theme=theme.id, current=True)
         self.assertIsNotNone(event)
 
     def test_only_one_current_event(self):
         output = StringIO()
         call_command(
-            'createdefaultevent',
+            'createevent',
             interactive=False,
             event_name=self.TEST_EVENT_NAME + "1",
             theme_name=self.TEST_THEME_NAME + "1",
+            subdomain=self.TEST_SUBDOMAIN + "1",
             end_date=self.TEST_EVENT_END_DATE,
             stdout=output
         )
@@ -165,10 +193,11 @@ class CreateDefaultEventManagementCommandTests(TestCase):
 
         output = StringIO()
         call_command(
-            'createdefaultevent',
+            'createevent',
             interactive=False,
             event_name=self.TEST_EVENT_NAME + "2",
             theme_name=self.TEST_THEME_NAME + "2",
+            subdomain=self.TEST_SUBDOMAIN + "2",
             end_date=self.TEST_EVENT_END_DATE,
             stdout=output
         )
