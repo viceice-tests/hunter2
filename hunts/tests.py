@@ -545,22 +545,21 @@ class ClueDisplayTests(EventTestCase):
 
 class FileUploadTests(EventTestCase):
     def setUp(self):
+        self.eventfile = EventFileFactory()
         self.user = UserProfileFactory()
         self.client.force_login(self.user.user)
 
     def test_load_episode_with_eventfile(self):
-        eventfile = EventFileFactory()
-        episode = EpisodeFactory(flavour=f'${{{eventfile.slug}}}')
+        episode = EpisodeFactory(flavour=f'${{{self.eventfile.slug}}}')
         response = self.client.get(episode.get_absolute_url())
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, eventfile.file.url)
+        self.assertContains(response, self.eventfile.file.url)
 
     def test_load_puzzle_with_eventfile(self):
-        eventfile = EventFileFactory()
-        puzzle = PuzzleFactory(content=f'${{{eventfile.slug}}}')
+        puzzle = PuzzleFactory(content=f'${{{self.eventfile.slug}}}')
         response = self.client.get(puzzle.get_absolute_url())
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, eventfile.file.url)
+        self.assertContains(response, self.eventfile.file.url)
 
     def test_load_puzzle_with_puzzlefile(self):
         puzzle = PuzzleFactory()
@@ -572,7 +571,6 @@ class FileUploadTests(EventTestCase):
         self.assertContains(response, puzzlefile.slug)  # Puzzle files don't use their URL so just check slug
 
     def test_puzzlefile_overrides_eventfile(self):
-        eventfile = EventFileFactory()
         puzzle = PuzzleFactory()
         puzzlefile = PuzzleFileFactory(puzzle=puzzle)
         puzzle.content = f'${{{puzzlefile.slug}}}'
