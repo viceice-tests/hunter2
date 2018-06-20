@@ -23,7 +23,6 @@ from . import rules
 from . import runtimes
 from .mixins import EpisodeUnlockedMixin, PuzzleUnlockedMixin
 
-import events
 import hunter2
 import teams
 
@@ -67,7 +66,6 @@ class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
                 'flavour': flavour,
                 'position': position,
                 'episode_number': episode_number,
-                'event_id': request.tenant.pk,
                 'puzzles': puzzles,
             }
         )
@@ -85,7 +83,6 @@ class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
             context={
                 'flavour': request.episode.flavour,
                 'episode_number': episode_number,
-                'event_id': request.tenant.pk,
                 'puzzles': puzzles,
             }
         )
@@ -185,14 +182,13 @@ class GuessesContent(LoginRequiredMixin, View):
 
         # Grab the current URL (which is not the URL of *this* view) so that we can manipulate the query string
         # in the template.
-        current_url = reverse('guesses', subdomain=request.subdomain, kwargs={'event_id': request.tenant.pk})
+        current_url = reverse('guesses')
         current_url += '?' + request.GET.urlencode()
 
         return TemplateResponse(
             request,
             'hunts/guesses_content.html',
             context={
-                'event_id': request.tenant.pk,
                 'guesses': guesses,
                 'current_url': current_url
             }
@@ -334,12 +330,7 @@ class StatsContent(LoginRequiredMixin, View):
 
 class EventDirect(LoginRequiredMixin, View):
     def get(self, request):
-        event = events.models.Event.objects.filter(current=True).get()
-
-        return redirect(
-            'event',
-            event_id=event.id,
-        )
+        return redirect('event')
 
 
 class EventIndex(LoginRequiredMixin, View):
@@ -362,7 +353,6 @@ class EventIndex(LoginRequiredMixin, View):
             'hunts/event.html',
             context={
                 'event_title':  event.name,
-                'event_id':     event.id,
                 'episodes':     list(episodes),
             }
         )
@@ -400,11 +390,10 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             **{f.slug: reverse(
                 'puzzle_file',
                 kwargs={
-                    'event_id': request.tenant.pk,
                     'episode_number': episode_number,
                     'puzzle_number': puzzle_number,
                     'file_slug': f.slug,
-                }, subdomain='www') for f in puzzle.puzzlefile_set.all()},
+                }) for f in puzzle.puzzlefile_set.all()},
         }  # Puzzle files with matching slugs override hunt counterparts
 
         text = Template(runtimes.runtimes[puzzle.runtime].evaluate(
@@ -504,7 +493,7 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 response['url'] = reverse('puzzle', kwargs={'episode_number': episode_number, 'puzzle_number': next})
             else:
                 response['text'] = f'back to {request.episode.name}'
-                response['url'] = reverse('event', kwargs={'event_id': request.tenant.pk})
+                response['url'] = reverse('event')
                 response['url'] += f'#episode-{episode_number}'
         else:
             all_unlocks = models.Unlock.objects.filter(puzzle=request.puzzle)

@@ -9,7 +9,7 @@ from django.utils import timezone
 from parameterized import parameterized
 
 from accounts.factories import UserProfileFactory
-from events.factories import EventFactory
+from events.factories import EventFactory, EventFileFactory
 from events.test import EventTestCase
 from teams.factories import TeamFactory, TeamMemberFactory
 from . import runtimes
@@ -541,6 +541,45 @@ class ClueDisplayTests(EventTestCase):
         # Check can only be seen by the correct teams.
         self.assertTrue(unlock.unlocked_by(self.team), "Unlock should be visible not it's been guessed")
         self.assertFalse(unlock.unlocked_by(other_team), "Unlock should not be visible to other team")
+
+
+class FileUploadTests(EventTestCase):
+    def setUp(self):
+        self.user = UserProfileFactory()
+        self.client.force_login(self.user.user)
+
+    def test_load_episode_with_eventfile(self):
+        eventfile = EventFileFactory()
+        episode = EpisodeFactory(flavour=f'${{{eventfile.slug}}}')
+        response = self.client.get(episode.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, eventfile.file.url)
+
+    def test_load_puzzle_with_eventfile(self):
+        eventfile = EventFileFactory()
+        puzzle = PuzzleFactory(content=f'${{{eventfile.slug}}}')
+        response = self.client.get(puzzle.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, eventfile.file.url)
+
+    def test_load_puzzle_with_puzzlefile(self):
+        puzzle = PuzzleFactory()
+        puzzlefile = PuzzleFileFactory(puzzle=puzzle)
+        puzzle.content = f'${{{puzzlefile.slug}}}'
+        puzzle.save()
+        response = self.client.get(puzzle.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, puzzlefile.slug)  # Puzzle files don't use their URL so just check slug
+
+    def test_puzzlefile_overrides_eventfile(self):
+        eventfile = EventFileFactory()
+        puzzle = PuzzleFactory()
+        puzzlefile = PuzzleFileFactory(puzzle=puzzle)
+        puzzle.content = f'${{{puzzlefile.slug}}}'
+        puzzle.save()
+        response = self.client.get(puzzle.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, puzzlefile.slug)  # Puzzle files don't use their URL so just check slug
 
 
 class AdminTeamTests(EventTestCase):
