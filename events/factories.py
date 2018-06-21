@@ -86,7 +86,7 @@ class EventFileFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ('event', 'slug')
 
     event = factory.SubFactory(EventFactory)
-    slug = factory.Faker('slug')
+    slug = factory.Faker('word')
     file = factory.django.FileField(
         filename=factory.Faker('file_name'),
         data=factory.Faker('binary')

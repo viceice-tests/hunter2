@@ -52,4 +52,4 @@ class EditProfileView(LoginRequiredMixin, View):
             if profile_formset.is_valid():
                 created_user.save()
                 profile_formset.save()
-                return HttpResponseRedirect(reverse('edit_profile', subdomain='www'))
+                return HttpResponseRedirect(reverse('edit_profile'))

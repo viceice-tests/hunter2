@@ -68,7 +68,7 @@ class PuzzleFileFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ('puzzle', 'slug')
 
     puzzle = factory.SubFactory(PuzzleFactory)
-    slug = factory.Faker('slug')
+    slug = factory.Faker('word')
     file = factory.django.FileField(
         filename=factory.Faker('file_name'),
         data=factory.Faker('binary')
