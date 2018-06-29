@@ -5,6 +5,8 @@ import logging
 # Load the current environment profile
 root = environ.Path(__file__) - 2
 env = environ.Env()
+env.DB_SCHEMES['postgres'] = 'django_tenants.postgresql_backend'
+env.DB_SCHEMES['postgresql'] = 'django_tenants.postgresql_backend'
 
 # Default settings which should be overridden by environment variables
 DEBUG              = env.bool      ('H2_DEBUG',         default=False)
@@ -66,6 +68,10 @@ AUTHENTICATION_BACKENDS = (
 
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
+
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
 FULLCLEAN_WHITELIST = [
@@ -74,13 +80,11 @@ FULLCLEAN_WHITELIST = [
     'teams',
 ]
 
-INSTALLED_APPS = (
+SHARED_APPS = (
     # Our apps first to allow us to override third party templates
     # These are in dependency order
     'accounts',
     'events',
-    'teams',
-    'hunts',
     'hunter2',
     # Third party apps
     # These are in alphabetical order
@@ -101,16 +105,29 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django_extensions',
     'django_fullclean',
+    'django_tenants',
+    'django_uwsgi',
     'nested_admin',
     'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',
     'solo',
     'sortedm2m',
-    'subdomains',
     'url_tools',
 )
 if USE_SILK:  # nocover
-    INSTALLED_APPS = INSTALLED_APPS + ('silk',)
+    SHARED_APPS += ('silk',)
+
+TENANT_APPS = (
+    # Our apps first to allow us to override third party templates
+    # These are in dependency order
+    'teams',
+    'hunts',
+    # Third party apps
+    # These are in alphabetical order
+    'django.contrib.contenttypes',
+)
+
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 LOGGING = {
     'version': 1,
@@ -139,10 +156,10 @@ MEDIA_ROOT = '/uploads/'
 MEDIA_URL = '/media/'
 
 MIDDLEWARE = (
+    'django_tenants.middleware.default.DefaultTenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'subdomains.middleware.SubdomainURLRoutingMiddleware',
     'django.middleware.common.CommonMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -150,8 +167,6 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
-    'subdomains.middleware.SubdomainMiddleware',
-    'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
 if USE_SILK:  # nocover
@@ -196,11 +211,6 @@ SENDFILE_URL = '/media'
 
 SITE_ID = 1
 
-SUBDOMAIN_URLCONFS = {
-    'admin': 'hunter2.urls.admin',
-    'www': 'hunter2.urls.www',
-}
-
 TEMPLATES = [
     {
         'APP_DIRS': True,
@@ -221,6 +231,9 @@ TEMPLATES = [
         },
     },
 ]
+
+TENANT_MODEL = 'events.Event'
+TENANT_DOMAIN_MODEL = 'events.Domain'
 
 TEST_RUNNER = 'hunter2.tests.TestRunner'
 

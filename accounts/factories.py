@@ -3,15 +3,6 @@ import unicodedata
 import factory
 import pytz
 from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
-
-
-class SiteFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = Site
-
-    domain = factory.Faker('domain_name')
-    name = factory.Faker('domain_word')
 
 
 class UserProfileFactory(factory.django.DjangoModelFactory):
@@ -41,7 +32,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     last_login = factory.LazyAttribute(lambda o: factory.Faker('date_time_between_dates', datetime_start=o.date_joined, tzinfo=pytz.utc).generate({}))
 
     # We pass in 'user' to link the generated Profile to our just-generated User
-    # This will call ProfileFactory(user=our_new_user), thus skipping the SubFactory.
+    # This will call UserProfileFactory(user=our_new_user), thus skipping the SubFactory.
     profile = factory.RelatedFactory(UserProfileFactory, 'user')
 
     @factory.lazy_attribute_sequence

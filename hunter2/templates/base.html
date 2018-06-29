@@ -1,7 +1,6 @@
 {% load analytical %}
 {% load raven %}
 {% load staticfiles %}
-{% load hunter2urls %}
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -37,17 +36,17 @@
 				<div class="collapse navbar-collapse" id="site-navbar-collapse-1">
 					<ul class="nav navbar-nav">
 						{% block topbar_left %}
-						<li class="button"><a href="{% url 'index' 'www' %}">Home</a></li>
+						<li class="button"><a href="{% url 'index' %}">Home</a></li>
 						{% endblock %}
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
 						{% block topbar_right %}
 						{% if user.is_authenticated %}
-						<li class="button"><a href="{% url 'edit_profile' 'www' %}" id="navUser">Account</a></li>
+						<li class="button"><a href="{% url 'edit_profile' %}" id="navUser">Account</a></li>
 						<li class="button"><a href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
-						<form id="logoutForm" action="{% url 'account_logout' 'www' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
+						<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
 						{% else %}
-						<li><a href="{% url 'account_login' 'www' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a></li>
+						<li><a href="{% url 'account_login' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a></li>
 						{% endif %}
 						{% endblock %}
 					</ul>

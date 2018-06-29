@@ -1,5 +1,4 @@
 {% extends "teams/base.html" %}
-{% load hunter2urls %}
 
 {% block page_header %}
 <h1>Home</h1>
@@ -7,7 +6,7 @@
 
 {% block content %}
 {% if event %}
-<div class="alert alert-success" role="alert"><h2>Current Event: <a href='{% url 'event' 'www' event.id %}'>{{event.name}}</a></h2></div>
+<div class="alert alert-success" role="alert"><h2>Current Event: <a href='{% url 'event' %}'>{{event.name}}</a></h2></div>
 {% endif %}
 {{ content | safe }}
 {% endblock %}

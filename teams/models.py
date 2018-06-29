@@ -1,14 +1,16 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-from hunter2.resolvers import reverse
+from django.urls import reverse
 
 import accounts
 import events
 
 
 class Team(models.Model):
-    name = models.CharField(blank=True, max_length=100)
-    at_event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='teams')
+    # Nullable CharField with the unique property allows us to enforce uniqueness at DB schema level
+    # DB will allow multiple teams with no name while still enforcing name uniqueness
+    name = models.CharField(blank=True, null=True, unique=True, max_length=100)
+    at_event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING, related_name='teams')
     is_admin = models.BooleanField(default=False)
     members = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='teams')
     invites = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='team_invites')
@@ -37,18 +39,16 @@ class Team(models.Model):
             raise ValidationError('There can only be one admin team per event')
 
     def save(self, *args, **kwargs):
-        if self.name != '':
-            conflicts = Team.objects.filter(name=self.name, at_event=self.at_event)
-            conflicts = conflicts.exclude(pk=self.id)
-            if conflicts.exists():
-                raise ValidationError('Cannot have multiple teams with the same non-empty name at an event')
+        # We don't want to use '' as our empty value because we would trip over the uniqueness constraint
+        if self.name == '':
+            self.name = None
         return super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('team', subdomain='www', kwargs={'event_id': self.at_event.pk, 'team_id': self.pk})
+        return reverse('team', kwargs={'team_id': self.pk})
 
     def is_explicit(self):
-        return self.name != ''
+        return self.name is not None
 
     def is_full(self):
         return self.members.count() >= self.at_event.max_team_size > 0 and not self.is_admin

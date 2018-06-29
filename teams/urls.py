@@ -20,6 +20,6 @@ eventpatterns = [
 ]
 
 urlpatterns = [
-    url(r'^event/(?P<event_id>[1-9]\d*)/', include(eventpatterns)),
+    url(r'^hunt/', include(eventpatterns)),
     url(r'^team_autocomplete$', views.TeamAutoComplete.as_view(), name='team_autocomplete'),
 ]

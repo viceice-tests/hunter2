@@ -1,10 +1,8 @@
-# vim: set fileencoding=utf-8 :
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 from .iframe import IFrameRuntime
 from .regex import RegexRuntime
 from .static import StaticRuntime
-
 from .. import models
 
 import re
@@ -36,7 +34,7 @@ class IFrameRuntimeTestCase(TestCase):
             self.iframe_runtime.validate_guess(iframe_url, "")
 
 
-class RegexRuntimeTestCase(TestCase):
+class RegexRuntimeTestCase(SimpleTestCase):
     def test_evaluate(self):
         regex_runtime = RegexRuntime()
         regex_script = r'.*'
@@ -60,7 +58,7 @@ class RegexRuntimeTestCase(TestCase):
             regex_runtime.validate_guess(regex_script, "")
 
 
-class StaticRuntimeTestCase(TestCase):
+class StaticRuntimeTestCase(SimpleTestCase):
     def test_evaluate(self):
         static_runtime = StaticRuntime()
         static_script = '''Hello  World!'''

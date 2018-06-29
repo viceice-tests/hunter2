@@ -3,10 +3,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.urls import reverse
 from sortedm2m.fields import SortedManyToManyField
 from datetime import timedelta
 from enumfields import EnumField, Enum
-from hunter2.resolvers import reverse
 from . import runtimes
 
 import accounts
@@ -54,11 +54,10 @@ class Puzzle(models.Model):
             return ''
 
         params = {
-            'event_id': episode.event.pk,
             'episode_number': episode.get_relative_id(),
             'puzzle_number': self.get_relative_id()
         }
-        return reverse('puzzle', subdomain='www', kwargs=params)
+        return reverse('puzzle', kwargs=params)
 
     def get_relative_id(self):
         try:
@@ -66,12 +65,13 @@ class Puzzle(models.Model):
         except Episode.DoesNotExist:
             raise ValueError("Puzzle %s is not on an episode and so has no relative id" % self.title)
 
-        for i, p in enumerate(episode.puzzles.values('pk')):
-            if self.pk == p['pk']:
-                puzzle_number = i + 1
-                break
+        puzzles = episode.puzzles.all()
 
-        return puzzle_number
+        for i, p in enumerate(puzzles, start=1):
+            if self.pk == p.pk:
+                return i
+
+        raise RuntimeError("Could not find Puzzle pk when iterating episode's puzzle list")
 
     # Takes the team parameter for compatability with Episode.started()
     # Will be useful if we add puzzle head starts later
@@ -248,7 +248,7 @@ class Answer(models.Model):
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
-    by_team = models.ForeignKey(teams.models.Team, on_delete=models.PROTECT)
+    by_team = models.ForeignKey(teams.models.Team, on_delete=models.SET_NULL, null=True, blank=True)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
     # The following two fields cache whether the guess is correct. Do not use them directly.
@@ -259,7 +259,7 @@ class Guess(models.Model):
         verbose_name_plural = 'Guesses'
 
     def __str__(self):
-        return f'"{self.guess}" by {self.by} ({self.by_team})'
+        return f'"{self.guess}" by {self.by} ({self.by_team}) @ {self.given}'
 
     def get_team(self):
         event = self.for_puzzle.episode_set.get().event
@@ -268,8 +268,7 @@ class Guess(models.Model):
     def get_correct_for(self):
         """Get the first answer this guess is correct for, if such exists."""
         if not self.correct_current:
-            self._evaluate_correctness()
-            self.save(update_team=False)
+            self.save()
 
         return self.correct_for
 
@@ -291,8 +290,8 @@ class Guess(models.Model):
                 self.correct_for = answer
                 return
 
-    def save(self, *args, update_team=True, **kwargs):
-        if update_team:
+    def save(self, *args, **kwargs):
+        if not self.by_team:
             self.by_team = self.get_team()
         self._evaluate_correctness()
         super().save(*args, **kwargs)
@@ -323,7 +322,7 @@ class TeamData(models.Model):
 
 
 class UserData(models.Model):
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING)
     user = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
     data = JSONField(blank=True, null=True)
 
@@ -404,7 +403,7 @@ class Episode(models.Model):
         symmetrical=False,
     )
     start_date = models.DateTimeField()
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING)
     parallel = models.BooleanField(default=False, help_text='Allow players to answer riddles in this episode in any order they like')
     headstart_from = models.ManyToManyField(
         "self", blank=True,
@@ -420,10 +419,9 @@ class Episode(models.Model):
 
     def get_absolute_url(self):
         params = {
-            'event_id': self.event.pk,
             'episode_number': self.get_relative_id(),
         }
-        return reverse('episode', subdomain='www', kwargs=params)
+        return reverse('episode', kwargs=params)
 
     def follows(self, episode):
         """Does this episode follow the provied episode by one or more prequel relationships?"""
@@ -446,11 +444,11 @@ class Episode(models.Model):
             unlocked = None
             for i, puzzle in enumerate(self.puzzles.all()):
                 if not puzzle.answered_by(team):
-                    if unlocked is None:
+                    if unlocked is None:  # If this is the first not unlocked puzzle, it might be the "next puzzle"
                         unlocked = i + 1
-                    else:
+                    else:  # We've found a second not unlocked puzzle, we can terminate early and return None
                         return None
-            return unlocked
+            return unlocked  # This is either None, if we found no unlocked puzzles, or the one puzzle we found above
         else:
             for i, puzzle in enumerate(self.puzzles.all()):
                 if not puzzle.answered_by(team):
@@ -548,7 +546,7 @@ class AnnouncementType(Enum):
 
 
 class Announcement(models.Model):
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='announcements')
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING, related_name='announcements')
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE, related_name='announcements', null=True, blank=True)
     title = models.CharField(max_length=255)
     posted = models.DateTimeField(auto_now_add=True)
