@@ -8,7 +8,7 @@ import django.db.models.deletion
 
 
 def migrate_seat(apps, schema_editor):
-    Attendance = apps.get_model('accounts', 'Attendance')
+    Attendance = apps.get_model('events', 'Attendance')
     UserProfile = apps.get_model('accounts', 'UserProfile')
     for user in UserProfile.objects.all():
         for team in user.teams.annotate(Min('at_event__episode__start_date')).order_by('at_event__episode__start_date__min'):
@@ -19,7 +19,7 @@ def migrate_seat(apps, schema_editor):
 
 
 def revert_seat(apps, schema_editor):
-    Attendance = apps.get_model('accounts', 'Attendance')
+    Attendance = apps.get_model('events', 'Attendance')
     UserProfile = apps.get_model('accounts', 'UserProfile')
     for user in UserProfile.objects.all():
         attendance = user.attendance_set.annotate(Min('event__episode__start_date')).order_by('-at_event__episode__start_date__min').first()
@@ -30,7 +30,7 @@ def revert_seat(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('events', '0001_initial'),
+        ('events', '0003_merge_20180603_1925'),
     ]
 
     operations = [
