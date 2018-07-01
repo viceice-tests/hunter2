@@ -397,11 +397,11 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         }  # Puzzle files with matching slugs override hunt counterparts
 
         text = Template(runtimes.runtimes[puzzle.runtime].evaluate(
-            script=puzzle.content,
-            team_puzzle_data=data.tp_data,
-            user_puzzle_data=data.up_data,
-            team_data=data.t_data,
-            user_data=data.u_data,
+            puzzle.content,
+            data.tp_data,
+            data.up_data,
+            data.t_data,
+            data.u_data,
         )).safe_substitute(**files)
 
         flavour = Template(puzzle.flavour).safe_substitute(**files)
@@ -531,11 +531,11 @@ class Callback(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         response = HttpResponse(
             runtimes.runtimes[request.puzzle.cb_runtime].evaluate(
-                script=request.puzzle.cb_content,
-                team_puzzle_data=data.tp_data,
-                user_puzzle_data=data.up_data,
-                team_data=data.t_data,
-                user_data=data.u_data,
+                request.puzzle.cb_content,
+                data.tp_data,
+                data.up_data,
+                data.t_data,
+                data.u_data,
             )
         )
 
