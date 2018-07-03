@@ -45,7 +45,7 @@ class Team(models.Model):
         return super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('team', kwargs={'event_id': self.at_event.pk, 'team_id': self.pk})
+        return reverse('team', kwargs={'team_id': self.pk})
 
     def is_explicit(self):
         return self.name is not None
