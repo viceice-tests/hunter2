@@ -15,11 +15,6 @@ class EventsProvider(BaseProvider):
         name = name.replace('-', '')
         return name
 
-    def seat(self,):
-        row = self.generator.format('random_uppercase_letter')
-        seat = self.generator.format('random_int', min=1, max=144)
-        return f'{row}{seat}'
-
 
 factory.Faker.add_provider(EventsProvider)
 
@@ -106,4 +101,4 @@ class AttendanceFactory(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(UserProfileFactory)
     event = factory.SubFactory(EventFactory)
-    seat = factory.Faker('seat')
+    seat = factory.Faker('bothify', text='??##', letters='ABCDEFGHJKLMNPQRSTUVWXYZ')
