@@ -5,17 +5,23 @@ from django.db import connection
 from faker import Faker
 from faker.providers import BaseProvider
 
+from accounts.factories import UserProfileFactory
 from .models import Event
 
 
-class SchemaNameProvider(BaseProvider):
+class EventsProvider(BaseProvider):
     def schema_name(self,):
         name = self.generator.format('domain_word')
         name = name.replace('-', '')
         return name
 
+    def seat(self,):
+        row = self.generator.format('random_uppercase_letter')
+        seat = self.generator.format('random_int', min=1, max=144)
+        return f'{row}{seat}'
 
-factory.Faker.add_provider(SchemaNameProvider)
+
+factory.Faker.add_provider(EventsProvider)
 
 
 class SiteFactory(factory.django.DjangoModelFactory):
@@ -91,3 +97,13 @@ class EventFileFactory(factory.django.DjangoModelFactory):
         filename=factory.Faker('file_name'),
         data=factory.Faker('binary')
     )
+
+
+class AttendanceFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'events.Attendance'
+        django_get_or_create = ('event', 'user')
+
+    user = factory.SubFactory(UserProfileFactory)
+    event = factory.SubFactory(EventFactory)
+    seat = factory.Faker('seat')

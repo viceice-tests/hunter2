@@ -61,3 +61,6 @@ class Attendance(models.Model):
         default='',
         help_text='Enter your seat so we can find you easily if you get stuck. (To help you, not to mock you <3)'
     )
+
+    class Meta:
+        unique_together = (('event', 'user'), )
