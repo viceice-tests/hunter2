@@ -19,6 +19,6 @@ services:
     volumes:
       - ${PWD:-.}:/code
   flake8:
-    image: registry.gitlab.com/rconan/docker-flake8:3.5.0-0
+    image: registry.gitlab.com/rconan/docker-flake8:3.5.0-3
     volumes:
       - ${PWD:-.}:/code
