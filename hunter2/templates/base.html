@@ -31,24 +31,31 @@
 		<noscript>
 			You do not have JavaScript Enabled. JavaScript is required to access and take part in a hunt.
 		</noscript>
-		<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-			<div class="collapse navbar-toggleable-md">
-				<ul class="navbar-nav mr-auto">
-					{% block topbar_left %}
-					<li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
-					{% endblock %}
+
+		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
+			{% block topbar_left %}
+				<a class="nav-link" href="{% url 'index' %}">Home</a>
+			{% endblock %}
+
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+				<span class="navbar-toggler-icon"></span>
+		  	</button>
+
+			<div class="collapse navbar-collapse" id="collapsibleNavbar">
+				<ul class="navbar-nav">
 					{% block topbar_right %}
-					{% if user.is_authenticated %}
-					<li class="nav-item"><a class="nav-link" href="{% url 'edit_profile' %}" id="navUser">Account</a></li>
-					<li class="nav-item"><a class="nav-link" href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
-					<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
-					{% else %}
-					<li class="nav-item"><a class="nav-link" href="{% url 'account_login' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a></li>
-					{% endif %}
+						{% if user.is_authenticated %}
+							<li class="nav-item"><a class="nav-link" href="{% url 'edit_profile' %}" id="navUser">Account</a></li>
+							<li class="nav-item"><a class="nav-link" href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
+							<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
+						{% else %}
+							<li class="nav-item"><a class="nav-link" href="{% url 'account_login' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a></li>
+						{% endif %}
 					{% endblock %}
 				</ul>
-			</div>
+		  	</div>
 		</nav>
+
 		{% block debug %}{% endblock %}
 		<div class="container-fluid">
 			{% for announcement in announcements %}
