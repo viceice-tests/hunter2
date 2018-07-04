@@ -8,6 +8,8 @@
 	{% csrf_token %}
 	{{ user_form.as_p }}
 	{{ profile_formset.as_p }}
+	<h3>Details for {{ request.tenant }}</h3>
+	{{ attendance_formset.as_p }}
 	<button type="submit">Update</button>
 </form>
 {% endspaceless %}

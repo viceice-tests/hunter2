@@ -4,6 +4,8 @@ from django_tenants.models import TenantMixin, DomainMixin
 
 from .fields import SingleTrueBooleanField
 
+import accounts.models
+
 
 class Theme(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -48,3 +50,17 @@ class EventFile(models.Model):
 
     class Meta:
         unique_together = (('event', 'slug'), )
+
+
+class Attendance(models.Model):
+    user = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    seat = models.CharField(
+        max_length=12,
+        blank=True,
+        default='',
+        help_text='Enter your seat so we can find you easily if you get stuck. (To help you, not to mock you <3)'
+    )
+
+    class Meta:
+        unique_together = (('event', 'user'), )
