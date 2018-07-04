@@ -42,7 +42,7 @@
 		  	</button>
 
 			<div class="collapse navbar-collapse" id="collapsibleNavbar">
-				<ul class="navbar-nav">
+				<ul class="navbar-nav ml-auto">
 					{% block topbar_right %}
 						{% if user.is_authenticated %}
 							<li class="nav-item"><a class="nav-link" href="{% url 'edit_profile' %}" id="navUser">Account</a></li>
