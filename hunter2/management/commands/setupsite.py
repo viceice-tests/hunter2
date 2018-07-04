@@ -10,6 +10,7 @@ from django.core.management import BaseCommand, CommandError
 # https://github.com/django/django/blob/master/django/contrib/auth/management/commands/createsuperuser.py
 class Command(BaseCommand):
     help = 'Setup site name and domain'
+    stealth_options = ('stdin', )
 
     DEFAULT_SITE_NAME   = "Hunter 2"
     DEFAULT_SITE_DOMAIN = "hunter2.local"

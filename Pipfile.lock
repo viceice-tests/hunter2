@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "97208cae136da5dec68297542c46c14db22f47e5488a56b3f668d364bbc222cd"
+            "sha256": "a22583e52a58e908e659b89f857d59d827fafa0c14470d1e5cba20eb92f3c956"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -88,11 +88,11 @@
         },
         "django": {
             "hashes": [
-                "sha256:18986bcffe69653a84eaf1faa1fa5a7eded32cee41cfecc77fdc65a3e046404d",
-                "sha256:46adfe8e0abe4d1f026c1086889970b611aec492784fbdfbdaabc2457360a4a5"
+                "sha256:97886b8a13bbc33bfeba2ff133035d3eca014e2309dff2b6da0bdfc0b8656613",
+                "sha256:e900b73beee8977c7b887d90c6c57d68af10066b9dac898e1eaf0f82313de334"
             ],
             "index": "pypi",
-            "version": "==1.11.13"
+            "version": "==2.0.7"
         },
         "django-allauth": {
             "git": "https://github.com/riconnon/django-allauth.git",
@@ -178,8 +178,8 @@
             "version": "==1.5.0"
         },
         "django-tenants": {
-            "git": "https://github.com/riconnon/django-tenants.git",
-            "ref": "v1.3.4+1"
+            "git": "https://github.com/tomturner/django-tenants.git",
+            "ref": "0a5ff14478e44f55ea566d020e0252bb6ca5ac24"
         },
         "django-url-tools-py3": {
             "hashes": [
@@ -433,11 +433,11 @@
         },
         "django": {
             "hashes": [
-                "sha256:18986bcffe69653a84eaf1faa1fa5a7eded32cee41cfecc77fdc65a3e046404d",
-                "sha256:46adfe8e0abe4d1f026c1086889970b611aec492784fbdfbdaabc2457360a4a5"
+                "sha256:97886b8a13bbc33bfeba2ff133035d3eca014e2309dff2b6da0bdfc0b8656613",
+                "sha256:e900b73beee8977c7b887d90c6c57d68af10066b9dac898e1eaf0f82313de334"
             ],
             "index": "pypi",
-            "version": "==1.11.13"
+            "version": "==2.0.7"
         },
         "django-silk": {
             "hashes": [

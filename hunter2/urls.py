@@ -1,9 +1,9 @@
 from allauth.account.views import logout as allauth_logout
-from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.urls import include, path
 from django.views.defaults import page_not_found, server_error, bad_request, permission_denied
 from django.views.csrf import csrf_failure
 
@@ -20,9 +20,9 @@ admin.site.login = login_required(admin.site.login)
 admin.site.logout = allauth_logout
 
 urlpatterns = [
-    url(r'^accounts/', include('allauth.urls')),
-    url(r'^admin/', admin.site.urls),
-    url(r'^nested_admin/', include('nested_admin.urls')),
+    path('accounts/', include('allauth.urls')),
+    path('admin/', admin.site.urls),
+    path('nested_admin/', include('nested_admin.urls')),
 ] \
     + staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
@@ -35,19 +35,19 @@ if settings.DEBUG:
     import debug_toolbar
 
     urlpatterns += [
-        url(r'^__debug__/', include(debug_toolbar.urls)),
+        path('__debug__/', include(debug_toolbar.urls)),
     ]
 
     # Http error code handlers (including CSRF validation)
     urlpatterns += [
-        url(r'^test/http/400/$', bad_request, kwargs={'exception': Exception("Bad Request!")}),
-        url(r'^test/http/403/$', permission_denied, kwargs={'exception': Exception("Permission Denied")}),
-        url(r'^test/http/403/csrf/$', csrf_failure),
-        url(r'^test/http/404/$', page_not_found, kwargs={'exception': Exception("Page not Found")}),
-        url(r'^test/http/500/$', server_error),
+        path('test/http/400/', bad_request, kwargs={'exception': Exception("Bad Request!")}),
+        path('test/http/403/', permission_denied, kwargs={'exception': Exception("Permission Denied")}),
+        path('test/http/403/csrf/', csrf_failure),
+        path('test/http/404/', page_not_found, kwargs={'exception': Exception("Page not Found")}),
+        path('test/http/500/', server_error),
     ]
 
     if settings.USE_SILK:  # nocover
         urlpatterns.append(
-            url(r'^silk/', include('silk.urls', namespace='silk')),
+            path('silk/', include('silk.urls', namespace='silk')),
         )
