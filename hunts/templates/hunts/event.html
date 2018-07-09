@@ -7,11 +7,13 @@
 {% block content %}
 
 {% if episodes|length > 0 %}
+<div class="col-md-6">
 <ul id="ep-list" class="nav nav-tabs">
 {% for episode in episodes %}
-<li><a class="episode-link" href="#episode-{{ episode.index }}" data-url="{% url 'episode_content' episode_number=episode.index %}" data-toggle="tab">{{ episode.name }}</a></li>
+<li><a class="episode-link nav-link" href="#episode-{{ episode.index }}" data-url="{% url 'episode_content' episode_number=episode.index %}" data-toggle="tab">{{ episode.name }}</a></li>
 {% endfor %}
 </ul>
+</div>
 <div class="tab-content">
 {% for episode in episodes %}
 <div class="tab-pane" id="episode-{{ episode.index }}"></div>

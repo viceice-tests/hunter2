@@ -13,7 +13,7 @@
 		<script src="https://cdn.ravenjs.com/3.24.2/raven.min.js" integrity="sha256-aQcL/lJFlqXoaB8IUpqp21jpU+SAjUm9WFRxJmroQKc=" crossorigin="anonymous"></script>
 		<script>Raven.config('{% sentry_public_dsn "https" %}').install()</script>
 
-		<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+		<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
 		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
 
@@ -33,15 +33,17 @@
 		</noscript>
 
 		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
-			{% block topbar_left %}
-				<a class="nav-link" href="{% url 'index' %}">Home</a>
-			{% endblock %}
-
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
-				<span class="navbar-toggler-icon"></span>
-		  	</button>
-
 			<div class="collapse navbar-collapse" id="collapsibleNavbar">
+				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+
+				<ul class="navbar-nav">
+					{% block topbar_left %}
+						<li class="navbar-brand"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
+					{% endblock %}
+				</ul>
+
 				<ul class="navbar-nav ml-auto">
 					{% block topbar_right %}
 						{% if user.is_authenticated %}
@@ -57,16 +59,16 @@
 		</nav>
 
 		{% block debug %}{% endblock %}
-		<div class="container-fluid">
+		<div class="container-fluid pt-3">
 			{% for announcement in announcements %}
-			<div class="alert {{ announcement.css_type }} fade in">
+			<div class="alert {{ announcement.css_type }}" role="alert">
 				<strong>{{ announcement.title }}</strong> {{ announcement.message }}
 			</div>
 			{% endfor %}
-			<header class="container-fluid">
+			<header class="container pt-3">
 				{% block page_header %}{% endblock page_header%}
 			</header>
-			<div id="content" class="container">
+			<div id="content" class="container pt-3">
 			{% block content %}
 				If you're seeing this, contact the site administrators.
 			{% endblock content %}
