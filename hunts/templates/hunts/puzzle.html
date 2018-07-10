@@ -45,7 +45,19 @@
 	<button type="submit" id="answer-button" class="btn btn-default">Guess!</button>
 </form>
 {% endif %}
-{% if hints %}
-
+{% if ended %}
+<button id="soln-button" class="btn btn-primary" data-toggle="collapse" data-target="#solution-content" data-url="{% url 'solution_content' episode_number=episode_number puzzle_number=puzzle_number %}">Reveal Solution</button>
+<div id="soln-collapsible" class="collapse">
+	<div id="solution-content" class="card card-body">
+	</div>
+</div>
+<script>
+$(function() {
+	$('#soln-collapsible').on('show.bs.collapse', function(e) {
+		var target = $('#soln-button').attr('data-target');
+		$(target).load(url, function(result) {
+		});
+	});
+});
 {% endif %}
 {% endblock %}
