@@ -24,6 +24,7 @@
 {% endif %}
 <script>
 $(function() {
+	"use strict";
 	$('a[data-toggle="tab"]').on('show.bs.tab', function(e) {
 		var url = $(this).data('url');
 		var target = $(this).attr('href');

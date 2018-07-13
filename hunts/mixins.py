@@ -1,6 +1,7 @@
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
+from django.utils import timezone
 
 from . import rules
 from . import utils
@@ -14,7 +15,9 @@ class EpisodeUnlockedMixin():
         request.episode = utils.event_episode(request.tenant, episode_number)
         request.admin = rules.is_admin_for_episode(request.user, request.episode)
 
-        if not request.episode.started(request.team) and not request.admin:
+        now = timezone.now()
+
+        if not request.episode.started(request.team) and not request.admin and request.tenant.end_date > now:
             if request.is_ajax():
                 raise PermissionDenied
             return TemplateResponse(
@@ -29,7 +32,7 @@ class EpisodeUnlockedMixin():
             )
 
         # TODO: May need caching of progress to avoid DB load
-        if not request.episode.unlocked_by(request.team):
+        if not request.episode.unlocked_by(request.team) and not request.admin and request.tenant.end_date > now:
             if request.is_ajax():
                 raise PermissionDenied
             return TemplateResponse(
@@ -50,7 +53,9 @@ class PuzzleUnlockedMixin():
                 raise PermissionDenied
             return redirect(f'{request.tenant.get_absolute_url()}#episode-{episode_number}')
 
-        if not request.puzzle.started(request.team) and not request.admin:
+        now = timezone.now()
+
+        if not request.puzzle.started(request.team) and not request.admin and request.tenant.end_date > now:
             if request.is_ajax():
                 raise PermissionDenied
             return TemplateResponse(
@@ -62,7 +67,7 @@ class PuzzleUnlockedMixin():
                 status=403,
             )
 
-        if not request.puzzle.unlocked_by(request.team) and not request.admin:
+        if not request.puzzle.unlocked_by(request.team) and not request.admin and request.tenant.end_date > now:
             if request.is_ajax():
                 raise PermissionDenied
             return TemplateResponse(

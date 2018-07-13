@@ -18,9 +18,7 @@ from sendfile import sendfile
 from string import Template
 from teams.mixins import TeamMixin
 
-from . import models
-from . import rules
-from . import runtimes
+from . import models, rules, runtimes, utils
 from .mixins import EpisodeUnlockedMixin, PuzzleUnlockedMixin
 
 import hunter2
@@ -430,8 +428,8 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         return response
 
 
-class SolutionContent(View):
-    def get(self, request, episode_number, puzzle_number, file_slug):
+class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
+    def get(self, request, episode_number, puzzle_number):
         episode, puzzle = utils.event_episode_puzzle(request.tenant, episode_number, puzzle_number)
         admin = rules.is_admin_for_puzzle(request.user, puzzle)
 
