@@ -291,9 +291,17 @@ class PuzzleAccessTests(EventTestCase):
             resp = self.client.post(
                 reverse('answer', kwargs=kwargs),
                 {'answer': 'NOT_CORRECT'},  # Deliberately incorrect answer
-                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
             )
             self.assertEqual(resp.status_code, expected_response)
+
+            # Solution
+            resp = self.client.get(
+                reverse('solution_content', kwargs=kwargs),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
+            # Solution should always fail with 403 except for the ended case which is separate below
+            self.assertEqual(resp.status_code, 403)
 
         # This test submits two answers on the same puzzle so we have to jump forward 5 seconds
         with freezegun.freeze_time() as frozen_datetime:
@@ -339,6 +347,13 @@ class PuzzleAccessTests(EventTestCase):
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest'
             )
             self.assertEqual(resp.status_code, 400)
+
+            # Solution
+            resp = self.client.get(
+                reverse('solution_content', kwargs=kwargs),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+            self.assertEqual(resp.status_code, 200)
 
             # Revert to current time
             frozen_datetime.move_to(old_time)
