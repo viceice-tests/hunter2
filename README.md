@@ -32,13 +32,13 @@ If you are running a development instance on a laptop then you need to add some 
 ```
 echo 127.0.0.1 hunter2.local dev.hunter2.local > /etc/hosts
 docker-compose run --rm app createsuperuser
-docker-compose run --rm app createdefaultevent
+docker-compose run --rm app createevent
 ```
 `dev.hunter2.local` is the default event subdomain. If you are working with more events add more names here.
 
 To create the base objects run the following:
 ```
-docker-compose run --rm app python manage.py setupsite
-docker-compose run --rm app python manage.py createsuperuser
-docker-compose run --rm app python manage.py createevent
+docker-compose run --rm app setupsite
+docker-compose run --rm app createsuperuser
+docker-compose run --rm app createevent
 ```

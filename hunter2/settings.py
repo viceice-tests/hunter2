@@ -167,6 +167,7 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
+    'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
 if USE_SILK:  # nocover

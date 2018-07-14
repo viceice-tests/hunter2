@@ -13,6 +13,7 @@ from ...models import Domain, Event, Theme
 # https://github.com/django/django/blob/master/django/contrib/auth/management/commands/createsuperuser.py
 class Command(BaseCommand):
     help = 'Creates an event and associated theme, tenant and domain'
+    stealth_options = ('stdin', )
 
     DEFAULT_EVENT_NAME = "Development Event"
     DEFAULT_THEME_NAME = "Development Theme"

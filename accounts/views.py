@@ -31,11 +31,13 @@ class EditProfileView(LoginRequiredMixin, View):
         user_form = forms.UserForm(instance=request.user)
         password_form = ChangePasswordForm(user=request.user) if request.user.has_usable_password() else SetPasswordForm(user=request.user)
         profile_formset = forms.UserProfileFormset(instance=request.user)
+        attendance_formset = forms.AttendanceFormset(instance=request.user.profile, queryset=request.user.profile.attendance_set.filter(event=request.tenant))
         steam_linked = request.user.socialaccount_set.exists()  # This condition breaks down if we support multiple social accounts.
         context = {
             'user_form': user_form,
             'password_form': password_form,
             'profile_formset': profile_formset,
+            'attendance_formset': attendance_formset,
             'steam_linked': steam_linked,
         }
         return TemplateResponse(
@@ -50,6 +52,10 @@ class EditProfileView(LoginRequiredMixin, View):
             created_user = user_form.save(commit=False)
             profile_formset = forms.UserProfileFormset(request.POST, instance=created_user)
             if profile_formset.is_valid():
-                created_user.save()
-                profile_formset.save()
-                return HttpResponseRedirect(reverse('edit_profile'))
+                created_profile = profile_formset[0].save(commit=False)
+                attendance_formset = forms.AttendanceFormset(request.POST, instance=created_profile)
+                if attendance_formset.is_valid():
+                    created_user.save()
+                    profile_formset.save()
+                    attendance_formset.save()
+                    return HttpResponseRedirect(reverse('edit_profile'))

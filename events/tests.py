@@ -3,7 +3,7 @@ from unittest.case import expectedFailure
 
 from django.core.management import CommandError, call_command
 
-from events.factories import EventFactory, EventFileFactory, ThemeFactory
+from events.factories import AttendanceFactory, EventFactory, EventFileFactory, ThemeFactory
 from events.models import Event, Theme
 from hunter2.tests import MockTTY, mock_inputs
 from . import factories
@@ -21,6 +21,9 @@ class FactoryTests(EventTestCase):
 
     def test_event_file_factory_default_construction(self):
         EventFileFactory.create()
+
+    def test_attendance_factory_default_construction(self):
+        AttendanceFactory.create()
 
 
 class EventRulesTests(EventAwareTestCase):
