@@ -89,10 +89,10 @@ class Puzzle(models.Model):
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
-        # TODO: Make it not depend on a team. So single player puzzles work.
         episode = self.episode_set.get(event=team.at_event)
-        return episode.unlocked_by(team) and \
-            episode._puzzle_unlocked_by(self, team)
+        result = episode.event.end_date < timezone.now() or \
+            episode.unlocked_by(team) and episode._puzzle_unlocked_by(self, team)
+        return result
 
     def answered_by(self, team):
         """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
@@ -493,7 +493,9 @@ class Episode(models.Model):
         return -1
 
     def unlocked_by(self, team):
-        return all([episode.finished_by(team) for episode in self.prequels.all()])
+        result = self.event.end_date < timezone.now() or \
+            all([episode.finished_by(team) for episode in self.prequels.all()])
+        return result
 
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])

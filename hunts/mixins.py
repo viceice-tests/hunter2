@@ -15,9 +15,7 @@ class EpisodeUnlockedMixin():
         request.episode = utils.event_episode(request.tenant, episode_number)
         request.admin = rules.is_admin_for_episode(request.user, request.episode)
 
-        now = timezone.now()
-
-        if not request.episode.started(request.team) and not request.admin and request.tenant.end_date > now:
+        if not request.episode.started(request.team) and not request.admin:
             if request.is_ajax():
                 raise PermissionDenied
             return TemplateResponse(
@@ -32,7 +30,7 @@ class EpisodeUnlockedMixin():
             )
 
         # TODO: May need caching of progress to avoid DB load
-        if not request.episode.unlocked_by(request.team) and not request.admin and request.tenant.end_date > now:
+        if not request.episode.unlocked_by(request.team) and not request.admin:
             if request.is_ajax():
                 raise PermissionDenied
             return TemplateResponse(
@@ -53,9 +51,7 @@ class PuzzleUnlockedMixin():
                 raise PermissionDenied
             return redirect(f'{request.tenant.get_absolute_url()}#episode-{episode_number}')
 
-        now = timezone.now()
-
-        if not request.puzzle.started(request.team) and not request.admin and request.tenant.end_date > now:
+        if not request.puzzle.started(request.team) and not request.admin:
             if request.is_ajax():
                 raise PermissionDenied
             return TemplateResponse(
@@ -67,7 +63,7 @@ class PuzzleUnlockedMixin():
                 status=403,
             )
 
-        if not request.puzzle.unlocked_by(request.team) and not request.admin and request.tenant.end_date > now:
+        if not request.puzzle.unlocked_by(request.team) and not request.admin:
             if request.is_ajax():
                 raise PermissionDenied
             return TemplateResponse(

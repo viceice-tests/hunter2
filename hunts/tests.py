@@ -28,6 +28,7 @@ from .factories import (
     UserDataFactory,
     UserPuzzleDataFactory,
 )
+from events.models import Event
 from .models import PuzzleData, TeamPuzzleData
 
 
@@ -260,10 +261,9 @@ class PuzzleStartTimeTests(EventTestCase):
 
 class PuzzleAccessTests(EventTestCase):
     def setUp(self):
-        self.episode = EpisodeFactory(parallel=False)
+        self.episode = EpisodeFactory(event=self.tenant, parallel=False)
         self.puzzles = PuzzleFactory.create_batch(3, episode=self.episode)
-        self.event = self.episode.event
-        self.user = TeamMemberFactory(team__at_event=self.event)
+        self.user = TeamMemberFactory(team__at_event=self.tenant)
 
     def test_puzzle_view_authorisation(self):
         self.client.force_login(self.user.user)
@@ -310,6 +310,17 @@ class PuzzleAccessTests(EventTestCase):
             _check_load_callback_answer(self.puzzles[1], 200)
             # Can't load, callback or answer the third puzzle
             _check_load_callback_answer(self.puzzles[2], 403)
+
+            # Can load third puzzle and solution after event ends
+            old_time = frozen_datetime()
+            frozen_datetime.move_to(self.tenant.end_date + datetime.timedelta(seconds=1))
+            kwargs = {
+                'episode_number': self.episode.get_relative_id(),
+                'puzzle_number': self.puzzles[2].get_relative_id(),
+            }
+            resp = self.client.get(reverse('puzzle', kwargs=kwargs))
+            self.assertEqual(resp.status_code, 200)
+            frozen_datetime.move_to(old_time)
 
             # Answer the second puzzle after a delay of 5 seconds
             frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
@@ -495,6 +506,19 @@ class EpisodeSequenceTests(EventTestCase):
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 403)
+
+        # Can load second episode after event end
+        with freezegun.freeze_time() as frozen_datetime:
+            frozen_datetime.move_to(self.event.end_date + datetime.timedelta(seconds=1))
+            response = self.client.get(
+                reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
+            )
+            self.assertEqual(response.status_code, 200)
+            response = self.client.get(
+                reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+            self.assertEqual(response.status_code, 200)
 
         # Unlock second episode
         GuessFactory(for_puzzle=puzzle, by=self.user, correct=True)
