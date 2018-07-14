@@ -311,15 +311,36 @@ class PuzzleAccessTests(EventTestCase):
             # Can't load, callback or answer the third puzzle
             _check_load_callback_answer(self.puzzles[2], 403)
 
-            # Can load third puzzle and solution after event ends
+            # Can load third puzzle, but not callback or answer after event ends
             old_time = frozen_datetime()
             frozen_datetime.move_to(self.tenant.end_date + datetime.timedelta(seconds=1))
+
+            # Load
             kwargs = {
                 'episode_number': self.episode.get_relative_id(),
                 'puzzle_number': self.puzzles[2].get_relative_id(),
             }
             resp = self.client.get(reverse('puzzle', kwargs=kwargs))
             self.assertEqual(resp.status_code, 200)
+
+            # Callback
+            resp = self.client.post(
+                reverse('callback', kwargs=kwargs),
+                content_type='application/json',
+                HTTP_ACCEPT='application/json',
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
+            self.assertEqual(resp.status_code, 400)
+
+            # Answer
+            resp = self.client.post(
+                reverse('answer', kwargs=kwargs),
+                {'answer': 'NOT_CORRECT'},  # Deliberately incorrect answer
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+            self.assertEqual(resp.status_code, 400)
+
+            # Revert to current time
             frozen_datetime.move_to(old_time)
 
             # Answer the second puzzle after a delay of 5 seconds

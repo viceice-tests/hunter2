@@ -558,6 +558,9 @@ class Callback(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         if 'application/json' not in request.META['HTTP_ACCEPT']:
             return HttpResponse(status=406)
 
+        if request.tenant.end_date < timezone.now():
+            return JsonResponse({'error': 'event is over'}, status=400)
+
         data = models.PuzzleData(request.puzzle, request.team, request.user.profile)
 
         response = HttpResponse(
