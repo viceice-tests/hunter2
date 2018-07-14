@@ -1,7 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
-from django.utils import timezone
 
 from . import rules
 from . import utils

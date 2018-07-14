@@ -28,7 +28,6 @@ from .factories import (
     UserDataFactory,
     UserPuzzleDataFactory,
 )
-from events.models import Event
 from .models import PuzzleData, TeamPuzzleData
 
 
