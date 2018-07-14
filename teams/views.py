@@ -16,9 +16,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
+from django.urls import reverse
 from django.views import View
 from django.views.generic import UpdateView
-from hunter2.resolvers import reverse
+
 from accounts.models import UserProfile
 from . import forms, models
 from .forms import CreateTeamForm, InviteForm, RequestForm
@@ -31,7 +32,7 @@ class TeamAutoComplete(LoginRequiredMixin, autocomplete.Select2QuerySetView):
     raise_exception = True
 
     def get_queryset(self):
-        qs = models.Team.objects.filter(at_event=self.request.event).order_by('name')
+        qs = models.Team.objects.filter(at_event=self.request.tenant).order_by('name')
 
         if self.q:
             qs = qs.filter(name__istartswith=self.q)
@@ -47,9 +48,8 @@ class CreateTeamView(LoginRequiredMixin, TeamMixin, UpdateView):
         return self.request.team
 
     def get_success_url(self):
-        event_id = self.request.event.pk
         team_id = self.request.team.pk
-        return reverse('team', subdomain=self.request.subdomain, kwargs={'event_id': event_id, 'team_id': team_id})
+        return reverse('team', kwargs={'team_id': team_id})
 
 
 class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
@@ -84,7 +84,7 @@ class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
 class TeamView(LoginRequiredMixin, TeamMixin, View):
     def get(self, request, team_id):
         team = get_object_or_404(
-            models.Team, at_event=request.event, pk=team_id
+            models.Team, at_event=request.tenant, pk=team_id
         )
         if not team.name:
             raise Http404
@@ -106,7 +106,7 @@ class Invite(LoginRequiredMixin, TeamMixin, View):
 
     def post(self, request, team_id):
         data = json.loads(request.body)
-        team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
+        team = get_object_or_404(models.Team, at_event=request.tenant, pk=team_id)
         user = request.user.profile
         if user not in team.members.all():
             return JsonResponse({
@@ -125,7 +125,7 @@ class Invite(LoginRequiredMixin, TeamMixin, View):
                 'result': 'Bad Request',
                 'message': 'User has already been invited',
             }, status=400)
-        if user.is_on_explicit_team(request.event):
+        if user.is_on_explicit_team(request.tenant):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'User is already a member of a team for this event',
@@ -148,7 +148,7 @@ class CancelInvite(LoginRequiredMixin, TeamMixin, View):
 
     def post(self, request, team_id):
         data = json.loads(request.body)
-        team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
+        team = get_object_or_404(models.Team, at_event=request.tenant, pk=team_id)
         if request.user.profile not in team.members.all():
             return JsonResponse({
                 'result': 'Forbidden',
@@ -179,7 +179,7 @@ class AcceptInvite(LoginRequiredMixin, TeamMixin, View):
     raise_exception = True
 
     def post(self, request, team_id):
-        team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
+        team = get_object_or_404(models.Team, at_event=request.tenant, pk=team_id)
         user = request.user.profile
         if user not in team.invites.all():
             return JsonResponse({
@@ -187,7 +187,7 @@ class AcceptInvite(LoginRequiredMixin, TeamMixin, View):
                 'message': 'Not invited to this team',
                 'delete': True,
             }, status=400)
-        if user.is_on_explicit_team(request.event):
+        if user.is_on_explicit_team(request.tenant):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'Already on a team for this event',
@@ -200,11 +200,11 @@ class AcceptInvite(LoginRequiredMixin, TeamMixin, View):
                 'message': 'This team is full',
                 'delete': True,
             }, status=400)
-        old_team = request.user.profile.team_at(request.event)
+        old_team = request.user.profile.team_at(request.tenant)
         old_team.guess_set.update(by_team=team)
         old_team.delete()  # This is the user's implicit team, as checked above.
-        user.team_invites.remove(*user.team_invites.filter(at_event=request.event))
-        user.team_requests.remove(*user.team_requests.filter(at_event=request.event))
+        user.team_invites.remove(*user.team_invites.filter(at_event=request.tenant))
+        user.team_requests.remove(*user.team_requests.filter(at_event=request.tenant))
         team.members.add(user)
         return JsonResponse({
             'result': 'OK',
@@ -216,7 +216,7 @@ class DenyInvite(LoginRequiredMixin, TeamMixin, View):
     raise_exception = True
 
     def post(self, request, team_id):
-        team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
+        team = get_object_or_404(models.Team, at_event=request.tenant, pk=team_id)
         user = request.user.profile
         if user not in team.invites.all():
             return JsonResponse({
@@ -235,9 +235,9 @@ class Request(LoginRequiredMixin, TeamMixin, View):
     raise_exception = True
 
     def post(self, request, team_id):
-        team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
+        team = get_object_or_404(models.Team, at_event=request.tenant, pk=team_id)
         user = request.user.profile
-        if user.is_on_explicit_team(request.event):
+        if user.is_on_explicit_team(request.tenant):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'Already a member of a team for this event',
@@ -264,7 +264,7 @@ class CancelRequest(LoginRequiredMixin, TeamMixin, View):
     raise_exception = True
 
     def post(self, request, team_id):
-        team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
+        team = get_object_or_404(models.Team, at_event=request.tenant, pk=team_id)
         user = request.user.profile
         if user not in team.requests.all():
             return JsonResponse({
@@ -284,7 +284,7 @@ class AcceptRequest(LoginRequiredMixin, TeamMixin, View):
 
     def post(self, request, team_id):
         data = json.loads(request.body)
-        team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
+        team = get_object_or_404(models.Team, at_event=request.tenant, pk=team_id)
         if request.user.profile not in team.members.all():
             return JsonResponse({
                 'result': 'Forbidden',
@@ -304,7 +304,7 @@ class AcceptRequest(LoginRequiredMixin, TeamMixin, View):
                 'message': 'User has not requested to join',
                 'delete': True,
             }, status=400)
-        if user.is_on_explicit_team(request.event):
+        if user.is_on_explicit_team(request.tenant):
             return JsonResponse({
                 'result': 'Bad Request',
                 'message': 'Already a member of a team for this event',
@@ -317,17 +317,18 @@ class AcceptRequest(LoginRequiredMixin, TeamMixin, View):
                 'message': 'This team is full',
                 'delete': True,
             }, status=400)
-        old_team = user.team_at(request.event)
+        old_team = user.team_at(request.tenant)
         old_team.guess_set.update(by_team=team)
         old_team.delete()  # This is the user's implicit team, as checked above.
-        user.team_invites.remove(*user.team_invites.filter(at_event=request.event))
-        user.team_requests.remove(*user.team_requests.filter(at_event=request.event))
+        user.team_invites.remove(*user.team_invites.filter(at_event=request.tenant))
+        user.team_requests.remove(*user.team_requests.filter(at_event=request.tenant))
         team.members.add(user)
+        seat = user.attendance_at(request.tenant).seat
         return JsonResponse({
             'result': 'OK',
             'message': 'Request accepted',
             'username': user.user.username,
-            'seat': user.seat,
+            'seat': seat,
         })
 
 
@@ -336,7 +337,7 @@ class DenyRequest(LoginRequiredMixin, TeamMixin, View):
 
     def post(self, request, team_id):
         data = json.loads(request.body)
-        team = get_object_or_404(models.Team, at_event=request.event, pk=team_id)
+        team = get_object_or_404(models.Team, at_event=request.tenant, pk=team_id)
         if request.user.profile not in team.members.all():
             return JsonResponse({
                 'result': 'Forbidden',

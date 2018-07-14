@@ -1,7 +1,6 @@
-FROM python:3.6.5-alpine3.7 AS python_build
+FROM python:3.7.0-alpine3.7 AS python_build
 
 ARG DEVELOPMENT=
-COPY pip.conf /etc/pip.conf
 COPY Pipfile Pipfile.lock pipenv.txt /usr/src/app/
 WORKDIR /usr/src/app
 
@@ -16,7 +15,8 @@ RUN pip install --no-deps -r pipenv.txt
 RUN pipenv lock -r --keep-outdated > requirements.txt
 RUN [ -z ${DEVELOPMENT} ] || pipenv lock -d -r --keep-outdated >> requirements.txt
 # Even though requirements.txt includes all dependencies it's parsed in order so we need --no-deps to avoid unwanted updates.
-RUN pip wheel --no-deps -r requirements.txt -w /wheels
+# idna 2.7 wheel has files with wonky permissions
+RUN pip wheel --no-binary idna --no-deps -r requirements.txt -w /wheels
 
 
 FROM alpine:3.7 AS lua_build
@@ -34,7 +34,7 @@ RUN luarocks-5.2 install lua-cjson 2.1.0-1
 RUN luarocks-5.2 install lua-imlib2 dev-2
 
 
-FROM python:3.6.5-alpine3.7
+FROM python:3.7.0-alpine3.7
 
 COPY --from=python_build /wheels /wheels
 

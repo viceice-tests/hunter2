@@ -24,9 +24,9 @@ from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.safestring import mark_safe
+from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
-from hunter2.resolvers import reverse
 from sendfile import sendfile
 from string import Template
 from teams.mixins import TeamMixin
@@ -36,7 +36,6 @@ from . import rules
 from . import runtimes
 from .mixins import EpisodeUnlockedMixin, PuzzleUnlockedMixin
 
-import events
 import hunter2
 import teams
 
@@ -69,7 +68,7 @@ class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
         else:
             position = None
 
-        files = {f.slug: f.file.url for f in request.event.eventfile_set.all()}
+        files = {f.slug: f.file.url for f in request.tenant.eventfile_set.all()}
         flavour = Template(request.episode.flavour).safe_substitute(**files)
 
         return TemplateResponse(
@@ -80,7 +79,6 @@ class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
                 'flavour': flavour,
                 'position': position,
                 'episode_number': episode_number,
-                'event_id': request.event.pk,
                 'puzzles': puzzles,
             }
         )
@@ -98,7 +96,6 @@ class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
             context={
                 'flavour': request.episode.flavour,
                 'episode_number': episode_number,
-                'event_id': request.event.pk,
                 'puzzles': puzzles,
             }
         )
@@ -106,7 +103,7 @@ class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
 
 class EpisodeList(LoginRequiredMixin, View):
     def get(self, request):
-        admin = rules.is_admin_for_event(request.user, request.event)
+        admin = rules.is_admin_for_event(request.user, request.tenant)
 
         if not admin:
             raise PermissionDenied
@@ -114,12 +111,12 @@ class EpisodeList(LoginRequiredMixin, View):
         return JsonResponse([{
             'id': episode.pk,
             'name': episode.name
-        } for episode in models.Episode.objects.filter(event=request.event)], safe=False)
+        } for episode in models.Episode.objects.filter(event=request.tenant)], safe=False)
 
 
 class Guesses(LoginRequiredMixin, View):
     def get(self, request):
-        admin = rules.is_admin_for_event(request.user, request.event)
+        admin = rules.is_admin_for_event(request.user, request.tenant)
 
         if not admin:
             raise PermissionDenied
@@ -132,7 +129,7 @@ class Guesses(LoginRequiredMixin, View):
 
 class GuessesContent(LoginRequiredMixin, View):
     def get(self, request):
-        admin = rules.is_admin_for_event(request.user, request.event)
+        admin = rules.is_admin_for_event(request.user, request.tenant)
 
         if not admin:
             return HttpResponseForbidden()
@@ -141,7 +138,7 @@ class GuessesContent(LoginRequiredMixin, View):
         puzzle = request.GET.get('puzzle')
         team = request.GET.get('team')
 
-        puzzles = models.Puzzle.objects.filter(episode__event=request.event)
+        puzzles = models.Puzzle.objects.filter(episode__event=request.tenant)
         if puzzle:
             puzzles = puzzles.filter(id=puzzle)
         if episode:
@@ -198,14 +195,13 @@ class GuessesContent(LoginRequiredMixin, View):
 
         # Grab the current URL (which is not the URL of *this* view) so that we can manipulate the query string
         # in the template.
-        current_url = reverse('guesses', subdomain=request.subdomain, kwargs={'event_id': request.event.pk})
+        current_url = reverse('guesses')
         current_url += '?' + request.GET.urlencode()
 
         return TemplateResponse(
             request,
             'hunts/guesses_content.html',
             context={
-                'event_id': request.event.pk,
                 'guesses': guesses,
                 'current_url': current_url
             }
@@ -214,7 +210,7 @@ class GuessesContent(LoginRequiredMixin, View):
 
 class Stats(LoginRequiredMixin, View):
     def get(self, request):
-        admin = rules.is_admin_for_event(request.user, request.event)
+        admin = rules.is_admin_for_event(request.user, request.tenant)
 
         if not admin:
             raise PermissionDenied
@@ -227,16 +223,16 @@ class Stats(LoginRequiredMixin, View):
 
 class StatsContent(LoginRequiredMixin, View):
     def get(self, request, episode_id):
-        admin = rules.is_admin_for_event(request.user, request.event)
+        admin = rules.is_admin_for_event(request.user, request.tenant)
 
         if not admin:
             raise PermissionDenied
 
         now = timezone.now()
-        end_time = min(now, request.event.end_date) + timedelta(minutes=10)
+        end_time = min(now, request.tenant.end_date) + timedelta(minutes=10)
 
         # TODO select and prefetch all the things
-        episodes = models.Episode.objects.filter(event=request.event).order_by('start_date')
+        episodes = models.Episode.objects.filter(event=request.tenant).order_by('start_date')
         if episode_id != 'all':
             episodes = episodes.filter(pk=episode_id)
             if not episodes.exists():
@@ -249,7 +245,7 @@ class StatsContent(LoginRequiredMixin, View):
         all_teams = teams.models.Team.objects.annotate(
             num_members=Count('members')
         ).filter(
-            at_event=request.event, num_members__gte=1
+            at_event=request.tenant, num_members__gte=1
         ).prefetch_related('members', 'members__user')
 
         # Get the first correct guess for each team on each puzzle.
@@ -347,18 +343,13 @@ class StatsContent(LoginRequiredMixin, View):
 
 class EventDirect(LoginRequiredMixin, View):
     def get(self, request):
-        event = events.models.Event.objects.filter(current=True).get()
-
-        return redirect(
-            'event',
-            event_id=event.id,
-        )
+        return redirect('event')
 
 
 class EventIndex(LoginRequiredMixin, View):
     def get(self, request):
 
-        event = request.event
+        event = request.tenant
 
         episodes = [
             e for e in
@@ -375,7 +366,6 @@ class EventIndex(LoginRequiredMixin, View):
             'hunts/event.html',
             context={
                 'event_title':  event.name,
-                'event_id':     event.id,
                 'episodes':     list(episodes),
             }
         )
@@ -409,28 +399,27 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             unlocks.append({'guesses': guesses, 'text': mark_safe(u.text)})
 
         files = {
-            **{f.slug: f.file.url for f in request.event.eventfile_set.all()},
+            **{f.slug: f.file.url for f in request.tenant.eventfile_set.all()},
             **{f.slug: reverse(
                 'puzzle_file',
                 kwargs={
-                    'event_id': request.event.pk,
                     'episode_number': episode_number,
                     'puzzle_number': puzzle_number,
                     'file_slug': f.slug,
-                }, subdomain='www') for f in puzzle.puzzlefile_set.all()},
+                }) for f in puzzle.puzzlefile_set.all()},
         }  # Puzzle files with matching slugs override hunt counterparts
 
         text = Template(runtimes.runtimes[puzzle.runtime].evaluate(
-            script=puzzle.content,
-            team_puzzle_data=data.tp_data,
-            user_puzzle_data=data.up_data,
-            team_data=data.t_data,
-            user_data=data.u_data,
+            puzzle.content,
+            data.tp_data,
+            data.up_data,
+            data.t_data,
+            data.u_data,
         )).safe_substitute(**files)
 
         flavour = Template(puzzle.flavour).safe_substitute(**files)
 
-        ended = request.event.end_date < now
+        ended = request.tenant.end_date < now
 
         response = TemplateResponse(
             request,
@@ -482,7 +471,7 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         except MultiValueDictKeyError as e:
             return JsonResponse({'error': 'no answer given'}, status=400)
 
-        if request.event.end_date < now:
+        if request.tenant.end_date < now:
             return JsonResponse({'error': 'event is over'}, status=400)
 
         data = models.PuzzleData(request.puzzle, request.team)
@@ -514,14 +503,10 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             next = request.episode.next_puzzle(request.team)
             if next:
                 response['text'] = f'to the next puzzle'
-                response['url'] = reverse('puzzle', subdomain=request.subdomain,
-                                          kwargs={'event_id': request.event.pk,
-                                                  'episode_number': episode_number,
-                                                  'puzzle_number': next})
+                response['url'] = reverse('puzzle', kwargs={'episode_number': episode_number, 'puzzle_number': next})
             else:
                 response['text'] = f'back to {request.episode.name}'
-                response['url'] = reverse('event', subdomain=request.subdomain,
-                                          kwargs={'event_id': request.event.pk})
+                response['url'] = reverse('event')
                 response['url'] += f'#episode-{episode_number}'
         else:
             all_unlocks = models.Unlock.objects.filter(puzzle=request.puzzle)
@@ -559,11 +544,11 @@ class Callback(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         response = HttpResponse(
             runtimes.runtimes[request.puzzle.cb_runtime].evaluate(
-                script=request.puzzle.cb_content,
-                team_puzzle_data=data.tp_data,
-                user_puzzle_data=data.up_data,
-                team_data=data.t_data,
-                user_data=data.u_data,
+                request.puzzle.cb_content,
+                data.tp_data,
+                data.up_data,
+                data.t_data,
+                data.u_data,
             )
         )
 
@@ -607,15 +592,15 @@ class AboutView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        admin_team = self.request.event.teams.get(is_admin=True)
+        admin_team = self.request.tenant.teams.get(is_admin=True)
 
-        files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
-        content = Template(self.request.event.about_text).safe_substitute(**files)
+        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.all()}
+        content = Template(self.request.tenant.about_text).safe_substitute(**files)
 
         context.update({
             'admins': admin_team.members.all(),
             'content': content,
-            'event_name': self.request.event.name,
+            'event_name': self.request.tenant.name,
         })
         return context
 
@@ -626,12 +611,12 @@ class RulesView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
-        content = Template(self.request.event.rules_text).safe_substitute(**files)
+        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.all()}
+        content = Template(self.request.tenant.rules_text).safe_substitute(**files)
 
         context.update({
             'content': content,
-            'event_name': self.request.event.name,
+            'event_name': self.request.tenant.name,
         })
         return context
 
@@ -642,12 +627,12 @@ class HelpView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
-        content = Template(self.request.event.help_text).safe_substitute(**files)
+        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.all()}
+        content = Template(self.request.tenant.help_text).safe_substitute(**files)
 
         context.update({
             'content': content,
-            'event_name': self.request.event.name,
+            'event_name': self.request.tenant.name,
         })
         return context
 
@@ -658,11 +643,11 @@ class ExamplesView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        files = {f.slug: f.file.url for f in self.request.event.eventfile_set.all()}
-        content = Template(self.request.event.examples_text).safe_substitute(**files)
+        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.all()}
+        content = Template(self.request.tenant.examples_text).safe_substitute(**files)
 
         context.update({
             'content': content,
-            'event_name': self.request.event.name,
+            'event_name': self.request.tenant.name,
         })
         return context

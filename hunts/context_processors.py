@@ -31,11 +31,11 @@ def announcements(request):
 
     if has_puzzle:
         current_announcements = models.Announcement.objects.filter(
-            (Q(event__isnull=True) | Q(event=request.event)) &
+            (Q(event__isnull=True) | Q(event=request.tenant)) &
             (Q(puzzle__isnull=True) | Q(puzzle=request.puzzle)))
     else:
         current_announcements = models.Announcement.objects.filter(
-            (Q(event__isnull=True) | Q(event=request.event)) &
+            (Q(event__isnull=True) | Q(event=request.tenant)) &
             (Q(puzzle__isnull=True)))
 
     # TODO: This is relatively closely linked to the CSS so perhaps should be further moved to the view / template

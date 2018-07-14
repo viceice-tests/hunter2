@@ -27,4 +27,5 @@ class EventAdmin(admin.ModelAdmin):
     ]
 
 
+admin.site.register(models.Domain)
 admin.site.register(models.Theme)

@@ -10,8 +10,8 @@
 {% if team.is_explicit %}
 {% spaceless %}
 <p>You can invite people to join your team.
-{% if request.event.max_team_size %}
-Teams can have up to {{ request.event.max_team_size }} members.
+{% if event.max_team_size %}
+Teams can have up to {{ event.max_team_size }} members.
 {% else %}
 There is no maximum team size.
 {% endif %}

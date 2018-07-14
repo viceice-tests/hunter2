@@ -11,12 +11,6 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.shortcuts import get_object_or_404
-import logging
-
-from .models import Event
-
-
 class EventMiddleware(object):
     def __init__(self, get_response):
         self.get_response = get_response
@@ -25,16 +19,9 @@ class EventMiddleware(object):
         return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if 'event_id' in view_kwargs:
-            event_id = view_kwargs['event_id']
-            request.event = get_object_or_404(Event, pk=event_id)
-            logging.debug(f'Explicit Event: {request.event}')
-            # Remove the event_id kwarg in case views are not expecting it.
-            del view_kwargs['event_id']
-        else:
-            try:
-                request.event = Event.objects.filter(current=True).get()
-                logging.debug(f'Implicit Event: {request.event}')
-            except Event.DoesNotExist:
-                request.event = None
+        if request.user.is_authenticated:
+            request.user.profile.attendance_set.get_or_create(
+                user=request.user.profile,
+                event=request.tenant,
+            )
         return

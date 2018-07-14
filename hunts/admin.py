@@ -13,10 +13,9 @@
 
 from django import forms
 from django.contrib import admin
-from django.conf.urls import url
 from django.utils.functional import curry
 from django.utils.html import format_html
-from django.urls import reverse
+from django.urls import path, reverse
 from django.db.models import Count, Sum
 from nested_admin import \
     NestedModelAdmin, \
@@ -150,9 +149,9 @@ class PuzzleAdmin(NestedModelAdmin):
         # Expose three extra views for editing answers, hints and unlocks without anything else
         urls = super().get_urls()
         urls = [
-            url(r'^(?P<puzzle_id>[1-9]\d*)/answers/$', self.onlyinlines_view(AnswerInline)),
-            url(r'^(?P<puzzle_id>[1-9]\d*)/hints/$', self.onlyinlines_view(HintInline)),
-            url(r'^(?P<puzzle_id>[1-9]\d*)/unlocks/$', self.onlyinlines_view(UnlockInline))
+            path('<int:puzzle_id>/answers/', self.onlyinlines_view(AnswerInline)),
+            path('<int:puzzle_id>/hints/', self.onlyinlines_view(HintInline)),
+            path('<int:puzzle_id>/unlocks/', self.onlyinlines_view(UnlockInline))
         ] + urls
         return urls
 

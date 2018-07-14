@@ -11,10 +11,10 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.conf.urls import url
+from django.urls import path
 from . import views
 
 urlpatterns = [
-    url(r'^profile/$', views.EditProfileView.as_view(), name='edit_profile'),
-    url(r'^userprofile_autocomplete/$', views.UserProfileAutoComplete.as_view(), name='userprofile_autocomplete'),
+    path('profile/', views.EditProfileView.as_view(), name='edit_profile'),
+    path('userprofile_autocomplete/', views.UserProfileAutoComplete.as_view(), name='userprofile_autocomplete'),
 ]

@@ -13,8 +13,11 @@
 
 from django.db import models
 from django.core.validators import MinValueValidator
+from django_tenants.models import TenantMixin, DomainMixin
 
 from .fields import SingleTrueBooleanField
+
+import accounts.models
 
 
 class Theme(models.Model):
@@ -26,7 +29,12 @@ class Theme(models.Model):
         return self.name
 
 
-class Event(models.Model):
+class Domain(DomainMixin):
+    pass
+
+
+class Event(TenantMixin):
+    auto_drop_schema = True
     name = models.CharField(max_length=255, unique=True)
     theme = models.ForeignKey(Theme, on_delete=models.CASCADE, related_name='theme')
     current = SingleTrueBooleanField()
@@ -40,6 +48,9 @@ class Event(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, verbosity=0, *args, **kwargs):
+        super().save(verbosity, *args, **kwargs)
+
 
 def event_file_path(instance, filename):
     return 'events/{0}/{1}'.format(instance.event.id, filename)
@@ -52,3 +63,17 @@ class EventFile(models.Model):
 
     class Meta:
         unique_together = (('event', 'slug'), )
+
+
+class Attendance(models.Model):
+    user = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    seat = models.CharField(
+        max_length=12,
+        blank=True,
+        default='',
+        help_text='Enter your seat so we can find you easily if you get stuck. (To help you, not to mock you <3)'
+    )
+
+    class Meta:
+        unique_together = (('event', 'user'), )

@@ -16,15 +16,6 @@ import unicodedata
 import factory
 import pytz
 from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
-
-
-class SiteFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = Site
-
-    domain = factory.Faker('domain_name')
-    name = factory.Faker('domain_word')
 
 
 class UserProfileFactory(factory.django.DjangoModelFactory):
@@ -34,7 +25,6 @@ class UserProfileFactory(factory.django.DjangoModelFactory):
     # We pass in profile=None to prevent UserFactory from creating another profile
     # (this disables the RelatedFactory)
     user = factory.SubFactory('accounts.factories.UserFactory', profile=None)
-    seat = factory.Faker('bothify', text='?? ##', letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 
 
 class UserFactory(factory.django.DjangoModelFactory):
