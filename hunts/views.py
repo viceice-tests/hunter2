@@ -471,8 +471,6 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
     def post(self, request, episode_number, puzzle_number):
         now = timezone.now()
 
-        now = timezone.now()
-
         minimum_time = timedelta(seconds=5)
         try:
             latest_guess = models.Guess.objects.filter(
