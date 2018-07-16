@@ -13,7 +13,7 @@ STATIC       = 'S'
 
 RUNTIME_CHOICES = (
     (CASED_REGEX,  'Case Sensitive Regex Runtime'),
-    (CASED_STATIC ,'Case Sensitive Static Runtime'),
+    (CASED_STATIC, 'Case Sensitive Static Runtime'),
     (IFRAME,       'IFrame Runtime'),
     (LUA,          'Lua Runtime'),
     (REGEX,        'Regex Runtime'),
