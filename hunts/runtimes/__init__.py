@@ -4,30 +4,37 @@ from hunts.runtimes.lua import LuaRuntime
 from hunts.runtimes.regex import RegexRuntime
 from hunts.runtimes.static import StaticRuntime
 
-IFRAME = 'I'
-LUA    = 'L'
-REGEX  = 'R'
-STATIC = 'S'
+CASED_REGEX  = 'r'
+CASED_STATIC = 's'
+IFRAME       = 'I'
+LUA          = 'L'
+REGEX        = 'R'
+STATIC       = 'S'
 
 RUNTIME_CHOICES = (
-    (IFRAME, 'IFrame Runtime'),
-    (LUA,    'Lua Runtime'),
-    (REGEX,  'Regex Runtime'),
-    (STATIC, 'Static Runtime'),
+    (CASED_REGEX,  'Case Sensitive Regex Runtime'),
+    (CASED_STATIC ,'Case Sensitive Static Runtime'),
+    (IFRAME,       'IFrame Runtime'),
+    (LUA,          'Lua Runtime'),
+    (REGEX,        'Regex Runtime'),
+    (STATIC,       'Static Runtime'),
 )
 
 
 class Runtimes:
     runtimes = {
-        IFRAME: IFrameRuntime,
-        LUA:    LuaRuntime,
-        REGEX:  RegexRuntime,
-        STATIC: StaticRuntime,
+        CASED_REGEX:  (RegexRuntime, {'case_sensitive': True}),
+        CASED_STATIC: (StaticRuntime, {'case_sensitive': True}),
+        IFRAME:       (IFrameRuntime, {}),
+        LUA:          (LuaRuntime, {}),
+        REGEX:        (RegexRuntime, {'case_sensitive': False}),
+        STATIC:       (StaticRuntime, {'case_sensitive': False}),
     }
 
     def __getitem__(self, key):
         # Return an instantiated copy of the requested runtime
-        return self.runtimes[key]()
+        entry = self.runtimes[key]
+        return entry[0](**entry[1])
 
 
 runtimes = Runtimes()
