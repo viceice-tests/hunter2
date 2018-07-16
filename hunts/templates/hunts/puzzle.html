@@ -33,7 +33,7 @@
 <h2>Your correct answer{{ answered|pluralize }}</h2>
 <div id="answer">
 {% for guess in answered %}
-<p>"{{ guess.guess }}" &mdash; entered by {{ guess.by.user.username }}</p>
+<p>"{{ guess.guess }}" &mdash; entered by {{ guess.by.username }}</p>
 {% endfor %}
 </div>
 {% elif ended %}
