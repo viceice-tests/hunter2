@@ -27,6 +27,7 @@ services:
       - static:/static
       - uploads_events:/uploads/events
       - uploads_puzzles:/uploads/puzzles
+      - uploads_solutions:/uploads/solutions
   web:
     build: ./nginx
     image: ${IMAGE_TAG:-hunter2_web}
@@ -36,6 +37,7 @@ services:
       - static:/static:ro
       - uploads_events:/media/events:ro
       - uploads_puzzles:/media/puzzles:ro
+      - uploads_solutions:/media/solutions:ro
 
 volumes:
   db: {}
@@ -43,3 +45,4 @@ volumes:
   static: {}
   uploads_events: {}
   uploads_puzzles: {}
+  uploads_solutions: {}
