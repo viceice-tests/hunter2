@@ -17,9 +17,8 @@
 {% endspaceless %}{% endblock %}
 
 {% block topbar_left %}
-<li><a class="navbar-brand" href="{% url 'event' %}">{{ event.name }}</a></li>
-{{ block.super }}
-<li><a class="navbar-nav" href="{% url 'about' %}">About</a></li>
-<li><a class="navbar-nav" href="{% url 'rules' %}">Rules</a></li>
-<li><a class="navbar-nav" href="{% url 'help' %}">Help</a></li>
+	<li class="nav-item"><a class="navbar-brand" href="{% url 'index' %}">{{ event.name }}</a></li>
+	<li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About</a></li>
+	<li class="nav-item"><a class="nav-link" href="{% url 'rules' %}">Rules</a></li>
+	<li class="nav-item"><a class="nav-link" href="{% url 'help' %}">Help</a></li>
 {% endblock %}

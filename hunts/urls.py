@@ -18,6 +18,7 @@ puzzlepatterns = [
     path('', views.Puzzle.as_view(), name='puzzle'),
     path('an', views.Answer.as_view(), name='answer'),
     path('cb', views.Callback.as_view(), name='callback'),
+    path('soln', views.SolutionContent.as_view(), name='solution_content'),
     path('media/<slug:file_slug>', views.PuzzleFile.as_view(), name='puzzle_file'),
 ]
 

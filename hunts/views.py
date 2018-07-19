@@ -18,9 +18,7 @@ from sendfile import sendfile
 from string import Template
 from teams.mixins import TeamMixin
 
-from . import models
-from . import rules
-from . import runtimes
+from . import models, rules, runtimes, utils
 from .mixins import EpisodeUnlockedMixin, PuzzleUnlockedMixin
 
 import hunter2
@@ -415,7 +413,9 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 'answered': answered,
                 'admin': request.admin,
                 'ended': ended,
+                'episode_number': episode_number,
                 'hints': hints,
+                'puzzle_number': puzzle_number,
                 'title': puzzle.title,
                 'flavour': flavour,
                 'text': text,
@@ -428,16 +428,47 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         return response
 
 
+class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
+    def get(self, request, episode_number, puzzle_number):
+        episode, puzzle = utils.event_episode_puzzle(request.tenant, episode_number, puzzle_number)
+        admin = rules.is_admin_for_puzzle(request.user, puzzle)
+
+        if request.tenant.end_date > timezone.now() and not admin:
+            raise PermissionDenied
+
+        data = models.PuzzleData(request.puzzle, request.team, request.user.profile)
+
+        return HttpResponse(
+            runtimes.runtimes[request.puzzle.soln_runtime].evaluate(
+                request.puzzle.soln_content,
+                data.tp_data,
+                data.up_data,
+                data.t_data,
+                data.u_data,
+            )
+        )
+
+
 class PuzzleFile(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
     def get(self, request, episode_number, puzzle_number, file_slug):
         puzzle_file = get_object_or_404(request.puzzle.puzzlefile_set, slug=file_slug)
         return sendfile(request, puzzle_file.file.path)
 
 
+class SolutionFile(View):
+    def get(self, request, episode_number, puzzle_number, file_slug):
+        episode, puzzle = utils.event_episode_puzzle(request.tenant, episode_number, puzzle_number)
+        admin = rules.is_admin_for_puzzle(request.user, puzzle)
+
+        if request.tenant.end_date > timezone.now() and not admin:
+            raise Http404
+
+        solution_file = get_object_or_404(request.puzzle.solutionfile_set, slug=file_slug)
+        return sendfile(request, solution_file.file.path)
+
+
 class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
     def post(self, request, episode_number, puzzle_number):
-        now = timezone.now()
-
         now = timezone.now()
 
         minimum_time = timedelta(seconds=5)
@@ -526,6 +557,9 @@ class Callback(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             return HttpResponse(status=415)
         if 'application/json' not in request.META['HTTP_ACCEPT']:
             return HttpResponse(status=406)
+
+        if request.tenant.end_date < timezone.now():
+            return JsonResponse({'error': 'event is over'}, status=400)
 
         data = models.PuzzleData(request.puzzle, request.team, request.user.profile)
 

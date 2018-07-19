@@ -20,16 +20,25 @@ class Puzzle(models.Model):
     flavour = models.TextField(
         blank=True, verbose_name="Flavour text",
         help_text="Separate flavour text for the puzzle. Should not be required for solving the puzzle")
+
     runtime = models.CharField(
         max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC,
         help_text="Runtime for generating the question content"
     )
     content = models.TextField()
+
     cb_runtime = models.CharField(
         max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC, verbose_name="Callback runtime",
         help_text="Runtime for responding to an AJAX callback for this question, should return JSON"
     )
     cb_content = models.TextField(blank=True, default='', verbose_name="Callback content")
+
+    soln_runtime = models.CharField(
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC, verbose_name="Solution runtime",
+        help_text="Runtime for generating the question solution"
+    )
+    soln_content = models.TextField(blank=True, default='', verbose_name="Solution content")
+
     start_date = models.DateTimeField(blank=True, default=timezone.now)
     headstart_granted = models.DurationField(
         default=timedelta(),
@@ -80,10 +89,10 @@ class Puzzle(models.Model):
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
-        # TODO: Make it not depend on a team. So single player puzzles work.
         episode = self.episode_set.get(event=team.at_event)
-        return episode.unlocked_by(team) and \
-            episode._puzzle_unlocked_by(self, team)
+        result = episode.event.end_date < timezone.now() or \
+            episode.unlocked_by(team) and episode._puzzle_unlocked_by(self, team)
+        return result
 
     def answered_by(self, team):
         """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
@@ -132,10 +141,23 @@ def puzzle_file_path(instance, filename):
     return 'puzzles/{0}/{1}'.format(instance.puzzle.id, filename)
 
 
+def solution_file_path(instance, filename):
+    return 'solutions/{0}/{1}'.format(instance.puzzle.id, filename)
+
+
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     slug = models.CharField(max_length=50, help_text="Include the URL of the file in puzzle content using $slug or ${slug}.")
     file = models.FileField(upload_to=puzzle_file_path)
+
+    class Meta:
+        unique_together = (('puzzle', 'slug'), )
+
+
+class SolutionFile(models.Model):
+    puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
+    slug = models.CharField(max_length=50, help_text="Include the URL of the file in solution content using $slug or ${slug}.")
+    file = models.FileField(upload_to=solution_file_path)
 
     class Meta:
         unique_together = (('puzzle', 'slug'), )
@@ -471,7 +493,9 @@ class Episode(models.Model):
         return -1
 
     def unlocked_by(self, team):
-        return all([episode.finished_by(team) for episode in self.prequels.all()])
+        result = self.event.end_date < timezone.now() or \
+            all([episode.finished_by(team) for episode in self.prequels.all()])
+        return result
 
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])

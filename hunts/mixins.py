@@ -29,7 +29,7 @@ class EpisodeUnlockedMixin():
             )
 
         # TODO: May need caching of progress to avoid DB load
-        if not request.episode.unlocked_by(request.team):
+        if not request.episode.unlocked_by(request.team) and not request.admin:
             if request.is_ajax():
                 raise PermissionDenied
             return TemplateResponse(
