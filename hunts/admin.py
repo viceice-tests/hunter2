@@ -39,8 +39,13 @@ class AnswerInline(NestedStackedInline):
         return super().formfield_for_dbfield(db_field, **kwargs)
 
 
-class FileInline(NestedTabularInline):
+class PuzzleFileInline(NestedTabularInline):
     model = models.PuzzleFile
+    extra = 0
+
+
+class SolutionFileInline(NestedTabularInline):
+    model = models.SolutionFile
     extra = 0
 
 
@@ -114,7 +119,8 @@ class GuessAdmin(admin.ModelAdmin):
 class PuzzleAdmin(NestedModelAdmin):
     ordering = ('episode__start_date', 'start_date', 'pk')
     inlines = [
-        FileInline,
+        PuzzleFileInline,
+        SolutionFileInline,
         AnswerInline,
         HintInline,
         UnlockInline,
