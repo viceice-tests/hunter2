@@ -10,6 +10,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import timedelta
 
 from django.test import TransactionTestCase
 from django.utils import timezone
@@ -36,6 +37,6 @@ class EventTestCase(FastTenantTestCase):
     @classmethod
     def setup_tenant(cls, tenant):
         theme = ThemeFactory()
-        tenant.end_date = timezone.now()
+        tenant.end_date = timezone.now() + timedelta(days=5)
         tenant.name = 'Test Event'
         tenant.theme = theme
