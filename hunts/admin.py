@@ -251,6 +251,9 @@ class EpisodeAdmin(NestedModelAdmin):
     list_editable = ('start_date',)
     list_display_links = ('name',)
 
+    def view_on_site(self, obj):
+        return obj.get_absolute_url()
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.annotate(
