@@ -1,0 +1,4 @@
+{% extends 'admin/change_form.html' %}
+{% block form_top %}
+{% if not has_absolute_url %}<ul class="messagelist"><li class="warning">This puzzle cannot be viewed on the site until it's added to an episode.</li></ul>>{% endif %}
+{% endblock %}
