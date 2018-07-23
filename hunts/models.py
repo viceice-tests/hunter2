@@ -60,7 +60,7 @@ class Puzzle(models.Model):
         try:
             episode = self.episode_set.get()
         except Episode.DoesNotExist:
-            return ''
+            return None
 
         params = {
             'episode_number': episode.get_relative_id(),

@@ -112,6 +112,7 @@ class GuessAdmin(admin.ModelAdmin):
 
 @admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdmin):
+    change_form_template = 'hunts/admin/change_puzzle.html'
     ordering = ('episode__start_date', 'start_date', 'pk')
     inlines = [
         FileInline,
@@ -126,11 +127,7 @@ class PuzzleAdmin(NestedModelAdmin):
     popup = False
 
     def view_on_site(self, obj):
-        url = obj.get_absolute_url()
-        if url:
-            return url + '?preview=1'
-
-        return ''
+        return obj.get_absolute_url()
 
     def get_urls(self):
         # Expose three extra views for editing answers, hints and unlocks without anything else
