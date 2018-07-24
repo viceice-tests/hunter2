@@ -125,6 +125,7 @@ SHARED_APPS = (
     'rules.apps.AutodiscoverRulesConfig',
     'solo',
     'sortedm2m',
+    'sortedm2m_filter_horizontal_widget',
     'url_tools',
 )
 if USE_SILK:  # nocover
