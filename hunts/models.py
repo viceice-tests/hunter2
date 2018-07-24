@@ -70,11 +70,7 @@ class Puzzle(models.Model):
             raise ValidationError(e) from e
 
     def get_absolute_url(self):
-        try:
-            episode = self.episode_set.get()
-        except Episode.DoesNotExist:
-            return ''
-
+        episode = self.episode_set.get()
         params = {
             'episode_number': episode.get_relative_id(),
             'puzzle_number': self.get_relative_id()
