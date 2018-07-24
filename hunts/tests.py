@@ -278,7 +278,7 @@ class AdminPuzzleAccessTests(EventTestCase):
 
     def test_admin_overrides_episode_start_time(self):
         now = timezone.now()  # We need the non-naive version of the frozen time for object creation
-        with freezegun.freeze_time(now) as frozen_datetime:
+        with freezegun.freeze_time(now):
             start_date = now + datetime.timedelta(seconds=5)
             episode = EpisodeFactory(event=self.tenant, parallel=False, start_date=start_date)
             puzzle = PuzzleFactory.create(episode=episode, start_date=start_date)
@@ -291,7 +291,7 @@ class AdminPuzzleAccessTests(EventTestCase):
 
     def test_admin_overrides_puzzle_start_time(self):
         now = timezone.now()  # We need the non-naive version of the frozen time for object creation
-        with freezegun.freeze_time(now) as frozen_datetime:
+        with freezegun.freeze_time(now):
             episode_start_date = now - datetime.timedelta(seconds=5)
             puzzle_start_date = now + datetime.timedelta(seconds=5)
             episode = EpisodeFactory(event=self.tenant, parallel=False, start_date=episode_start_date)
