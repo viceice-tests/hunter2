@@ -127,7 +127,10 @@ class PuzzleAdmin(NestedModelAdmin):
     popup = False
 
     def view_on_site(self, obj):
-        return obj.get_absolute_url()
+        try:
+            return obj.get_absolute_url()
+        except models.Episode.DoesNotExist:
+            return None
 
     def get_urls(self):
         # Expose three extra views for editing answers, hints and unlocks without anything else
