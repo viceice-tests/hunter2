@@ -271,6 +271,39 @@ class PuzzleStartTimeTests(EventTestCase):
         self.assertEqual(first_time, second_time, msg='Start time does not alter on subsequent access')
 
 
+class AdminPuzzleAccessTests(EventTestCase):
+    def setUp(self):
+        self.user = TeamMemberFactory(team__at_event=self.tenant, team__is_admin=True)
+        self.client.force_login(self.user.user)
+
+    def test_admin_overrides_episode_start_time(self):
+        now = timezone.now()  # We need the non-naive version of the frozen time for object creation
+        with freezegun.freeze_time(now):
+            start_date = now + datetime.timedelta(seconds=5)
+            episode = EpisodeFactory(event=self.tenant, parallel=False, start_date=start_date)
+            puzzle = PuzzleFactory.create(episode=episode, start_date=start_date)
+
+            resp = self.client.get(reverse('puzzle', kwargs={
+                'episode_number': episode.get_relative_id(),
+                'puzzle_number': puzzle.get_relative_id(),
+            }))
+            self.assertEqual(resp.status_code, 200)
+
+    def test_admin_overrides_puzzle_start_time(self):
+        now = timezone.now()  # We need the non-naive version of the frozen time for object creation
+        with freezegun.freeze_time(now):
+            episode_start_date = now - datetime.timedelta(seconds=5)
+            puzzle_start_date = now + datetime.timedelta(seconds=5)
+            episode = EpisodeFactory(event=self.tenant, parallel=False, start_date=episode_start_date)
+            puzzle = PuzzleFactory.create(episode=episode, start_date=puzzle_start_date)
+
+            resp = self.client.get(reverse('puzzle', kwargs={
+                'episode_number': episode.get_relative_id(),
+                'puzzle_number': puzzle.get_relative_id(),
+            }))
+            self.assertEqual(resp.status_code, 200)
+
+
 class PuzzleAccessTests(EventTestCase):
     def setUp(self):
         self.episode = EpisodeFactory(event=self.tenant, parallel=False)

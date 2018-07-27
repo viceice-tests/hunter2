@@ -99,9 +99,8 @@ class Puzzle(models.Model):
     def unlocked_by(self, team):
         # Is this puzzle playable?
         episode = self.episode_set.get(event=team.at_event)
-        result = episode.event.end_date < timezone.now() or \
+        return episode.event.end_date < timezone.now() or \
             episode.unlocked_by(team) and episode._puzzle_unlocked_by(self, team)
-        return result
 
     def answered_by(self, team):
         """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
@@ -449,10 +448,7 @@ class Episode(models.Model):
         return f'{self.event.name} - {self.name}'
 
     def get_absolute_url(self):
-        params = {
-            'episode_number': self.get_relative_id(),
-        }
-        return reverse('episode', kwargs=params)
+        return reverse('episode', kwargs={'episode_number': self.get_relative_id()})
 
     def follows(self, episode):
         """Does this episode follow the provied episode by one or more prequel relationships?"""

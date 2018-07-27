@@ -14,6 +14,7 @@
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
+from django.urls import reverse
 
 from . import rules
 from . import utils
@@ -61,7 +62,8 @@ class PuzzleUnlockedMixin():
         if (not request.episode.started(request.team) or not request.episode.unlocked_by(request.team)) and not request.admin:
             if request.is_ajax():
                 raise PermissionDenied
-            return redirect(f'{request.tenant.get_absolute_url()}#episode-{episode_number}')
+            event_url = reverse('event')
+            return redirect(f'{event_url}#episode-{episode_number}')
 
         if not request.puzzle.started(request.team) and not request.admin:
             if request.is_ajax():
