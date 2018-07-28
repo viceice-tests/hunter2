@@ -23,8 +23,8 @@
 		</td>
 		<td>
 			<span class="user">
-				{% if not guess.by_team.is_explicit %}<a href="?team={{ guess.by_team.id }}">{{ guess.by.user.username }}</span></a>
-				{% else %}{{ guess.by.user.username }}{% endif %}
+				{% if not guess.by_team.is_explicit %}<a href="?team={{ guess.by_team.id }}">{{ guess.by.username }}</span></a>
+				{% else %}{{ guess.by.username }}{% endif %}
 			{% if guess.by_team.is_explicit %} <span class="team">(<a href="?team={{ guess.by_team.id }}">{{ guess.by_team.name }}</a>)</span>{% endif %}
 		</td>
 		<td>{{ guess.by.seat }}</td>

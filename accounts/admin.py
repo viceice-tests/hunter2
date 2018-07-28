@@ -24,7 +24,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_select_related = ('user', )
 
     def username(self, profile):
-        return profile.user.username
+        return profile.username
 
     def email(self, profile):
         return profile.user.email

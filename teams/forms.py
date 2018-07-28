@@ -123,7 +123,7 @@ class TeamForm(forms.ModelForm):
                 this_user = "these users have"
             else:
                 this_user = "this user has"
-            member_string = ', '.join(['%s (already on %s)' % (user.user.username, team.name)
+            member_string = ', '.join(['%s (already on %s)' % (user.username, team.name)
                                        for user, team in zip(moved_members, moved_from)])
             self.add_error('move_user',
                            'You are trying to add %s to this team. Are you sure you want'

@@ -361,7 +361,7 @@ class UserData(models.Model):
         verbose_name_plural = 'User data'
 
     def __str__(self):
-        return f'Data for {self.user.user.username} at {self.event}'
+        return f'Data for {self.user.username} at {self.event}'
 
 
 class TeamPuzzleData(models.Model):
@@ -389,7 +389,7 @@ class UserPuzzleData(models.Model):
         verbose_name_plural = 'User puzzle data'
 
     def __str__(self):
-        return f'Data for {self.user.user.username} on {self.puzzle.title}'
+        return f'Data for {self.user.username} on {self.puzzle.title}'
 
     def team(self):
         """Helper method to fetch the team associated with this user and puzzle"""

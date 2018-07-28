@@ -15,6 +15,11 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
+class UserProfileManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().select_related('user')
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     seat = models.CharField(
@@ -23,9 +28,14 @@ class UserProfile(models.Model):
         default='',
         help_text='Enter your seat so we can find you easily if you get stuck. (To help you, not to mock you <3)'
     )
+    objects = UserProfileManager()
+
+    @property
+    def username(self):
+        return self.user.username
 
     def __str__(self):
-        return f'{self.user.username}'
+        return f'{self.username}'
 
     def is_on_explicit_team(self, event):
         return self.teams.filter(at_event=event).exclude(name=None).exists()

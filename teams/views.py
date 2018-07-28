@@ -139,7 +139,7 @@ class Invite(LoginRequiredMixin, TeamMixin, View):
         return JsonResponse({
             'result': 'OK',
             'message': 'User invited',
-            'username': user.user.username,
+            'username': user.username,
         })
 
 
@@ -327,7 +327,7 @@ class AcceptRequest(LoginRequiredMixin, TeamMixin, View):
         return JsonResponse({
             'result': 'OK',
             'message': 'Request accepted',
-            'username': user.user.username,
+            'username': user.username,
             'seat': seat,
         })
 
