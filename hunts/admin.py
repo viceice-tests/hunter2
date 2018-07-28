@@ -21,6 +21,8 @@ from nested_admin import \
     NestedModelAdmin, \
     NestedStackedInline, \
     NestedTabularInline
+from sortedm2m_filter_horizontal_widget.forms import SortedFilteredSelectMultiple
+
 from . import models
 from .forms import AnswerForm, UnlockAnswerFormSet
 
@@ -260,6 +262,11 @@ class EpisodeAdmin(NestedModelAdmin):
             puzzles_count=Count('puzzles', distinct=True),
             headstart_sum=Sum('puzzles__headstart_granted'),
         )
+
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        if db_field.name == 'puzzles':
+            kwargs['widget'] = SortedFilteredSelectMultiple()
+            return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def event_change(self, obj):
         return format_html(
