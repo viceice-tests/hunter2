@@ -49,23 +49,37 @@ class IFrameRuntimeTestCase(TestCase):
 
 class RegexRuntimeTestCase(SimpleTestCase):
     def test_evaluate(self):
-        regex_runtime = RegexRuntime()
+        regex_runtime = RegexRuntime(case_sensitive=False)
         regex_script = r'.*'
         with self.assertRaises(NotImplementedError):
             regex_runtime.evaluate(regex_script, None, None, None, None)
 
     def test_validate_guess(self):
-        regex_runtime = RegexRuntime()
+        regex_runtime = RegexRuntime(case_sensitive=False)
         regex_script = r'Hello \w*!'
-        guess1 = "Hello Planet!"
-        result = regex_runtime.validate_guess(regex_script, guess1)
+        guess = "Hello Planet!"
+        result = regex_runtime.validate_guess(regex_script, guess)
         self.assertTrue(result)
-        guess2 = "Goodbye World!"
-        result = regex_runtime.validate_guess(regex_script, guess2)
+        # Should be case insensitive
+        guess = "hello Friend!"
+        result = regex_runtime.validate_guess(regex_script, guess)
+        self.assertTrue(result)
+        guess = "Goodbye World!"
+        result = regex_runtime.validate_guess(regex_script, guess)
+        self.assertFalse(result)
+
+    def test_case_sensitive_guess(self):
+        regex_runtime = RegexRuntime(case_sensitive=True)
+        regex_script = r'Hello \w*!'
+        guess = "Hello casematching!"
+        result = regex_runtime.validate_guess(regex_script, guess)
+        self.assertTrue(result)
+        guess = "hello nocapital!"
+        result = regex_runtime.validate_guess(regex_script, guess)
         self.assertFalse(result)
 
     def test_evaluate_syntax_error_fails(self):
-        regex_runtime = RegexRuntime()
+        regex_runtime = RegexRuntime(case_sensitive=False)
         regex_script = r'[]'
         with self.assertRaises(SyntaxError):
             regex_runtime.validate_guess(regex_script, "")
@@ -73,17 +87,30 @@ class RegexRuntimeTestCase(SimpleTestCase):
 
 class StaticRuntimeTestCase(SimpleTestCase):
     def test_evaluate(self):
-        static_runtime = StaticRuntime()
+        static_runtime = StaticRuntime(case_sensitive=False)
         static_script = '''Hello  World!'''
         result = static_runtime.evaluate(static_script, None, None, None, None)
         self.assertEqual(result, static_script)
 
     def test_validate_guess(self):
-        static_runtime = StaticRuntime()
+        static_runtime = StaticRuntime(case_sensitive=False)
         static_script = '''answer'''
-        guess1 = "answer"
-        result = static_runtime.validate_guess(static_script, guess1)
+        guess = "answer"
+        result = static_runtime.validate_guess(static_script, guess)
         self.assertTrue(result)
-        guess2 = "incorrect answer"
-        result = static_runtime.validate_guess(static_script, guess2)
+        guess = "ANSWER"
+        result = static_runtime.validate_guess(static_script, guess)
+        self.assertTrue(result)
+        guess = "incorrect answer"
+        result = static_runtime.validate_guess(static_script, guess)
+        self.assertFalse(result)
+
+    def test_case_sensitive_guess(self):
+        static_runtime = StaticRuntime(case_sensitive=True)
+        static_script = '''Answer'''
+        guess = "Answer"
+        result = static_runtime.validate_guess(static_script, guess)
+        self.assertTrue(result)
+        guess = "answer"
+        result = static_runtime.validate_guess(static_script, guess)
         self.assertFalse(result)
