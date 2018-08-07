@@ -21,7 +21,7 @@ services:
       - H2_SENDFILE=sendfile.backends.nginx
       - H2_SENTRY_DSN
       - UWSGI_WORKERS
-    image: ${IMAGE_TAG:-hunter2_app}
+    image: registry.gitlab.com/ihunt/hunter2/app:${H2_IMAGE_VERSION:-latest}
     volumes:
       - config:/config
       - static:/static
@@ -30,7 +30,7 @@ services:
       - uploads_solutions:/uploads/solutions
   web:
     build: ./nginx
-    image: ${IMAGE_TAG:-hunter2_web}
+    image: registry.gitlab.com/ihunt/hunter2/web:${H2_IMAGE_VERSION:-latest}
     ports:
       - "${H2_LISTEN:-8080}:80"
     volumes:
