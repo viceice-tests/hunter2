@@ -102,7 +102,7 @@ release:app:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
     - docker load -i "${SERVICE}.tar"
     - docker-compose push "${SERVICE}"
-    - docker tag "${IMAGE_TAG}" "{CI_REGISTRY_IMAGE}/${SERVICE}"
+    - docker tag "${IMAGE_TAG}" "${CI_REGISTRY_IMAGE}/${SERVICE}"
     - docker push "${CI_REGISTRY_IMAGE}/${SERVICE}"
   only:
     - master
@@ -117,7 +117,7 @@ release:web:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
     - docker load -i "${SERVICE}.tar"
     - docker-compose push "${SERVICE}"
-    - docker tag "${IMAGE_TAG}" "{CI_REGISTRY_IMAGE}/${SERVICE}"
+    - docker tag "${IMAGE_TAG}" "${CI_REGISTRY_IMAGE}/${SERVICE}"
     - docker push "${CI_REGISTRY_IMAGE}/${SERVICE}"
   only:
     - master
