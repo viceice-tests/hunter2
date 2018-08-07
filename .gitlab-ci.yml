@@ -103,7 +103,7 @@ release:app:
     - docker load -i "${SERVICE}.tar"
     - docker-compose push "${SERVICE}"
     - docker tag "${IMAGE_TAG}" "{CI_REGISTRY_IMAGE}/${SERVICE}"
-    - docker push "{CI_REGISTRY_IMAGE}/${SERVICE}"
+    - docker push "${CI_REGISTRY_IMAGE}/${SERVICE}"
   only:
     - master
 
@@ -118,6 +118,6 @@ release:web:
     - docker load -i "${SERVICE}.tar"
     - docker-compose push "${SERVICE}"
     - docker tag "${IMAGE_TAG}" "{CI_REGISTRY_IMAGE}/${SERVICE}"
-    - docker push "{CI_REGISTRY_IMAGE}/${SERVICE}"
+    - docker push "${CI_REGISTRY_IMAGE}/${SERVICE}"
   only:
     - master
