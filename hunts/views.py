@@ -403,7 +403,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 kwargs={
                     'episode_number': episode_number,
                     'puzzle_number': puzzle_number,
-                    'file_slug': f.slug,
+                    'file_path': f.url_path,
                 }) for f in puzzle.puzzlefile_set.all()},
         }  # Puzzle files with matching slugs override hunt counterparts
 
@@ -451,32 +451,50 @@ class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         data = models.PuzzleData(request.puzzle, request.team, request.user.profile)
 
-        return HttpResponse(
-            runtimes.runtimes[request.puzzle.soln_runtime].evaluate(
-                request.puzzle.soln_content,
-                data.tp_data,
-                data.up_data,
-                data.t_data,
-                data.u_data,
-            )
-        )
+        files = {
+            **{f.slug: f.file.url for f in request.tenant.eventfile_set.all()},
+            **{f.slug: reverse(
+                'puzzle_file',
+                kwargs={
+                    'episode_number': episode_number,
+                    'puzzle_number': puzzle_number,
+                    'file_path': f.url_path,
+                }) for f in puzzle.puzzlefile_set.all()},
+            **{f.slug: reverse(
+                'solution_file',
+                kwargs={
+                    'episode_number': episode_number,
+                    'puzzle_number': puzzle_number,
+                    'file_path': f.url_path,
+                }) for f in puzzle.solutionfile_set.all()},
+        }  # Puzzle files with matching slugs override hunt counterparts. Solution files override both puzzle and hunt files.
+
+        text = Template(runtimes.runtimes[request.puzzle.soln_runtime].evaluate(
+            request.puzzle.soln_content,
+            data.tp_data,
+            data.up_data,
+            data.t_data,
+            data.u_data,
+        )).safe_substitute(**files)
+
+        return HttpResponse(text)
 
 
 class PuzzleFile(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
-    def get(self, request, episode_number, puzzle_number, file_slug):
-        puzzle_file = get_object_or_404(request.puzzle.puzzlefile_set, slug=file_slug)
+    def get(self, request, episode_number, puzzle_number, file_path):
+        puzzle_file = get_object_or_404(request.puzzle.puzzlefile_set, url_path=file_path)
         return sendfile(request, puzzle_file.file.path)
 
 
 class SolutionFile(View):
-    def get(self, request, episode_number, puzzle_number, file_slug):
+    def get(self, request, episode_number, puzzle_number, file_path):
         episode, puzzle = utils.event_episode_puzzle(request.tenant, episode_number, puzzle_number)
         admin = rules.is_admin_for_puzzle(request.user, puzzle)
 
         if request.tenant.end_date > timezone.now() and not admin:
             raise Http404
 
-        solution_file = get_object_or_404(request.puzzle.solutionfile_set, slug=file_slug)
+        solution_file = get_object_or_404(request.puzzle.solutionfile_set, url_path=file_path)
         return sendfile(request, solution_file.file.path)
 
 

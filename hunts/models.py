@@ -156,19 +156,23 @@ def solution_file_path(instance, filename):
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     slug = models.CharField(max_length=50, help_text="Include the URL of the file in puzzle content using $slug or ${slug}.")
+    url_path = models.CharField(max_length=50, help_text='The path you want to appear in the URL. Can include "directories" using /')
     file = models.FileField(upload_to=puzzle_file_path)
 
     class Meta:
         unique_together = (('puzzle', 'slug'), )
+        unique_together = (('puzzle', 'url_path'), )
 
 
 class SolutionFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     slug = models.CharField(max_length=50, help_text="Include the URL of the file in solution content using $slug or ${slug}.")
+    url_path = models.CharField(max_length=50, help_text='The path you want to appear in the URL. Can include "directories" using /')
     file = models.FileField(upload_to=solution_file_path)
 
     class Meta:
         unique_together = (('puzzle', 'slug'), )
+        unique_together = (('puzzle', 'url_path'), )
 
 
 class Clue(models.Model):
