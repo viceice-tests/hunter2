@@ -21,6 +21,7 @@ from django.views import View
 from django.views.generic import UpdateView
 
 from accounts.models import UserProfile
+from events.utils import annotate_userprofile_queryset_with_seat
 from . import forms, models
 from .forms import CreateTeamForm, InviteForm, RequestForm
 from .mixins import TeamMixin
@@ -56,11 +57,13 @@ class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
     def get(self, request):
         if request.team.is_explicit():
             invite_form = InviteForm()
-            invites = request.team.invites.all()
-            requests = request.team.requests.all()
+            invites = annotate_userprofile_queryset_with_seat(request.team.invites, request.tenant)
+            members = annotate_userprofile_queryset_with_seat(request.team.members, request.tenant)
+            requests = annotate_userprofile_queryset_with_seat(request.team.requests, request.tenant)
             context = {
                 'invite_form': invite_form,
                 'invites': invites,
+                'members': members,
                 'requests': requests,
             }
         else:
@@ -89,12 +92,14 @@ class TeamView(LoginRequiredMixin, TeamMixin, View):
         if not team.name:
             raise Http404
         else:
+            members = annotate_userprofile_queryset_with_seat(team.members, request.tenant)
+
             return TemplateResponse(
                 request,
                 'teams/view.html',
                 context={
                     'team': team.name,
-                    'members': team.members.all(),
+                    'members': members,
                     'invited': request.user.profile in team.invites.all(),
                     'requested': request.user.profile in team.requests.all(),
                 }
