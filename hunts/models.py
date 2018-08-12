@@ -160,8 +160,7 @@ class PuzzleFile(models.Model):
     file = models.FileField(upload_to=puzzle_file_path)
 
     class Meta:
-        unique_together = (('puzzle', 'slug'), )
-        unique_together = (('puzzle', 'url_path'), )
+        unique_together = (('puzzle', 'slug'), ('puzzle', 'url_path'))
 
 
 class SolutionFile(models.Model):
@@ -171,8 +170,7 @@ class SolutionFile(models.Model):
     file = models.FileField(upload_to=solution_file_path)
 
     class Meta:
-        unique_together = (('puzzle', 'slug'), )
-        unique_together = (('puzzle', 'url_path'), )
+        unique_together = (('puzzle', 'slug'), ('puzzle', 'url_path'))
 
 
 class Clue(models.Model):

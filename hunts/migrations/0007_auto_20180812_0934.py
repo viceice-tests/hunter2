@@ -32,11 +32,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='puzzlefile',
-            unique_together={('puzzle', 'url_path')},
+            unique_together={('puzzle', 'slug'), ('puzzle', 'url_path')},
         ),
         migrations.AlterUniqueTogether(
             name='solutionfile',
-            unique_together={('puzzle', 'url_path')},
+            unique_together={('puzzle', 'slug'), ('puzzle', 'url_path')},
         ),
         migrations.RunPython(initialise_url_path('PuzzleFile'), migrations.RunPython.noop),
         migrations.RunPython(initialise_url_path('SolutionFile'), migrations.RunPython.noop),
