@@ -48,6 +48,10 @@ class PuzzleFactory(factory.django.DjangoModelFactory):
     cb_runtime = runtimes.STATIC
     cb_content = ""
 
+    # TODO: Use other runtimes when we are testing solutions.
+    soln_runtime = runtimes.STATIC
+    soln_content = factory.Faker('text')
+
     start_date = factory.Faker('date_time_this_month', tzinfo=pytz.utc)
     headstart_granted = factory.Faker('time_delta', end_datetime=timedelta(minutes=60))
 
@@ -78,10 +82,25 @@ class PuzzleFactory(factory.django.DjangoModelFactory):
 class PuzzleFileFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'hunts.PuzzleFile'
-        django_get_or_create = ('puzzle', 'slug')
+        django_get_or_create = ('puzzle', 'slug', 'url_path')
 
     puzzle = factory.SubFactory(PuzzleFactory)
     slug = factory.Faker('word')
+    url_path = factory.Faker('file_path')  # This will have a superfluous / on the beginning but this is fine.
+    file = factory.django.FileField(
+        filename=factory.Faker('file_name'),
+        data=factory.Faker('binary')
+    )
+
+
+class SolutionFileFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'hunts.SolutionFile'
+        django_get_or_create = ('puzzle', 'slug', 'url_path')
+
+    puzzle = factory.SubFactory(PuzzleFactory)
+    slug = factory.Faker('word')
+    url_path = factory.Faker('file_path')  # This will have a superfluous / on the beginning but this is fine.
     file = factory.django.FileField(
         filename=factory.Faker('file_name'),
         data=factory.Faker('binary')

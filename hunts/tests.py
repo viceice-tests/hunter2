@@ -34,6 +34,7 @@ from .factories import (
     HintFactory,
     PuzzleFactory,
     PuzzleFileFactory,
+    SolutionFileFactory,
     TeamDataFactory,
     TeamPuzzleDataFactory,
     UnlockAnswerFactory,
@@ -660,6 +661,15 @@ class FileUploadTests(EventTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.eventfile.file.url)
 
+    def test_load_episode_content_with_eventfile(self):
+        episode = EpisodeFactory(flavour=f'${{{self.eventfile.slug}}}')
+        response = self.client.get(
+            reverse('episode_content', kwargs={'episode_number': episode.get_relative_id()}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.eventfile.file.url)
+
     def test_load_puzzle_with_eventfile(self):
         puzzle = PuzzleFactory(content=f'${{{self.eventfile.slug}}}')
         response = self.client.get(puzzle.get_absolute_url())
@@ -673,16 +683,78 @@ class FileUploadTests(EventTestCase):
         puzzle.save()
         response = self.client.get(puzzle.get_absolute_url())
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, puzzlefile.slug)  # Puzzle files don't use their URL so just check slug
+        self.assertContains(response, puzzlefile.url_path)
 
     def test_puzzlefile_overrides_eventfile(self):
         puzzle = PuzzleFactory()
-        puzzlefile = PuzzleFileFactory(puzzle=puzzle)
+        puzzlefile = PuzzleFileFactory(puzzle=puzzle, slug=self.eventfile.slug)
         puzzle.content = f'${{{puzzlefile.slug}}}'
         puzzle.save()
         response = self.client.get(puzzle.get_absolute_url())
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, puzzlefile.slug)  # Puzzle files don't use their URL so just check slug
+        self.assertContains(response, puzzlefile.url_path)
+
+    def test_load_solution_with_eventfile(self):
+        puzzle = PuzzleFactory(content='content', soln_content=f'${{{self.eventfile.slug}}}')
+        episode_number = puzzle.episode_set.get().get_relative_id()
+        puzzle_number = puzzle.get_relative_id()
+        self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
+        with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
+            response = self.client.get(
+                reverse('solution_content', kwargs={'episode_number': episode_number, 'puzzle_number': puzzle_number}),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.eventfile.file.url)
+
+    def test_load_solution_with_puzzlefile(self):
+        puzzle = PuzzleFactory(content='content')
+        puzzlefile = PuzzleFileFactory(puzzle=puzzle)
+        puzzle.soln_content = f'${{{puzzlefile.slug}}}'
+        puzzle.save()
+        episode_number = puzzle.episode_set.get().get_relative_id()
+        puzzle_number = puzzle.get_relative_id()
+        self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
+        with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
+            response = self.client.get(
+                reverse('solution_content', kwargs={'episode_number': episode_number, 'puzzle_number': puzzle_number}),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, puzzlefile.url_path)
+
+    def test_load_solution_with_solutionfile(self):
+        puzzle = PuzzleFactory(content='content')
+        solutionfile = SolutionFileFactory(puzzle=puzzle)
+        puzzle.soln_content = f'${{{solutionfile.slug}}}'
+        puzzle.save()
+        episode_number = puzzle.episode_set.get().get_relative_id()
+        puzzle_number = puzzle.get_relative_id()
+        self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
+        with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
+            response = self.client.get(
+                reverse('solution_content', kwargs={'episode_number': episode_number, 'puzzle_number': puzzle_number}),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, solutionfile.url_path)
+
+    def test_solutionfile_overrides_other_files(self):
+        puzzle = PuzzleFactory(content='content')
+        puzzlefile = PuzzleFileFactory(puzzle=puzzle, slug=self.eventfile.slug)
+        solutionfile = SolutionFileFactory(puzzle=puzzle, slug=puzzlefile.slug)
+        puzzle.soln_content = f'${{{solutionfile.slug}}}'
+        puzzle.save()
+        episode_number = puzzle.episode_set.get().get_relative_id()
+        puzzle_number = puzzle.get_relative_id()
+        self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
+        with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
+            response = self.client.get(
+                reverse('solution_content', kwargs={'episode_number': episode_number, 'puzzle_number': puzzle_number}),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, solutionfile.url_path)
 
 
 class AdminTeamTests(EventTestCase):
