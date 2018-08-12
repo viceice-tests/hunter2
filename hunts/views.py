@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Prefetch
+from django.db.models import OuterRef, Prefetch, Subquery
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -33,6 +33,7 @@ from teams.mixins import TeamMixin
 
 from . import models, rules, runtimes, utils
 from .mixins import EpisodeUnlockedMixin, PuzzleUnlockedMixin
+from events.models import Attendance
 
 import hunter2
 import teams
@@ -632,7 +633,7 @@ class AboutView(TemplateView):
         content = Template(self.request.tenant.about_text).safe_substitute(**files)
 
         context.update({
-            'admins': admin_team.members.all(),
+            'admins': admin_team.members.annotate(seat=Subquery(Attendance.objects.filter(user=OuterRef('pk'), event=self.request.tenant).values('seat'))),
             'content': content,
             'event_name': self.request.tenant.name,
         })
