@@ -661,6 +661,16 @@ class FileUploadTests(EventTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.eventfile.file.url)
 
+    def test_load_episode_content_with_eventfile(self):
+        episode = EpisodeFactory(flavour=f'${{{self.eventfile.slug}}}')
+        response = self.client.get(episode.get_absolute_url())
+        response = self.client.get(
+            reverse('episode_content', kwargs={'episode_number': episode_number}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.eventfile.file.url)
+
     def test_load_puzzle_with_eventfile(self):
         puzzle = PuzzleFactory(content=f'${{{self.eventfile.slug}}}')
         response = self.client.get(puzzle.get_absolute_url())

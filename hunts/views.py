@@ -88,11 +88,14 @@ class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
         for puzzle in puzzles:
             puzzle.done = puzzle.answered_by(request.team)
 
+        files = {f.slug: f.file.url for f in request.tenant.eventfile_set.all()}
+        flavour = Template(request.episode.flavour).safe_substitute(**files)
+
         return TemplateResponse(
             request,
             'hunts/episode_content.html',
             context={
-                'flavour': request.episode.flavour,
+                'flavour': flavour,
                 'episode_number': episode_number,
                 'puzzles': puzzles,
             }
@@ -396,16 +399,16 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
             unlocks.append({'guesses': guesses, 'text': mark_safe(u.text)})
 
-        files = {
-            **{f.slug: f.file.url for f in request.tenant.eventfile_set.all()},
-            **{f.slug: reverse(
-                'puzzle_file',
-                kwargs={
-                    'episode_number': episode_number,
-                    'puzzle_number': puzzle_number,
-                    'file_path': f.url_path,
-                }) for f in puzzle.puzzlefile_set.all()},
-        }  # Puzzle files with matching slugs override hunt counterparts
+        event_files = {f.slug: f.file.url for f in request.tenant.eventfile_set.all()}
+        puzzle_files = {f.slug: reverse(
+            'puzzle_file',
+            kwargs={
+                'episode_number': episode_number,
+                'puzzle_number': puzzle_number,
+                'file_path': f.url_path,
+            }) for f in puzzle.puzzlefile_set.all()
+        }
+        files = { **event_files, **puzzle_files }  # Puzzle files with matching slugs override hunt counterparts
 
         text = Template(runtimes.runtimes[puzzle.runtime].evaluate(
             puzzle.content,
@@ -451,23 +454,24 @@ class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         data = models.PuzzleData(request.puzzle, request.team, request.user.profile)
 
-        files = {
-            **{f.slug: f.file.url for f in request.tenant.eventfile_set.all()},
-            **{f.slug: reverse(
-                'puzzle_file',
-                kwargs={
-                    'episode_number': episode_number,
-                    'puzzle_number': puzzle_number,
-                    'file_path': f.url_path,
-                }) for f in puzzle.puzzlefile_set.all()},
-            **{f.slug: reverse(
-                'solution_file',
-                kwargs={
-                    'episode_number': episode_number,
-                    'puzzle_number': puzzle_number,
-                    'file_path': f.url_path,
-                }) for f in puzzle.solutionfile_set.all()},
-        }  # Puzzle files with matching slugs override hunt counterparts. Solution files override both puzzle and hunt files.
+        event_files = {f.slug: f.file.url for f in request.tenant.eventfile_set.all()}
+        puzzle_files = {f.slug: reverse(
+            'puzzle_file',
+            kwargs={
+                'episode_number': episode_number,
+                'puzzle_number': puzzle_number,
+                'file_path': f.url_path,
+            }) for f in puzzle.puzzlefile_set.all()
+        }
+        solution_files = {f.slug: reverse(
+            'solution_file',
+            kwargs={
+                'episode_number': episode_number,
+                'puzzle_number': puzzle_number,
+                'file_path': f.url_path,
+            }) for f in puzzle.solutionfile_set.all()
+        }
+        files = { **event_files, **puzzle_files, **solution_files }  # Solution files override puzzle files, which override event files.
 
         text = Template(runtimes.runtimes[request.puzzle.soln_runtime].evaluate(
             request.puzzle.soln_content,
