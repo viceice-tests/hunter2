@@ -21,7 +21,7 @@ There is no maximum team size.
 <h3>{{ team.name }}</h3>
 {% spaceless %}
 <ul id="member-list" style="width: 40%">
-	{% for member in team.members.all %}
+	{% for member in members.all %}
 		<li>{{ member.username }}<span style="float: right">&nbsp;{{ member.seat }}</span></li>
 	{% endfor %}
 </ul>
@@ -52,7 +52,7 @@ There is no maximum team size.
 <ul id="inv-list" style="width: 40%">
 {% for user in invites %}
 	<li>
-		{{ user.username }} has been invited
+		{{ user.username }} @{{ user.seat }} has been invited
 		<span style="float: right">
 			&nbsp;<a href="#" class="inv-cancel" data-team="{{ team.pk }}" data-user="{{ user.pk }}">Cancel</a>
 		</span>
