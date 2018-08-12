@@ -1,4 +1,4 @@
-FROM python:3.7.0-alpine3.7 AS python_build
+FROM python:3.6.6-alpine3.7 AS python_build
 
 ARG DEVELOPMENT=
 COPY Pipfile Pipfile.lock pipenv.txt /usr/src/app/
@@ -34,7 +34,7 @@ RUN luarocks-5.2 install lua-cjson 2.1.0-1
 RUN luarocks-5.2 install lua-imlib2 dev-2
 
 
-FROM python:3.7.0-alpine3.7
+FROM python:3.6.6-alpine3.7
 
 COPY --from=python_build /wheels /wheels
 
