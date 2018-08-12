@@ -663,9 +663,8 @@ class FileUploadTests(EventTestCase):
 
     def test_load_episode_content_with_eventfile(self):
         episode = EpisodeFactory(flavour=f'${{{self.eventfile.slug}}}')
-        response = self.client.get(episode.get_absolute_url())
         response = self.client.get(
-            reverse('episode_content', kwargs={'episode_number': episode_number}),
+            reverse('episode_content', kwargs={'episode_number': episode.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)

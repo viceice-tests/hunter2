@@ -408,7 +408,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 'file_path': f.url_path,
             }) for f in puzzle.puzzlefile_set.all()
         }
-        files = { **event_files, **puzzle_files }  # Puzzle files with matching slugs override hunt counterparts
+        files = {**event_files, **puzzle_files}  # Puzzle files with matching slugs override hunt counterparts
 
         text = Template(runtimes.runtimes[puzzle.runtime].evaluate(
             puzzle.content,
@@ -471,7 +471,7 @@ class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 'file_path': f.url_path,
             }) for f in puzzle.solutionfile_set.all()
         }
-        files = { **event_files, **puzzle_files, **solution_files }  # Solution files override puzzle files, which override event files.
+        files = {**event_files, **puzzle_files, **solution_files}  # Solution files override puzzle files, which override event files.
 
         text = Template(runtimes.runtimes[request.puzzle.soln_runtime].evaluate(
             request.puzzle.soln_content,
