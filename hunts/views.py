@@ -504,7 +504,7 @@ class SolutionFile(View):
         if request.tenant.end_date > timezone.now() and not admin:
             raise Http404
 
-        solution_file = get_object_or_404(request.puzzle.solutionfile_set, url_path=file_path)
+        solution_file = get_object_or_404(puzzle.solutionfile_set, url_path=file_path)
         return sendfile(request, solution_file.file.path)
 
 
