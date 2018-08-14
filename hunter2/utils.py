@@ -10,9 +10,11 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-
-import random
 import configparser
+import random
+
+from django.conf import settings
+from urllib.parse import urlsplit, urlunsplit
 
 
 def generate_secret_key():
@@ -35,3 +37,16 @@ def load_or_create_secret_key(secrets_file):
             config.write(configfile)
 
     return secret_key
+
+
+def wwwize(url, request):
+    absolute_uri = request.build_absolute_uri(url)
+    components = urlsplit(absolute_uri)
+    domain = f'www.{settings.BASE_DOMAIN}'
+    try:
+        port = components.netloc.split(':')[1]
+        netloc = f'{domain}:{port}'
+    except IndexError:
+        netloc = domain
+
+    return urlunsplit(components[:1] + (netloc,) + components[2:])

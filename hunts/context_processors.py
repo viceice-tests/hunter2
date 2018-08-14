@@ -18,6 +18,9 @@ from hunts.models import AnnouncementType
 
 
 def announcements(request):
+    # Announcements are stored in tenant schemas. Some views won't have these in the search path.
+    if request.tenant is None:
+        return {}
 
     # Get all announcements, including puzzle specific announcements if present
     has_puzzle = hasattr(request, 'puzzle') and request.puzzle is not None
