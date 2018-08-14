@@ -51,7 +51,7 @@
 							<li class="nav-item"><a class="nav-link" href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
 							<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
 						{% else %}
-							<li class="nav-item"><a class="nav-link" href="{% url 'account_login' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a></li>
+							<li class="nav-item"><a class="nav-link" href="{{ login_url }}" id="navLogin">Login</a></li>
 						{% endif %}
 					{% endblock %}
 				</ul>
@@ -60,11 +60,7 @@
 
 		{% block debug %}{% endblock %}
 		<div class="container-fluid pt-3">
-			{% for announcement in announcements %}
-			<div class="alert {{ announcement.css_type }}" role="alert">
-				<strong>{{ announcement.title }}</strong> {{ announcement.message }}
-			</div>
-			{% endfor %}
+            {% block announcements %}{% endblock %}
 			<header class="container pt-3">
 				{% block page_header %}{% endblock page_header%}
 			</header>

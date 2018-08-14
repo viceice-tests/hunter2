@@ -10,7 +10,6 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from .utils import load_or_create_secret_key
 import environ
 import logging
@@ -23,6 +22,7 @@ env.DB_SCHEMES['postgresql'] = 'django_tenants.postgresql_backend'
 
 # Default settings which should be overridden by environment variables
 DEBUG              = env.bool      ('H2_DEBUG',         default=False)
+BASE_DOMAIN        = env.str       ('H2_DOMAIN',        default='hunter2.local')
 DEFAULT_URL_SCHEME = env.str       ('H2_SCHEME',        default='http')
 LOG_LEVEL          = env.str       ('H2_LOG_LEVEL',     default='WARNING')
 LANGUAGE_CODE      = env.str       ('H2_LANGUAGE_CODE', default='en-gb')
@@ -32,7 +32,7 @@ TIME_ZONE          = env.str       ('H2_TIME_ZONE',     default='Europe/London')
 ALLOWED_HOSTS      = env.list      ('H2_ALLOWED_HOSTS', default=['*'])
 INTERNAL_IPS       = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
 EMAIL_CONFIG       = env.email_url ('H2_EMAIL_URL',     default='smtp://localhost:25')
-EMAIL_DOMAIN       = env.str       ('H2_EMAIL_DOMAIN',  default='hunter2.local')
+EMAIL_DOMAIN       = env.str       ('H2_EMAIL_DOMAIN',  default=BASE_DOMAIN)
 ADMINS             = env.list      ('H2_ADMINS',        default=[])
 RAVEN_DSN          = env.str       ('H2_SENTRY_DSN',    default=None)
 SENDFILE_BACKEND   = env.str       ('H2_SENDFILE',      default='sendfile.backends.development')
@@ -170,7 +170,7 @@ MEDIA_ROOT = '/uploads/'
 MEDIA_URL = '/media/'
 
 MIDDLEWARE = (
-    'django_tenants.middleware.default.DefaultTenantMiddleware',
+    'events.middleware.TenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -187,25 +187,14 @@ MIDDLEWARE = (
 if USE_SILK:  # nocover
     MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
 
+PUBLIC_SCHEMA_URLCONF = 'hunter2.public_urls'
+
 if RAVEN_DSN:  # nocover
     RAVEN_CONFIG = {
         'dsn': RAVEN_DSN
     }
 
 ROOT_URLCONF = 'hunter2.urls'
-
-SOCIALACCOUNT_AUTO_SIGNUP = False
-
-SOCIALACCOUNT_PROVIDERS = {
-    'openid': {
-        'SERVERS': [{
-            'id': 'steam',
-            'name': 'Steam',
-            'openid_url': 'https://steamcommunity.com/openid',
-            'stateless': True,
-        }]
-    }
-}
 
 STATIC_ROOT = '/static/'
 
@@ -224,7 +213,22 @@ SENDFILE_ROOT = '/uploads'
 
 SENDFILE_URL = '/media'
 
+SESSION_COOKIE_DOMAIN = BASE_DOMAIN
+
 SITE_ID = 1
+
+SOCIALACCOUNT_AUTO_SIGNUP = False
+
+SOCIALACCOUNT_PROVIDERS = {
+    'openid': {
+        'SERVERS': [{
+            'id': 'steam',
+            'name': 'Steam',
+            'openid_url': 'https://steamcommunity.com/openid',
+            'stateless': True,
+        }]
+    }
+}
 
 TEMPLATES = [
     {
@@ -242,6 +246,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'teams.context_processors.event_team',
                 'hunts.context_processors.announcements',
+                'hunter2.context_processors.login_url',
             ],
         },
     },

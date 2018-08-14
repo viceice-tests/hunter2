@@ -13,6 +13,7 @@ services:
     environment:
       - H2_ADMINS
       - H2_DEBUG
+      - H2_DOMAIN
       - H2_EMAIL_DOMAIN
       - H2_EMAIL_URL
       - H2_PIWIK_HOST

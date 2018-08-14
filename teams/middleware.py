@@ -34,18 +34,19 @@ class TeamMiddleware(object):
         except UserProfile.DoesNotExist:
             return
 
-        request.events = set([t.at_event for t in user.teams.all()])
-        request.events.add(Event.objects.filter(current=True).get())
-        try:
-            request.events.remove(request.tenant)
-        except KeyError:
-            # TODO: Requested event not in events list. Should we allow? 404?
-            pass
+        if request.tenant is not None:
+            request.events = set([t.at_event for t in user.teams.all()])
+            request.events.add(Event.objects.filter(current=True).get())
+            try:
+                request.events.remove(request.tenant)
+            except KeyError:
+                # TODO: Requested event not in events list. Should we allow? 404?
+                pass
 
-        try:
-            request.team = user.teams.get(at_event=request.tenant)
-        except Team.DoesNotExist:
-            request.team = None
-            # TODO: User has no team for this event. Redirect to team creation?
-            pass
-        return
+            try:
+                request.team = user.teams.get(at_event=request.tenant)
+            except Team.DoesNotExist:
+                request.team = None
+                # TODO: User has no team for this event. Redirect to team creation?
+                pass
+            return
