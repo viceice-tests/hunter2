@@ -76,20 +76,19 @@ class HintInline(NestedTabularInline):
 
 class UnlockAnswerInline(NestedTabularInline):
     model = models.UnlockAnswer
-    extra = 0
+    extra = 1  # Must be one to support the new_guess param below
     formset = UnlockAnswerFormSet
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('guess', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
 
-    # Pre-population of inline formset from GET params based on
-    # https://stackoverflow.com/questions/442040/pre-populate-an-inline-formset
+    # Extract new_guess parameter and add it to the initial formset data
     def get_formset(self, request, obj=None, **kwargs):
         initial = []
-        if request.method == 'GET' and 'guess' in request.GET:
+        if request.method == 'GET' and 'new_guess' in request.GET:
             initial.append({
-                'guess': request.GET['guess']
+                'guess': request.GET['new_guess']
             })
         formset = super().get_formset(request, obj, **kwargs)
         formset.__init__ = curry(formset.__init__, initial=initial)
@@ -111,10 +110,19 @@ class UnlockAdmin(NestedModelAdmin):
         return False
 
 
+class NestedUnlockAnswerInline(NestedTabularInline):
+    model = models.UnlockAnswer
+    extra = 0
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        make_textinput('guess', db_field, kwargs)
+        return super().formfield_for_dbfield(db_field, **kwargs)
+
+
 class UnlockInline(NestedStackedInline):
     model = models.Unlock
     inlines = [
-        UnlockAnswerInline,
+        NestedUnlockAnswerInline,
     ]
     extra = 0
 

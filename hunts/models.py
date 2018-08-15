@@ -255,6 +255,7 @@ class Answer(models.Model):
             raise ValidationError(e) from e
 
     def save(self, *args, **kwargs):
+        print("Saving UnlockAnswer")
         super().save(*args, **kwargs)
         guesses = Guess.objects.filter(
             Q(for_puzzle=self.for_puzzle),
