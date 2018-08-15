@@ -18,6 +18,7 @@ from django.urls import reverse
 
 from . import rules
 from . import utils
+from .models import Puzzle
 
 # If PuzzleUnlockedMixin inherits from EpisodeUnlockedMixin the dispatch methods execute in the wrong order
 
@@ -85,3 +86,15 @@ class PuzzleUnlockedMixin():
             )
 
         return super().dispatch(request, *args, episode_number=episode_number, puzzle_number=puzzle_number, **kwargs)
+
+
+class PuzzleAdminMixin():
+    def dispatch(self, request, puzzle_id, *args, **kwargs):
+        try:
+            request.puzzle = Puzzle.objects.get(pk=puzzle_id)
+        except Puzzle.DoesNotExist:
+            raise PermissionDenied
+        request.admin = rules.is_admin_for_puzzle(request.user, request.puzzle)
+        if not request.admin:
+            raise PermissionDenied
+        return super().dispatch(request, *args, puzzle_id=puzzle_id, *args, **kwargs)

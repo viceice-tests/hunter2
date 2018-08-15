@@ -10,15 +10,18 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+from os import path
+from string import Template
+import tarfile
 
 from collections import defaultdict
 from datetime import datetime, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import OuterRef, Prefetch, Subquery
+from django.core.files import File
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
+from django.db.models import Count, OuterRef, Prefetch, Subquery
+from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
@@ -27,12 +30,13 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
+from django.views.generic.edit import FormView
 from sendfile import sendfile
-from string import Template
 from teams.mixins import TeamMixin
 
 from . import models, rules, runtimes, utils
-from .mixins import EpisodeUnlockedMixin, PuzzleUnlockedMixin
+from .forms import BulkUploadForm
+from .mixins import EpisodeUnlockedMixin, PuzzleAdminMixin, PuzzleUnlockedMixin
 from events.models import Attendance
 from events.utils import annotate_userprofile_queryset_with_seat
 
@@ -115,6 +119,38 @@ class EpisodeList(LoginRequiredMixin, View):
             'id': episode.pk,
             'name': episode.name
         } for episode in models.Episode.objects.filter(event=request.tenant)], safe=False)
+
+
+class BulkUpload(LoginRequiredMixin, PuzzleAdminMixin, FormView):
+    template_name = 'hunts/bulk_upload.html'
+    form_class = BulkUploadForm
+
+    def form_valid(self, form):
+        FileModel = models.SolutionFile if form.cleaned_data['solution'] else models.PuzzleFile
+        try:
+            archive = tarfile.open(fileobj=form.cleaned_data['archive'])
+            base_path = form.cleaned_data['base_path']
+            members = [m for m in archive.getmembers() if m.isfile()]
+            url_paths = [path.join(base_path, m.name) for m in members]
+            if not form.cleaned_data['overwrite']:
+                qs = FileModel.objects.filter(puzzle=self.request.puzzle, url_path__in=url_paths)
+                if qs.exists():
+                    return self.upload_error(form, 'Files would be overwritten by the upload.')
+            for member, url_path in zip(members, url_paths):
+                content = archive.extractfile(member)
+                try:
+                    pf = FileModel.objects.get(puzzle=self.request.puzzle, url_path=url_path)
+                except FileModel.DoesNotExist:
+                    pf = FileModel(puzzle=self.request.puzzle, url_path=url_path)
+                pf.file.save(path.basename(member.name), File(content))
+        except tarfile.ReadError as e:
+            return self.upload_error(form, e)
+        return HttpResponseRedirect(reverse('admin:hunts_puzzle_change', kwargs={'object_id': self.request.puzzle.pk}))
+
+    def upload_error(self, form, error):
+        context = self.get_context_data(form=form)
+        context['upload_error'] = f'Unable to process provided archive: {error}'
+        return self.render_to_response(context)
 
 
 class Guesses(LoginRequiredMixin, View):

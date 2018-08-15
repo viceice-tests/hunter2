@@ -12,6 +12,7 @@
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 from django.utils.safestring import mark_safe
 
 from .models import Answer, Guess, UnlockAnswer
@@ -110,6 +111,13 @@ class AnswerForm(forms.ModelForm):
             teams[t].append(g)
 
         return teams
+
+
+class BulkUploadForm(forms.Form):
+    archive = forms.FileField(validators=(FileExtensionValidator(('tar', )), ), help_text='tar archive of files to upload')
+    base_path = forms.CharField(required=False, help_text='Path to be pre-pended to paths in the archive')
+    solution = forms.BooleanField(required=False, help_text='Upload files as SolutionFile objects instead of PuzzleFile')
+    overwrite = forms.BooleanField(required=False, help_text='Allow upload to overwrite existing files')
 
 
 UnlockAnswerForm = forms.modelform_factory(UnlockAnswer, fields=('runtime', 'guess'))
