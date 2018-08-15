@@ -24,7 +24,7 @@ from nested_admin import \
 from sortedm2m_filter_horizontal_widget.forms import SortedFilteredSelectMultiple
 
 from . import models
-from .forms import AnswerForm, UnlockAnswerFormSet
+from .forms import AnswerForm
 
 
 def make_textinput(field, db_field, kwdict):
