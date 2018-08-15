@@ -118,4 +118,3 @@ class AnswerForm(forms.ModelForm):
 
 
 UnlockAnswerForm = forms.modelform_factory(UnlockAnswer, fields=('runtime', 'guess'))
-UnlockAnswerFormSet = formsets.formset_factory(UnlockAnswerForm, formset=BaseInlineFormSet)

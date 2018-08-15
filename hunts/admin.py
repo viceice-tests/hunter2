@@ -76,8 +76,16 @@ class HintInline(NestedTabularInline):
 
 class UnlockAnswerInline(NestedTabularInline):
     model = models.UnlockAnswer
+    extra = 0
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        make_textinput('guess', db_field, kwargs)
+        return super().formfield_for_dbfield(db_field, **kwargs)
+
+
+class NewUnlockAnswerInline(UnlockAnswerInline):
+    model = models.UnlockAnswer
     extra = 1  # Must be one to support the new_guess param below
-    formset = UnlockAnswerFormSet
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('guess', db_field, kwargs)
@@ -98,7 +106,7 @@ class UnlockAnswerInline(NestedTabularInline):
 @admin.register(models.Unlock)
 class UnlockAdmin(NestedModelAdmin):
     inlines = [
-        UnlockAnswerInline,
+        NewUnlockAnswerInline,
     ]
 
     def formfield_for_dbfield(self, db_field, **kwargs):
@@ -110,19 +118,10 @@ class UnlockAdmin(NestedModelAdmin):
         return False
 
 
-class NestedUnlockAnswerInline(NestedTabularInline):
-    model = models.UnlockAnswer
-    extra = 0
-
-    def formfield_for_dbfield(self, db_field, **kwargs):
-        make_textinput('guess', db_field, kwargs)
-        return super().formfield_for_dbfield(db_field, **kwargs)
-
-
 class UnlockInline(NestedStackedInline):
     model = models.Unlock
     inlines = [
-        NestedUnlockAnswerInline,
+        UnlockAnswerInline,
     ]
     extra = 0
 
