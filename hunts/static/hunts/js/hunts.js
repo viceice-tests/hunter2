@@ -18,7 +18,7 @@ function incorrect_answer(guess, timeout, new_hints, unlocks) {
 
 	var n_unlocks = unlocks.length;
 	for (let i = 0; i < n_unlocks; i++) {
-		guesses = unlocks[i].guesses.join(', ');
+		var guesses = unlocks[i].guesses.join(', ');
 		if (unlocks[i].new) {
 			unlocks_div.append('<p class="new-unlock">' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
 		} else {
