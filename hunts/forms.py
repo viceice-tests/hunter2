@@ -10,12 +10,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
-from django.forms import formsets
-from django.forms.models import BaseInlineFormSet
 from django.utils.safestring import mark_safe
 
 from .models import Answer, Guess, UnlockAnswer
@@ -123,32 +120,4 @@ class BulkUploadForm(forms.Form):
     overwrite = forms.BooleanField(required=False, help_text='Allow upload to overwrite existing files')
 
 
-# Pre-populatable inline formset based on
-# https://stackoverflow.com/questions/442040/pre-populate-an-inline-formset
-class BaseUnlockAnswerFormSet(BaseInlineFormSet):
-    def __init__(self, *args, **kwargs):
-        """
-        Grabs the curried initial values and stores them into a 'private'
-        variable. Note: the use of self.__initial is important, using
-        self.initial or self._initial will be erased by a parent class
-        """
-        self.__initial = kwargs.pop('initial', [])
-        super().__init__(*args, **kwargs)
-
-    def total_form_count(self):
-        return len(self.__initial) + self.extra
-
-    def _construct_forms(self):
-        return formsets.BaseFormSet._construct_forms(self)
-
-    def _construct_form(self, i, **kwargs):
-        if self.__initial:
-            try:
-                kwargs['initial'] = self.__initial[i]
-            except IndexError:
-                pass
-        return formsets.BaseFormSet._construct_form(self, i, **kwargs)
-
-
 UnlockAnswerForm = forms.modelform_factory(UnlockAnswer, fields=('runtime', 'guess'))
-UnlockAnswerFormSet = formsets.formset_factory(UnlockAnswerForm, formset=BaseUnlockAnswerFormSet)
