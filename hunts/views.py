@@ -72,7 +72,7 @@ class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
         else:
             position = None
 
-        files = {f.slug: f.file.url for f in request.tenant.eventfile_set.all()}
+        files = {f.slug: f.file.url for f in request.tenant.eventfile_set.filter(slug__isnull=False)}
         flavour = Template(request.episode.flavour).safe_substitute(**files)
 
         return TemplateResponse(
@@ -94,7 +94,7 @@ class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
         for puzzle in puzzles:
             puzzle.done = puzzle.answered_by(request.team)
 
-        files = {f.slug: f.file.url for f in request.tenant.eventfile_set.all()}
+        files = {f.slug: f.file.url for f in request.tenant.eventfile_set.filter(slug__isnull=False)}
         flavour = Template(request.episode.flavour).safe_substitute(**files)
 
         return TemplateResponse(
@@ -441,14 +441,14 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
             unlocks.append({'guesses': guesses, 'text': mark_safe(u.text)})
 
-        event_files = {f.slug: f.file.url for f in request.tenant.eventfile_set.all()}
+        event_files = {f.slug: f.file.url for f in request.tenant.eventfile_set.filter(slug__isnull=False)}
         puzzle_files = {f.slug: reverse(
             'puzzle_file',
             kwargs={
                 'episode_number': episode_number,
                 'puzzle_number': puzzle_number,
                 'file_path': f.url_path,
-            }) for f in puzzle.puzzlefile_set.all()
+            }) for f in puzzle.puzzlefile_set.filter(slug__isnull=False)
         }
         files = {**event_files, **puzzle_files}  # Puzzle files with matching slugs override hunt counterparts
 
@@ -496,14 +496,14 @@ class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         data = models.PuzzleData(request.puzzle, request.team, request.user.profile)
 
-        event_files = {f.slug: f.file.url for f in request.tenant.eventfile_set.all()}
+        event_files = {f.slug: f.file.url for f in request.tenant.eventfile_set.filter(slug__isnull=False)}
         puzzle_files = {f.slug: reverse(
             'puzzle_file',
             kwargs={
                 'episode_number': episode_number,
                 'puzzle_number': puzzle_number,
                 'file_path': f.url_path,
-            }) for f in puzzle.puzzlefile_set.all()
+            }) for f in puzzle.puzzlefile_set.filter(slug__isnull=False)
         }
         solution_files = {f.slug: reverse(
             'solution_file',
@@ -511,7 +511,7 @@ class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 'episode_number': episode_number,
                 'puzzle_number': puzzle_number,
                 'file_path': f.url_path,
-            }) for f in puzzle.solutionfile_set.all()
+            }) for f in puzzle.solutionfile_set.filter(slug__isnull=False)
         }
         files = {**event_files, **puzzle_files, **solution_files}  # Solution files override puzzle files, which override event files.
 
@@ -692,7 +692,7 @@ class AboutView(TemplateView):
         context = super().get_context_data(**kwargs)
         admin_team = self.request.tenant.teams.get(is_admin=True)
 
-        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.all()}
+        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.filter(slug__isnull=False)}
         content = Template(self.request.tenant.about_text).safe_substitute(**files)
 
         admin_members = annotate_userprofile_queryset_with_seat(admin_team.members, self.request.tenant)
@@ -711,7 +711,7 @@ class RulesView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.all()}
+        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.filter(slug__isnull=False)}
         content = Template(self.request.tenant.rules_text).safe_substitute(**files)
 
         context.update({
@@ -727,7 +727,7 @@ class HelpView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.all()}
+        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.filter(slug__isnull=False)}
         content = Template(self.request.tenant.help_text).safe_substitute(**files)
 
         context.update({
@@ -743,7 +743,7 @@ class ExamplesView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.all()}
+        files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.filter(slug__isnull=False)}
         content = Template(self.request.tenant.examples_text).safe_substitute(**files)
 
         context.update({
