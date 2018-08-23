@@ -41,6 +41,14 @@ def announcements(request):
             (Q(event__isnull=True) | Q(event=request.tenant)) &
             (Q(puzzle__isnull=True)))
 
+    if request.user.profile.attendance_at(request.tenant).seat == '':
+        current_announcements = list(current_announcements) + [models.Announcement(
+            event=request.tenant,
+            title='No Seat Set',
+            message="You don't have a seat set at this event. Set your seat on the account page.",
+            type=AnnouncementType.WARNING,
+        )]
+
     # TODO: This is relatively closely linked to the CSS so perhaps should be further moved to the view / template
     for announcement in current_announcements:
         announcement.css_type = css_class[announcement.type]
