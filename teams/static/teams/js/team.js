@@ -16,7 +16,7 @@ $(document).ready(function() {
 			cancel.click(function() {
 				cancel_invite($(this));
 			});
-			var list_entry = $(`<li hidden>${data.username} has been invited<span style="float: right">&nbsp;</span></li>`);
+			var list_entry = $(`<li style="display: none;">${data.username} has been invited<span style="float: right;">&nbsp;</span></li>`);
 			list_entry.find('span').append(cancel);
 			$('#inv-list').append(list_entry);
 			list_entry.fadeIn('slow');
@@ -101,7 +101,7 @@ $(document).ready(function() {
 			cancel_link.click(function() {
 				cancel_request($(this));
 			});
-			var list_entry = $(`<li hidden>You have requested to join ${data.team}<span style="float: right"></span></li>`);
+			var list_entry = $(`<li style="display: none;">You have requested to join ${data.team}<span style="float: right;"></span></li>`);
 			list_entry.find('span').append(cancel_link);
 			$('#req-list').append(list_entry);
 			list_entry.fadeIn('slow');
