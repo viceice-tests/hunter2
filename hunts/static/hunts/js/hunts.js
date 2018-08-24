@@ -83,7 +83,7 @@ $(function() {
 			},
 			error: function(xhr, status, error) {
 				button.removeAttr('disabled');
-				if (xhr.responseJSON.error == "too fast") {
+				if (xhr.responseJSON && xhr.responseJSON.error == "too fast") {
 					message("Slow down there, sparky! You're supposed to wait 5s between submissions.", "");
 				} else {
 					message("There was an error submitting the answer.", error);
