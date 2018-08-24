@@ -29,7 +29,7 @@ There is no maximum team size.
 {% if requests %}
 <div id="req-div">
 {% else %}
-<div id="req-div" hidden>
+<div id="req-div" style="display: none;">
 {% endif %}
 <h3>Requests to join</h3>
 <ul style="width: 40%">
@@ -48,7 +48,7 @@ There is no maximum team size.
 </div>
 {% comment %}{% if not team.is_full %}{% endcomment %}
 <h3>Invite team members</h3>
-<p id="inv-error" hidden></p>
+<p id="inv-error" style="display: none;"></p>
 <ul id="inv-list" style="width: 40%">
 {% for user in invites %}
 	<li>
@@ -76,10 +76,10 @@ There is no maximum team size.
 {% if invites %}
 <div id="inv-div">
 {% else %}
-<div id="inv-div" hidden>
+<div id="inv-div" style="display: none;">
 {% endif %}
 <h2>Invites</h2>
-<p id="inv-error" hidden></p>
+<p id="inv-error" style="display: none;"></p>
 {% spaceless %}
 <ul id="inv-list" style="width: 40%">
 {% for team in invites %}
@@ -95,7 +95,7 @@ There is no maximum team size.
 {% endspaceless %}
 </div>
 <h3>Requests</h3>
-<p id="req-error" hidden></p>
+<p id="req-error" style="display: none;"></p>
 {% spaceless %}
 <ul id="req-list" style="width: 40%">
 {% for team in requests %}
@@ -112,7 +112,7 @@ There is no maximum team size.
 {{ request_form.media }}
 {% endspaceless %}
 <h2>Create a team</h2>
-<p id="create-error" hidden></p>
+<p id="create-error" style="display: none;"></p>
 {% spaceless %}
 	<form action="create" method="post">
 		{% csrf_token %}
@@ -120,7 +120,7 @@ There is no maximum team size.
 			<p>{{ field.label_tag }}</p>
 			<p>{{ field }}</p>
 		{% endfor %}
-		<p id="inv-error" hidden></p>
+		<p id="inv-error" style="display: none;"></p>
 		<input type="submit" value="Create your team" />
 	</form>
 {% endspaceless %}
