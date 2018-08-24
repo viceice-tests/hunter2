@@ -25,7 +25,6 @@ from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpRespon
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
-from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.views import View
@@ -565,9 +564,9 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         else:
             if latest_guess.given + minimum_time > now:
                 return JsonResponse({'error': 'too fast'}, status=429)
-        try:
-            given_answer = request.POST['answer']
-        except MultiValueDictKeyError as e:
+
+        given_answer = request.POST.get('answer', '')
+        if given_answer == '':
             return JsonResponse({'error': 'no answer given'}, status=400)
 
         if request.tenant.end_date < now:
