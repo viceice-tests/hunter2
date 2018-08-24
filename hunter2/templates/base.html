@@ -64,7 +64,11 @@
 			<header class="container pt-3">
 				{% block page_header %}{% endblock page_header%}
 			</header>
-			<div id="content" class="container pt-3">
+			{% if wide %}
+				<div id="content" class="container-fluid pt-3">
+			{% else %}
+				<div id="content" class="container pt-3">
+			{% endif %}
 			{% block content %}
 				If you're seeing this, contact the site administrators.
 			{% endblock content %}
