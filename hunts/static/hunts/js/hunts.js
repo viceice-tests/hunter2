@@ -54,8 +54,8 @@ var last_updated = Date.now();
 
 $(function() {
 	"use strict";
-	let field = $('#answer-entry')
-	let button = $('#answer-button')
+	let field = $('#answer-entry');
+	let button = $('#answer-button');
 	field.keyup(function(e) {
 		console.log("??");
 		if (!field.val()) {

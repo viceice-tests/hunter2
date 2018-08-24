@@ -25,7 +25,6 @@ from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpRespon
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
-from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.views import View
