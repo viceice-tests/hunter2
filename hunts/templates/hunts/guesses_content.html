@@ -27,7 +27,7 @@
 				{% else %}{{ guess.by.username }}{% endif %}
 			{% if guess.by_team.is_explicit %} <span class="team">(<a href="?team={{ guess.by_team.id }}">{{ guess.by_team.name }}</a>)</span>{% endif %}
 		</td>
-		<td>{{ guess.by.seat }}</td>
+		<td>{{ guess.byseat }}</td>
 		<td class="guess">
 			{{ guess.guess }}
 			<span class="shortcuts">
