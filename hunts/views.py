@@ -563,9 +563,9 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         else:
             if latest_guess.given + minimum_time > now:
                 return JsonResponse({'error': 'too fast'}, status=429)
-        try:
-            given_answer = request.POST['answer']
-        except MultiValueDictKeyError as e:
+
+        given_answer = request.POST.get('answer', '')
+        if given_answer == '':
             return JsonResponse({'error': 'no answer given'}, status=400)
 
         if request.tenant.end_date < now:

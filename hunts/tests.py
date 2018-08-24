@@ -211,6 +211,12 @@ class AnswerSubmissionTests(EventTestCase):
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['error'], 'no answer given')
+        response = self.client.post(self.url, {
+            'last_updated': '0',
+            'answer': ''
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error'], 'no answer given')
 
     def test_answer_cooldown(self):
         with freezegun.freeze_time() as frozen_datetime:
