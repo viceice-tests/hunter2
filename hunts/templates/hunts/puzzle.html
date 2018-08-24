@@ -42,7 +42,7 @@
 <form class="form-inline" action="an" method="POST">
 	{% csrf_token %}
 	<input name="answer" id="answer-entry" class="form-control"></input>
-	<button type="submit" id="answer-button" class="btn btn-default">Guess!</button>
+	<button type="submit" id="answer-button" class="btn btn-default" disabled="disabled">Guess!</button>
 </form>
 {% endif %}
 {% if ended or admin %}

@@ -54,14 +54,26 @@ var last_updated = Date.now();
 
 $(function() {
 	"use strict";
+	let field = $('#answer-entry')
+	let button = $('#answer-button')
+	field.keyup(function(e) {
+		console.log("??");
+		if (!field.val()) {
+			console.log("OFF");
+			button.attr('disabled', true);
+		} else {
+			console.log("ON");
+			button.removeAttr('disabled');
+		}
+	});
 	$('.form-inline').submit(function(e) {
 		e.preventDefault();
 		var form = $(e.target);
 		var button = form.children('button');
-		if (button.attr('disabled') == 'true') {
+		if (button.attr('disabled') == true) {
 			return;
 		}
-		button.attr('disabled', 'true');
+		button.attr('disabled', true);
 		var data = {
 			last_updated: last_updated,
 			answer: form.children('input[name=answer]')[0].value
