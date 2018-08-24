@@ -290,7 +290,9 @@ class StatsContent(LoginRequiredMixin, View):
         all_teams = teams.models.Team.objects.annotate(
             num_members=Count('members')
         ).filter(
-            at_event=request.tenant, num_members__gte=1
+            at_event=request.tenant,
+            is_admin=False,
+            num_members__gte=1,
         ).prefetch_related('members', 'members__user')
 
         # Get the first correct guess for each team on each puzzle.
