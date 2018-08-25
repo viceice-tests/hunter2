@@ -27,12 +27,10 @@ class TeamMiddleware(object):
         request.events = None
         request.team = None
 
-        try:
-            user = request.user.profile
-        except AttributeError:
+        if not request.user.is_authenticated:
             return
-        except UserProfile.DoesNotExist:
-            return
+
+        (user, _) = UserProfile.objects.get_or_create(user=request.user)
 
         if request.tenant is not None:
             request.events = set([t.at_event for t in user.teams.all()])
