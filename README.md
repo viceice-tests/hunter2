@@ -30,9 +30,7 @@ docker-compose up -d
 
 If you are running a development instance on a laptop then you need to add some hosts file entries:
 ```
-echo 127.0.0.1 hunter2.local dev.hunter2.local > /etc/hosts
-docker-compose run --rm app createsuperuser
-docker-compose run --rm app createevent
+echo 127.0.0.1 hunter2.local www.hunter2.local dev.hunter2.local > /etc/hosts
 ```
 `dev.hunter2.local` is the default event subdomain. If you are working with more events add more names here.
 
