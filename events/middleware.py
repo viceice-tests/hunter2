@@ -18,6 +18,7 @@ from django_tenants.middleware import TenantMainMiddleware
 
 from accounts.models import UserProfile
 
+
 class EventMiddleware(object):
     def __init__(self, get_response):
         self.get_response = get_response
