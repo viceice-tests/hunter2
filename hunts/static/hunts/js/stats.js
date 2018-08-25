@@ -46,8 +46,11 @@ function getStats(force) {
 	if (!(force || $('#auto-update').prop('checked'))) {
 		return;
 	}
-	$.get('stats_content/' + $('#episode').val(), {}, function (data) { globalData = data; drawGraph(); });
-	timeout = setTimeout(getStats, 5000);
+	$.get('stats_content/' + $('#episode').val(), {}, function (data) {
+		// Get new stats 5 seconds after we got last stats
+		timeout = setTimeout(getStats, 5000);
+		globalData = data; drawGraph();
+	});
 }
 
 function drawGraph() {
