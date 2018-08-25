@@ -41,6 +41,9 @@ docker-compose run --rm app createsuperuser
 docker-compose run --rm app createevent
 ```
 
+Load an event page (such as [http://dev.hunter2.local:8080/hunt/](http://dev.hunter2.local:8080/hunt/)) and log in.
+This implicitly creates a profile for you, and then you can strugle make an admin team.
+
 Copyright
 =======
 Hunter 2 is a platform for running online puzzle hunts. Further information can be found at https://www.hunter2.app/ including details of contributors.
