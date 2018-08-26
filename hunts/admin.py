@@ -273,7 +273,7 @@ class EpisodeAdmin(NestedModelAdmin):
     def formfield_for_manytomany(self, db_field, request=None, **kwargs):
         if db_field.name == 'puzzles':
             kwargs['widget'] = SortedFilteredSelectMultiple()
-            return super().formfield_for_manytomany(db_field, request, **kwargs)
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def event_change(self, obj):
         return format_html(
