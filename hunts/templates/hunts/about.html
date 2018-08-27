@@ -9,7 +9,7 @@
 <p>{{ event_name }} is run by:</p>
 <ul style="width: 40%">
     {% for admin in admins %}
-    <li>{{ admin.user.username }}<span style="float: right;">&nbsp;{{ admin.seat }}</li>
+    <li>{{ admin.username }}<span style="float: right;">&nbsp;{{ admin.seat }}</li>
     {% endfor %}
 </ul>
 {{ content | safe }}

@@ -11,14 +11,15 @@
 {% block content %}
 <h1>{{ title }}</h1>
 {% if flavour %}
-<div class="puzzle-flavour">{{ flavour | safe }}</div>
+<!-- This is just flavour text - not related to the puzzle! -->
+<div class="puzzle-flavour"><span class="flavour-intro">Story: </span>{{ flavour | safe }}</div>
 <hr class="flavour-clue-divider">
 {% endif %}
 <!-- CLUE STARTS HERE -->
 {% comment %}Render puzzle text including HTML elements{% endcomment %}
 {{ text | safe }}
 <!-- CLUE ENDS HERE -->
-<h2>Clues</h2>
+<hr />
 <h3>Hints</h3>
 <div id="hints">
 {% for hint in hints %}
@@ -36,19 +37,44 @@
 <h2>Your correct answer{{ answered|pluralize }}</h2>
 <div id="answer">
 {% for guess in answered %}
-<p>"{{ guess.guess }}" &mdash; entered by {{ guess.by.user.username }}</p>
+<p>"{{ guess.guess }}" &mdash; entered by {{ guess.by.username }}</p>
 {% endfor %}
 </div>
+{% elif ended %}
+<h2>Event is over</h2>
 {% else %}
 <form class="form-inline" action="an" method="POST">
 	{% csrf_token %}
 	<span id="answer-border">
 	<input name="answer" id="answer-entry" class="form-control"></input>
 	</span>
-	<button type="submit" id="answer-button" class="btn btn-default">Guess!</button>
+	<button type="submit" id="answer-button" class="btn btn-default" disabled="disabled">Guess!</button>
 </form>
 {% endif %}
-{% if hints %}
+{% if ended or admin %}
+<button id="soln-button" class="btn btn-primary" data-toggle="collapse" data-target="#soln-content" data-url="{% url 'solution_content' episode_number=episode_number puzzle_number=puzzle_number %}">Show Solution</button>
+<div id="soln-content" class="collapse">
+	<div id="soln-text" class="card card-body">
+	</div>
+</div>
+<script>
+$(function() {
+	"use strict";
+	var content = $('#soln-content');
+	var button = $('#soln-button');
 
+	content.on('show.bs.collapse', function() {
+		var url = button.data('url');
+		$('#soln-text').load(url);
+		$(this).unbind('show.bs.collapse');
+	});
+	content.on('shown.bs.collapse', function() {
+		button.text('Hide Solution');
+	});
+	content.on('hidden.bs.collapse', function() {
+		button.text('Show Solution');
+	});
+});
+</script>
 {% endif %}
 {% endblock %}

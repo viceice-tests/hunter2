@@ -10,7 +10,7 @@
 <h2>Members</h2>
 <ul id="member-list" style="width: 40%">
 {% for u in members %}
-<li>{{ u.user.username }}<span style="float: right">&nbsp;{{ u.seat }}</span></li>
+<li>{{ u.username }}<span style="float: right">&nbsp;{{ u.seat }}</span></li>
 {% endfor %}
 </ul>
 {% endblock %}

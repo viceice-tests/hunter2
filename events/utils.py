@@ -1,25 +1,19 @@
-from django.shortcuts import get_object_or_404
-from .models import Event
+# Copyright (C) 2018 The Hunter2 Contributors.
+#
+# This file is part of Hunter2.
+#
+# Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-import traceback
+from django.db.models import OuterRef, Subquery
+
+from events.models import Attendance
 
 
-def with_event(f):
-    """ Returns a wed function that receives an `event` kwarg """
-
-    def view_func(request, event_id=None, *args, **kwargs):
-        logging.debug(traceback.format_stack())
-        if event_id is not None:
-            logging.debug(f'Event ID: {event_id}')
-            event = get_object_or_404(Event, pk=event_id)
-            logging.debug(f'Event: {event}')
-        else:
-            try:
-                event = Event.objects.filter(current=True).get()
-            except Event.DoesNotExist:
-                event = None
-
-        return f(request, event=event, *args, **kwargs)
-
-    return view_func
+def annotate_userprofile_queryset_with_seat(queryset, event):
+    return queryset.annotate(seat=Subquery(Attendance.objects.filter(user=OuterRef('pk'), event=event).values('seat')))

@@ -1,13 +1,24 @@
-# vim: set fileencoding=utf-8 :
-from unittest import TestCase
+# Copyright (C) 2018 The Hunter2 Contributors.
+#
+# This file is part of Hunter2.
+#
+# Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+
+from django.test import SimpleTestCase
 from parameterized import parameterized
 
-from .. import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
+from ..exceptions import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
 from . import LuaRuntime
 
 
-class LuaRuntimeTestCase(TestCase):
+class LuaRuntimeTestCase(SimpleTestCase):
     def test_evaluate(self):
         lua_runtime = LuaRuntime()
         lua_script = '''return "Hello World"'''
@@ -47,7 +58,7 @@ class LuaRuntimeTestCase(TestCase):
         self.assertRegex(context.exception.message, ".*error_message$")
 
 
-class LuaSandboxTestCase(TestCase):
+class LuaSandboxTestCase(SimpleTestCase):
     # Functions that we do not want to expose to our sandbox
     PROTECTED_FUNCTIONS = [
         'collectgarbage',
@@ -114,7 +125,7 @@ class LuaSandboxTestCase(TestCase):
             lua_runtime._sandbox_run(lua_script)
 
 
-class LuaSandboxLibrariesTestCase(TestCase):
+class LuaSandboxLibrariesTestCase(SimpleTestCase):
     # Functions that we do not want to expose to our sandbox
     SUPPORTED_LIBRARIES = [
         'cjson',

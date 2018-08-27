@@ -1,20 +1,23 @@
 {% load analytical %}
+{% load raven %}
 {% load staticfiles %}
-{% load hunter2urls %}
 <!DOCTYPE html>
 <html lang="en">
 	<head>
 		{% analytical_head_top %}
-		<title>The iHunt</title>
+		<title>{{ request.site.name }}</title>
 		<meta charset="UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+		<script src="https://cdn.ravenjs.com/3.24.2/raven.min.js" integrity="sha256-aQcL/lJFlqXoaB8IUpqp21jpU+SAjUm9WFRxJmroQKc=" crossorigin="anonymous"></script>
+		<script>Raven.config('{% sentry_public_dsn "https" %}').install()</script>
 
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous" />
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+		<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
 
 		<link rel="stylesheet" href="{% static 'hunter2/css/base.css' %}" type="text/css" />
 		<script src="{% static 'hunter2/js/base.js' %}"></script>
@@ -26,56 +29,55 @@
 	<body>
 		{% analytical_body_top %}
 		<noscript>
-			You do not have JavaScript Enabled. JavaScript is required to access and take part in the iHunt.
+			You do not have JavaScript Enabled. JavaScript is required to access and take part in a hunt.
 		</noscript>
-		<nav class="navbar navbar-inverse">
-			<div class="container-fluid">
-				<div class="collapse navbar-collapse" id="site-navbar-collapse-1">
-					<ul class="nav navbar-nav">
-						{% block topbar_left %}
-						<li class="button"><a href="{% url 'index' 'www' %}">Home</a></li>
-						{% endblock %}
-					</ul>
-					<ul class="nav navbar-nav navbar-right">
-						{% block topbar_right %}
+
+		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<div class="collapse navbar-collapse" id="collapsibleNavbar">
+				<ul class="navbar-nav">
+					{% block topbar_left %}
+						<li class="navbar-brand"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
+					{% endblock %}
+				</ul>
+
+				<ul class="navbar-nav ml-auto">
+					{% block topbar_right %}
 						{% if user.is_authenticated %}
-						<li class="button"><a href="{% url 'edit_profile' 'www' %}" id="navUser">Account</a></li>
-						<li class="button"><a href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
-						<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
+							<li class="nav-item"><a class="nav-link" href="{% url 'edit_profile' %}" id="navUser">Account</a></li>
+							<li class="nav-item"><a class="nav-link" href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
+							<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
 						{% else %}
-						<li><a href="{% url 'account_login' %}?next={{ request.get_full_path | urlencode }}" id="navLogin">Login</a></li>
+							<li class="nav-item"><a class="nav-link" href="{{ login_url }}" id="navLogin">Login</a></li>
 						{% endif %}
-						{% endblock %}
-					</ul>
-				</div>
-			</div>
+					{% endblock %}
+				</ul>
+		  	</div>
 		</nav>
+
 		{% block debug %}{% endblock %}
-		<div class="container">
-			{% for announcement in announcements %}
-			<div class="alert {{ announcement.css_type }} fade in">
-				<strong>{{ announcement.title }}</strong> {{ announcement.message }}
+		<div class="container-fluid pt-3">
+            {% block announcements %}{% endblock %}
+			<header class="container pt-3">
+				{% block page_header %}{% endblock page_header%}
+			</header>
+			{% if wide %}
+				<div id="content" class="container-fluid pt-3">
+			{% else %}
+				<div id="content" class="container pt-3">
+			{% endif %}
+			{% block content %}
+				If you're seeing this, contact the site administrators.
+			{% endblock content %}
 			</div>
-			{% endfor %}
-		<div class="page-header">
-			{% block page_header %}{% endblock page_header%}
+			<footer class="container-fluid">
+				<p>Built with <a href="https://hunter2.app/">Hunter2</a>. Copyright &copy; 2017-2018  The Hunter 2 Contributors<br />
+				Hunter 2 is free software: you can redistribute it and/or modify it under the terms of the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">GNU Affero General Public License</a> as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.<br />
+			</footer>
 		</div>
-		{% block content %}
-			If you're seeing this, it's all gone wrong!
-		{% endblock content %}
-		</div>
-		<footer class="footer">
-			<div class="container">
-				<div style="float: left; width: 33%;font-size: 10px;text-align: left;padding-left: 15px;color: #646464;">
-					Riddlers Online: 0 <br />
-					Teams Online: 0
-				</div>
-				<div style="float: left; width: 33%; text-align: center;">
-					Copyright &copy; 2016 <br />
-					<a href="https://www.theihunt.uk">https://www.theihunt.uk</a>
-				</div>
-			</div>
-		</footer>
 		{% analytical_body_bottom %}
 	</body>
 </html>

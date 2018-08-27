@@ -2,18 +2,19 @@ version: '2.1'
 
 services:
   db:
-    image: postgres:9.6-alpine
+    image: postgres:9.6.6-alpine
     volumes:
       - db:/var/lib/postgresql/data
   app:
     build:
        context: .
-       args:
-          REQUIREMENTS_VERSION: "production"
     depends_on:
       - db
     environment:
       - H2_DEBUG
+      - H2_DOMAIN
+      - H2_TEST_SEED
+      - H2_SENDFILE=sendfile.backends.nginx
     image: ${IMAGE_TAG:-hunter2_app}
     volumes:
       - ${PWD:-.}:/usr/src/app
@@ -21,6 +22,7 @@ services:
       - static:/static
       - uploads_events:/uploads/events
       - uploads_puzzles:/uploads/puzzles
+      - uploads_solutions:/uploads/solutions
   web:
     build: ./nginx
     image: ${IMAGE_TAG:-hunter2_web}
@@ -30,6 +32,7 @@ services:
       - static:/static:ro
       - uploads_events:/media/events:ro
       - uploads_puzzles:/media/puzzles:ro
+      - uploads_solutions:/media/solutions:ro
 
 volumes:
   db: {}
@@ -37,3 +40,4 @@ volumes:
   static: {}
   uploads_events: {}
   uploads_puzzles: {}
+  uploads_solutions: {}

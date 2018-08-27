@@ -7,28 +7,36 @@
 
 {% block content %}
 <h1>Team</h1>
-{% lorem %}
 {% if team.is_explicit %}
+{% spaceless %}
+<p>You can invite people to join your team.
+{% if event.max_team_size %}
+Teams can have up to {{ event.max_team_size }} members.
+{% else %}
+There is no maximum team size.
+{% endif %}
+</p>
+{% endspaceless %}
 <h2>Manage your team</h2>
 <h3>{{ team.name }}</h3>
 {% spaceless %}
 <ul id="member-list" style="width: 40%">
-	{% for member in team.members.all %}
-		<li>{{ member.user.username }}<span style="float: right">&nbsp;{{ member.seat }}</span></li>
+	{% for member in members.all %}
+		<li>{{ member.username }}<span style="float: right">&nbsp;{{ member.seat }}</span></li>
 	{% endfor %}
 </ul>
 {% endspaceless %}
 {% if requests %}
 <div id="req-div">
 {% else %}
-<div id="req-div" hidden>
+<div id="req-div" style="display: none;">
 {% endif %}
 <h3>Requests to join</h3>
 <ul style="width: 40%">
 {% spaceless %}
 {% for user in requests %}
 	<li>
-		{{ user.user.username }} has requested to join
+		{{ user.username }} has requested to join
 		<span style="float: right">
 			&nbsp;<a href="#" class="req-accept" data-team="{{ team.pk }}" data-user="{{ user.pk }}">Accept</a>
 			&nbsp;<a href="#" class="req-deny" data-team="{{ team.pk }}" data-user="{{ user.pk }}">Ignore</a>
@@ -40,11 +48,11 @@
 </div>
 {% comment %}{% if not team.is_full %}{% endcomment %}
 <h3>Invite team members</h3>
-<p id="inv-error" hidden></p>
+<p id="inv-error" style="display: none;"></p>
 <ul id="inv-list" style="width: 40%">
 {% for user in invites %}
 	<li>
-		{{ user.user.username }} has been invited
+		{{ user.username }} @{{ user.seat }} has been invited
 		<span style="float: right">
 			&nbsp;<a href="#" class="inv-cancel" data-team="{{ team.pk }}" data-user="{{ user.pk }}">Cancel</a>
 		</span>
@@ -63,14 +71,15 @@
 {% endspaceless %}
 {% comment %}{% endif %}{% endcomment %}
 {% else %}
+<p>You can accept a team invite, request to join a team, or create your own team. Once you create or join a team for this event you cannot move to another team.</p>
 <h2>Join a team</h2>
 {% if invites %}
 <div id="inv-div">
 {% else %}
-<div id="inv-div" hidden>
+<div id="inv-div" style="display: none;">
 {% endif %}
 <h2>Invites</h2>
-<p id="inv-error" hidden></p>
+<p id="inv-error" style="display: none;"></p>
 {% spaceless %}
 <ul id="inv-list" style="width: 40%">
 {% for team in invites %}
@@ -86,7 +95,7 @@
 {% endspaceless %}
 </div>
 <h3>Requests</h3>
-<p id="req-error" hidden></p>
+<p id="req-error" style="display: none;"></p>
 {% spaceless %}
 <ul id="req-list" style="width: 40%">
 {% for team in requests %}
@@ -103,7 +112,7 @@
 {{ request_form.media }}
 {% endspaceless %}
 <h2>Create a team</h2>
-<p id="create-error" hidden></p>
+<p id="create-error" style="display: none;"></p>
 {% spaceless %}
 	<form action="create" method="post">
 		{% csrf_token %}
@@ -111,7 +120,7 @@
 			<p>{{ field.label_tag }}</p>
 			<p>{{ field }}</p>
 		{% endfor %}
-		<p id="inv-error" hidden></p>
+		<p id="inv-error" style="display: none;"></p>
 		<input type="submit" value="Create your team" />
 	</form>
 {% endspaceless %}

@@ -2,39 +2,43 @@ version: '2.1'
 
 services:
   db:
-    image: postgres:9.6-alpine
+    image: postgres:9.6.6-alpine
     volumes:
       - db:/var/lib/postgresql/data
   app:
     build:
        context: .
-       args:
-          REQUIREMENTS_VERSION: "production"
     depends_on:
       - db
     environment:
       - H2_ADMINS
       - H2_DEBUG
+      - H2_DOMAIN
       - H2_EMAIL_DOMAIN
       - H2_EMAIL_URL
       - H2_PIWIK_HOST
       - H2_PIWIK_SITE
+      - H2_SCHEME
+      - H2_SENDFILE=sendfile.backends.nginx
       - H2_SENTRY_DSN
-    image: ${IMAGE_TAG:-hunter2_app}
+      - UWSGI_WORKERS
+    image: registry.gitlab.com/ihunt/hunter2/app:${H2_IMAGE_VERSION:-latest}
     volumes:
       - config:/config
       - static:/static
       - uploads_events:/uploads/events
       - uploads_puzzles:/uploads/puzzles
+      - uploads_solutions:/uploads/solutions
   web:
     build: ./nginx
-    image: ${IMAGE_TAG:-hunter2_web}
+    image: registry.gitlab.com/ihunt/hunter2/web:${H2_IMAGE_VERSION:-latest}
     ports:
       - "${H2_LISTEN:-8080}:80"
     volumes:
       - static:/static:ro
       - uploads_events:/media/events:ro
       - uploads_puzzles:/media/puzzles:ro
+      - uploads_solutions:/media/solutions:ro
 
 volumes:
   db: {}
@@ -42,3 +46,4 @@ volumes:
   static: {}
   uploads_events: {}
   uploads_puzzles: {}
+  uploads_solutions: {}

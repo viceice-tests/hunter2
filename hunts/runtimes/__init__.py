@@ -1,33 +1,52 @@
-# vim: set fileencoding=utf-8 :
-from abc import ABCMeta, abstractmethod
+# Copyright (C) 2018 The Hunter2 Contributors.
+#
+# This file is part of Hunter2.
+#
+# Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-class RuntimeExecutionError(Exception):
-    def __init__(self, message):
-        self.message = message
+from hunts.runtimes.iframe import IFrameRuntime
+from hunts.runtimes.lua import LuaRuntime
+from hunts.runtimes.regex import RegexRuntime
+from hunts.runtimes.static import StaticRuntime
+
+CASED_REGEX  = 'r'
+CASED_STATIC = 's'
+IFRAME       = 'I'
+LUA          = 'L'
+REGEX        = 'R'
+STATIC       = 'S'
+
+RUNTIME_CHOICES = (
+    (STATIC,       'Static Runtime'),
+    (CASED_STATIC, 'Case Sensitive Static Runtime'),
+    (REGEX,        'Regex Runtime'),
+    (CASED_REGEX,  'Case Sensitive Regex Runtime'),
+    (IFRAME,       'IFrame Runtime'),
+    (LUA,          'Lua Runtime'),
+)
 
 
-class RuntimeMemoryExceededError(Exception):
-    def __init__(self, message="Runtime memory limit exceeded"):
-        self.message = message
+class Runtimes:
+    runtimes = {
+        CASED_REGEX:  (RegexRuntime, {'case_sensitive': True}),
+        CASED_STATIC: (StaticRuntime, {'case_sensitive': True}),
+        IFRAME:       (IFrameRuntime, {}),
+        LUA:          (LuaRuntime, {}),
+        REGEX:        (RegexRuntime, {'case_sensitive': False}),
+        STATIC:       (StaticRuntime, {'case_sensitive': False}),
+    }
+
+    def __getitem__(self, key):
+        # Return an instantiated copy of the requested runtime
+        entry = self.runtimes[key]
+        return entry[0](**entry[1])
 
 
-class RuntimeExecutionTimeExceededError(Exception):
-    def __init__(self, message="Runtime time limit exceeded"):
-        self.message = message
-
-
-class RuntimeSandboxViolationError(Exception):
-    def __init__(self, message="Runtime sandbox violation"):
-        self.message = message
-
-
-class AbstractRuntime(metaclass=ABCMeta):
-    @abstractmethod
-    def evaluate(self, script, team_puzzle_data, user_puzzle_data, team_data, user_data):
-        """ABSTRACT"""
-
-    @abstractmethod
-    # TODO: Consider changing to allow returning a result and unlock hints for this puzzle.
-    def validate_guess(self, validator, guess):
-        """ABSTRACT"""
+runtimes = Runtimes()

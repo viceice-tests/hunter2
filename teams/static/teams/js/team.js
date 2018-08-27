@@ -1,4 +1,5 @@
 $(document).ready(function() {
+	"use strict";
 	$('#inv-create').submit(function(event) {
 		event.preventDefault();
 		var field = $(this).find('select[name=user]');
@@ -12,14 +13,16 @@ $(document).ready(function() {
 			if (team) {
 				cancel.data('team', team);
 			}
-			cancel.click(cancel_invite);
-			var list_entry = $(`<li hidden>${data.username} has been invited<span style="float: right">&nbsp;</span></li>`);
+			cancel.click(function() {
+				cancel_invite($(this));
+			});
+			var list_entry = $(`<li style="display: none;">${data.username} has been invited<span style="float: right;">&nbsp;</span></li>`);
 			list_entry.find('span').append(cancel);
 			$('#inv-list').append(list_entry);
 			list_entry.fadeIn('slow');
 			field.empty();
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON['message'];
+			var message = jqXHR.responseJSON.message;
 			$('#inv-error').text(message).show('fast');
 		});
 	});
@@ -33,33 +36,35 @@ $(document).ready(function() {
 		});
 	}
 
-	function cancel_invite() {
-		var prefix = $(this).data('team') ? `${$(this).data('team')}/` : ''
-		var list_entry = $(this).closest('li');
+	function cancel_invite(inv_button) {
+		var prefix = inv_button.data('team') ? `${inv_button.data('team')}/` : '';
+		var list_entry = inv_button.closest('li');
 		$.post(
-			prefix + 'cancelinvite', JSON.stringify({ user: $(this).data('user') })
+			prefix + 'cancelinvite', JSON.stringify({ user: inv_button.data('user') })
 		).done(function() {
 			$('#inv-error').text('').hide('fast');
 			hide_invite(list_entry);
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON['message'];
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_invite(list_entry);
 			}
 			$('#inv-error').text(message).show('fast');
 		});
 	}
-	$('.inv-cancel').click(cancel_invite);
+	$('.inv-cancel').click(function() {
+		cancel_invite($(this));
+	});
 
 	$('.inv-accept').click(function() {
-		var prefix = $(this).data('team') ? `${$(this).data('team')}/` : ''
+		var prefix = $(this).data('team') ? `${$(this).data('team')}/` : '';
 		var list_entry = $(this).closest('li');
 		$.post(
 			prefix + 'acceptinvite'
 		).done(function() {
 			location.reload();
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON['message'];
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_invite(list_entry);
 			}
@@ -68,7 +73,7 @@ $(document).ready(function() {
 	});
 
 	$('.inv-deny').click(function() {
-		var prefix = $(this).data('team') ? `${$(this).data('team')}/` : ''
+		var prefix = $(this).data('team') ? `${$(this).data('team')}/` : '';
 		var list_entry = $(this).closest('li');
 		$.post(
 			prefix + 'denyinvite'
@@ -76,7 +81,7 @@ $(document).ready(function() {
 			$('#inv-error').text('').hide('fast');
 			hide_invite(list_entry);
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON['message'];
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_invite(list_entry);
 			}
@@ -93,13 +98,15 @@ $(document).ready(function() {
 		).done(function(data) {
 			$('#inv-error').text('').hide('fast');
 			var cancel_link = $(`<a href="#" data-team="${team}">Cancel</a>`);
-			cancel_link.click(cancel_request);
-			var list_entry = $(`<li hidden>You have requested to join ${data['team']}<span style="float: right"></span></li>`);
+			cancel_link.click(function() {
+				cancel_request($(this));
+			});
+			var list_entry = $(`<li style="display: none;">You have requested to join ${data.team}<span style="float: right;"></span></li>`);
 			list_entry.find('span').append(cancel_link);
 			$('#req-list').append(list_entry);
 			list_entry.fadeIn('slow');
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON['message'];
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				list_entry.fadeOut('slow', function() {
 					$(this).remove();
@@ -118,26 +125,28 @@ $(document).ready(function() {
 		});
 	}
 	
-	function cancel_request() {
-		var list_entry = $(this).closest('li');
-		var list = $(this).closest('ul');
+	function cancel_request(req_button) {
+		var list_entry = req_button.closest('li');
+		var list = req_button.closest('ul');
 		$.post(
-			$(this).data('team') + '/cancelrequest'
+			req_button.data('team') + '/cancelrequest'
 		).done(function() {
 			$('#req-error').text('').hide('fast');
 			hide_request(list_entry);
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON['message'];
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_request(list_entry);
 			}
 			$('#req-error').text(message).show('fast');
 		});
 	}
-	$('.req-cancel').click(cancel_request);
+	$('.req-cancel').click(function() {
+		cancel_request($(this)); }
+	);
 
 	$('.req-accept').click(function() {
-		var prefix = $(this).data('team') ? `${$(this).data('team')}/` : ''
+		var prefix = $(this).data('team') ? `${$(this).data('team')}/` : '';
 		var list_entry = $(this).closest('li');
 		$.post(
 			prefix + 'acceptrequest', JSON.stringify({ user: $(this).data('user') })
@@ -147,7 +156,7 @@ $(document).ready(function() {
 			var new_element = $(`<li>${data.username}<span style="float: right">&nbsp;${data.seat}</span></li>`);
 			$('#member-list').append(new_element);
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON['message'];
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_request(list_entry);
 			}
@@ -156,7 +165,7 @@ $(document).ready(function() {
 	});
 
 	$('.req-deny').click(function() {
-		var prefix = $(this).data('team') ? `${$(this).data('team')}/` : ''
+		var prefix = $(this).data('team') ? `${$(this).data('team')}/` : '';
 		var list_entry = $(this).closest('li');
 		$.post(
 			prefix + 'denyrequest', JSON.stringify({ user: $(this).data('user') })
@@ -164,11 +173,11 @@ $(document).ready(function() {
 			$('#req-error').text('').hide('fast');
 			hide_request(list_entry);
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON['message'];
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_request(list_entry);
 			}
 			$('#req-error').text(message).show('fast');
 		});
 	});
-})
+});

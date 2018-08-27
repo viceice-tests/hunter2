@@ -1,6 +1,6 @@
 #answer-button {
-	width: 60px;
-	height: 60px;
+	width: 55px;
+	height: 55px;
 	padding: 0;
 	background-image: linear-gradient(to bottom,#fff 0,#ddd 100%);
 	overflow: hidden;
@@ -20,9 +20,9 @@
 }
 
 #answer-entry {
-	height: 58px;
-	border: 13px solid #eee;
+	height: 53px;
 	border-radius: 4px;
+	font-size: 21px;
 }
 
 #answer-border {
