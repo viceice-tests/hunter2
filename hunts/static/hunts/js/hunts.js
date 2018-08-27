@@ -49,6 +49,7 @@ function message(message, error) {
 }
 
 function doCooldown(milliseconds) {
+	"use strict";
 	var button = d3.select("#answer-button");
 	var size = button.node().getBoundingClientRect().width;
 	var g = button.select("svg")
@@ -109,8 +110,9 @@ function doCooldown(milliseconds) {
 }
 
 function drawSliceSquare(size) {
+	"use strict";
 	return function(proportion) {
-		angle = (proportion * Math.PI * 2) - Math.PI / 2;
+		var angle = (proportion * Math.PI * 2) - Math.PI / 2;
 		var x = Math.cos(angle) * size;
 		var y = Math.sin(angle) * size;
 		var pathString = "M " + size / 2 + ",0" +
@@ -134,6 +136,7 @@ function drawSliceSquare(size) {
 }
 
 function drawCooldownText(milliseconds) {
+	"use strict";
 	return function(proportion) {
 		var time = milliseconds * proportion / 1000;
 		d3.select(this).text(time < 1 ? d3.format(".1")(time) : d3.format("1")(time));
@@ -141,12 +144,14 @@ function drawCooldownText(milliseconds) {
 }
 
 function drawFlashSquare(size) {
+	"use strict";
 	return function(t) {
 		return "";
 	};
 }
 
 function addSVG() {
+	"use strict";
 	var button = d3.select("#answer-button");
 	var svg = button.append("svg");
 	var size = button.node().getBoundingClientRect().width;
@@ -175,7 +180,7 @@ function addSVG() {
 	    .attr("result", "offsetBlur");
 	var feMerge = filter.append("feMerge");
 	feMerge.append("feMergeNode")
-	    .attr("in", "offsetBlur")
+	    .attr("in", "offsetBlur");
 	feMerge.append("feMergeNode")
 	    .attr("in", "SourceGraphic");
 }
