@@ -479,14 +479,12 @@ class EpisodeBehaviourTest(EventTestCase):
 
         with freezegun.freeze_time() as frozen_datetime:
             linear_episode.event.end_date = timezone.now()
-            frozen_datetime.tick(-60) # Move a minute before the end of the event
+            frozen_datetime.tick(-60)  # Move a minute before the end of the event
             team_puzzles = linear_episode.unlocked_puzzles(team)
             self.assertEqual(len(team_puzzles), 1, msg='Before the event ends, only the first puzzle is unlocked')
-            frozen_datetime.tick(120) # Move a minute after the end of the event
+            frozen_datetime.tick(120)  # Move a minute after the end of the event
             team_puzzles = linear_episode.unlocked_puzzles(team)
             self.assertEqual(len(team_puzzles), num_puzzles, msg='After the event ends, all of the puzzles are unlocked')
-
-
 
     def test_headstarts(self):
         # TODO: Replace with episode sequence factory?
