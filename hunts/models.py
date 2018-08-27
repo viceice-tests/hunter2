@@ -545,8 +545,9 @@ class Episode(models.Model):
         return timedelta(seconds=seconds)
 
     def _puzzle_unlocked_by(self, puzzle, team):
-        started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())
-        if self.parallel:
+        now = timezone.now()
+        started_puzzles = self.puzzles.filter(start_date__lt=now)
+        if self.parallel or self.event.end_date < now:
             return puzzle in started_puzzles
         else:
             for p in started_puzzles:
@@ -556,8 +557,9 @@ class Episode(models.Model):
                     return False
 
     def unlocked_puzzles(self, team):
-        started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())
-        if self.parallel:
+        now = timezone.now()
+        started_puzzles = self.puzzles.filter(start_date__lt=now)
+        if self.parallel or self.event.end_date < now:
             return started_puzzles
         else:
             result = []
