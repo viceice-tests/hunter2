@@ -470,6 +470,24 @@ class EpisodeBehaviourTest(EventTestCase):
         for puzzle in parallel_episode.puzzles.all():
             self.assertTrue(puzzle.unlocked_by(team), msg='Puzzle unlocked in parallel episode')
 
+    def test_can_see_all_puzzles_after_event_end(self):
+        linear_episode = EpisodeFactory(parallel=False)
+        num_puzzles = 10
+        PuzzleFactory.create_batch(num_puzzles, episode=linear_episode)
+        user = UserProfileFactory()
+        team = TeamFactory(at_event=linear_episode.event, members=user)
+
+        with freezegun.freeze_time() as frozen_datetime:
+            linear_episode.event.end_date = timezone.now()
+            frozen_datetime.tick(-60) # Move a minute before the end of the event
+            team_puzzles = linear_episode.unlocked_puzzles(team)
+            self.assertEqual(len(team_puzzles), 1, msg='Before the event ends, only the first puzzle is unlocked')
+            frozen_datetime.tick(120) # Move a minute after the end of the event
+            team_puzzles = linear_episode.unlocked_puzzles(team)
+            self.assertEqual(len(team_puzzles), num_puzzles, msg='After the event ends, all of the puzzles are unlocked')
+
+
+
     def test_headstarts(self):
         # TODO: Replace with episode sequence factory?
         episode1 = EpisodeFactory()
