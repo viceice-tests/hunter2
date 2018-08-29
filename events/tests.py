@@ -21,7 +21,8 @@ from events.factories import AttendanceFactory, EventFactory, EventFileFactory, 
 from accounts.factories import UserProfileFactory
 from events.models import Event, Theme
 from hunter2.tests import MockTTY, mock_inputs
-from hunts.models import Episode, Puzzle, Answer, Guess
+#from hunts.models import Episode, Puzzle, Answer, Guess
+from hunts.factories import EpisodeFactory, PuzzleFactory, GuessFactory
 from teams.factories import TeamFactory
 from . import factories
 from .management.commands import createevent
@@ -71,55 +72,58 @@ class EventWinningTests(EventTestCase):
     fixtures = ["teams_test"]
 
     def setUp(self):
-        self.event = factories.EventFactory(current=True)
+        self.event = EventFactory()
+        self.ep1 = EpisodeFactory(event=self.event, winning=True)
+        self.ep2 = EpisodeFactory(event=self.event, winning=False)
         self.user1 = UserProfileFactory()
         self.user2 = UserProfileFactory()
-        self.team1 = TeamFactory(at_event=self.event)
-        self.team1.members.add(self.user1)
-        self.team2 = TeamFactory(at_event=self.event)
-        self.team2.members.add(self.user2)
+        self.team1 = TeamFactory(at_event=self.event, members=self.user1)
+        self.team2 = TeamFactory(at_event=self.event, members=self.user2)
 
-        self.ep1 = Episode(name="Day 1", event=self.event, start_date=timezone.now(), winning=True)
-        self.ep1.save()
-        self.ep2 = Episode(name="Day 2", event=self.event, start_date=timezone.now(), winning=False)
-        self.ep2.save()
-        self.pz1_1 = Puzzle(title="Puzzle 1", episode=self.ep1, content="1")
-        self.pz1_1.save()
-        a1_1 = Answer(for_puzzle=self.pz1_1, answer="correct")
-        a1_1.save()
-        self.pz1_2 = Puzzle(title="Puzzle 2", episode=self.ep1, content="2")
-        self.pz1_2.save()
-        a1_2 = Answer(for_puzzle=self.pz1_2, answer="correct")
-        a1_2.save()
-        self.pz2_1 = Puzzle(title="Puzzle 3", episode=self.ep2, content="3")
-        self.pz2_1.save()
-        a2_1 = Answer(for_puzzle=self.pz2_1, answer="correct")
-        a2_1.save()
-        self.pz2_2 = Puzzle(title="Puzzle 4", episode=self.ep2, content="4")
-        self.pz2_2.save()
-        a2_2 = Answer(for_puzzle=self.pz2_2, answer="correct")
-        a2_2.save()
-        self.ep1.puzzles.set([self.pz1_1, self.pz1_2])
-        self.ep1.save()
-        self.ep2.puzzles.set([self.pz2_1, self.pz2_2])
-        self.ep2.save()
+        PuzzleFactory.create_batch(2, episode=self.ep1)
+        PuzzleFactory.create_batch(2, episode=self.ep2)
+        #self.pz1_1 = Puzzle(title="Puzzle 1", episode=self.ep1, content="1")
+        #self.pz1_1.save()
+        #a1_1 = Answer(for_puzzle=self.pz1_1, answer="correct")
+        #a1_1.save()
+        #self.pz1_2 = Puzzle(title="Puzzle 2", episode=self.ep1, content="2")
+        #self.pz1_2.save()
+        #a1_2 = Answer(for_puzzle=self.pz1_2, answer="correct")
+        #a1_2.save()
+        #self.pz2_1 = Puzzle(title="Puzzle 3", episode=self.ep2, content="3")
+        #self.pz2_1.save()
+        #a2_1 = Answer(for_puzzle=self.pz2_1, answer="correct")
+        #a2_1.save()
+        #self.pz2_2 = Puzzle(title="Puzzle 4", episode=self.ep2, content="4")
+        #self.pz2_2.save()
+        #a2_2 = Answer(for_puzzle=self.pz2_2, answer="correct")
+        #a2_2.save()
+        #self.ep1.puzzles.set([self.pz1_1, self.pz1_2])
+        #self.ep1.save()
+        #self.ep2.puzzles.set([self.pz2_1, self.pz2_2])
+        #self.ep2.save()
 
     def test_win_single_linear_episode(self):
         # No correct answers => noone has finished => no finishing positions!
         self.assertEqual(self.event.finishing_positions(), [])
 
-        Guess(for_puzzle=self.pz1_1, by=self.user1, guess="correct").save()
-        Guess(for_puzzle=self.pz1_1, by=self.user2, guess="correct").save()
+        #Guess(for_puzzle=self.pz1_1, by=self.user1, guess="correct").save()
+        #Guess(for_puzzle=self.pz1_1, by=self.user2, guess="correct").save()
+        GuessFactory.create(for_puzzle=self.ep1.get_puzzle(1), by=self.user1, correct=True)
+        GuessFactory.create(for_puzzle=self.ep1.get_puzzle(1), by=self.user2, correct=True)
         # First episode still not complete
         self.assertEqual(self.event.finishing_positions(), [])
 
-        g = Guess(for_puzzle=self.pz1_2, by=self.user1, guess="correct")
-        g.save()
-        Guess(for_puzzle=self.pz1_2, by=self.user2, guess="incorrect").save()
+        #g = Guess(for_puzzle=self.pz1_2, by=self.user1, guess="correct")
+        #g.save()
+        g = GuessFactory.create(for_puzzle=self.ep1.get_puzzle(2), by=self.user1, correct=True)
+        #Guess(for_puzzle=self.pz1_2, by=self.user2, guess="incorrect").save()
+        GuessFactory.create(for_puzzle=self.ep1.get_puzzle(2), by=self.user2, correct=False)
         # Team 1 has finished the only winning episode, but Team 2 has not
         self.assertEqual(self.event.finishing_positions(), [self.team1])
 
-        Guess(for_puzzle=self.pz1_2, by=self.user2, guess="correct").save()
+        #Guess(for_puzzle=self.pz1_2, by=self.user2, guess="correct").save()
+        GuessFactory.create(for_puzzle=self.ep1.get_puzzle(2), by=self.user2, correct=True)
         # Team 2 should now be second place
         self.assertEqual(self.event.finishing_positions(), [self.team1, self.team2])
 
@@ -134,31 +138,40 @@ class EventWinningTests(EventTestCase):
 
         self.assertEqual(self.event.finishing_positions(), [])
 
-        Guess(for_puzzle=self.pz1_1, by=self.user1, guess="correct").save()
-        Guess(for_puzzle=self.pz1_1, by=self.user2, guess="correct").save()
-        Guess(for_puzzle=self.pz1_2, by=self.user1, guess="correct").save()
-        Guess(for_puzzle=self.pz1_2, by=self.user2, guess="correct").save()
+        for pz in self.ep1.puzzles.all():
+            for user in (self.user1, self.user2):
+                GuessFactory.create(for_puzzle=pz, by=user, correct=True)
         # We need to complete both episodes
         self.assertEqual(self.event.finishing_positions(), [])
 
         # Invalidate Episode 1 guesses, complete Episode 2
-        Guess.objects.all().update(guess="incorrect", correct_for=None)
-        Guess(for_puzzle=self.pz2_1, by=self.user1, guess="correct").save()
-        Guess(for_puzzle=self.pz2_1, by=self.user2, guess="correct").save()
-        g = Guess(for_puzzle=self.pz2_2, by=self.user1, guess="correct")
-        g.save()
-        Guess(for_puzzle=self.pz2_2, by=self.user2, guess="correct").save()
+        for pz in self.ep1.puzzles.all():
+            for g in pz.guess_set.all():
+                g.delete()
+        for pz in self.ep1.puzzles.all():
+            for user in (self.user1, self.user2):
+                GuessFactory.create(for_puzzle=pz, by=user, correct=False)
+
+        for pz in self.ep2.puzzles.all():
+            for user in (self.user1, self.user2):
+                GuessFactory.create(for_puzzle=pz, by=user, correct=True)
         # Should still have no-one finished
         self.assertEqual(self.event.finishing_positions(), [])
 
         # Make Episode 1 guesses valid again
-        Guess.objects.all().update(guess="correct")
-        [g.save() for g in Guess.objects.all()]
+        for pz in self.ep1.puzzles.all() | self.ep2.puzzles.all():
+            for g in pz.guess_set.all():
+                g.delete()
+            for user in (self.user1, self.user2):
+                GuessFactory.create(for_puzzle=pz, by=user, correct=True)
+        #print(list(self.ep1.finished_times()))
         self.assertEqual(self.event.finishing_positions(), [self.team1, self.team2])
 
         # Swap order
-        g.given = timezone.now()
-        g.save()
+        for pz in self.ep1.puzzles.all():
+            for g in pz.guess_set.filter(by=self.user1):
+                g.given = timezone.now()
+                g.save()
         self.assertEqual(self.event.finishing_positions(), [self.team2, self.team1])
 
 
