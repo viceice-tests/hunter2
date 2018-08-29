@@ -1,7 +1,18 @@
+# Copyright (C) 2018 The Hunter2 Contributors.
+#
+# This file is part of Hunter2.
+#
+# Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
+
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import formsets
-from django.forms.models import BaseInlineFormSet
+from django.core.validators import FileExtensionValidator
 from django.utils.safestring import mark_safe
 
 from .models import Answer, Guess, UnlockAnswer
@@ -102,32 +113,11 @@ class AnswerForm(forms.ModelForm):
         return teams
 
 
-# Pre-populatable inline formset based on
-# https://stackoverflow.com/questions/442040/pre-populate-an-inline-formset
-class BaseUnlockAnswerFormSet(BaseInlineFormSet):
-    def __init__(self, *args, **kwargs):
-        """
-        Grabs the curried initial values and stores them into a 'private'
-        variable. Note: the use of self.__initial is important, using
-        self.initial or self._initial will be erased by a parent class
-        """
-        self.__initial = kwargs.pop('initial', [])
-        super().__init__(*args, **kwargs)
-
-    def total_form_count(self):
-        return len(self.__initial) + self.extra
-
-    def _construct_forms(self):
-        return formsets.BaseFormSet._construct_forms(self)
-
-    def _construct_form(self, i, **kwargs):
-        if self.__initial:
-            try:
-                kwargs['initial'] = self.__initial[i]
-            except IndexError:
-                pass
-        return formsets.BaseFormSet._construct_form(self, i, **kwargs)
+class BulkUploadForm(forms.Form):
+    archive = forms.FileField(validators=(FileExtensionValidator(('tar', )), ), help_text='tar archive of files to upload')
+    base_path = forms.CharField(required=False, help_text='Path to be pre-pended to paths in the archive')
+    solution = forms.BooleanField(required=False, help_text='Upload files as SolutionFile objects instead of PuzzleFile')
+    overwrite = forms.BooleanField(required=False, help_text='Allow upload to overwrite existing files')
 
 
 UnlockAnswerForm = forms.modelform_factory(UnlockAnswer, fields=('runtime', 'guess'))
-UnlockAnswerFormSet = formsets.formset_factory(UnlockAnswerForm, formset=BaseUnlockAnswerFormSet)

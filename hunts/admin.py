@@ -1,16 +1,30 @@
+# Copyright (C) 2018 The Hunter2 Contributors.
+#
+# This file is part of Hunter2.
+#
+# Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
+
+
 from django import forms
 from django.contrib import admin
-from django.conf.urls import url
 from django.utils.functional import curry
 from django.utils.html import format_html
-from django.urls import reverse
+from django.urls import path, reverse
 from django.db.models import Count, Sum
 from nested_admin import \
     NestedModelAdmin, \
     NestedStackedInline, \
     NestedTabularInline
+from sortedm2m_filter_horizontal_widget.forms import SortedFilteredSelectMultiple
+
 from . import models
-from .forms import AnswerForm, UnlockAnswerFormSet
+from .forms import AnswerForm
 
 
 def make_textinput(field, db_field, kwdict):
@@ -40,8 +54,13 @@ class AnswerInline(NestedStackedInline):
         return super().formfield_for_dbfield(db_field, **kwargs)
 
 
-class FileInline(NestedTabularInline):
+class PuzzleFileInline(NestedTabularInline):
     model = models.PuzzleFile
+    extra = 0
+
+
+class SolutionFileInline(NestedTabularInline):
+    model = models.SolutionFile
     extra = 0
 
 
@@ -58,19 +77,26 @@ class HintInline(NestedTabularInline):
 class UnlockAnswerInline(NestedTabularInline):
     model = models.UnlockAnswer
     extra = 0
-    formset = UnlockAnswerFormSet
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('guess', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
 
-    # Pre-population of inline formset from GET params based on
-    # https://stackoverflow.com/questions/442040/pre-populate-an-inline-formset
+
+class NewUnlockAnswerInline(UnlockAnswerInline):
+    model = models.UnlockAnswer
+    extra = 1  # Must be one to support the new_guess param below
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        make_textinput('guess', db_field, kwargs)
+        return super().formfield_for_dbfield(db_field, **kwargs)
+
+    # Extract new_guess parameter and add it to the initial formset data
     def get_formset(self, request, obj=None, **kwargs):
         initial = []
-        if request.method == 'GET' and 'guess' in request.GET:
+        if request.method == 'GET' and 'new_guess' in request.GET:
             initial.append({
-                'guess': request.GET['guess']
+                'guess': request.GET['new_guess']
             })
         formset = super().get_formset(request, obj, **kwargs)
         formset.__init__ = curry(formset.__init__, initial=initial)
@@ -80,7 +106,7 @@ class UnlockAnswerInline(NestedTabularInline):
 @admin.register(models.Unlock)
 class UnlockAdmin(NestedModelAdmin):
     inlines = [
-        UnlockAnswerInline,
+        NewUnlockAnswerInline,
     ]
 
     def formfield_for_dbfield(self, db_field, **kwargs):
@@ -113,9 +139,11 @@ class GuessAdmin(admin.ModelAdmin):
 
 @admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdmin):
+    change_form_template = 'hunts/admin/change_puzzle.html'
     ordering = ('episode__start_date', 'start_date', 'pk')
     inlines = [
-        FileInline,
+        PuzzleFileInline,
+        SolutionFileInline,
         AnswerInline,
         HintInline,
         UnlockInline,
@@ -127,19 +155,18 @@ class PuzzleAdmin(NestedModelAdmin):
     popup = False
 
     def view_on_site(self, obj):
-        url = obj.get_absolute_url()
-        if url:
-            return url + '?preview=1'
-
-        return ''
+        try:
+            return obj.get_absolute_url()
+        except models.Episode.DoesNotExist:
+            return None
 
     def get_urls(self):
         # Expose three extra views for editing answers, hints and unlocks without anything else
         urls = super().get_urls()
         urls = [
-            url(r'^(?P<puzzle_id>[1-9]\d*)/answers/$', self.onlyinlines_view(AnswerInline)),
-            url(r'^(?P<puzzle_id>[1-9]\d*)/hints/$', self.onlyinlines_view(HintInline)),
-            url(r'^(?P<puzzle_id>[1-9]\d*)/unlocks/$', self.onlyinlines_view(UnlockInline))
+            path('<int:puzzle_id>/answers/', self.onlyinlines_view(AnswerInline)),
+            path('<int:puzzle_id>/hints/', self.onlyinlines_view(HintInline)),
+            path('<int:puzzle_id>/unlocks/', self.onlyinlines_view(UnlockInline))
         ] + urls
         return urls
 
@@ -233,12 +260,20 @@ class EpisodeAdmin(NestedModelAdmin):
     list_editable = ('start_date',)
     list_display_links = ('name',)
 
+    def view_on_site(self, obj):
+        return obj.get_absolute_url()
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.annotate(
             puzzles_count=Count('puzzles', distinct=True),
             headstart_sum=Sum('puzzles__headstart_granted'),
         )
+
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        if db_field.name == 'puzzles':
+            kwargs['widget'] = SortedFilteredSelectMultiple()
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def event_change(self, obj):
         return format_html(

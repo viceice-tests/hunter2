@@ -1,8 +1,10 @@
 function updateGuesses(force) {
 	"use strict";
 	if (force || $('#auto-update').prop('checked')) {
-		$('#guesses-container').load('guesses_content' + window.location.search + ' #guesses-container');
-		setTimeout(updateGuesses, 5000);
+		$('#guesses-container').load('guesses_content' + window.location.search + ' #guesses-container', function(data, status, req) {
+			// Go for more guesses 5 seconds after we're done getting the last lot of guesses.
+			setTimeout(updateGuesses, 5000);
+		});
 	}
 }
 

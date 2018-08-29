@@ -1,8 +1,21 @@
-# vim: set fileencoding=utf-8 :
+# Copyright (C) 2018 The Hunter2 Contributors.
+#
+# This file is part of Hunter2.
+#
+# Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import os
 import sys
 
-from .. import AbstractRuntime, RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
+from ..abstract import AbstractRuntime
+from ..exceptions import RuntimeExecutionError, RuntimeExecutionTimeExceededError, RuntimeMemoryExceededError, RuntimeSandboxViolationError
 
 # TODO: Replace this with proper DLFCN support in the docker python version
 orig_dlflags = sys.getdlopenflags()
@@ -21,6 +34,14 @@ class LuaRuntime(AbstractRuntime):
 
     def __init__(self):
         pass
+
+    def check_script(self, script):
+        try:
+            # Use the sandbox engine with a *very* restrictive limit which will prevent anything meaningful happening.
+            # TODO: look at a way to restrict this completely.
+            self._sandbox_run(script, instruction_limit=10)
+        except RuntimeExecutionTimeExceededError:
+            return True
 
     def evaluate(self, script, team_puzzle_data, user_puzzle_data, team_data, user_data):
         return_values = self._sandbox_run(script, {

@@ -16,13 +16,13 @@ $(document).ready(function() {
 			cancel.click(function() {
 				cancel_invite($(this));
 			});
-			var list_entry = $(`<li hidden>${data.username} has been invited<span style="float: right">&nbsp;</span></li>`);
+			var list_entry = $(`<li style="display: none;">${data.username} has been invited<span style="float: right;">&nbsp;</span></li>`);
 			list_entry.find('span').append(cancel);
 			$('#inv-list').append(list_entry);
 			list_entry.fadeIn('slow');
 			field.empty();
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON.message;
+			var message = jqXHR.responseJSON.message;
 			$('#inv-error').text(message).show('fast');
 		});
 	});
@@ -45,7 +45,7 @@ $(document).ready(function() {
 			$('#inv-error').text('').hide('fast');
 			hide_invite(list_entry);
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON.message;
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_invite(list_entry);
 			}
@@ -64,7 +64,7 @@ $(document).ready(function() {
 		).done(function() {
 			location.reload();
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON.message;
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_invite(list_entry);
 			}
@@ -81,7 +81,7 @@ $(document).ready(function() {
 			$('#inv-error').text('').hide('fast');
 			hide_invite(list_entry);
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON.message;
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_invite(list_entry);
 			}
@@ -101,12 +101,12 @@ $(document).ready(function() {
 			cancel_link.click(function() {
 				cancel_request($(this));
 			});
-			var list_entry = $(`<li hidden>You have requested to join ${data.team}<span style="float: right"></span></li>`);
+			var list_entry = $(`<li style="display: none;">You have requested to join ${data.team}<span style="float: right;"></span></li>`);
 			list_entry.find('span').append(cancel_link);
 			$('#req-list').append(list_entry);
 			list_entry.fadeIn('slow');
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON.message;
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				list_entry.fadeOut('slow', function() {
 					$(this).remove();
@@ -134,7 +134,7 @@ $(document).ready(function() {
 			$('#req-error').text('').hide('fast');
 			hide_request(list_entry);
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON.message;
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_request(list_entry);
 			}
@@ -156,7 +156,7 @@ $(document).ready(function() {
 			var new_element = $(`<li>${data.username}<span style="float: right">&nbsp;${data.seat}</span></li>`);
 			$('#member-list').append(new_element);
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON.message;
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_request(list_entry);
 			}
@@ -173,7 +173,7 @@ $(document).ready(function() {
 			$('#req-error').text('').hide('fast');
 			hide_request(list_entry);
 		}).fail(function(jqXHR, textStatus, error) {
-			message = jqXHR.responseJSON.message;
+			var message = jqXHR.responseJSON.message;
 			if (jqXHR.responseJSON['delete']) {
 				hide_request(list_entry);
 			}

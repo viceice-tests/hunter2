@@ -1,15 +1,30 @@
-# vim: set fileencoding=utf-8 :
-import os
-import tempfile
+# Copyright (C) 2018 The Hunter2 Contributors.
+#
+# This file is part of Hunter2.
+#
+# Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import logging
+import os
+import random
+import tempfile
 from io import StringIO
 
 import builtins
+import sys
 from colour_runner.django_runner import ColourRunnerMixin
 from django.contrib.sites.models import Site
 from django.core.management import CommandError, call_command
 from django.test import TestCase, override_settings
 from django.test.runner import DiscoverRunner
+from faker import Faker
 
 from hunter2.management.commands import setupsite
 from .utils import generate_secret_key, load_or_create_secret_key
@@ -19,7 +34,15 @@ class TestRunner(ColourRunnerMixin, DiscoverRunner):
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         # Disable non-critial logging for test runs
         logging.disable(logging.CRITICAL)
-        return super(TestRunner, self).run_tests(test_labels, extra_tests, **kwargs)
+
+        # Seed the random generators extracting the seed used
+        # https://stackoverflow.com/a/5012617/393688
+        random_seed = os.getenv('H2_TEST_SEED', random.randrange(sys.maxsize))
+        random.seed(random_seed)
+        Faker().seed(random.randrange(sys.maxsize))
+        print(f'Testing Seed: {random_seed}')
+
+        return super().run_tests(test_labels, extra_tests, **kwargs)
 
 
 # Adapted from:
@@ -71,13 +94,10 @@ class MigrationsTests(TestCase):
                 'makemigrations',
                 interactive=False,
                 dry_run=True,
-                exit_code=True,
+                check_changes=True,
                 stdout=output
             )
         except SystemExit as e:
-            # The exit code will be 1 when there are no missing migrations
-            self.assertEqual(str(e), '1')
-        else:  # nocover
             self.fail("There are missing migrations:\n %s" % output.getvalue())
 
 

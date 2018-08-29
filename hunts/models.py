@@ -1,13 +1,26 @@
+# Copyright (C) 2018 The Hunter2 Contributors.
+#
+# This file is part of Hunter2.
+#
+# Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
+
+
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.urls import reverse
 from sortedm2m.fields import SortedManyToManyField
-from .runtimes.registry import RuntimesRegistry as rr
 from datetime import timedelta
 from enumfields import EnumField, Enum
-from hunter2.resolvers import reverse
+from . import runtimes
 
 import accounts
 import events
@@ -20,16 +33,25 @@ class Puzzle(models.Model):
     flavour = models.TextField(
         blank=True, verbose_name="Flavour text",
         help_text="Separate flavour text for the puzzle. Should not be required for solving the puzzle")
+
     runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC,
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC,
         help_text="Runtime for generating the question content"
     )
     content = models.TextField()
+
     cb_runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC, verbose_name="Callback runtime",
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC, verbose_name="Callback runtime",
         help_text="Runtime for responding to an AJAX callback for this question, should return JSON"
     )
     cb_content = models.TextField(blank=True, default='', verbose_name="Callback content")
+
+    soln_runtime = models.CharField(
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC, verbose_name="Solution runtime",
+        help_text="Runtime for generating the question solution"
+    )
+    soln_content = models.TextField(blank=True, default='', verbose_name="Solution content")
+
     start_date = models.DateTimeField(blank=True, default=timezone.now)
     headstart_granted = models.DurationField(
         default=timedelta(),
@@ -42,23 +64,18 @@ class Puzzle(models.Model):
     def clean(self):
         super().clean()
         try:
-            rr.check_script(self.runtime, self.content)
-            rr.check_script(self.cb_runtime, self.cb_content)
+            runtimes.runtimes[self.runtime].check_script(self.content)
+            runtimes.runtimes[self.cb_runtime].check_script(self.cb_content)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
     def get_absolute_url(self):
-        try:
-            episode = self.episode_set.get()
-        except Episode.DoesNotExist:
-            return ''
-
+        episode = self.episode_set.get()
         params = {
-            'event_id': episode.event.pk,
             'episode_number': episode.get_relative_id(),
             'puzzle_number': self.get_relative_id()
         }
-        return reverse('puzzle', subdomain='www', kwargs=params)
+        return reverse('puzzle', kwargs=params)
 
     def get_relative_id(self):
         try:
@@ -66,19 +83,24 @@ class Puzzle(models.Model):
         except Episode.DoesNotExist:
             raise ValueError("Puzzle %s is not on an episode and so has no relative id" % self.title)
 
-        for i, p in enumerate(episode.puzzles.values('pk')):
-            if self.pk == p['pk']:
-                puzzle_number = i + 1
-                break
+        puzzles = episode.puzzles.all()
 
-        return puzzle_number
+        for i, p in enumerate(puzzles, start=1):
+            if self.pk == p.pk:
+                return i
+
+        raise RuntimeError("Could not find Puzzle pk when iterating episode's puzzle list")
+
+    # Takes the team parameter for compatability with Episode.started()
+    # Will be useful if we add puzzle head starts later
+    def started(self, team):
+        return self.start_date < timezone.now()
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
-        # TODO: Make it not depend on a team. So single player puzzles work.
         episode = self.episode_set.get(event=team.at_event)
-        return episode.unlocked_by(team) and \
-            episode._puzzle_unlocked_by(self, team)
+        return episode.event.end_date < timezone.now() or \
+            episode.unlocked_by(team) and episode._puzzle_unlocked_by(self, team)
 
     def answered_by(self, team):
         """Return a list of correct guesses for this puzzle by the given team, ordered by when they were given."""
@@ -132,13 +154,28 @@ def puzzle_file_path(instance, filename):
     return 'puzzles/{0}/{1}'.format(instance.puzzle.id, filename)
 
 
+def solution_file_path(instance, filename):
+    return 'solutions/{0}/{1}'.format(instance.puzzle.id, filename)
+
+
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    slug = models.CharField(max_length=50, help_text="Include the URL of the file in puzzle content using $slug or ${slug}.")
+    slug = models.CharField(max_length=50, help_text="Include the URL of the file in puzzle content using $slug or ${slug}.", blank=True, null=True)
+    url_path = models.CharField(max_length=50, help_text='The path you want to appear in the URL. Can include "directories" using /')
     file = models.FileField(upload_to=puzzle_file_path)
 
     class Meta:
-        unique_together = (('puzzle', 'slug'), )
+        unique_together = (('puzzle', 'slug'), ('puzzle', 'url_path'))
+
+
+class SolutionFile(models.Model):
+    puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
+    slug = models.CharField(max_length=50, help_text="Include the URL of the file in solution content using $slug or ${slug}.", blank=True, null=True)
+    url_path = models.CharField(max_length=50, help_text='The path you want to appear in the URL. Can include "directories" using /')
+    file = models.FileField(upload_to=solution_file_path)
+
+    class Meta:
+        unique_together = (('puzzle', 'slug'), ('puzzle', 'url_path'))
 
 
 class Clue(models.Model):
@@ -178,12 +215,12 @@ class Unlock(Clue):
 class UnlockAnswer(models.Model):
     unlock = models.ForeignKey(Unlock, on_delete=models.CASCADE)
     runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC
     )
     guess = models.TextField()
 
     def __str__(self):
-        if self.runtime == rr.STATIC or self.runtime == rr.REGEX:
+        if self.runtime == runtimes.STATIC or self.runtime == runtimes.REGEX:
             return self.guess
         else:
             return '[Using %s]' % self.get_runtime_display()
@@ -191,13 +228,12 @@ class UnlockAnswer(models.Model):
     def clean(self):
         super().clean()
         try:
-            rr.check_script(self.runtime, self.guess)
+            runtimes.runtimes[self.runtime].check_script(self.guess)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
     def validate_guess(self, guess):
-        return rr.validate_guess(
-            self.runtime,
+        return runtimes.runtimes[self.runtime].validate_guess(
             self.guess,
             guess.guess,
         )
@@ -206,12 +242,12 @@ class UnlockAnswer(models.Model):
 class Answer(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     runtime = models.CharField(
-        max_length=1, choices=rr.RUNTIME_CHOICES, default=rr.STATIC
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC
     )
     answer = models.TextField()
 
     def __str__(self):
-        if self.runtime == rr.STATIC or self.runtime == rr.REGEX:
+        if self.runtime == runtimes.STATIC or self.runtime == runtimes.REGEX:
             return self.answer
         else:
             return '[Using %s]' % self.get_runtime_display()
@@ -219,7 +255,7 @@ class Answer(models.Model):
     def clean(self):
         super().clean()
         try:
-            rr.check_script(self.runtime, self.answer)
+            runtimes.runtimes[self.runtime].check_script(self.answer)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
@@ -240,8 +276,7 @@ class Answer(models.Model):
         super().delete(*args, **kwargs)
 
     def validate_guess(self, guess):
-        return rr.validate_guess(
-            self.runtime,
+        return runtimes.runtimes[self.runtime].validate_guess(
             self.answer,
             guess.guess,
         )
@@ -250,7 +285,7 @@ class Answer(models.Model):
 class Guess(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
-    by_team = models.ForeignKey(teams.models.Team, on_delete=models.PROTECT)
+    by_team = models.ForeignKey(teams.models.Team, on_delete=models.SET_NULL, null=True, blank=True)
     guess = models.TextField()
     given = models.DateTimeField(auto_now_add=True)
     # The following two fields cache whether the guess is correct. Do not use them directly.
@@ -261,7 +296,7 @@ class Guess(models.Model):
         verbose_name_plural = 'Guesses'
 
     def __str__(self):
-        return f'"{self.guess}" by {self.by} ({self.by_team})'
+        return f'"{self.guess}" by {self.by} ({self.by_team}) @ {self.given}'
 
     def get_team(self):
         event = self.for_puzzle.episode_set.get().event
@@ -270,8 +305,7 @@ class Guess(models.Model):
     def get_correct_for(self):
         """Get the first answer this guess is correct for, if such exists."""
         if not self.correct_current:
-            self._evaluate_correctness()
-            self.save(update_team=False)
+            self.save()
 
         return self.correct_for
 
@@ -293,8 +327,8 @@ class Guess(models.Model):
                 self.correct_for = answer
                 return
 
-    def save(self, *args, update_team=True, **kwargs):
-        if update_team:
+    def save(self, *args, **kwargs):
+        if not self.by_team:
             self.by_team = self.get_team()
         self._evaluate_correctness()
         super().save(*args, **kwargs)
@@ -325,7 +359,7 @@ class TeamData(models.Model):
 
 
 class UserData(models.Model):
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING)
     user = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
     data = JSONField(blank=True, null=True)
 
@@ -334,7 +368,7 @@ class UserData(models.Model):
         verbose_name_plural = 'User data'
 
     def __str__(self):
-        return f'Data for {self.user.user.username} at {self.event}'
+        return f'Data for {self.user.username} at {self.event}'
 
 
 class TeamPuzzleData(models.Model):
@@ -362,7 +396,7 @@ class UserPuzzleData(models.Model):
         verbose_name_plural = 'User puzzle data'
 
     def __str__(self):
-        return f'Data for {self.user.user.username} on {self.puzzle.title}'
+        return f'Data for {self.user.username} on {self.puzzle.title}'
 
     def team(self):
         """Helper method to fetch the team associated with this user and puzzle"""
@@ -387,13 +421,13 @@ class PuzzleData:
                 puzzle=puzzle, user=user
             )
 
-    def save(self):
-        self.t_data.save()
-        self.tp_data.save()
+    def save(self, *args, **kwargs):
+        self.t_data.save(*args, **kwargs)
+        self.tp_data.save(*args, **kwargs)
         if self.u_data:
-            self.u_data.save()
+            self.u_data.save(*args, **kwargs)
         if self.up_data:
-            self.up_data.save()
+            self.up_data.save(*args, **kwargs)
 
 
 class Episode(models.Model):
@@ -406,7 +440,7 @@ class Episode(models.Model):
         symmetrical=False,
     )
     start_date = models.DateTimeField()
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING)
     parallel = models.BooleanField(default=False, help_text='Allow players to answer riddles in this episode in any order they like')
     headstart_from = models.ManyToManyField(
         "self", blank=True,
@@ -426,6 +460,9 @@ class Episode(models.Model):
     #    all_puzzle_ids = self.puzzles.all().values_list('pk')
     #    if any(pz_id not in all_puzzle_ids for pz_id in pk_set):
     #        raise ValidationError('Puzzles marked winning must be part of the episode')
+
+    def get_absolute_url(self):
+        return reverse('episode', kwargs={'episode_number': self.get_relative_id()})
 
     def follows(self, episode):
         """Does this episode follow the provied episode by one or more prequel relationships?"""
@@ -448,11 +485,11 @@ class Episode(models.Model):
             unlocked = None
             for i, puzzle in enumerate(self.puzzles.all()):
                 if not puzzle.answered_by(team):
-                    if unlocked is None:
+                    if unlocked is None:  # If this is the first not unlocked puzzle, it might be the "next puzzle"
                         unlocked = i + 1
-                    else:
+                    else:  # We've found a second not unlocked puzzle, we can terminate early and return None
                         return None
-            return unlocked
+            return unlocked  # This is either None, if we found no unlocked puzzles, or the one puzzle we found above
         else:
             for i, puzzle in enumerate(self.puzzles.all()):
                 if not puzzle.answered_by(team):
@@ -475,7 +512,9 @@ class Episode(models.Model):
         return -1
 
     def unlocked_by(self, team):
-        return all([episode.finished_by(team) for episode in self.prequels.all()])
+        result = self.event.end_date < timezone.now() or \
+            all([episode.finished_by(team) for episode in self.prequels.all()])
+        return result
 
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
@@ -524,8 +563,9 @@ class Episode(models.Model):
         return timedelta(seconds=seconds)
 
     def _puzzle_unlocked_by(self, puzzle, team):
-        started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())
-        if self.parallel:
+        now = timezone.now()
+        started_puzzles = self.puzzles.filter(start_date__lt=now)
+        if self.parallel or self.event.end_date < now:
             return puzzle in started_puzzles
         else:
             for p in started_puzzles:
@@ -535,8 +575,9 @@ class Episode(models.Model):
                     return False
 
     def unlocked_puzzles(self, team):
-        started_puzzles = self.puzzles.filter(start_date__lt=timezone.now())
-        if self.parallel:
+        now = timezone.now()
+        started_puzzles = self.puzzles.filter(start_date__lt=now)
+        if self.parallel or self.event.end_date < now:
             return started_puzzles
         else:
             result = []
@@ -556,7 +597,7 @@ class AnnouncementType(Enum):
 
 
 class Announcement(models.Model):
-    event = models.ForeignKey(events.models.Event, on_delete=models.CASCADE, related_name='announcements')
+    event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING, related_name='announcements')
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE, related_name='announcements', null=True, blank=True)
     title = models.CharField(max_length=255)
     posted = models.DateTimeField(auto_now_add=True)

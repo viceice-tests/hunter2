@@ -1,223 +1,582 @@
-from django.core.exceptions import ValidationError
-from django.contrib.sites.models import Site
-from django.db import transaction
-from django.test import TestCase
-from django.utils import timezone
-from hunter2.resolvers import reverse
+# Copyright (C) 2018 The Hunter2 Contributors.
+#
+# This file is part of Hunter2.
+#
+# Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-from accounts.models import UserProfile
-from events.models import Event
-from teams.models import Team
-from .models import Answer, Episode, Guess, Hint, Puzzle, PuzzleData, TeamPuzzleData, Unlock, UnlockAnswer
-from .runtimes.registry import RuntimesRegistry as rr
 
 import datetime
+import random
+
 import freezegun
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.urls import reverse
+from django.utils import timezone
+from parameterized import parameterized
+
+from accounts.factories import UserProfileFactory
+from events.factories import EventFactory, EventFileFactory
+from events.test import EventTestCase
+from teams.factories import TeamFactory, TeamMemberFactory
+from . import runtimes
+from .factories import (
+    AnnouncementFactory,
+    AnswerFactory,
+    EpisodeFactory,
+    GuessFactory,
+    HintFactory,
+    PuzzleFactory,
+    PuzzleFileFactory,
+    SolutionFileFactory,
+    TeamDataFactory,
+    TeamPuzzleDataFactory,
+    UnlockAnswerFactory,
+    UnlockFactory,
+    UserDataFactory,
+    UserPuzzleDataFactory,
+)
+from .models import PuzzleData, TeamPuzzleData
 
 
-class HomePageTests(TestCase):
-    fixtures = ['hunts_test']
+class FactoryTests(EventTestCase):
+    # TODO: Consider reworking RUNTIME_CHOICES so this can be used.
+    ANSWER_RUNTIMES = [
+        ("static", runtimes.STATIC),
+        ("regex", runtimes.REGEX),
+        ("lua",  runtimes.LUA)
+    ]
 
+    @staticmethod
+    def test_puzzle_factory_default_construction():
+        PuzzleFactory.create()
+
+    @staticmethod
+    def test_puzzle_file_factory_default_construction():
+        PuzzleFileFactory.create()
+
+    @staticmethod
+    def test_hint_factory_default_construction():
+        HintFactory.create()
+
+    @staticmethod
+    def test_unlock_factory_default_construction():
+        UnlockFactory.create()
+
+    @staticmethod
+    def test_unlock_answer_factory_default_construction():
+        UnlockAnswerFactory.create()
+
+    @staticmethod
+    def test_answer_factory_default_construction():
+        AnswerFactory.create()
+
+    @staticmethod
+    def test_guess_factory_default_construction():
+        GuessFactory.create()
+
+    @parameterized.expand(ANSWER_RUNTIMES)
+    def test_guess_factory_correct_guess_generation(self, _, runtime):
+        answer = AnswerFactory(runtime=runtime)
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=True)
+        self.assertTrue(answer.for_puzzle.answered_by(guess.by_team), "Puzzle answered by correct guess")
+
+    @parameterized.expand(ANSWER_RUNTIMES)
+    def test_guess_factory_incorrect_guess_generation(self, _, runtime):
+        answer = AnswerFactory(runtime=runtime)
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=False)
+        self.assertFalse(answer.for_puzzle.answered_by(guess.by_team), "Puzzle not answered by incorrect guess")
+
+    @staticmethod
+    def test_team_data_factory_default_construction():
+        TeamDataFactory.create()
+
+    @staticmethod
+    def test_user_data_factory_default_construction():
+        UserDataFactory.create()
+
+    @staticmethod
+    def test_team_puzzle_data_factory_default_construction():
+        TeamPuzzleDataFactory.create()
+
+    @staticmethod
+    def test_user_puzzle_data_factory_default_construction():
+        UserPuzzleDataFactory.create()
+
+    @staticmethod
+    def test_episode_factory_default_construction():
+        EpisodeFactory.create()
+
+    @staticmethod
+    def test_announcement_factory_default_construction():
+        AnnouncementFactory.create()
+
+
+class HomePageTests(EventTestCase):
     def test_load_homepage(self):
-        url = reverse('index', subdomain='www')
-        response = self.client.get(url, HTTP_HOST='www.testserver')
+        # Need one default event.
+        EventFactory.create()
+        url = reverse('index')
+        response = self.client.get(url)
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
 
-class RegexValidationTests(TestCase):
-    fixtures = ['hunts_test']
+class StaticValidationTests(EventTestCase):
+    @staticmethod
+    def test_static_save_answer():
+        AnswerFactory(runtime=runtimes.STATIC)
 
-    def test_save_answer(self):
-        puzzle = Puzzle.objects.get(pk=1)
-        Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[Rr]egex.*').save()
-        with self.assertRaises(ValidationError):
-            Answer(for_puzzle=puzzle, runtime=rr.REGEX, answer='[NotARegex').save()
-
-    def test_save_unlock_answer(self):
-        unlock = Unlock.objects.get(pk=1)
-        UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[Rr]egex.*').save()
-        with self.assertRaises(ValidationError):
-            UnlockAnswer(unlock=unlock, runtime=rr.REGEX, guess='[NotARegex').save()
-
-
-class AnswerValidationTests(TestCase):
-    fixtures = ['hunts_test']
-
-    def setUp(self):
-        self.puzzle = Puzzle.objects.get(pk=1)
-        self.team = Team.objects.get(pk=1)
-        self.data = PuzzleData(self.puzzle, self.team)
+    @staticmethod
+    def test_static_save_unlock_answer():
+        UnlockAnswerFactory(runtime=runtimes.STATIC)
 
     def test_static_answers(self):
-        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.STATIC)
-        guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
+        answer = AnswerFactory(runtime=runtimes.STATIC)
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=True)
         self.assertTrue(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=False)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=False)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=False)
         self.assertFalse(answer.validate_guess(guess))
+
+
+class RegexValidationTests(EventTestCase):
+    def test_regex_save_answer(self):
+        AnswerFactory(runtime=runtimes.REGEX, answer='[Rr]egex.*')
+        with self.assertRaises(ValidationError):
+            AnswerFactory(runtime=runtimes.REGEX, answer='[NotARegex')
+
+    def test_regex_save_unlock_answer(self):
+        UnlockAnswerFactory(runtime=runtimes.REGEX, guess='[Rr]egex.*')
+        with self.assertRaises(ValidationError):
+            UnlockAnswerFactory(runtime=runtimes.REGEX, guess='[NotARegex')
 
     def test_regex_answers(self):
-        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.REGEX)
-        guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
+        answer = AnswerFactory(runtime=runtimes.REGEX, answer='cor+ect')
+        guess = GuessFactory(guess='correct', for_puzzle=answer.for_puzzle)
         self.assertTrue(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='correctnot', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='incorrect', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='wrong', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
+
+
+class LuaValidationTests(EventTestCase):
+    def test_lua_save_answer(self):
+        AnswerFactory(runtime=runtimes.LUA, answer='''return {} == nil''')
+        with self.assertRaises(ValidationError):
+            AnswerFactory(runtime=runtimes.LUA, answer='''@''')
+
+    def test_lua_save_unlock_answer(self):
+        UnlockAnswerFactory(runtime=runtimes.LUA, guess='''return {} == nil''')
+        with self.assertRaises(ValidationError):
+            UnlockAnswerFactory(runtime=runtimes.LUA, guess='''@''')
 
     def test_lua_answers(self):
-        answer = Answer.objects.get(for_puzzle=self.puzzle, runtime=rr.LUA)
-        guess = Guess.objects.filter(guess='correct', for_puzzle=self.puzzle).get()
+        answer = AnswerFactory(runtime=runtimes.LUA, answer='''return guess == "correct"''')
+        guess = GuessFactory(guess='correct', for_puzzle=answer.for_puzzle)
         self.assertTrue(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='correctnot', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='correctnot', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='incorrect', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='incorrect', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
-        guess = Guess.objects.filter(guess='wrong', for_puzzle=self.puzzle).get()
+        guess = GuessFactory(guess='wrong', for_puzzle=answer.for_puzzle)
         self.assertFalse(answer.validate_guess(guess))
 
 
-class AnswerSubmissionTest(TestCase):
-    fixtures = ['hunts_test']
-
+class AnswerSubmissionTests(EventTestCase):
     def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
-        self.puzzle = Puzzle.objects.get(pk=1)
-        self.team = Team.objects.get(pk=1)
-        self.data = PuzzleData(self.puzzle, self.team)
+        self.puzzle = PuzzleFactory()
+        self.episode = self.puzzle.episode_set.get()
+        self.event = self.episode.event
+        self.user = TeamMemberFactory(team__at_event=self.event)
+        self.url = reverse('answer', kwargs={
+            'episode_number': self.episode.get_relative_id(),
+            'puzzle_number': self.puzzle.get_relative_id()
+        },)
+        self.client.force_login(self.user.user)
+
+    def test_no_answer_given(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error'], 'no answer given')
+        response = self.client.post(self.url, {
+            'last_updated': '0',
+            'answer': ''
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error'], 'no answer given')
 
     def test_answer_cooldown(self):
-        self.assertTrue(self.client.login(username='test', password='hunter2'))
-        url = reverse('answer', subdomain='www',
-                      kwargs={'event_id': 1, 'episode_number': 1, 'puzzle_number': 1},
-                      )
         with freezegun.freeze_time() as frozen_datetime:
-            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            response = self.client.post(self.url, {
+                'last_updated': '0',
+                'answer': GuessFactory.build(for_puzzle=self.puzzle, correct=False).guess
+            })
             self.assertEqual(response.status_code, 200)
-            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            response = self.client.post(self.url, {
+                'last_updated': '0',
+                'answer': GuessFactory.build(for_puzzle=self.puzzle, correct=False).guess
+            })
             self.assertEqual(response.status_code, 429)
             self.assertTrue(b'error' in response.content)
             frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
-            response = self.client.post(url, {'last_updated': '0', 'answer': 'incorrect'}, HTTP_HOST='www.testserver')
+            response = self.client.post(self.url, {
+                'last_updated': '0',
+                'answer': GuessFactory.build(for_puzzle=self.puzzle, correct=False).guess
+            })
             self.assertEqual(response.status_code, 200)
 
+    def test_answer_after_end(self):
+        self.client.force_login(self.user.user)
+        with freezegun.freeze_time() as frozen_datetime:
+            self.event.end_date = timezone.now() + datetime.timedelta(seconds=5)
+            self.event.save()
+            response = self.client.post(self.url, {
+                'last_updated': '0',
+                'answer': GuessFactory.build(for_puzzle=self.puzzle, correct=False).guess
+            })
+            self.assertEqual(response.status_code, 200)
+            frozen_datetime.tick(delta=datetime.timedelta(seconds=10))
+            response = self.client.post(self.url, {
+                'last_updated': '0',
+                'answer': GuessFactory.build(for_puzzle=self.puzzle, correct=False).guess
+            })
+            self.assertEqual(response.status_code, 400)
 
-class PuzzleStartTimeTests(TestCase):
-    fixtures = ['hunts_test']
 
-    def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
-
+class PuzzleStartTimeTests(EventTestCase):
     def test_start_times(self):
-        self.assertTrue(self.client.login(username='test', password='hunter2'))
-        response = self.client.get('/event/1/ep/1/pz/1/', HTTP_HOST='www.testserver')
-        self.assertEqual(response.status_code, 200)
+        self.puzzle = PuzzleFactory()
+        self.episode = self.puzzle.episode_set.get()
+        self.event = self.episode.event
+        self.user = TeamMemberFactory(team__at_event=self.event)
+
+        self.client.force_login(self.user.user)
+
+        response = self.client.get(self.puzzle.get_absolute_url())
+        self.assertEqual(response.status_code, 200, msg='Puzzle is accessible on absolute url')
+
         first_time = TeamPuzzleData.objects.get().start_time
-        self.assertIsNot(first_time, None)
-        response = self.client.get('/event/1/ep/1/pz/1/', HTTP_HOST='www.testserver')
-        self.assertEqual(response.status_code, 200)
+        self.assertIsNot(first_time, None, msg='Start time is set on first access to a puzzle')
+
+        response = self.client.get(self.puzzle.get_absolute_url())
+        self.assertEqual(response.status_code, 200, msg='Puzzle is accessible on absolute url')
+
         second_time = TeamPuzzleData.objects.get().start_time
-        self.assertEqual(first_time, second_time)
+        self.assertEqual(first_time, second_time, msg='Start time does not alter on subsequent access')
 
 
-class EpisodeBehaviourTest(TestCase):
-    fixtures = ['hunts_test']
-
+class AdminPuzzleAccessTests(EventTestCase):
     def setUp(self):
-        self.linear_episode = Episode.objects.get(pk=1)
-        self.parallel_episode = Episode.objects.get(pk=2)
-        self.team = Team.objects.get(pk=1)
-        self.user = self.team.members.get(pk=1)
+        self.user = TeamMemberFactory(team__at_event=self.tenant, team__is_admin=True)
+        self.client.force_login(self.user.user)
 
+    def test_admin_overrides_episode_start_time(self):
+        now = timezone.now()  # We need the non-naive version of the frozen time for object creation
+        with freezegun.freeze_time(now):
+            start_date = now + datetime.timedelta(seconds=5)
+            episode = EpisodeFactory(event=self.tenant, parallel=False, start_date=start_date)
+            puzzle = PuzzleFactory.create(episode=episode, start_date=start_date)
+
+            resp = self.client.get(reverse('puzzle', kwargs={
+                'episode_number': episode.get_relative_id(),
+                'puzzle_number': puzzle.get_relative_id(),
+            }))
+            self.assertEqual(resp.status_code, 200)
+
+    def test_admin_overrides_puzzle_start_time(self):
+        now = timezone.now()  # We need the non-naive version of the frozen time for object creation
+        with freezegun.freeze_time(now):
+            episode_start_date = now - datetime.timedelta(seconds=5)
+            puzzle_start_date = now + datetime.timedelta(seconds=5)
+            episode = EpisodeFactory(event=self.tenant, parallel=False, start_date=episode_start_date)
+            puzzle = PuzzleFactory.create(episode=episode, start_date=puzzle_start_date)
+
+            resp = self.client.get(reverse('puzzle', kwargs={
+                'episode_number': episode.get_relative_id(),
+                'puzzle_number': puzzle.get_relative_id(),
+            }))
+            self.assertEqual(resp.status_code, 200)
+
+
+class PuzzleAccessTests(EventTestCase):
+    def setUp(self):
+        self.episode = EpisodeFactory(event=self.tenant, parallel=False)
+        self.puzzles = PuzzleFactory.create_batch(3, episode=self.episode)
+        self.user = TeamMemberFactory(team__at_event=self.tenant)
+
+    def test_puzzle_view_authorisation(self):
+        self.client.force_login(self.user.user)
+
+        def _check_load_callback_answer(puzzle, expected_response):
+            kwargs = {
+                'episode_number': self.episode.get_relative_id(),
+                'puzzle_number': puzzle.get_relative_id(),
+            }
+
+            # Load
+            resp = self.client.get(reverse('puzzle', kwargs=kwargs))
+            self.assertEqual(resp.status_code, expected_response)
+
+            # Callback
+            resp = self.client.post(
+                reverse('callback', kwargs=kwargs),
+                content_type='application/json',
+                HTTP_ACCEPT='application/json',
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
+            self.assertEqual(resp.status_code, expected_response)
+
+            # Answer
+            resp = self.client.post(
+                reverse('answer', kwargs=kwargs),
+                {'answer': 'NOT_CORRECT'},  # Deliberately incorrect answer
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
+            self.assertEqual(resp.status_code, expected_response)
+
+            # Solution
+            resp = self.client.get(
+                reverse('solution_content', kwargs=kwargs),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
+            # Solution should always fail with 403 except for the ended case which is separate below
+            self.assertEqual(resp.status_code, 403)
+
+        # This test submits two answers on the same puzzle so we have to jump forward 5 seconds
+        with freezegun.freeze_time() as frozen_datetime:
+            # Create an initial correct guess and wait 5 seconds before attempting other answers.
+            GuessFactory(
+                by=self.user,
+                for_puzzle=self.puzzles[0],
+                correct=True
+            )
+            frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
+
+            # Can load, callback and answer the first two puzzles
+            _check_load_callback_answer(self.puzzles[0], 200)
+            _check_load_callback_answer(self.puzzles[1], 200)
+            # Can't load, callback or answer the third puzzle
+            _check_load_callback_answer(self.puzzles[2], 403)
+
+            # Can load third puzzle, but not callback or answer after event ends
+            old_time = frozen_datetime()
+            frozen_datetime.move_to(self.tenant.end_date + datetime.timedelta(seconds=1))
+
+            # Load
+            kwargs = {
+                'episode_number': self.episode.get_relative_id(),
+                'puzzle_number': self.puzzles[2].get_relative_id(),
+            }
+            resp = self.client.get(reverse('puzzle', kwargs=kwargs))
+            self.assertEqual(resp.status_code, 200)
+
+            # Callback
+            resp = self.client.post(
+                reverse('callback', kwargs=kwargs),
+                content_type='application/json',
+                HTTP_ACCEPT='application/json',
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
+            self.assertEqual(resp.status_code, 400)
+
+            # Answer
+            resp = self.client.post(
+                reverse('answer', kwargs=kwargs),
+                {'answer': 'NOT_CORRECT'},  # Deliberately incorrect answer
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+            self.assertEqual(resp.status_code, 400)
+
+            # Solution
+            resp = self.client.get(
+                reverse('solution_content', kwargs=kwargs),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+            self.assertEqual(resp.status_code, 200)
+
+            # Revert to current time
+            frozen_datetime.move_to(old_time)
+
+            # Answer the second puzzle after a delay of 5 seconds
+            frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
+            response = self.client.post(
+                reverse('answer', kwargs={
+                    'episode_number': self.episode.get_relative_id(),
+                    'puzzle_number': self.puzzles[1].get_relative_id()}
+                ), {
+                    'answer': GuessFactory.build(for_puzzle=self.puzzles[1], correct=True).guess
+                },
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+            self.assertEqual(response.status_code, 200)
+            # Can now load, callback and answer the third puzzle
+            _check_load_callback_answer(self.puzzles[2], 200)
+
+
+class EpisodeBehaviourTest(EventTestCase):
     def test_reuse_puzzle(self):
-        puzzle = Puzzle.objects.get(pk=2)
-        with self.assertRaises(ValidationError):
-            self.linear_episode.puzzles.add(puzzle)
+        puzzles = PuzzleFactory.create_batch(2)
+        with self.assertRaises(ValidationError, msg='Reusing a puzzle raises a ValidationError'):
+            puzzles[0].episode_set.get().puzzles.add(puzzles[1])
 
-    def test_episode_behaviour(self):
-        self.linear_episodes_are_linear()
-        self.can_see_all_parallel_puzzles()
+    def test_linear_episodes_are_linear(self):
+        linear_episode = EpisodeFactory(parallel=False)
+        PuzzleFactory.create_batch(10, episode=linear_episode)
+        user = UserProfileFactory()
+        team = TeamFactory(at_event=linear_episode.event, members=user)
 
-    def linear_episodes_are_linear(self):
-        self.assertTrue(self.linear_episode.unlocked_by(self.team))
-        self.assertFalse(self.linear_episode.parallel)
-        self.assertTrue(self.linear_episode.get_puzzle(1).unlocked_by(self.team))
-        self.assertTrue(self.linear_episode.get_puzzle(2).unlocked_by(self.team))
-        self.assertFalse(self.linear_episode.get_puzzle(3).unlocked_by(self.team))
-        self.assertFalse(self.linear_episode.get_puzzle(2).answered_by(self.team))
+        # TODO: Scramble puzzle order before starting (so they are not in the order they were created).
 
-        Guess(for_puzzle=self.linear_episode.get_puzzle(2), by=self.user, guess="correct").save()
-        self.assertTrue(self.linear_episode.get_puzzle(2).answered_by(self.team))
-        self.assertTrue(self.linear_episode.get_puzzle(3).unlocked_by(self.team))
-        self.assertFalse(self.linear_episode.get_puzzle(3).answered_by(self.team))
+        # Check we can start and that it is a linear episode.
+        self.assertTrue(linear_episode.unlocked_by(team), msg='Episode is unlocked by team')
+        self.assertFalse(linear_episode.parallel, msg='Episode is not set as parallel')
 
-        Guess(for_puzzle=self.linear_episode.get_puzzle(3), by=self.user, guess="correctish").save()
-        self.assertTrue(self.linear_episode.get_puzzle(3).answered_by(self.team))
+        for i in range(1, linear_episode.puzzles.count() + 1):
+            # Test we have unlocked the question, but not answered it yet.
+            self.assertTrue(linear_episode.get_puzzle(i).unlocked_by(team), msg=f'Puzzle[{i}] is unlocked')
+            self.assertFalse(linear_episode.get_puzzle(i).answered_by(team), msg=f'Puzzle[{i}] is not answered')
 
-    def can_see_all_parallel_puzzles(self):
-        self.assertTrue(self.parallel_episode.unlocked_by(self.team))
-        self.assertTrue(self.parallel_episode.parallel)
-        for puzzle in self.parallel_episode.puzzles.all():
-            self.assertTrue(puzzle.unlocked_by(self.team), msg=puzzle)
+            # Test that we have not unlocked the next puzzle before answering.
+            if i < linear_episode.puzzles.count():
+                self.assertFalse(linear_episode.get_puzzle(i + 1).unlocked_by(team), msg=f'Puzzle[{i + 1}] is not unlocked until previous puzzle answered')
+
+            # Answer the question and assert that it's now answered.
+            GuessFactory.create(for_puzzle=linear_episode.get_puzzle(i), by=user, correct=True)
+            self.assertTrue(linear_episode.get_puzzle(i).answered_by(team), msg=f'Correct guess has answered puzzle[{i}]')
+
+    def test_can_see_all_parallel_puzzles(self):
+        parallel_episode = EpisodeFactory(parallel=True)
+        PuzzleFactory.create_batch(5, episode=parallel_episode)
+        team = TeamFactory(at_event=parallel_episode.event)
+
+        # Check we can start and that it is a parallel episode.
+        self.assertTrue(parallel_episode.unlocked_by(team))
+        self.assertTrue(parallel_episode.parallel)
+
+        # Ensure all puzzles in a parallel episode are unlocked.
+        for puzzle in parallel_episode.puzzles.all():
+            self.assertTrue(puzzle.unlocked_by(team), msg='Puzzle unlocked in parallel episode')
+
+    def test_can_see_all_puzzles_after_event_end(self):
+        linear_episode = EpisodeFactory(parallel=False)
+        num_puzzles = 10
+        PuzzleFactory.create_batch(num_puzzles, episode=linear_episode)
+        user = UserProfileFactory()
+        team = TeamFactory(at_event=linear_episode.event, members=user)
+
+        with freezegun.freeze_time() as frozen_datetime:
+            linear_episode.event.end_date = timezone.now()
+            frozen_datetime.tick(-60)  # Move a minute before the end of the event
+            team_puzzles = linear_episode.unlocked_puzzles(team)
+            self.assertEqual(len(team_puzzles), 1, msg='Before the event ends, only the first puzzle is unlocked')
+            frozen_datetime.tick(120)  # Move a minute after the end of the event
+            team_puzzles = linear_episode.unlocked_puzzles(team)
+            self.assertEqual(len(team_puzzles), num_puzzles, msg='After the event ends, all of the puzzles are unlocked')
 
     def test_headstarts(self):
-        self.assertEqual(self.linear_episode.headstart_granted(self.team),
-                         self.parallel_episode.headstart_applied(self.team))
-        self.assertEqual(self.linear_episode.headstart_granted(self.team), datetime.timedelta(minutes=10))
-        Guess(for_puzzle=self.linear_episode.get_puzzle(2), by=self.user, guess="correct").save()
-        self.assertEqual(self.linear_episode.headstart_granted(self.team),
-                         self.parallel_episode.headstart_applied(self.team))
-        self.assertEqual(self.linear_episode.headstart_granted(self.team), datetime.timedelta(minutes=15))
+        # TODO: Replace with episode sequence factory?
+        episode1 = EpisodeFactory()
+        episode2 = EpisodeFactory(event=episode1.event, headstart_from=episode1)
+        PuzzleFactory.create_batch(10, episode=episode1)
+        user = UserProfileFactory()
+        team = TeamFactory(at_event=episode1.event, members=user)
+
+        # Check that the headstart granted is the sum of the puzzle headstarts
+        headstart = datetime.timedelta()
+        self.assertEqual(episode1.headstart_granted(team), datetime.timedelta(minutes=0), "No headstart when puzzles unanswered")
+
+        for i in range(1, episode1.puzzles.count() + 1):
+            # Start answering puzzles
+            GuessFactory.create(for_puzzle=episode1.get_puzzle(i), by=user, correct=True)
+            self.assertTrue(episode1.get_puzzle(i).answered_by(team), msg=f'Correct guess has answered puzzle[{i}]')
+
+            # Check headstart summing logic.
+            headstart += episode1.get_puzzle(i).headstart_granted
+            self.assertEqual(episode1.headstart_granted(team), headstart, "Episode headstart is sum of answered puzzle headstarts")
+
+        # All of these headstarts should be applied to the second episode.
+        self.assertEqual(episode2.headstart_applied(team), headstart)
+
         # Test that headstart does not apply in the wrong direction
-        self.assertEqual(self.linear_episode.headstart_applied(self.team), datetime.timedelta(minutes=0))
+        self.assertEqual(episode1.headstart_applied(team), datetime.timedelta(minutes=0))
 
-    def test_next_puzzle(self):
-        self.assertEqual(self.linear_episode.next_puzzle(self.team), 2)
-        Guess(for_puzzle=self.linear_episode.get_puzzle(2), by=self.user, guess="correct").save()
-        self.assertEqual(self.linear_episode.next_puzzle(self.team), 3)
-        Guess(for_puzzle=self.linear_episode.get_puzzle(3), by=self.user, guess="correctish").save()
-        self.assertEqual(self.linear_episode.next_puzzle(self.team), None)
+    def test_next_linear_puzzle(self):
+        linear_episode = EpisodeFactory(parallel=False)
+        PuzzleFactory.create_batch(10, episode=linear_episode)
+        user = UserProfileFactory()
+        team = TeamFactory(at_event=linear_episode.event, members=user)
 
-        self.assertEqual(self.parallel_episode.next_puzzle(self.team), None)
-        Guess(for_puzzle=self.parallel_episode.get_puzzle(2), by=self.user, guess="4").save()
-        self.assertTrue(self.parallel_episode.get_puzzle(2).answered_by(self.team))
-        self.assertEqual(self.parallel_episode.next_puzzle(self.team), 3)
+        # TODO: Scramble puzzle order before starting (so they are not in the order they were created).
+
+        # Check we can start and that it is a linear episode.
+        self.assertTrue(linear_episode.unlocked_by(team), msg='Episode is unlocked by team')
+        self.assertFalse(linear_episode.parallel, msg='Episode is not set as parallel')
+
+        for i in range(1, linear_episode.puzzles.count() + 1):
+            # Test we have unlocked the question, but not answered it yet.
+            self.assertEqual(linear_episode.next_puzzle(team), i, msg=f'Puzzle[{i}]\'s next puzzle is Puzzle[{i + 1}]')
+
+            # Answer the question and assert that it's now answered.
+            GuessFactory.create(for_puzzle=linear_episode.get_puzzle(i), by=user, correct=True)
+            self.assertTrue(linear_episode.get_puzzle(i).answered_by(team), msg=f'Correct guess has answered puzzle[{i}]')
+
+    def test_next_parallel_puzzle(self):
+        parallel_episode = EpisodeFactory(parallel=True)
+        PuzzleFactory.create_batch(10, episode=parallel_episode)
+        user = UserProfileFactory()
+        team = TeamFactory(at_event=parallel_episode.event, members=user)
+
+        # TODO: Scramble puzzle order before starting (so they are not in the order they were created).
+
+        # Check we can start and that it is a linear episode.
+        self.assertTrue(parallel_episode.unlocked_by(team), msg='Episode is unlocked by team')
+        self.assertTrue(parallel_episode.parallel, msg='Episode is not set as parallel')
+
+        # Answer all questions in a random order.
+        answer_order = list(range(1, parallel_episode.puzzles.count() + 1))
+        random.shuffle(answer_order)
+
+        for i in answer_order:
+            # Should be no 'next' puzzle for parallel episodes, unless there is just one left.
+            # TODO: Check that this is the behaviour that we want, never having a next seems more logical.
+            if i != answer_order[-1]:
+                self.assertIsNone(parallel_episode.next_puzzle(team), msg='Parallel episode has no next puzzle')
+            else:
+                self.assertEqual(parallel_episode.next_puzzle(team), i, msg='Last unanswered is next puzzle in parallel episode')
+
+            # Answer the question and assert that it's now answered.
+            GuessFactory.create(for_puzzle=parallel_episode.get_puzzle(i), by=user, correct=True)
+            self.assertTrue(parallel_episode.get_puzzle(i).answered_by(team), msg=f'Correct guess has answered puzzle[{i}]')
+        self.assertIsNone(parallel_episode.next_puzzle(team), msg='Parallel episode has no next puzzle when all puzzles are answered')
 
     def test_puzzle_numbers(self):
-        puzzle1 = Puzzle.objects.get(pk=1)
-        puzzle2 = Puzzle.objects.get(pk=2)
-        puzzle3 = Puzzle.objects.get(pk=3)
-        puzzle4 = Puzzle.objects.get(pk=4)
-        self.assertEqual(puzzle1.get_relative_id(), 1)
-        self.assertEqual(puzzle2.get_relative_id(), 1)
-        self.assertEqual(puzzle3.get_relative_id(), 2)
-        self.assertEqual(puzzle4.get_relative_id(), 3)
-        self.assertEqual(self.linear_episode.get_puzzle(puzzle1.get_relative_id()), puzzle1)
-        self.assertEqual(self.parallel_episode.get_puzzle(puzzle2.get_relative_id()), puzzle2)
-        self.assertEqual(self.parallel_episode.get_puzzle(puzzle3.get_relative_id()), puzzle3)
-        self.assertEqual(self.parallel_episode.get_puzzle(puzzle4.get_relative_id()), puzzle4)
+        for episode in EpisodeFactory.create_batch(5):
+            for i, puzzle in enumerate(PuzzleFactory.create_batch(5, episode=episode)):
+                self.assertEqual(puzzle.get_relative_id(), i + 1, msg='Relative ID should match index in episode')
+                self.assertEqual(episode.get_puzzle(puzzle.get_relative_id()), puzzle, msg='A Puzzle\'s relative ID should retrieve it from its Episode')
 
 
-class EpisodeSequenceTests(TestCase):
-    fixtures = ['hunts_episodesequence']
-
+class EpisodeSequenceTests(EventTestCase):
     def setUp(self):
-        self.episode1 = Episode.objects.get(pk=1)
-        self.episode2 = Episode.objects.get(pk=2)
-        self.team = Team.objects.get(pk=1)
-        self.user = self.team.members.get(pk=1)
+        self.event = self.tenant
+        self.episode1 = EpisodeFactory(event=self.event)
+        self.episode2 = EpisodeFactory(event=self.event, prequels=self.episode1)
+        self.user = TeamMemberFactory(team__at_event=self.event)
 
     def test_episode_prequel_validation(self):
-        self.episode2.prequels.add(self.episode1)
         # Because we intentionally throw exceptions we need to use transaction.atomic() to avoid a TransactionManagementError
         with self.assertRaises(ValidationError), transaction.atomic():
             self.episode1.prequels.add(self.episode1)
@@ -225,110 +584,265 @@ class EpisodeSequenceTests(TestCase):
             self.episode1.prequels.add(self.episode2)
 
     def test_episode_unlocking(self):
-        self.episode2.prequels.add(self.episode1)
-        self.assertTrue(self.episode1.unlocked_by(self.team))
-        self.assertFalse(self.episode2.unlocked_by(self.team))
-        Guess(for_puzzle=self.episode1.get_puzzle(1), by=self.user, guess="correct").save()
-        self.assertTrue(self.episode2.unlocked_by(self.team))
+        puzzle = PuzzleFactory(episode=self.episode1)
+
+        self.client.force_login(self.user.user)
+
+        # Can load first episode
+
+        response = self.client.get(
+            reverse('episode', kwargs={'episode_number': self.episode1.get_relative_id()}),
+        )
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(
+            reverse('episode_content', kwargs={'episode_number': self.episode1.get_relative_id()}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # Can't load second episode
+        response = self.client.get(
+            reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
+        )
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(
+            reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 403)
+
+        # Can load second episode after event end
+        with freezegun.freeze_time() as frozen_datetime:
+            frozen_datetime.move_to(self.event.end_date + datetime.timedelta(seconds=1))
+            response = self.client.get(
+                reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
+            )
+            self.assertEqual(response.status_code, 200)
+            response = self.client.get(
+                reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+            self.assertEqual(response.status_code, 200)
+
+        # Unlock second episode
+        GuessFactory(for_puzzle=puzzle, by=self.user, correct=True)
+
+        # Can now load second episode
+        response = self.client.get(
+            reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
+        )
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(
+            reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
 
 
-class ClueDisplayTests(TestCase):
-    fixtures = ['hunts_test']
-
+class ClueDisplayTests(EventTestCase):
     def setUp(self):
-        user = UserProfile.objects.get(pk=1)
-        self.puzzle = Puzzle.objects.get(pk=1)
-        self.team = Team.objects.get(pk=1)
-        self.data = PuzzleData(self.puzzle, self.team, user)
+        self.episode = EpisodeFactory()
+        self.user = UserProfileFactory()
+        self.puzzle = PuzzleFactory(episode=self.episode)
+        self.team = TeamFactory(at_event=self.episode.event, members={self.user})
+        self.data = PuzzleData(self.puzzle, self.team, self.user)  # Don't actually need to use a factory here.
 
     def test_hint_display(self):
-        hint = Hint.objects.get()
-        self.assertFalse(hint.unlocked_by(self.team, self.data))
-        self.data.tp_data.start_time = timezone.now() + datetime.timedelta(minutes=-5)
-        self.assertFalse(hint.unlocked_by(self.team, self.data))
-        self.data.tp_data.start_time = timezone.now() + datetime.timedelta(minutes=-10)
-        self.assertTrue(hint.unlocked_by(self.team, self.data))
+        hint = HintFactory(puzzle=self.puzzle)
+
+        with freezegun.freeze_time() as frozen_datetime:
+            self.data.tp_data.start_time = timezone.now()
+            self.assertFalse(hint.unlocked_by(self.team, self.data), "Hint not unlocked by team at start")
+
+            frozen_datetime.tick(hint.time / 2)
+            self.assertFalse(hint.unlocked_by(self.team, self.data), "Hint not unlocked by less than hint time duration.")
+
+            frozen_datetime.tick(hint.time)
+            self.assertTrue(hint.unlocked_by(self.team, self.data), "Hint unlocked by team after required time elapsed.")
 
     def test_unlock_display(self):
-        unlock = Unlock.objects.get(pk=1)
-        self.assertTrue(unlock.unlocked_by(self.team))
-        fail_team = Team.objects.get(pk=2)
-        self.assertFalse(unlock.unlocked_by(fail_team))
+        other_team = TeamFactory(at_event=self.episode.event)
+
+        unlock = UnlockFactory(puzzle=self.puzzle)
+        GuessFactory.create(for_puzzle=self.puzzle, by=self.user, guess=unlock.unlockanswer_set.get().guess)
+
+        # Check can only be seen by the correct teams.
+        self.assertTrue(unlock.unlocked_by(self.team), "Unlock should be visible not it's been guessed")
+        self.assertFalse(unlock.unlocked_by(other_team), "Unlock should not be visible to other team")
 
 
-class AdminTeamTests(TestCase):
-    fixtures = ['hunts_test']
-
+class FileUploadTests(EventTestCase):
     def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
+        self.eventfile = EventFileFactory()
+        self.user = UserProfileFactory()
+        self.client.force_login(self.user.user)
+
+    def test_load_episode_with_eventfile(self):
+        episode = EpisodeFactory(flavour=f'${{{self.eventfile.slug}}}')
+        response = self.client.get(episode.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.eventfile.file.url)
+
+    def test_load_episode_content_with_eventfile(self):
+        episode = EpisodeFactory(flavour=f'${{{self.eventfile.slug}}}')
+        response = self.client.get(
+            reverse('episode_content', kwargs={'episode_number': episode.get_relative_id()}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.eventfile.file.url)
+
+    def test_load_puzzle_with_eventfile(self):
+        puzzle = PuzzleFactory(content=f'${{{self.eventfile.slug}}}')
+        response = self.client.get(puzzle.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.eventfile.file.url)
+
+    def test_load_puzzle_with_puzzlefile(self):
+        puzzle = PuzzleFactory()
+        puzzlefile = PuzzleFileFactory(puzzle=puzzle)
+        puzzle.content = f'${{{puzzlefile.slug}}}'
+        puzzle.save()
+        response = self.client.get(puzzle.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, puzzlefile.url_path)
+
+    def test_puzzlefile_overrides_eventfile(self):
+        puzzle = PuzzleFactory()
+        puzzlefile = PuzzleFileFactory(puzzle=puzzle, slug=self.eventfile.slug)
+        puzzle.content = f'${{{puzzlefile.slug}}}'
+        puzzle.save()
+        response = self.client.get(puzzle.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, puzzlefile.url_path)
+
+    def test_load_solution_with_eventfile(self):
+        puzzle = PuzzleFactory(content='content', soln_content=f'${{{self.eventfile.slug}}}')
+        episode_number = puzzle.episode_set.get().get_relative_id()
+        puzzle_number = puzzle.get_relative_id()
+        self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
+        with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
+            response = self.client.get(
+                reverse('solution_content', kwargs={'episode_number': episode_number, 'puzzle_number': puzzle_number}),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.eventfile.file.url)
+
+    def test_load_solution_with_puzzlefile(self):
+        puzzle = PuzzleFactory(content='content')
+        puzzlefile = PuzzleFileFactory(puzzle=puzzle)
+        puzzle.soln_content = f'${{{puzzlefile.slug}}}'
+        puzzle.save()
+        episode_number = puzzle.episode_set.get().get_relative_id()
+        puzzle_number = puzzle.get_relative_id()
+        self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
+        with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
+            response = self.client.get(
+                reverse('solution_content', kwargs={'episode_number': episode_number, 'puzzle_number': puzzle_number}),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, puzzlefile.url_path)
+
+    def test_load_solution_with_solutionfile(self):
+        puzzle = PuzzleFactory(content='content')
+        solutionfile = SolutionFileFactory(puzzle=puzzle)
+        puzzle.soln_content = f'${{{solutionfile.slug}}}'
+        puzzle.save()
+        episode_number = puzzle.episode_set.get().get_relative_id()
+        puzzle_number = puzzle.get_relative_id()
+        self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
+        with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
+            response = self.client.get(
+                reverse('solution_content', kwargs={'episode_number': episode_number, 'puzzle_number': puzzle_number}),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, solutionfile.url_path)
+
+    def test_solutionfile_overrides_other_files(self):
+        puzzle = PuzzleFactory(content='content')
+        puzzlefile = PuzzleFileFactory(puzzle=puzzle, slug=self.eventfile.slug)
+        solutionfile = SolutionFileFactory(puzzle=puzzle, slug=puzzlefile.slug)
+        puzzle.soln_content = f'${{{solutionfile.slug}}}'
+        puzzle.save()
+        episode_number = puzzle.episode_set.get().get_relative_id()
+        puzzle_number = puzzle.get_relative_id()
+        self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
+        with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
+            response = self.client.get(
+                reverse('solution_content', kwargs={'episode_number': episode_number, 'puzzle_number': puzzle_number}),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, solutionfile.url_path)
+
+
+class AdminTeamTests(EventTestCase):
+    def setUp(self):
+        self.event = self.tenant
+        self.episode = EpisodeFactory(event=self.event)
+        self.admin_user = UserProfileFactory()
+        self.admin_team = TeamFactory(at_event=self.event, is_admin=True, members={self.admin_user})
 
     def test_can_view_episode(self):
-        self.assertTrue(self.client.login(username='admin', password='hunter2'))
-
-        response = self.client.get(reverse('episode', subdomain='www', kwargs={'event_id': 1, 'episode_number': 1}), HTTP_HOST='www.testserver')
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(
+            reverse('episode', kwargs={'episode_number': self.episode.get_relative_id()}),
+        )
         self.assertEqual(response.status_code, 200)
-
-
-class AdminViewTests(TestCase):
-    fixtures = ['hunts_test']
-
-    def setUp(self):
-        site = Site.objects.get()
-        site.domain = 'testserver'
-        site.save()
 
     def test_can_view_guesses(self):
-        self.assertTrue(self.client.login(username='admin', password='hunter2'))
-        response = self.client.get(reverse('guesses', subdomain='admin', kwargs={'event_id': 1}), HTTP_HOST='admin.testserver')
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(reverse('guesses'))
         self.assertEqual(response.status_code, 200)
 
 
-class ProgressionTests(TestCase):
-    fixtures = ['hunts_progression']
-
+class ProgressionTests(EventTestCase):
     def setUp(self):
-        self.user1   = UserProfile.objects.get(pk=1)
-        self.user2   = UserProfile.objects.get(pk=2)
-        self.team1   = Team.objects.get(pk=1)
-        self.team2   = Team.objects.get(pk=2)
-        self.event   = Event.objects.get(current=True)
-        self.episode = Episode.objects.get(pk=1)
+        self.episode = EpisodeFactory()
+        self.event = self.episode.event
+        self.user1 = UserProfileFactory()
+        self.user2 = UserProfileFactory()
+        self.team1 = TeamFactory(at_event=self.event, members={self.user1})
+        self.team2 = TeamFactory(at_event=self.event, members={self.user2})
 
     def test_answered_by_ordering(self):
-        puzzle1 = self.episode.get_puzzle(1)
+        puzzle1 = PuzzleFactory(episode=self.episode)
 
-        # Submit two correct answers, 1 an hour after the other.
-        future_time = timezone.now() + datetime.timedelta(hours=1)
-        guess1 = Guess(for_puzzle=puzzle1, by=self.user1, guess="correct")
-        guess2 = Guess(for_puzzle=puzzle1, by=self.user1, guess="correct")
-        guess1.save()
-        guess2.save()
-        guess1.given = future_time
-        guess1.save()
+        # Submit two correct answers, 1 an hour after the other
+        with freezegun.freeze_time() as frozen_datetime:
+            guess1 = GuessFactory(for_puzzle=puzzle1, by=self.user1, correct=True)
+            frozen_datetime.tick(datetime.timedelta(hours=1))
+            guess2 = GuessFactory(for_puzzle=puzzle1, by=self.user1, correct=True)
 
-        # Ensure the first given answer is reported first
-        self.assertEqual(len(puzzle1.answered_by(self.team1)), 2)
-        self.assertEqual(puzzle1.answered_by(self.team1)[0], guess2)
-        self.assertEqual(puzzle1.answered_by(self.team1)[1], guess1)
+            # Fudge another before the first to test ordering.
+            frozen_datetime.tick(datetime.timedelta(hours=-2))
+            guess3 = GuessFactory(for_puzzle=puzzle1, by=self.user1, correct=True)
+
+            # Ensure the first given answer is reported first
+            self.assertEqual(len(puzzle1.answered_by(self.team1)), 3)
+            self.assertEqual(puzzle1.answered_by(self.team1)[0], guess3)
+            self.assertEqual(puzzle1.answered_by(self.team1)[1], guess1)
+            self.assertEqual(puzzle1.answered_by(self.team1)[2], guess2)
 
     def test_episode_finishing(self):
+        # Ensure at least one puzzle in episode.
+        puzzles = PuzzleFactory.create_batch(3, episode=self.episode)
+
         # Check episode has not been completed
         self.assertFalse(self.episode.finished_by(self.team1))
 
         # Team 1 answer all questions correctly
-        Guess(for_puzzle=self.episode.get_puzzle(1), by=self.user1, guess="correct").save()
-        Guess(for_puzzle=self.episode.get_puzzle(2), by=self.user1, guess="correct").save()
-        Guess(for_puzzle=self.episode.get_puzzle(3), by=self.user1, guess="correctish").save()
+        for puzzle in puzzles:
+            GuessFactory.create(for_puzzle=puzzle, by=self.user1, correct=True)
 
         # Ensure this team has finished the episode
         self.assertTrue(self.episode.finished_by(self.team1))
 
     def test_finish_positions(self):
-        puzzle1 = self.episode.get_puzzle(1)
-        puzzle2 = self.episode.get_puzzle(2)
-        puzzle3 = self.episode.get_puzzle(3)
+        puzzle1, puzzle2, puzzle3 = PuzzleFactory.create_batch(3, episode=self.episode)
 
         # Check there are no winners to begin with
         self.assertFalse(self.episode.finished_by(self.team1))
@@ -336,8 +850,8 @@ class ProgressionTests(TestCase):
         self.assertEqual(len(self.episode.finished_positions()), 0)
 
         # Answer all the questions correctly for both teams with team 1 ahead to begin with then falling behind
-        Guess(for_puzzle=puzzle1, by=self.user1, guess="correct").save()
-        Guess(for_puzzle=puzzle2, by=self.user1, guess="correct").save()
+        GuessFactory.create(for_puzzle=puzzle1, by=self.user1, correct=True)
+        GuessFactory.create(for_puzzle=puzzle2, by=self.user1, correct=True)
 
         # Check only the first team has finished the first questions
         self.assertEqual(len(puzzle1.finished_teams(self.event)), 1)
@@ -346,16 +860,16 @@ class ProgressionTests(TestCase):
         self.assertEqual(puzzle1.position(self.team2), None)
 
         # Team 2 completes all answers
-        Guess(for_puzzle=puzzle1, by=self.user2, guess="correct").save()
-        Guess(for_puzzle=puzzle2, by=self.user2, guess="correct").save()
-        Guess(for_puzzle=puzzle3, by=self.user2, guess="correctish").save()
+        GuessFactory.create(for_puzzle=puzzle1, by=self.user2, correct=True)
+        GuessFactory.create(for_puzzle=puzzle2, by=self.user2, correct=True)
+        GuessFactory.create(for_puzzle=puzzle3, by=self.user2, correct=True)
 
         # Ensure this team has finished the questions and is listed as first in the finished teams
         self.assertEqual(len(self.episode.finished_positions()), 1)
         self.assertEqual(self.episode.finished_positions()[0], self.team2)
 
         # Team 1 finishes as well.
-        Guess(for_puzzle=puzzle3, by=self.user1, guess="correctish").save()
+        GuessFactory(for_puzzle=puzzle3, by=self.user1, correct=True)
 
         # Ensure both teams have finished, and are ordered correctly
         self.assertEqual(len(self.episode.finished_positions()), 2)
@@ -363,38 +877,34 @@ class ProgressionTests(TestCase):
         self.assertEqual(self.episode.finished_positions()[1], self.team1)
 
     def test_guesses(self):
-        puzzle1 = self.episode.get_puzzle(1)
+        puzzle1 = PuzzleFactory(episode=self.episode)
 
         # Single incorrect guess
-        Guess(for_puzzle=puzzle1, by=self.user1, guess="wrong").save()
+        GuessFactory(for_puzzle=puzzle1, by=self.user1, correct=False)
 
         # Check we have no correct answers
         self.assertEqual(len(puzzle1.first_correct_guesses(self.event)), 0)
 
         # Add two correct guesses after each other
-        first_correct_guess = Guess(for_puzzle=puzzle1, by=self.user1, guess="correct")
-        first_correct_guess.save()
-        future_time = timezone.now() + datetime.timedelta(hours=1)
-        second_correct_guess = Guess(for_puzzle=puzzle1, by=self.user1, guess="correct")
-        second_correct_guess.save()
-        second_correct_guess.given = future_time
-        second_correct_guess.save()
+        with freezegun.freeze_time() as frozen_datetime:
+            first_correct_guess = GuessFactory(for_puzzle=puzzle1, by=self.user1, correct=True)
+            frozen_datetime.tick(datetime.timedelta(hours=1))
+            GuessFactory.create(for_puzzle=puzzle1, by=self.user1, correct=True)
 
         # Ensure that the first correct guess is correctly returned
         self.assertEqual(puzzle1.first_correct_guesses(self.event)[self.team1], first_correct_guess)
 
 
-class CorrectnessCacheTests(TestCase):
-    fixtures = ['hunts_progression']
-
+class CorrectnessCacheTests(EventTestCase):
     def setUp(self):
-        self.user1   = UserProfile.objects.get(pk=1)
-        self.user2   = UserProfile.objects.get(pk=2)
-        self.team1   = Team.objects.get(pk=1)
-        self.team2   = Team.objects.get(pk=2)
-        self.episode = Episode.objects.get(pk=1)
-        self.puzzle1 = self.episode.get_puzzle(1)
-        self.puzzle2 = self.episode.get_puzzle(2)
+        self.episode = EpisodeFactory()
+        self.event = self.episode.event
+        self.user1 = UserProfileFactory()
+        self.user2 = UserProfileFactory()
+        self.team1 = TeamFactory(at_event=self.event, members={self.user1})
+        self.team2 = TeamFactory(at_event=self.event, members={self.user2})
+        self.puzzle1 = PuzzleFactory(episode=self.episode)
+        self.puzzle2 = PuzzleFactory(episode=self.episode)
         self.answer1 = self.puzzle1.answer_set.get()
 
     def test_changing_answers(self):
@@ -403,19 +913,17 @@ class CorrectnessCacheTests(TestCase):
         self.assertFalse(self.puzzle2.answered_by(self.team2))
 
         # Add a correct guess and check it is marked correct
-        guess1 = Guess(for_puzzle=self.puzzle1, by=self.user1, guess="correct")
-        guess1.save()
+        guess1 = GuessFactory(for_puzzle=self.puzzle1, by=self.user1, correct=True)
         self.assertTrue(guess1.correct_current)
         self.assertTrue(self.puzzle1.answered_by(self.team1))
 
         # Add an incorrect guess and check
-        guess2 = Guess(for_puzzle=self.puzzle2, by=self.user2, guess="correct?")
-        guess2.save()
+        guess2 = GuessFactory(for_puzzle=self.puzzle2, by=self.user2, correct=False)
         self.assertTrue(guess2.correct_current)
         self.assertFalse(self.puzzle2.answered_by(self.team2))
 
         # Alter the answer and check only the first guess is invalidated
-        self.answer1.answer = "correct!"
+        self.answer1.answer = AnswerFactory.build(runtime=self.answer1.runtime).answer
         self.answer1.save()
         guess1.refresh_from_db()
         guess2.refresh_from_db()
@@ -425,7 +933,7 @@ class CorrectnessCacheTests(TestCase):
         self.assertFalse(self.puzzle1.answered_by(self.team1))
 
         # Update the first guess and check
-        guess1.guess = "correct!"
+        guess1.guess = GuessFactory.build(for_puzzle=self.puzzle1, correct=True).guess
         guess1.save()
         self.assertTrue(self.puzzle1.answered_by(self.team1))
 
@@ -439,7 +947,7 @@ class CorrectnessCacheTests(TestCase):
         self.assertFalse(self.puzzle1.answered_by(self.team1))
 
         # Add an answer that matches guess 2 and check
-        Answer(for_puzzle=self.puzzle2, runtime='S', answer='correct?').save()
+        AnswerFactory(for_puzzle=self.puzzle2, runtime=runtimes.STATIC, answer=guess2.guess).save()
         guess1.refresh_from_db()
         guess2.refresh_from_db()
         self.assertTrue(guess1.correct_current)
@@ -449,42 +957,38 @@ class CorrectnessCacheTests(TestCase):
         self.assertTrue(self.puzzle2.answered_by(self.team2))
 
 
-class GuessTeamDenormalisationTests(TestCase):
-    fixtures = ['hunts_progression']
-
+class GuessTeamDenormalisationTests(EventTestCase):
     def setUp(self):
-        self.team1   = Team.objects.get(pk=1)
-        self.team2   = Team.objects.get(pk=2)
-        self.user1   = self.team1.members.get()
-        self.user2   = self.team2.members.get()
-        self.episode = Episode.objects.get(pk=1)
-        self.puzzle1 = self.episode.get_puzzle(1)
-        self.puzzle2 = self.episode.get_puzzle(2)
-        self.answer1 = self.puzzle1.answer_set.get()
+        self.episode = EpisodeFactory()
+        self.user1 = UserProfileFactory()
+        self.user2 = UserProfileFactory()
+        self.team1 = TeamFactory(at_event=self.episode.event, members={self.user1})
+        self.team2 = TeamFactory(at_event=self.episode.event, members={self.user2})
+        self.puzzle1 = PuzzleFactory(episode=self.episode)
+        self.puzzle2 = PuzzleFactory(episode=self.episode)
 
     def test_adding_guess(self):
-        guess1 = Guess(for_puzzle=self.puzzle1, by=self.user1, guess="incorrect")
-        guess2 = Guess(for_puzzle=self.puzzle2, by=self.user2, guess="incorrect")
-        guess1.save()
-        guess2.save()
-        self.assertEqual(guess1.by_team, self.team1)
-        self.assertEqual(guess2.by_team, self.team2)
+        guess1 = GuessFactory(for_puzzle=self.puzzle1, by=self.user1, correct=False)
+        guess2 = GuessFactory(for_puzzle=self.puzzle2, by=self.user2, correct=False)
+
+        # Check by_team denormalisation.
+        self.assertEqual(guess1.by_team, self.team1, "by_team denormalisation consistent with user's team")
+        self.assertEqual(guess2.by_team, self.team2, "by_team denormalisation consistent with user's team")
 
     def test_join_team_updates_guesses(self):
-        guess1 = Guess(for_puzzle=self.puzzle1, by=self.user1, guess="incorrect")
-        guess2 = Guess(for_puzzle=self.puzzle2, by=self.user2, guess="incorrect")
-        guess1.save()
-        guess2.save()
+        guess1 = GuessFactory(for_puzzle=self.puzzle1, by=self.user1, correct=False)
+        guess2 = GuessFactory(for_puzzle=self.puzzle2, by=self.user2, correct=False)
 
         # Swap teams and check the guesses update
-        self.team1.members = []
-        self.team2.members = [self.user1]
+        self.team1.members.set([])
+        self.team2.members.set([self.user1])
         self.team1.save()
         self.team2.save()
-        self.team1.members = [self.user2]
+        self.team1.members.set([self.user2])
         self.team1.save()
 
+        # Refresh the retrieved Guesses and ensure they are consistent.
         guess1.refresh_from_db()
         guess2.refresh_from_db()
-        self.assertEqual(guess1.by_team, self.team2)
-        self.assertEqual(guess2.by_team, self.team1)
+        self.assertEqual(guess1.by_team, self.team2, "by_team denormalisation consistent with user's team")
+        self.assertEqual(guess2.by_team, self.team1, "by_team denormalisation consistent with user's team")

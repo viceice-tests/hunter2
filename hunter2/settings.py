@@ -1,3 +1,15 @@
+# Copyright (C) 2018 The Hunter2 Contributors.
+#
+# This file is part of Hunter2.
+#
+# Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
+
 from .utils import load_or_create_secret_key
 import environ
 import logging
@@ -5,9 +17,12 @@ import logging
 # Load the current environment profile
 root = environ.Path(__file__) - 2
 env = environ.Env()
+env.DB_SCHEMES['postgres'] = 'django_tenants.postgresql_backend'
+env.DB_SCHEMES['postgresql'] = 'django_tenants.postgresql_backend'
 
 # Default settings which should be overridden by environment variables
 DEBUG              = env.bool      ('H2_DEBUG',         default=False)
+BASE_DOMAIN        = env.str       ('H2_DOMAIN',        default='hunter2.local')
 DEFAULT_URL_SCHEME = env.str       ('H2_SCHEME',        default='http')
 LOG_LEVEL          = env.str       ('H2_LOG_LEVEL',     default='WARNING')
 LANGUAGE_CODE      = env.str       ('H2_LANGUAGE_CODE', default='en-gb')
@@ -17,7 +32,7 @@ TIME_ZONE          = env.str       ('H2_TIME_ZONE',     default='Europe/London')
 ALLOWED_HOSTS      = env.list      ('H2_ALLOWED_HOSTS', default=['*'])
 INTERNAL_IPS       = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
 EMAIL_CONFIG       = env.email_url ('H2_EMAIL_URL',     default='smtp://localhost:25')
-EMAIL_DOMAIN       = env.str       ('H2_EMAIL_DOMAIN',  default='hunter2.local')
+EMAIL_DOMAIN       = env.str       ('H2_EMAIL_DOMAIN',  default=BASE_DOMAIN)
 ADMINS             = env.list      ('H2_ADMINS',        default=[])
 RAVEN_DSN          = env.str       ('H2_SENTRY_DSN',    default=None)
 SENDFILE_BACKEND   = env.str       ('H2_SENDFILE',      default='sendfile.backends.development')
@@ -66,6 +81,10 @@ AUTHENTICATION_BACKENDS = (
 
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
+
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
 FULLCLEAN_WHITELIST = [
@@ -74,13 +93,11 @@ FULLCLEAN_WHITELIST = [
     'teams',
 ]
 
-INSTALLED_APPS = (
+SHARED_APPS = (
     # Our apps first to allow us to override third party templates
     # These are in dependency order
     'accounts',
     'events',
-    'teams',
-    'hunts',
     'hunter2',
     # Third party apps
     # These are in alphabetical order
@@ -101,16 +118,30 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django_extensions',
     'django_fullclean',
+    'django_tenants',
+    'django_uwsgi',
     'nested_admin',
     'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',
     'solo',
     'sortedm2m',
-    'subdomains',
+    'sortedm2m_filter_horizontal_widget',
     'url_tools',
 )
 if USE_SILK:  # nocover
-    INSTALLED_APPS = INSTALLED_APPS + ('silk',)
+    SHARED_APPS += ('silk',)
+
+TENANT_APPS = (
+    # Our apps first to allow us to override third party templates
+    # These are in dependency order
+    'teams',
+    'hunts',
+    # Third party apps
+    # These are in alphabetical order
+    'django.contrib.contenttypes',
+)
+
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 LOGGING = {
     'version': 1,
@@ -139,10 +170,10 @@ MEDIA_ROOT = '/uploads/'
 MEDIA_URL = '/media/'
 
 MIDDLEWARE = (
+    'events.middleware.TenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'subdomains.middleware.SubdomainURLRoutingMiddleware',
     'django.middleware.common.CommonMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -150,12 +181,13 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
-    'subdomains.middleware.SubdomainMiddleware',
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
 )
 if USE_SILK:  # nocover
     MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
+
+PUBLIC_SCHEMA_URLCONF = 'hunter2.public_urls'
 
 if RAVEN_DSN:  # nocover
     RAVEN_CONFIG = {
@@ -163,19 +195,6 @@ if RAVEN_DSN:  # nocover
     }
 
 ROOT_URLCONF = 'hunter2.urls'
-
-SOCIALACCOUNT_AUTO_SIGNUP = False
-
-SOCIALACCOUNT_PROVIDERS = {
-    'openid': {
-        'SERVERS': [{
-            'id': 'steam',
-            'name': 'Steam',
-            'openid_url': 'https://steamcommunity.com/openid',
-            'stateless': True,
-        }]
-    }
-}
 
 STATIC_ROOT = '/static/'
 
@@ -194,11 +213,21 @@ SENDFILE_ROOT = '/uploads'
 
 SENDFILE_URL = '/media'
 
+SESSION_COOKIE_DOMAIN = BASE_DOMAIN
+
 SITE_ID = 1
 
-SUBDOMAIN_URLCONFS = {
-    'admin': 'hunter2.urls.admin',
-    'www': 'hunter2.urls.www',
+SOCIALACCOUNT_AUTO_SIGNUP = False
+
+SOCIALACCOUNT_PROVIDERS = {
+    'openid': {
+        'SERVERS': [{
+            'id': 'steam',
+            'name': 'Steam',
+            'openid_url': 'https://steamcommunity.com/openid',
+            'stateless': True,
+        }]
+    }
 }
 
 TEMPLATES = [
@@ -217,10 +246,14 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'teams.context_processors.event_team',
                 'hunts.context_processors.announcements',
+                'hunter2.context_processors.login_url',
             ],
         },
     },
 ]
+
+TENANT_MODEL = 'events.Event'
+TENANT_DOMAIN_MODEL = 'events.Domain'
 
 TEST_RUNNER = 'hunter2.tests.TestRunner'
 

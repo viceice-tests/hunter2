@@ -10,8 +10,32 @@ body {
 footer {
 	position: absolute;
 	bottom: 0;
+	left: 0;
 	text-align: center;
 	width: 100%;
+	font-size: smaller;
+}
+
+ul.errorlist {
+	margin: 0 0 4px;
+	padding: 0;
+	color: #ba2121;
+	background: #fff;
+}
+
+ul.errorlist li {
+	font-size: 13px;
+	display: block;
+	margin-bottom: 4px;
+}
+
+ul.errorlist li:first-child {
+	margin-top: 0;
+}
+
+ul.errorlist li a {
+	color: inherit;
+	text-decoration: underline;
 }
 
 a.episode-link {

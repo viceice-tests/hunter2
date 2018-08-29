@@ -1,3 +1,16 @@
+# Copyright (C) 2018 The Hunter2 Contributors.
+#
+# This file is part of Hunter2.
+#
+# Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
+
+
 from dal import autocomplete
 from django import forms
 
@@ -48,7 +61,7 @@ class TeamForm(forms.ModelForm):
 
     class Meta:
         model = models.Team
-        fields = ('name', 'at_event', 'members', 'move_user', 'invites', 'requests')
+        fields = ('name', 'is_admin', 'at_event', 'members', 'move_user', 'invites', 'requests')
         widgets = {
             'members': autocomplete.ModelSelect2Multiple(
                 url='userprofile_autocomplete',
@@ -110,7 +123,7 @@ class TeamForm(forms.ModelForm):
                 this_user = "these users have"
             else:
                 this_user = "this user has"
-            member_string = ', '.join(['%s (already on %s)' % (user.user.username, team.name)
+            member_string = ', '.join(['%s (already on %s)' % (user.username, team.name)
                                        for user, team in zip(moved_members, moved_from)])
             self.add_error('move_user',
                            'You are trying to add %s to this team. Are you sure you want'

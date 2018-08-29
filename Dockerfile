@@ -1,7 +1,6 @@
-FROM python:3.6.5-alpine3.7 AS python_build
+FROM python:3.6.6-alpine3.7 AS python_build
 
 ARG DEVELOPMENT=
-COPY pip.conf /etc/pip.conf
 COPY Pipfile Pipfile.lock pipenv.txt /usr/src/app/
 WORKDIR /usr/src/app
 
@@ -15,7 +14,9 @@ RUN apk add --no-cache \
 RUN pip install --no-deps -r pipenv.txt
 RUN pipenv lock -r --keep-outdated > requirements.txt
 RUN [ -z ${DEVELOPMENT} ] || pipenv lock -d -r --keep-outdated >> requirements.txt
-RUN pip wheel -r requirements.txt -w /wheels
+# Even though requirements.txt includes all dependencies it's parsed in order so we need --no-deps to avoid unwanted updates.
+# idna 2.7 wheel has files with wonky permissions
+RUN pip wheel --no-binary idna --no-deps -r requirements.txt -w /wheels
 
 
 FROM alpine:3.7 AS lua_build
@@ -33,7 +34,7 @@ RUN luarocks-5.2 install lua-cjson 2.1.0-1
 RUN luarocks-5.2 install lua-imlib2 dev-2
 
 
-FROM python:3.6.5-alpine3.7
+FROM python:3.6.6-alpine3.7
 
 COPY --from=python_build /wheels /wheels
 
@@ -51,10 +52,21 @@ COPY . .
 
 RUN addgroup -g 500 -S django \
  && adduser -h /usr/src/app -s /sbin/nologin -G django -S -u 500 django \
- && install -d -g django -o django /config /static /uploads/events /uploads/puzzles
+ && install -d -g django -o django /config /static /uploads/events /uploads/puzzles /uploads/solutions
 USER django
 
-VOLUME ["/config", "/static", "/uploads/events", "/uploads/puzzles"]
+VOLUME ["/config", "/static", "/uploads/events", "/uploads/puzzles", "/uploads/solutions"]
 
 EXPOSE 3031
-CMD ["uwsgi", "--ini", "/usr/src/app/uwsgi.ini"]
+
+ENV UWSGI_SOCKET :3031
+ENV UWSGI_ENABLE_THREADS True
+ENV UWSGI_MASTER True
+ENV UWSGI_VACUUM True
+ENV UWSGI_UID 500
+ENV UWSGI_GID 500
+ENV UWSGI_CHDIR /usr/src/app
+ENV UWSGI_MODULE hunter2.wsgi:application
+
+ENTRYPOINT ["python", "manage.py"]
+CMD ["runuwsgi"]

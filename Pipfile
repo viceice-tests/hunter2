@@ -7,11 +7,11 @@ name = "pypi"
 
 [packages]
 
-Django = "<2.0"
+Django = "*"
 PyYAML = "*"
 colour-runner = "*"
 coverage = "*"
-django-allauth = { git = "https://github.com/riconnon/django-allauth.git", ref = "0.35.0-stateless" }
+django-allauth = { git = "https://github.com/riconnon/django-allauth.git", ref = "0.36.0+stateless" }
 django-analytical = "*"
 django-autocomplete-light = "*"
 django-debug-toolbar = "*"
@@ -23,14 +23,18 @@ django-nested-admin = "*"
 django-sendfile = "*"
 django-solo = "*"
 django-sortedm2m = "*"
-django-url-tools = { git = "https://bitbucket.org/nlaurance/django-url-tools.git", ref = "17352a9" }
+django-sortedm2m-filter-horizontal-widget = "*"
+django-tenants = { git = "https://github.com/tomturner/django-tenants.git", ref = "0a5ff14478e44f55ea566d020e0252bb6ca5ac24" }
+django-url-tools-py3 = "*"
+django-uwsgi = "*"
+factory_boy = "*"
 freezegun = "*"
 lupa = "*"
 parameterized = "*"
 psycopg2 = "*"
+python3-openid = "*"
 raven = "*"
 rules = "*"
-subdomains = "*"
 uWSGI = "*"
 validators = "*"
 wait = "*"

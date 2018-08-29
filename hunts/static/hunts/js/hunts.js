@@ -18,7 +18,7 @@ function incorrect_answer(guess, timeout, new_hints, unlocks) {
 
 	var n_unlocks = unlocks.length;
 	for (let i = 0; i < n_unlocks; i++) {
-		guesses = unlocks[i].guesses.join(', ');
+		var guesses = unlocks[i].guesses.join(', ');
 		if (unlocks[i].new) {
 			unlocks_div.append('<p class="new-unlock">' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
 		} else {
@@ -54,14 +54,26 @@ var last_updated = Date.now();
 
 $(function() {
 	"use strict";
+	let field = $('#answer-entry');
+	let button = $('#answer-button');
+	field.keyup(function(e) {
+		console.log("??");
+		if (!field.val()) {
+			console.log("OFF");
+			button.attr('disabled', true);
+		} else {
+			console.log("ON");
+			button.removeAttr('disabled');
+		}
+	});
 	$('.form-inline').submit(function(e) {
 		e.preventDefault();
 		var form = $(e.target);
 		var button = form.children('button');
-		if (button.attr('disabled') == 'true') {
+		if (button.attr('disabled') == true) {
 			return;
 		}
-		button.attr('disabled', 'true');
+		button.attr('disabled', true);
 		var data = {
 			last_updated: last_updated,
 			answer: form.children('input[name=answer]')[0].value
@@ -83,7 +95,7 @@ $(function() {
 			},
 			error: function(xhr, status, error) {
 				button.removeAttr('disabled');
-				if (xhr.responseJSON.error == "too fast") {
+				if (xhr.responseJSON && xhr.responseJSON.error == "too fast") {
 					message("Slow down there, sparky! You're supposed to wait 5s between submissions.", "");
 				} else {
 					message("There was an error submitting the answer.", error);
