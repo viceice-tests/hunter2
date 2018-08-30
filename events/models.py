@@ -51,6 +51,7 @@ class Event(TenantMixin):
         return self.name
 
     def finishing_positions(self):
+        """Get an iterable of teams in the order in which they finished the whole Event"""
         Episode = apps.get_model('hunts.Episode')
         winning_episodes = Episode.objects.filter(event=self, winning=True)
 
@@ -62,15 +63,13 @@ class Event(TenantMixin):
         num_winning_episodes = len(winning_episodes)
         for team, times in list(team_times.items()):
             if len(times) < num_winning_episodes:
+                # To win an event you have to win every winning episode
                 del team_times[team]
             else:
+                # Your position is dictated by the maximum of your episode win times
                 team_times[team] = max(times)
 
         return sorted(team_times.keys(), key=lambda t: team_times[t])
-
-    def team_finishing_position(self, team):
-        """Returns the position the team came in, or None if they haven't finished"""
-        raise NotImplemented
 
     def save(self, verbosity=0, *args, **kwargs):
         super().save(verbosity, *args, **kwargs)

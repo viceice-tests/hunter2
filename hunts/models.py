@@ -456,11 +456,6 @@ class Episode(models.Model):
     def __str__(self):
         return f'{self.event.name} - {self.name}'
 
-    #def check_winning_puzzles(self, pk_set):
-    #    all_puzzle_ids = self.puzzles.all().values_list('pk')
-    #    if any(pz_id not in all_puzzle_ids for pz_id in pk_set):
-    #        raise ValidationError('Puzzles marked winning must be part of the episode')
-
     def get_absolute_url(self):
         return reverse('episode', kwargs={'episode_number': self.get_relative_id()})
 

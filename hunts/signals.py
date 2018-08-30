@@ -26,15 +26,6 @@ def episode_puzzles_changed(sender, instance, action, pk_set, **kwargs):
             puzzle = Puzzle.objects.get(pk=puzzle_id)
             if puzzle.episode_set.count() > 0:
                 raise ValidationError('Puzzle can only be used in one episode')
-#
-#    if action == 'pre_remove':
-#        instance.check_winning_puzzles(pk_set)
-#
-#
-#@receiver(m2m_changed, sender=models.Episode.winning_puzzles.through)
-#def episode_winning_puzzles_changed(sender, instance, action, pk_set, **kwargs):
-#    if action == 'pre_add':
-#        instance.check_winning_puzzles(pk_set)
 
 
 @receiver(m2m_changed, sender=Episode.prequels.through)
