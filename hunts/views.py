@@ -397,6 +397,17 @@ class EventIndex(LoginRequiredMixin, View):
 
         event = request.tenant
 
+        positions = event.finishing_positions()
+        if request.team in positions:
+            position = positions.index(request.team)
+            if position < 3:
+                position = {0: 'first', 1: 'second', 2: 'third'}[position]
+            else:
+                position += 1
+                position = f'in position {position}'
+        else:
+            position = None
+
         episodes = [
             e for e in
             models.Episode.objects.filter(event=event.id).order_by('start_date')
@@ -413,6 +424,7 @@ class EventIndex(LoginRequiredMixin, View):
             context={
                 'event_title':  event.name,
                 'episodes':     list(episodes),
+                'position':     position,
             }
         )
 
