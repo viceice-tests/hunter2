@@ -21,7 +21,6 @@ from events.factories import AttendanceFactory, EventFactory, EventFileFactory, 
 from accounts.factories import UserProfileFactory
 from events.models import Event, Theme
 from hunter2.tests import MockTTY, mock_inputs
-#from hunts.models import Episode, Puzzle, Answer, Guess
 from hunts.factories import EpisodeFactory, PuzzleFactory, GuessFactory
 from teams.factories import TeamFactory
 from . import factories
@@ -107,7 +106,7 @@ class EventWinningTests(EventTestCase):
         self.assertEqual(self.event.finishing_positions(), [self.team2, self.team1])
 
     def test_win_two_linear_episodes(self):
-        self.ep2.winning=True
+        self.ep2.winning = True
         self.ep2.save()
 
         self.assertEqual(self.event.finishing_positions(), [])

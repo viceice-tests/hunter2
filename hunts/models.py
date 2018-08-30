@@ -448,7 +448,6 @@ class Episode(models.Model):
         symmetrical=False,
     )
     winning = models.BooleanField(default=False, help_text='Whether this episode must be won in order to win the event')
-    #winning_puzzles = models.ManyToManyField(Puzzle, blank=True, help_text='Which puzzles trigger the win condition')
 
     class Meta:
         unique_together = (('event', 'start_date'),)
@@ -537,7 +536,6 @@ class Episode(models.Model):
 
             last_team_times = ((t, last_team_guesses[t].given) for t in last_team_guesses)
             return last_team_times
-            #return sorted(last_team_guesses.keys(), key=lambda t: last_team_guesses[t].given)
 
         else:
             last_puzzle = self.puzzles.all().last()
