@@ -397,7 +397,7 @@ class EventIndex(LoginRequiredMixin, View):
 
         event = request.tenant
 
-        positions = event.finishing_positions()
+        positions = utils.finishing_positions(event)
         if request.team in positions:
             position = positions.index(request.team)
             if position < 3:

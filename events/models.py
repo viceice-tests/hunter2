@@ -11,8 +11,6 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from collections import defaultdict
-from django.apps import apps
 from django.db import models
 from django.core.validators import MinValueValidator
 from django_tenants.models import TenantMixin, DomainMixin
@@ -49,27 +47,6 @@ class Event(TenantMixin):
 
     def __str__(self):
         return self.name
-
-    def finishing_positions(self):
-        """Get an iterable of teams in the order in which they finished the whole Event"""
-        Episode = apps.get_model('hunts.Episode')
-        winning_episodes = Episode.objects.filter(event=self, winning=True)
-
-        team_times = defaultdict(list)
-        for ep in winning_episodes:
-            for team, time in ep.finished_times():
-                team_times[team].append(time)
-
-        num_winning_episodes = len(winning_episodes)
-        for team, times in list(team_times.items()):
-            if len(times) < num_winning_episodes:
-                # To win an event you have to win every winning episode
-                del team_times[team]
-            else:
-                # Your position is dictated by the maximum of your episode win times
-                team_times[team] = max(times)
-
-        return sorted(team_times.keys(), key=lambda t: team_times[t])
 
     def save(self, verbosity=0, *args, **kwargs):
         super().save(verbosity, *args, **kwargs)
