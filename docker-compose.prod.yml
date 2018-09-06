@@ -6,8 +6,6 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
   app:
-    build:
-       context: .
     depends_on:
       - db
     environment:
@@ -30,7 +28,8 @@ services:
       - uploads_puzzles:/uploads/puzzles
       - uploads_solutions:/uploads/solutions
   web:
-    build: ./nginx
+    depends_on:
+      - app
     image: registry.gitlab.com/hunter2.app/hunter2/web:${H2_IMAGE_VERSION:-latest}
     ports:
       - "${H2_LISTEN:-8080}:80"
