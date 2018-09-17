@@ -48,7 +48,7 @@ build:app:
 
 build:web:
   dependencies:
-    - build: app
+    - build:app
   stage: build
   variables:
     SERVICE: web
