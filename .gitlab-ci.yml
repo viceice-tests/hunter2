@@ -49,7 +49,7 @@ build-app:app:
 
 build-web:web:
   dependencies:
-    - build:app
+    - build-app:app
   stage: build-web
   variables:
     SERVICE: web
