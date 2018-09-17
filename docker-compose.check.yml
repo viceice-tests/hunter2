@@ -5,20 +5,20 @@ services:
     environment:
       - http_proxy
       - https_proxy
-    image: python:3.7.0-alpine3.7
-    command: sh -c "cd /code && pip install -r pipenv.txt && pipenv lock"
+      image: registry.gitlab.com/rconan/docker-pipenv:2018.7.1-0
+    command: lock
     volumes:
       - ${PWD:-.}:/code
   dot:
     command: -v -Tsvg -o/files/diagram/models.svg /files/diagram/models.dot
-    image: registry.gitlab.com/rconan/docker-graphviz:0.0.1
+    image: registry.gitlab.com/rconan/docker-graphviz:2.40.1-0
     volumes:
       - ${PWD:-.}:/files
   jshint:
-    image: registry.gitlab.com/rconan/docker-jshint:2.9.5-0
+    image: registry.gitlab.com/rconan/docker-jshint:2.9.6-0
     volumes:
       - ${PWD:-.}:/code
   flake8:
-    image: registry.gitlab.com/rconan/docker-flake8:3.5.0-3
+    image: registry.gitlab.com/rconan/docker-flake8:3.5.0-4
     volumes:
       - ${PWD:-.}:/code
