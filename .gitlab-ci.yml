@@ -97,7 +97,7 @@ test:app:
 release:app:
   stage: release
   dependencies:
-    - build:app
+    - image:app
   variables:
     SERVICE: app
   script:
@@ -112,7 +112,7 @@ release:app:
 release:web:
   stage: release
   dependencies:
-    - build:web
+    - image:web
   variables:
     SERVICE: web
   script:
