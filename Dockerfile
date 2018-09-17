@@ -40,19 +40,17 @@ RUN luarocks-5.2 install lua-imlib2 dev-2
 
 FROM python:3.7.0-alpine3.8
 
-COPY --from=python_build /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/site-packages
-
-WORKDIR /usr/src/app
-
 RUN apk add --no-cache \
     lua5.2 \
     postgresql-client \
     postgresql-libs \
     imlib2
-RUN python -m wheel install --force /wheels/*.whl
-COPY --from=lua_build /opt/hunter2 /opt/hunter2
 
-COPY . .
+COPY --from=python_build /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/site-packages
+COPY --from=lua_build /opt/hunter2 /opt/hunter2
+COPY . /usr/src/app
+
+WORKDIR /usr/src/app
 
 RUN addgroup -g 500 -S django \
  && adduser -h /usr/src/app -s /sbin/nologin -G django -S -u 500 django \

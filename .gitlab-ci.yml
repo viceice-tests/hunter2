@@ -47,11 +47,14 @@ build:app:
       - diagram/models.dot
 
 build:web:
+  dependencies:
+    - build: app
   stage: build
   variables:
     SERVICE: web
   script:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
+    - docker load -i app.tar
     - docker-compose build "${SERVICE}"
     - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
   artifacts:
