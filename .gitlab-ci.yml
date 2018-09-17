@@ -54,7 +54,7 @@ image:web:
   script:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
     - docker load -i app.tar
-    - docker-compose build "${SERVICE}"
+    - docker-compose build --build-arg app_tag="${GIT_DESCRIBE}" "${SERVICE}"
     - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
   artifacts:
     expire_in: 90 days
