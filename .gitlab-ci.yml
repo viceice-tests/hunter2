@@ -8,7 +8,8 @@ services:
 
 stages:
   - check
-  - build
+  - build-app
+  - build-web
   - doc
   - test
   - release
@@ -29,8 +30,8 @@ check:jshint:
   script:
     - docker-compose -f docker-compose.check.yml run --rm jshint
 
-build:app:
-  stage: build
+build-app:app:
+  stage: build-app
   variables:
     SERVICE: app
   script:
@@ -46,10 +47,10 @@ build:app:
       - "${SERVICE}.tar"
       - diagram/models.dot
 
-build:web:
+build-web:web:
   dependencies:
     - build:app
-  stage: build
+  stage: build-web
   variables:
     SERVICE: web
   script:
