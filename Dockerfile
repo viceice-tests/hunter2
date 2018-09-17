@@ -1,4 +1,4 @@
-FROM registry.gitlab.com/rconan/docker-pipenv:2018.7.1-0 AS req_export
+FROM registry.gitlab.com/rconan/docker-pipenv:2018.7.1-1 AS req_export
 
 ARG DEVELOPMENT=
 COPY Pipfile Pipfile.lock /
