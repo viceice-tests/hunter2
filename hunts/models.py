@@ -131,11 +131,16 @@ class Puzzle(models.Model):
 
         return team_guesses
 
-    def finished_teams(self, event):
-        """Return a list of teams who have completed this puzzle at the given event in order of completion."""
+    def finished_team_times(self, event):
+        """Return an iterable of (team, time) tuples of teams who have completed this puzzle at the given event,
+together with the team at which they completed the puzzle."""
         team_guesses = self.first_correct_guesses(event)
 
-        return sorted(team_guesses.keys(), key=lambda t: (team_guesses[t].given, team_guesses[t].pk))
+        return ((team, team_guesses[team].given) for team in team_guesses)
+
+    def finished_teams(self, event):
+        """Return a list of teams who have completed this puzzle at the given event in order of completion."""
+        return [team for team, time in sorted(self.finished_team_times(event), key=lambda x: x[1])]
 
     def position(self, team):
         """Returns the position in which the given team finished this puzzle: 0 = first, None = not yet finished."""
@@ -442,6 +447,7 @@ class Episode(models.Model):
         help_text='Episodes which should grant a headstart for this episode',
         symmetrical=False,
     )
+    winning = models.BooleanField(default=False, help_text='Whether this episode must be won in order to win the event')
 
     class Meta:
         unique_together = (('event', 'start_date'),)
@@ -507,8 +513,8 @@ class Episode(models.Model):
     def finished_by(self, team):
         return all([puzzle.answered_by(team) for puzzle in self.puzzles.all()])
 
-    def finished_positions(self):
-        """Get a list of teams who have finished this episode in order of finishing."""
+    def finished_times(self):
+        """Get a list of teams who have finished this episode together with the time at which they finished."""
         if not self.puzzles.all():
             return []
 
@@ -528,11 +534,16 @@ class Episode(models.Model):
                     elif team_guesses[team].given > last_team_guesses[team].given:
                         last_team_guesses[team] = team_guesses[team]
 
-            return sorted(last_team_guesses.keys(), key=lambda t: last_team_guesses[t].given)
+            last_team_times = ((t, last_team_guesses[t].given) for t in last_team_guesses)
+            return last_team_times
 
         else:
             last_puzzle = self.puzzles.all().last()
-            return last_puzzle.finished_teams(self.event)
+            return last_puzzle.finished_team_times(self.event)
+
+    def finished_positions(self):
+        """Get a list of teams who have finished this episode in the order in which they finished."""
+        return [team for team, time in sorted(self.finished_times(), key=lambda x: x[1])]
 
     def headstart_applied(self, team):
         """The headstart that the team has acquired that will be applied to this episode"""
