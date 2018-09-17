@@ -22,10 +22,7 @@ services:
       - uploads_puzzles:/uploads/puzzles
       - uploads_solutions:/uploads/solutions
   web:
-    build:
-      context: ./nginx
-      cache_from:
-        - app
+    build: ./nginx
     depends_on:
       - app
     image: ${IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/web}
