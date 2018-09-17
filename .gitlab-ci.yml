@@ -9,9 +9,7 @@ services:
 stages:
   - check
   - build-app
-  - build-web
-  - doc
-  - test
+  - web-doc-test
   - release
 
 before_script:
@@ -30,7 +28,7 @@ check:jshint:
   script:
     - docker-compose -f docker-compose.check.yml run --rm jshint
 
-build-app:app:
+image:app:
   stage: build-app
   variables:
     SERVICE: app
@@ -47,10 +45,10 @@ build-app:app:
       - "${SERVICE}.tar"
       - diagram/models.dot
 
-build-web:web:
+image:web:
+  stage: web-doc-test
   dependencies:
-    - build-app:app
-  stage: build-web
+    - image:app
   variables:
     SERVICE: web
   script:
@@ -65,9 +63,9 @@ build-web:web:
       - "${SERVICE}.tar"
 
 doc:graph:
-  stage: doc
+  stage: web-doc-test
   dependencies:
-    - build:app
+    - image:app
   script:
     - docker-compose -f docker-compose.check.yml run --rm dot
   artifacts:
@@ -76,10 +74,10 @@ doc:graph:
     paths:
       - diagram/models.svg
 
-test:
-  stage: test
+test:app:
+  stage: web-doc-test
   dependencies:
-    - build:app
+    - image:app
   variables:
     SERVICE: app
   script:
