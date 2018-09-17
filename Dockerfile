@@ -1,7 +1,16 @@
+FROM registry.gitlab.com/rconan/docker-pipenv:2018.7.1-0 AS req_export
+
+ARG DEVELOPMENT=
+COPY Pipfile Pipfile.lock /
+
+RUN pipenv lock -r --keep-outdated > /requirements.txt
+RUN [ -z ${DEVELOPMENT} ] || pipenv lock -d -r --keep-outdated >> /requirements.txt
+
+
 FROM python:3.7.0-alpine3.8 AS python_build
 
 ARG DEVELOPMENT=
-COPY Pipfile Pipfile.lock pipenv.txt /usr/src/app/
+COPY --from=req_export /requirements.txt /usr/src/app/
 WORKDIR /usr/src/app
 
 RUN apk add --no-cache \
@@ -11,12 +20,7 @@ RUN apk add --no-cache \
     lua5.2-dev \
     musl-dev \
     postgresql-dev
-RUN pip install --no-deps -r pipenv.txt
-RUN pipenv lock -r --keep-outdated > requirements.txt
-RUN [ -z ${DEVELOPMENT} ] || pipenv lock -d -r --keep-outdated >> requirements.txt
-# Even though requirements.txt includes all dependencies it's parsed in order so we need --no-deps to avoid unwanted updates.
-# idna 2.7 wheel has files with wonky permissions
-RUN pip wheel --no-binary idna --no-deps -r requirements.txt -w /wheels
+RUN pip install --no-deps -r requirements.txt
 
 
 FROM alpine:3.8 AS lua_build
@@ -36,7 +40,7 @@ RUN luarocks-5.2 install lua-imlib2 dev-2
 
 FROM python:3.7.0-alpine3.8
 
-COPY --from=python_build /wheels /wheels
+COPY --from=python_build /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/site-packages
 
 WORKDIR /usr/src/app
 
