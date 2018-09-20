@@ -87,26 +87,6 @@ class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
         )
 
 
-class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
-    def get(self, request, episode_number):
-        puzzles = request.episode.unlocked_puzzles(request.team)
-        for puzzle in puzzles:
-            puzzle.done = puzzle.answered_by(request.team)
-
-        files = {f.slug: f.file.url for f in request.tenant.eventfile_set.filter(slug__isnull=False)}
-        flavour = Template(request.episode.flavour).safe_substitute(**files)
-
-        return TemplateResponse(
-            request,
-            'hunts/episode_content.html',
-            context={
-                'flavour': flavour,
-                'episode_number': episode_number,
-                'puzzles': puzzles,
-            }
-        )
-
-
 class EpisodeList(LoginRequiredMixin, View):
     def get(self, request):
         admin = rules.is_admin_for_event(request.user, request.tenant)

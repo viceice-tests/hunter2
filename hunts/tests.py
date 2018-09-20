@@ -595,7 +595,7 @@ class EpisodeSequenceTests(EventTestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
-            reverse('episode_content', kwargs={'episode_number': self.episode1.get_relative_id()}),
+            reverse('episode', kwargs={'episode_number': self.episode1.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
@@ -606,7 +606,7 @@ class EpisodeSequenceTests(EventTestCase):
         )
         self.assertEqual(response.status_code, 403)
         response = self.client.get(
-            reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
+            reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 403)
@@ -619,7 +619,7 @@ class EpisodeSequenceTests(EventTestCase):
             )
             self.assertEqual(response.status_code, 200)
             response = self.client.get(
-                reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
+                reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest'
             )
             self.assertEqual(response.status_code, 200)
@@ -633,7 +633,7 @@ class EpisodeSequenceTests(EventTestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
-            reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
+            reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
@@ -683,10 +683,10 @@ class FileUploadTests(EventTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.eventfile.file.url)
 
-    def test_load_episode_content_with_eventfile(self):
+    def test_load_episode_with_eventfile(self):
         episode = EpisodeFactory(flavour=f'${{{self.eventfile.slug}}}')
         response = self.client.get(
-            reverse('episode_content', kwargs={'episode_number': episode.get_relative_id()}),
+            reverse('episode', kwargs={'episode_number': episode.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)

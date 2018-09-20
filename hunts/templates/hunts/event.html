@@ -14,7 +14,7 @@
 <div class="col-md-6">
 <ul id="ep-list" class="nav nav-tabs">
 {% for episode in episodes %}
-<li><a class="episode-link nav-link" href="#episode-{{ episode.index }}" data-url="{% url 'episode_content' episode_number=episode.index %}" data-toggle="tab">{{ episode.name }}</a></li>
+<li><a class="episode-link nav-link" href="#episode-{{ episode.index }}" data-url="{% url 'episode' episode_number=episode.index %}" data-toggle="tab">{{ episode.name }}</a></li>
 {% endfor %}
 </ul>
 </div>
