@@ -14,6 +14,7 @@ services:
       - H2_DOMAIN
       - H2_TEST_SEED
       - H2_SENDFILE=sendfile.backends.nginx
+      - H2_SENTRY_DSN
     image: ${IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/app}
     volumes:
       - ${PWD:-.}:/usr/src/app
