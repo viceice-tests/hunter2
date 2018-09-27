@@ -54,6 +54,11 @@ class Index(TemplateView):
         }
 
 
+class EpisodeIndex(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
+    def get(self, request, episode_number):
+        return redirect(request.episode.get_absolute_url(), permanent=True)
+
+
 class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
     def get(self, request, episode_number):
         puzzles = request.episode.unlocked_puzzles(request.team)

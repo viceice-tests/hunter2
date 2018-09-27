@@ -13,6 +13,7 @@
 
 from django.urls import include, path
 from django.views.generic import TemplateView
+
 from . import views
 
 eventadminpatterns = [
@@ -34,7 +35,7 @@ puzzlepatterns = [
 ]
 
 episodepatterns = [
-    path('', views.Episode.as_view(), name='episode'),
+    path('', views.EpisodeIndex.as_view(), name='episode_index'),
     path('content', views.Episode.as_view(), name='episode'),
     path('pz/<int:puzzle_number>/', include(puzzlepatterns)),
 ]
