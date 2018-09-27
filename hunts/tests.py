@@ -591,22 +591,22 @@ class EpisodeSequenceTests(EventTestCase):
         # Can load first episode
 
         response = self.client.get(
-            reverse('episode', kwargs={'episode_number': self.episode1.get_relative_id()}),
+            reverse('episode_content', kwargs={'episode_number': self.episode1.get_relative_id()}),
         )
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
-            reverse('episode', kwargs={'episode_number': self.episode1.get_relative_id()}),
+            reverse('episode_content', kwargs={'episode_number': self.episode1.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
 
         # Can't load second episode
         response = self.client.get(
-            reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
+            reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
         )
         self.assertEqual(response.status_code, 403)
         response = self.client.get(
-            reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
+            reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 403)
@@ -615,11 +615,11 @@ class EpisodeSequenceTests(EventTestCase):
         with freezegun.freeze_time() as frozen_datetime:
             frozen_datetime.move_to(self.event.end_date + datetime.timedelta(seconds=1))
             response = self.client.get(
-                reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
+                reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
             )
             self.assertEqual(response.status_code, 200)
             response = self.client.get(
-                reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
+                reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest'
             )
             self.assertEqual(response.status_code, 200)
@@ -629,11 +629,11 @@ class EpisodeSequenceTests(EventTestCase):
 
         # Can now load second episode
         response = self.client.get(
-            reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
+            reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
         )
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
-            reverse('episode', kwargs={'episode_number': self.episode2.get_relative_id()}),
+            reverse('episode_content', kwargs={'episode_number': self.episode2.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
@@ -677,16 +677,10 @@ class FileUploadTests(EventTestCase):
         self.user = UserProfileFactory()
         self.client.force_login(self.user.user)
 
-    def test_load_episode_with_eventfile(self):
-        episode = EpisodeFactory(flavour=f'${{{self.eventfile.slug}}}')
-        response = self.client.get(episode.get_absolute_url())
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.eventfile.file.url)
-
-    def test_load_episode_with_eventfile(self):
+    def test_load_episode_content_with_eventfile(self):
         episode = EpisodeFactory(flavour=f'${{{self.eventfile.slug}}}')
         response = self.client.get(
-            reverse('episode', kwargs={'episode_number': episode.get_relative_id()}),
+            reverse('episode_content', kwargs={'episode_number': episode.get_relative_id()}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
@@ -789,7 +783,7 @@ class AdminTeamTests(EventTestCase):
     def test_can_view_episode(self):
         self.client.force_login(self.admin_user.user)
         response = self.client.get(
-            reverse('episode', kwargs={'episode_number': self.episode.get_relative_id()}),
+            reverse('episode_content', kwargs={'episode_number': self.episode.get_relative_id()}),
         )
         self.assertEqual(response.status_code, 200)
 

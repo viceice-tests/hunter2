@@ -59,7 +59,7 @@ class EpisodeIndex(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
         return redirect(request.episode.get_absolute_url(), permanent=True)
 
 
-class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
+class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
     def get(self, request, episode_number):
         puzzles = request.episode.unlocked_puzzles(request.team)
         for puzzle in puzzles:
