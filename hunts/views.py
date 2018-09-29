@@ -601,8 +601,7 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 response['url'] = reverse('puzzle', kwargs={'episode_number': episode_number, 'puzzle_number': next})
             else:
                 response['text'] = f'back to {request.episode.name}'
-                response['url'] = reverse('event')
-                response['url'] += f'#episode-{episode_number}'
+                response['url'] = request.episode.get_absolute_url()
         else:
             all_unlocks = models.Unlock.objects.filter(puzzle=request.puzzle)
             unlocks = []
