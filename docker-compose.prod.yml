@@ -2,7 +2,7 @@ version: '2.1'
 
 services:
   db:
-    image: postgres:9.6.6-alpine
+    image: postgres:9.6.10-alpine
     volumes:
       - db:/var/lib/postgresql/data
   app:
@@ -23,7 +23,6 @@ services:
     image: registry.gitlab.com/hunter2.app/hunter2/app:${H2_IMAGE_VERSION:-latest}
     volumes:
       - config:/config
-      - static:/static
       - uploads_events:/uploads/events
       - uploads_puzzles:/uploads/puzzles
       - uploads_solutions:/uploads/solutions
@@ -34,7 +33,6 @@ services:
     ports:
       - "${H2_LISTEN:-8080}:80"
     volumes:
-      - static:/static:ro
       - uploads_events:/media/events:ro
       - uploads_puzzles:/media/puzzles:ro
       - uploads_solutions:/media/solutions:ro
@@ -42,7 +40,6 @@ services:
 volumes:
   db: {}
   config: {}
-  static: {}
   uploads_events: {}
   uploads_puzzles: {}
   uploads_solutions: {}

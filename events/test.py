@@ -37,6 +37,7 @@ class EventTestCase(FastTenantTestCase):
     @classmethod
     def setup_tenant(cls, tenant):
         theme = ThemeFactory()
+        tenant.current = True
         tenant.end_date = timezone.now() + timedelta(days=5)
         tenant.name = 'Test Event'
         tenant.theme = theme

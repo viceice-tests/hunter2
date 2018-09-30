@@ -1,16 +1,15 @@
-image: registry.gitlab.com/rconan/docker-and-compose:1.22.0-1
+image: registry.gitlab.com/rconan/docker-and-compose:1.22.0-2
 
 variables:
   DOCKER_DRIVER: overlay2
 
 services:
-  - docker:18.06.0-ce-dind
+  - docker:18.06.1-ce-dind
 
 stages:
   - check
-  - build
-  - doc
-  - test
+  - build-app
+  - web-doc-test
   - release
 
 before_script:
@@ -29,8 +28,8 @@ check:jshint:
   script:
     - docker-compose -f docker-compose.check.yml run --rm jshint
 
-build:app:
-  stage: build
+image:app:
+  stage: build-app
   variables:
     SERVICE: app
   script:
@@ -46,13 +45,16 @@ build:app:
       - "${SERVICE}.tar"
       - diagram/models.dot
 
-build:web:
-  stage: build
+image:web:
+  stage: web-doc-test
+  dependencies:
+    - image:app
   variables:
     SERVICE: web
   script:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
-    - docker-compose build "${SERVICE}"
+    - docker load -i app.tar
+    - docker-compose build --build-arg app_tag="${GIT_DESCRIBE}" "${SERVICE}"
     - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
   artifacts:
     expire_in: 90 days
@@ -61,9 +63,9 @@ build:web:
       - "${SERVICE}.tar"
 
 doc:graph:
-  stage: doc
+  stage: web-doc-test
   dependencies:
-    - build:app
+    - image:app
   script:
     - docker-compose -f docker-compose.check.yml run --rm dot
   artifacts:
@@ -72,10 +74,10 @@ doc:graph:
     paths:
       - diagram/models.svg
 
-test:
-  stage: test
+test:app:
+  stage: web-doc-test
   dependencies:
-    - build:app
+    - image:app
   variables:
     SERVICE: app
   script:
@@ -95,7 +97,7 @@ test:
 release:app:
   stage: release
   dependencies:
-    - build:app
+    - image:app
   variables:
     SERVICE: app
   script:
@@ -110,7 +112,7 @@ release:app:
 release:web:
   stage: release
   dependencies:
-    - build:web
+    - image:web
   variables:
     SERVICE: web
   script:
