@@ -456,7 +456,7 @@ class Episode(models.Model):
         return f'{self.event.name} - {self.name}'
 
     def get_absolute_url(self):
-        return reverse('episode', kwargs={'episode_number': self.get_relative_id()})
+        return reverse('event') + '#episode-{}'.format(self.get_relative_id())
 
     def follows(self, episode):
         """Does this episode follow the provied episode by one or more prequel relationships?"""

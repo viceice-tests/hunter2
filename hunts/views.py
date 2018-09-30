@@ -54,7 +54,12 @@ class Index(TemplateView):
         }
 
 
-class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
+class EpisodeIndex(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
+    def get(self, request, episode_number):
+        return redirect(request.episode.get_absolute_url(), permanent=True)
+
+
+class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
     def get(self, request, episode_number):
         puzzles = request.episode.unlocked_puzzles(request.team)
         for puzzle in puzzles:
@@ -81,26 +86,6 @@ class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
                 'episode': request.episode.name,
                 'flavour': flavour,
                 'position': position,
-                'episode_number': episode_number,
-                'puzzles': puzzles,
-            }
-        )
-
-
-class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
-    def get(self, request, episode_number):
-        puzzles = request.episode.unlocked_puzzles(request.team)
-        for puzzle in puzzles:
-            puzzle.done = puzzle.answered_by(request.team)
-
-        files = {f.slug: f.file.url for f in request.tenant.eventfile_set.filter(slug__isnull=False)}
-        flavour = Template(request.episode.flavour).safe_substitute(**files)
-
-        return TemplateResponse(
-            request,
-            'hunts/episode_content.html',
-            context={
-                'flavour': flavour,
                 'episode_number': episode_number,
                 'puzzles': puzzles,
             }
@@ -616,8 +601,7 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 response['url'] = reverse('puzzle', kwargs={'episode_number': episode_number, 'puzzle_number': next})
             else:
                 response['text'] = f'back to {request.episode.name}'
-                response['url'] = reverse('event')
-                response['url'] += f'#episode-{episode_number}'
+                response['url'] = request.episode.get_absolute_url()
         else:
             all_unlocks = models.Unlock.objects.filter(puzzle=request.puzzle)
             unlocks = []
