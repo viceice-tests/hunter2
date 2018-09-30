@@ -14,7 +14,7 @@ services:
     depends_on:
       - db
     entrypoint: daphne
-    command: -b 0.0.0.0 -v 2 hunter2.asgi:application
+    command: --bind 0.0.0.0 --verbosity 2 --proxy-headers hunter2.asgi:application
     environment:
       - H2_DEBUG
       - H2_DOMAIN
