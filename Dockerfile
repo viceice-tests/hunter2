@@ -47,7 +47,7 @@ RUN apk add --no-cache \
     imlib2
 
 COPY --from=python_build /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages
-COPY --from=python_build /usr/local/bin/uwsgi /usr/local/bin/uwsgi
+COPY --from=python_build /usr/local/bin/daphne /usr/local/bin/daphne
 COPY --from=lua_build /opt/hunter2 /opt/hunter2
 COPY . /usr/src/app
 
@@ -62,14 +62,5 @@ VOLUME ["/config", "/uploads/events", "/uploads/puzzles", "/uploads/solutions"]
 
 EXPOSE 3031
 
-ENV UWSGI_SOCKET :3031
-ENV UWSGI_ENABLE_THREADS True
-ENV UWSGI_MASTER True
-ENV UWSGI_VACUUM True
-ENV UWSGI_UID 500
-ENV UWSGI_GID 500
-ENV UWSGI_CHDIR /usr/src/app
-ENV UWSGI_MODULE hunter2.wsgi:application
-
 ENTRYPOINT ["python", "manage.py"]
-CMD ["runuwsgi"]
+CMD ["runserver"]
