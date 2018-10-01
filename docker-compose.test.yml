@@ -13,6 +13,7 @@ services:
     build: .
     depends_on:
       - db
+      - redis
     environment:
       - H2_DEBUG
       - H2_DOMAIN
@@ -45,3 +46,4 @@ volumes:
   uploads_events: {}
   uploads_puzzles: {}
   uploads_solutions: {}
+  redis: {}
