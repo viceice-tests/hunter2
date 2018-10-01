@@ -40,7 +40,7 @@ services:
 volumes:
   db: {}
   config: {}
+  redis: {}
   uploads_events: {}
   uploads_puzzles: {}
   uploads_solutions: {}
-  redis: {}
