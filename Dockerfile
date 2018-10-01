@@ -59,7 +59,7 @@ USER django
 
 VOLUME ["/config", "/uploads/events", "/uploads/puzzles", "/uploads/solutions"]
 
-EXPOSE 3031
+EXPOSE 8000
 
 ENTRYPOINT ["python", "manage.py"]
 CMD ["rundaphne", "--bind", "0.0.0.0"]
