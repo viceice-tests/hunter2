@@ -12,8 +12,6 @@ services:
   app:
     depends_on:
       - db
-    entrypoint: daphne
-    command: hunter2.asgi:application
     environment:
       - H2_ADMINS
       - H2_DEBUG

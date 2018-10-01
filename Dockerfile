@@ -47,7 +47,6 @@ RUN apk add --no-cache \
     imlib2
 
 COPY --from=python_build /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages
-COPY --from=python_build /usr/local/bin/daphne /usr/local/bin/daphne
 COPY --from=lua_build /opt/hunter2 /opt/hunter2
 COPY . /usr/src/app
 
@@ -63,4 +62,4 @@ VOLUME ["/config", "/uploads/events", "/uploads/puzzles", "/uploads/solutions"]
 EXPOSE 3031
 
 ENTRYPOINT ["python", "manage.py"]
-CMD ["runserver"]
+CMD ["rundaphne", "--bind", "0.0.0.0"]
