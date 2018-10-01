@@ -10,15 +10,10 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+from django.conf.urls import url
 
-from channels.auth import AuthMiddlewareStack
-from channels.routing import ProtocolTypeRouter, URLRouter
-import hunts.routing
+from . import consumers
 
-application = ProtocolTypeRouter({
-    'websocket': AuthMiddlewareStack(
-        URLRouter(
-            hunts.routing.websocket_urlpatterns
-        )
-    ),
-})
+websocket_urlpatterns = [
+    url(r'^ws/test$', consumers.TestConsumer),
+]

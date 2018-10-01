@@ -77,4 +77,15 @@ $(function() {
 });
 </script>
 {% endif %}
+<script>
+	var sock = new WebSocket('ws://' + window.location.host + '/ws/test');
+	sock.onmessage = function(e) {
+		data = JSON.parse(e.data);
+		console.log(data['message']);
+	};
+	sock.onopen = function(e) {
+		sock.send(JSON.stringify({'message': 'hello'}));
+		sock.send(JSON.stringify({'message': 'goodbye'}));
+	};
+</script>
 {% endblock %}

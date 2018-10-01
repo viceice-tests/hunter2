@@ -10,15 +10,23 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+from channels.generic.websocket import WebsocketConsumer
+import json
 
-from channels.auth import AuthMiddlewareStack
-from channels.routing import ProtocolTypeRouter, URLRouter
-import hunts.routing
+class TestConsumer(WebsocketConsumer):
+    def connect(self):
+        self.accept()
 
-application = ProtocolTypeRouter({
-    'websocket': AuthMiddlewareStack(
-        URLRouter(
-            hunts.routing.websocket_urlpatterns
-        )
-    ),
-})
+    def disconnect(self, close_code):
+        pass
+
+    def receive(self, text_data):
+        data = json.loads(text_data)
+        if data['message'] == 'hello':
+            message = 'world!'
+        else:
+            message = 'uwotm8'
+
+        self.send(text_data=json.dumps({
+            'message': message,
+        }))
