@@ -43,5 +43,5 @@ wait = "*"
 [dev-packages]
 
 django-silk = "==0.7.0"
-#ipython = "*"
+ipython = "*"
 ptpython = "*"
