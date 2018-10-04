@@ -10,23 +10,67 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-from channels.generic.websocket import WebsocketConsumer
+from asgiref.sync import async_to_sync
+from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async as db_access
+from urllib.parse import urlparse
 import json
 
-class TestConsumer(WebsocketConsumer):
-    def connect(self):
-        self.accept()
+from events.models import Domain
 
-    def disconnect(self, close_code):
-        pass
+class TestConsumer(AsyncWebsocketConsumer):
+    @db_access
+    def get_team(self):
+        self.event.activate()
+        self.team = self.user.profile.team_at(self.event)
+    
+    @db_access
+    def get_event(self, domain):
+        event = Domain.objects.get(domain=domain).tenant
+        self.event = event
 
-    def receive(self, text_data):
+    async def connect(self):
+        try:
+            headers = dict(self.scope['headers'])
+            try:
+                origin = headers[b'origin']
+            except KeyError:
+                #await self.send(text_data=json.dumps({
+                #    'error': 'Bad Request',
+                #    'message': 'No Origin header',
+                #}))
+                #await self.close()
+                return
+
+            domain = urlparse(origin).hostname.decode('ascii')
+            self.user = self.scope['user']
+            await self.get_event(domain)
+            await self.get_team()
+            self.event.activate()
+            print(self.team)
+            await self.channel_layer.group_add('test_channel', self.channel_name)
+            await self.accept()
+        except Exception as e:
+            print(e)
+            raise
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard('test_channel', self.channel_name)
+
+    async def receive(self, text_data):
         data = json.loads(text_data)
         if data['message'] == 'hello':
-            message = 'world!'
+            message = 'hello, ' + str(self.scope['user'])
         else:
             message = 'uwotm8'
 
-        self.send(text_data=json.dumps({
+        await self.send(text_data=json.dumps({
+            'message': message,
+        }))
+
+    async def answer(self, event):
+        message = event['message']
+
+        await self.send(text_data=json.dumps({
             'message': message,
         }))

@@ -627,6 +627,10 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             response['new_hints'] = new_hints
             response['unlocks'] = unlocks
         response['correct'] = str(correct).lower()
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        layer = get_channel_layer()
+        async_to_sync(layer.group_send)('test_channel', {'type': 'answer', 'message': response})
 
         return JsonResponse(response)
 
