@@ -10,67 +10,70 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-from asgiref.sync import async_to_sync
-from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.db import database_sync_to_async as db_access
-from urllib.parse import urlparse
+from django.core.exceptions import ObjectDoesNotExist
+from channels.generic.websocket import JsonWebsocketConsumer
 import json
 
 from events.models import Domain
 
-class TestConsumer(AsyncWebsocketConsumer):
-    @db_access
-    def get_team(self):
-        self.event.activate()
-        self.team = self.user.profile.team_at(self.event)
-    
-    @db_access
-    def get_event(self, domain):
-        event = Domain.objects.get(domain=domain).tenant
-        self.event = event
-
-    async def connect(self):
+def activate_tenant(f):
+    def wrapper(self, *args, **kwargs):
         try:
-            headers = dict(self.scope['headers'])
-            try:
-                origin = headers[b'origin']
-            except KeyError:
-                #await self.send(text_data=json.dumps({
-                #    'error': 'Bad Request',
-                #    'message': 'No Origin header',
-                #}))
-                #await self.close()
-                return
+            self.scope['tenant'].activate()
+        except (AttributeError, KeyError):
+            raise ValueError('%s has no scope or no tenant on its scope' % self)
+        return f(self, *args, **kwargs)
 
-            domain = urlparse(origin).hostname.decode('ascii')
-            self.user = self.scope['user']
-            await self.get_event(domain)
-            await self.get_team()
-            self.event.activate()
-            print(self.team)
-            await self.channel_layer.group_add('test_channel', self.channel_name)
-            await self.accept()
-        except Exception as e:
-            print(e)
-            raise
+    return wrapper
 
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard('test_channel', self.channel_name)
 
-    async def receive(self, text_data):
-        data = json.loads(text_data)
+class TeamMixin:
+    @activate_tenant
+    def websocket_connect(self, message):
+        # Add a team object to the scope. We can't do this in middleware because the user object
+        # isn't resolved yet (I don't know what causes it to be resolved, either...) and we can't do
+        # it in __init__ here because the middleware hasn't even run then, so we have no user or
+        # tenant or anything!
+        # This means this is a bit weirdly placed.
+        try:
+            user = self.scope['user'].profile
+            self.team = user.team_at(self.scope['tenant'])
+        except ObjectDoesNotExist:
+            # A user on the website will never open the websocket without getting a userprofile and team.
+            self.close()
+            return
+        return super().websocket_connect(message)
+
+
+# MRO is important as long as TeamMixin uses websocket_connect().
+class PuzzleEventWebsocket(TeamMixin, JsonWebsocketConsumer):
+    def get_team(self):
+        self.team = self.user.profile.team_at(self.scope['tenant'])
+
+    @activate_tenant
+    def connect(self):
+        self.user = self.scope['user']
+        print(self.team)
+        self.channel_layer.group_add('test_channel', self.channel_name)
+        self.accept()
+
+    def disconnect(self, close_code):
+        self.channel_layer.group_discard('test_channel', self.channel_name)
+
+    def receive_json(self, content):
+        data = content
         if data['message'] == 'hello':
             message = 'hello, ' + str(self.scope['user'])
         else:
             message = 'uwotm8'
 
-        await self.send(text_data=json.dumps({
+        self.send_json({
             'message': message,
-        }))
+        })
 
-    async def answer(self, event):
+    def answer(self, event):
         message = event['message']
 
-        await self.send(text_data=json.dumps({
+        self.send({
             'message': message,
-        }))
+        })

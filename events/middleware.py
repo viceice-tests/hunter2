@@ -10,13 +10,17 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+from urllib.parse import urlparse
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.shortcuts import get_current_site
-from django.db import connection
+from django.db import connection, close_old_connections
 from django_tenants.middleware import TenantMainMiddleware
 
+from channels.middleware import BaseMiddleware
+
 from accounts.models import UserProfile
+from .models import Domain
 
 
 class EventMiddleware(object):
@@ -54,3 +58,31 @@ class TenantMiddleware(TenantMainMiddleware):
             return
 
         return super().process_request(request)
+
+
+class TenantWebsocketMiddleware(BaseMiddleware):
+    def populate_scope(self, scope):
+        try:
+            headers = dict(scope['headers'])
+            origin = headers[b'origin']
+        except KeyError:
+            raise ValueError('Websocket connected without origin header, which is required by TenantWebsocketMiddleware.')
+
+        url = urlparse(origin)
+        try:
+            domain = url.hostname.decode('ascii')
+        except UnicodeDecodeError:
+            raise ValueError('TenantWebsocketMiddleware got malformed origin %s' % url.hostname.decode('ascii', errors='ignore'))
+
+        try:
+            scope['tenant'] = Domain.objects.get(domain=domain).tenant
+        except Domain.DoesNotExist:
+            raise ValueError('No tenant Domain matching origin %s' % domain)
+
+        close_old_connections()
+
+    async def resolve_scope(self, scope):
+        # Unsure how you're actually supposed to correctly subclass Channels Middleware.
+        # If we implement populate_scope instead of overriding __call__, we need to define
+        # this method.
+        pass

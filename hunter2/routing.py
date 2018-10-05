@@ -14,11 +14,14 @@
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 import hunts.routing
+from events.middleware import TenantWebsocketMiddleware
+from teams.middleware import TeamWebsocketMiddleware
 
 application = ProtocolTypeRouter({
-    'websocket': AuthMiddlewareStack(
+    'websocket': 
+        TenantWebsocketMiddleware(
+        AuthMiddlewareStack(
         URLRouter(
             hunts.routing.websocket_urlpatterns
-        )
-    ),
+        ))),
 })

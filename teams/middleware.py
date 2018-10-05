@@ -14,6 +14,7 @@
 from accounts.models import UserProfile
 from events.models import Event
 from .models import Team
+from channels.middleware import BaseMiddleware
 
 
 class TeamMiddleware(object):
@@ -48,3 +49,15 @@ class TeamMiddleware(object):
                 # TODO: User has no team for this event. Redirect to team creation?
                 pass
             return
+
+
+class TeamWebsocketMiddleware(BaseMiddleware):
+    def populate_scope(self, scope):
+        if 'user' not in scope:
+            raise ValueError('TeamWebsocketMiddleware requires AuthMiddleware')
+
+        if not scope['user'].is_authenticated:
+            return
+
+    async def resolve_scope(self, scope):
+        pass
