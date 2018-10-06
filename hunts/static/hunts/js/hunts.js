@@ -33,7 +33,7 @@ function incorrect_answer(guess, timeout_length, timeout, new_hints, unlocks) {
 	// calculation of the same thing, assume that it's due to clock problems (rather than latency somewhere)
 	// and just wait however long the server was trying to tell us.
 	if (difference > 2000 || difference < 0) {
-		message("Your clock seems not to match the server's. The displayed cooldown may not be optimal.");
+		message("Possible clock mismatch. Cooldown may be inaccurate.");
 		milliseconds = timeout_length;
 	}
 	var answer_button = $('#answer-button');
