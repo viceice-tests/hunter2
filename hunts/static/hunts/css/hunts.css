@@ -1,0 +1,31 @@
+#answer-button {
+	width: 55px;
+	height: 55px;
+	padding: 0;
+	overflow: hidden;
+	position: relative;
+}
+
+#answer-button[disabled] {
+	opacity: 1;
+	filter: alpha(opacity=1);
+/*	background-image: initial;*/
+}
+
+#answer-button svg {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+#answer-entry {
+	height: 53px;
+	border-radius: 4px;
+	font-size: 21px;
+}
+
+#answer-border {
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	display: inline-block;
+}

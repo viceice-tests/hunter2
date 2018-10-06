@@ -1,4 +1,4 @@
-"use strict";
+/* globals d3 */
 
 // Keep the number of entries in here such that it has a large least common multiple with the number of colours.
 var symbolsPathList = [
@@ -32,28 +32,35 @@ var globalData = null;
 var timeout = null;
 
 function escapeHtml (string) {
+	"use strict";
 	return String(string).replace(/[&<>"'`=\/ ]/g, function (s) {
 		return entityMap[s];
 	});
 }
 
 function getStats(force) {
+	"use strict";
 	if (timeout) {
 		clearTimeout(timeout);
 	}
 	if (!(force || $('#auto-update').prop('checked'))) {
 		return;
 	}
-	$.get('stats_content/' + $('#episode').val(), {}, function (data) { globalData = data; drawGraph(); });
-	timeout = setTimeout(getStats, 5000);
+	$.get('stats_content/' + $('#episode').val(), {}, function (data) {
+		// Get new stats 5 seconds after we got last stats
+		timeout = setTimeout(getStats, 5000);
+		globalData = data; drawGraph();
+	});
 }
 
 function drawGraph() {
+	"use strict";
 	clearChart();
 	drawFunction(globalData);
 }
 
 function drawCompletion(data) {
+	"use strict";
 	// Create scales for a bar chart
 	var x = d3.scaleBand()
 		.rangeRound([0, width]).padding(0.1)
@@ -112,6 +119,7 @@ function drawCompletion(data) {
 }
 
 function drawTimeCompleted(lines) {
+	"use strict";
 	return function(data) {
 		// Create the X and Y scales
 		var x = d3.scalePoint()
@@ -131,11 +139,11 @@ function drawTimeCompleted(lines) {
 			.domain(data.teams);
 
 		var timeCompleted = data.puzzleCompletion.map(
-			function (d) { return d.completion }
+			function (d) { return d.completion; }
 		);
 		// Load data into team groups
 		var team = chart.selectAll("g.team")
-			.data(data.puzzleProgress)
+			.data(data.puzzleProgress);
 
 		// Kill the paths in the updating groups
 		team.selectAll("path").remove();
@@ -145,14 +153,14 @@ function drawTimeCompleted(lines) {
 			.append("g")
 			.attr("class", "team");
 
-		var updateTeam = enterTeam.merge(team)
+		var updateTeam = enterTeam.merge(team);
 		team.exit().remove();
 
 		// MAIN STUFF
 		// Now add data to this column for each correct answer, create a new path,
 		// transform it to the right time and draw a symbol corresponding to the team that made the answer
 		updateTeam.selectAll("path")
-			.data(function(d, i) { return d.progress })
+			.data(function(d, i) { return d.progress; })
 			.enter()
 			.append("path")
 			.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + "," + y(new Date(d.time)) + ")"; })
@@ -208,6 +216,7 @@ function drawTimeCompleted(lines) {
 }
 
 function timeFormatter(date) {
+	"use strict";
 	// When we create dates from the number of seconds, JS interprets them in the local time
 	// which makes the display weird. Correct for that here.
 	//var seconds = date.getTime() / 1000 - date.getTimezoneOffset()*60;
@@ -216,6 +225,7 @@ function timeFormatter(date) {
 }
 
 function drawTeamPuzzleStuckness(data) {
+	"use strict";
 	var x = d3.scalePoint()
 		.range([0, width])
 		.padding(0.5)
@@ -237,7 +247,7 @@ function drawTeamPuzzleStuckness(data) {
 
 	// Load data into team groups
 	var team = chart.selectAll("g.team")
-		.data(data.teamPuzzleStuckness)
+		.data(data.teamPuzzleStuckness);
 
 	// Kill the paths in the updating groups
 	team.selectAll("path").remove();
@@ -247,12 +257,12 @@ function drawTeamPuzzleStuckness(data) {
 		.append("g")
 		.attr("class", "team");
 
-	var updateTeam = enterTeam.merge(team)
+	var updateTeam = enterTeam.merge(team);
 	team.exit().remove();
 
 	// MAIN STUFF
 	updateTeam.selectAll("path")
-		.data(function(d, i) { return d.puzzleStuckness })
+		.data(function(d, i) { return d.puzzleStuckness; })
 		.enter()
 		.append("path")
 		.attr("transform", function(d, i) { return "translate(" + x(d.puzzle) + "," + y(d.stuckness) + ")"; })
@@ -280,6 +290,7 @@ function drawTeamPuzzleStuckness(data) {
 }
 
 function drawTeamStuckness(data) {
+	"use strict";
 	var stuckness = data.teamTotalStuckness.sort(function (a, b) { return b.stuckness - a.stuckness; });
 	var y = d3.scaleBand()
 		.domain(stuckness.map(function(d) { return d.team; }))
@@ -313,10 +324,11 @@ function drawTeamStuckness(data) {
 		.style("text-anchor", "middle");
 
 	yAxisElt.call(d3.axisLeft(y))
-		.selectAll("text")
+		.selectAll("text");
 }
 
 function puzzleTimeDrawer(mainPropName, subPropName) {
+	"use strict";
 	return function (data) {
 		// Create scales for a bar chart
 		var x = d3.scaleBand()
@@ -363,10 +375,12 @@ function puzzleTimeDrawer(mainPropName, subPropName) {
 }
 
 function teamClass(d) {
+	"use strict";
 	return '[class~="team-' + escapeHtml(d.team) + '"]';
 }
 
 function hoverTeam(data, computePuzzle, symbols, highlight) {
+	"use strict";
 	var puzzle = computePuzzle(d3.mouse(chart.node())[0]);
 	var progress = data.progress.find(function(d) { return d.puzzle == puzzle; });
 	if (progress === undefined) return;
@@ -374,14 +388,15 @@ function hoverTeam(data, computePuzzle, symbols, highlight) {
 	if (highlight) {
 		highlightTeam(data, symbols);
 	}
-	moveTooltip()
+	moveTooltip();
 	var time = d3.timeFormat("%a %H:%M:%S")(new Date(progress.time));
 	drawTooltip([data.team, progress.puzzle + ": " + time]);
 	chart.select(".chart-tooltip")
-		.style("visibility", "visible")
+		.style("visibility", "visible");
 }
 
 function moveTooltip() {
+	"use strict";
 	var mouse = d3.mouse(chart.select(".chart-background").node());
 	var ttx = mouse[0] + 24,
 		tty = mouse[1];
@@ -390,9 +405,10 @@ function moveTooltip() {
 }
 
 function drawTooltip(textArray) {
-	var tooltip = chart.select(".chart-tooltip")
+	"use strict";
+	var tooltip = chart.select(".chart-tooltip");
 	tooltip.selectAll("*").remove();
-	var text = tooltip.append("g")
+	var text = tooltip.append("g");
 
 	var lineHeight = 16;
 	textArray.forEach(function (d, i) {
@@ -401,8 +417,8 @@ function drawTooltip(textArray) {
 			.text(d);
 	});
 
-	var bbox = text.node().getBBox()
-	var margin = 6
+	var bbox = text.node().getBBox();
+	var margin = 6;
 
 	tooltip.append("rect")
 		.attr("width", bbox.width + 2 * margin)
@@ -410,12 +426,13 @@ function drawTooltip(textArray) {
 		.attr("x", -margin)
 		.attr("y", -margin)
 		.attr("rx", 6)
-		.attr("ry", 6)
+		.attr("ry", 6);
 	text.raise();
 	tooltip.raise();
 }
 
 function unhoverTeam(d, symbols) {
+	"use strict";
 	unhighlightTeam(d, symbols);
 	chart.select(".chart-tooltip")
 		.style("visibility", "hidden")
@@ -423,6 +440,7 @@ function unhoverTeam(d, symbols) {
 }
 
 function highlightTeam(d, symbols) {
+	"use strict";
 	// Increase the size of the team's lines and markers and raise them
 	d3.selectAll(teamClass(d)).filter(".marker")
 		.attr("stroke-width", symbols(d.team).strokeWidth + 2)
@@ -437,23 +455,25 @@ function highlightTeam(d, symbols) {
 }
 
 function unhighlightTeam(d, symbols) {
+	"use strict";
 	d3.selectAll(teamClass(d)).filter(".line")
 		.style("stroke-width", null);
 	d3.selectAll(teamClass(d)).filter(".marker")
 		.attr("stroke-width", symbols(d.team).strokeWidth);
 	d3.selectAll(teamClass(d)).filter(".hover-line")
-		.style("stroke-width", null)
+		.style("stroke-width", null);
 }
 
 function drawLegend(data, colours, symbols) {
+	"use strict";
 	// Compute margin from the main graph margin
-	var legendMargin = {top: margin.top + 20, right: 0, bottom: 0, left: 6}
+	var legendMargin = {top: margin.top + 20, right: 0, bottom: 0, left: 6};
 	var entryHeight = 16;
 	// Add data about the teams
 	var legend = d3.select("#legend").selectAll("li").data(data.puzzleProgress);
 	legend.selectAll("*").remove();
 	var enterLegend = legend.enter()
-		.append("li")
+		.append("li");
 	// Transform each group to a position just right of the main graph, and down some for each line
 	var updateLegend = enterLegend.merge(legend);
 	// Hide/show graph stuff
@@ -506,6 +526,7 @@ function drawLegend(data, colours, symbols) {
 }
 
 function parentData(n) {
+	"use strict";
 	return n.parentNode.__data__;
 }
 
@@ -517,6 +538,7 @@ var chart,
 	yAxisElt;
 
 function clearChart() {
+	"use strict";
 	var svg = d3.select('#episode-stats');
 	margin = {top: 100, right: 12, bottom: 100, left: 100};
 	width = +svg.attr("width") - margin.left - margin.right;
@@ -532,7 +554,7 @@ function clearChart() {
 		clearLegend();
 	}
 
-	chart = svg.select("g")
+	chart = svg.select("g");
 	chart.append("rect")
 		.attr("width", width)
 		.attr("height", height)
@@ -548,14 +570,17 @@ function clearChart() {
 }
 
 function clearLegend() {
+	"use strict";
 	d3.selectAll("#legend *").remove();
 }
 
 function episodeChanged(ev) {
+	"use strict";
 	getStats(true);
 }
 
 function typeChanged(ev) {
+	"use strict";
 	var graphType = $('#type').val();
 	drawFunction = {
 		"percent-complete": drawCompletion,
@@ -571,15 +596,12 @@ function typeChanged(ev) {
 	}
 }
 
-function updateClicked(ev) {
-	if ($(this).prop('checked')) {
-		getStats();
-	}
-}
+
 
 var drawFunction = drawCompletion;
 
 $(function () {
+	"use strict";
 	$.get('episode_list', {}, function (episodes) {
 		var select = $('#episode');
 		select.children(':not([value="all"])').remove();
@@ -592,6 +614,10 @@ $(function () {
 	typeChanged();
 	getStats(true);
 	$('#type').change(typeChanged);
-	$('#auto-update').click(updateClicked);
+	$('#auto-update').click(function (ev) {
+		if ($(this).prop('checked')) {
+			getStats();
+		}
+	});
 });
 

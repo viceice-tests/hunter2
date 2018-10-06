@@ -1,26 +1,15 @@
-{% extends "teams/base.html" %}
-{% load hunter2urls %}
-
-{% block page_header %}
-<h1>{{ episode }}</h1>
 {% if position %}
 <p>You came {{ position }} in this episode!</p>
 {% endif %}
-{% endblock %}
-
-{% block content %}
 {% if flavour %}<div class="episode-flavour">{{ flavour | safe }}</div>{% endif %}
-<div class="puzzles">
-<ol>
+<div class="container-fluid puzzle-list">
 {% for puzzle in puzzles %}
-	<li>
-{% if event_id %}
-		<a href="{% url 'puzzle' 'www' event_id episode_number forloop.counter %}">{{ puzzle.title }}</a>
+{% if puzzle.done %}
+<div class="puzzle-box puzzle-done">
 {% else %}
-		<a href="{% url 'puzzle' 'www' episode_number forloop.counter %}">{{ puzzle.title }}</a>
+<div class="puzzle-box puzzle-available">
 {% endif %}
-	</li>
-{% endfor %}
-</ol>
+	<a class="puzzle-link" href="{% url 'puzzle' episode_number forloop.counter %}">{{ puzzle.title }}</a>
 </div>
-{% endblock %}
+{% endfor %}
+</div>

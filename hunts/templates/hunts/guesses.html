@@ -1,15 +1,8 @@
 {% extends "teams/base.html" %}
-{% load staticfiles %}
+{% load static %}
 
 {% block style %}
-<style type="text/css">
-	tr.correct {
-		background-color: #4d4;
-	}
-	tr.unlocked {
-		background-color: #ccf;
-	}
-</style>
+<link rel="stylesheet" href="{% static 'hunts/css/guesses.css' %}" type="text/css" />
 {% endblock %}
 {% block script %}
 <script src="{% static 'hunts/js/guesses.js' %}"></script>
@@ -22,7 +15,7 @@
 {% block content %}
 <p><a href="?">Clear filters</a></p>
 <p><input type="checkbox" checked="checked" id="auto-update"> <label for="auto-update">Update automatically</label></p>
-<div id="fill-me-up-you-slut">
+<div id="guesses-container">
 	Waiting for content...
 </div>
 {% endblock %}

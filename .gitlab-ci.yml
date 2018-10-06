@@ -1,71 +1,92 @@
-image: registry.gitlab.com/rconan/docker-and-compose:0.0.1
+image: registry.gitlab.com/rconan/docker-and-compose:1.22.0-2
 
 variables:
   DOCKER_DRIVER: overlay2
 
 services:
-  - docker:17.06.0-ce-dind
+  - docker:18.06.1-ce-dind
 
 stages:
   - check
-  - build
-  - test
+  - build-app
+  - web-doc-test
   - release
 
 before_script:
-  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  - export GIT_DESCRIBE=$(git describe)
+  - docker login -u gitlab-ci-token -p "${CI_JOB_TOKEN}" "${CI_REGISTRY}"
   - chmod -R g-w,o-w .
   - ln -s docker-compose.test.yml docker-compose.yml
 
-flake8:
+check:flake8:
   stage: check
   script:
     - docker-compose -f docker-compose.check.yml run --rm flake8 --verbose
 
-build:app:
-  stage: build
+check:jshint:
+  stage: check
+  script:
+    - docker-compose -f docker-compose.check.yml run --rm jshint
+
+image:app:
+  stage: build-app
   variables:
     SERVICE: app
-    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_REF_NAME
-    IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
   script:
-    - docker-compose build $SERVICE
-    - docker save -o $IMAGE_FILE $IMAGE_TAG
+    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
+    - docker-compose build "${SERVICE}"
+    - install -d -m 777 diagram
+    - docker-compose run --entrypoint "sh" "${SERVICE}" -c "python manage.py graph_models -a > diagram/models.dot"
+    - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
   artifacts:
     expire_in: 90 days
     name: app-container
     paths:
-      - $IMAGE_FILE
+      - "${SERVICE}.tar"
+      - diagram/models.dot
 
-build:web:
-  stage: build
+image:web:
+  stage: web-doc-test
+  dependencies:
+    - image:app
   variables:
     SERVICE: web
-    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_REF_NAME
-    IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
   script:
-    - docker-compose build $SERVICE
-    - docker save -o $IMAGE_FILE $IMAGE_TAG
+    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
+    - docker load -i app.tar
+    - docker-compose build --build-arg app_tag="${GIT_DESCRIBE}" "${SERVICE}"
+    - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
   artifacts:
     expire_in: 90 days
     name: web-container
     paths:
-      - $IMAGE_FILE
+      - "${SERVICE}.tar"
 
-test:
-  stage: test
+doc:graph:
+  stage: web-doc-test
   dependencies:
-    - build:app
+    - image:app
+  script:
+    - docker-compose -f docker-compose.check.yml run --rm dot
+  artifacts:
+    expire_in: 90 days
+    name: models-graph
+    paths:
+      - diagram/models.svg
+
+test:app:
+  stage: web-doc-test
+  dependencies:
+    - image:app
   variables:
     SERVICE: app
-    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_REF_NAME
-    IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
   script:
-    - docker load -i $IMAGE_FILE
+    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
+    - docker load -i "${SERVICE}.tar"
     - install -d -m 777 coverage
-    - docker-compose run $SERVICE coverage run --source . manage.py test -v 2
-    - docker-compose run $SERVICE coverage html
-    - docker-compose run $SERVICE coverage report
+    - docker-compose run -e H2_TEST_SEED=1 --entrypoint "python" "${SERVICE}" -Wd -m coverage run --source . manage.py test -v 2
+    - docker-compose run --entrypoint "python" "${SERVICE}" -m coverage html
+    - docker-compose run --entrypoint "python" "${SERVICE}" -m coverage report
   artifacts:
     expire_in: 180 days
     name: coverage
@@ -76,27 +97,29 @@ test:
 release:app:
   stage: release
   dependencies:
-    - build:app
+    - image:app
   variables:
     SERVICE: app
-    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_REF_NAME
-    IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
   script:
-    - docker load -i $IMAGE_FILE
-    - docker-compose push
+    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
+    - docker load -i "${SERVICE}.tar"
+    - docker-compose push "${SERVICE}"
+    - docker tag "${IMAGE_TAG}" "${CI_REGISTRY_IMAGE}/${SERVICE}"
+    - docker push "${CI_REGISTRY_IMAGE}/${SERVICE}"
   only:
-    - tags
+    - master
 
 release:web:
   stage: release
   dependencies:
-    - build:web
+    - image:web
   variables:
     SERVICE: web
-    IMAGE_TAG: $CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_REF_NAME
-    IMAGE_FILE: $SERVICE:$CI_COMMIT_REF_NAME.tar
   script:
-    - docker load -i $IMAGE_FILE
-    - docker-compose push
+    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
+    - docker load -i "${SERVICE}.tar"
+    - docker-compose push "${SERVICE}"
+    - docker tag "${IMAGE_TAG}" "${CI_REGISTRY_IMAGE}/${SERVICE}"
+    - docker push "${CI_REGISTRY_IMAGE}/${SERVICE}"
   only:
-    - tags
+    - master

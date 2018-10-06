@@ -1,4 +1,16 @@
--- vim: set fileencoding=utf-8 :
+-- Copyright (C) 2018 The Hunter2 Contributors.
+--
+-- This file is part of Hunter2.
+--
+-- Hunter2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free
+-- Software Foundation, either version 3 of the License, or (at your option) any later version.
+--
+-- Hunter2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+-- PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+--
+-- You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
+
+
 local sandbox = {}
 
 -- Allowed sandbox modules
@@ -66,21 +78,6 @@ sandbox.env = {
   tostring     = _G.tostring,
   type         = _G.type,
   xpcall       = _G.xpcall,
-
-  bit32 = {
-    arshift = _G.bit32.arshift,
-    band    = _G.bit32.band,
-    bnot    = _G.bit32.bnot,
-    bor     = _G.bit32.bor,
-    btest   = _G.bit32.btest,
-    bxor    = _G.bit32.bxor,
-    extract = _G.bit32.extract,
-    lrotate = _G.bit32.lrotate,
-    lshift  = _G.bit32.lshift,
-    replace = _G.bit32.replace,
-    rrotate = _G.bit32.rrotate,
-    rshift  = _G.bit32.rshift,
-  },
 
   -- coroutine = {}
   -- debug = {}
