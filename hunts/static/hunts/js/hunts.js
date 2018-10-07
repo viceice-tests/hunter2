@@ -5,7 +5,7 @@ function escapeHtml(text) {
 	});
 }
 
-function incorrect_answer(guess, timeout, new_hints, unlocks) {
+function incorrect_answer(guess, timeout, new_hints) {
 	"use strict";
 	var hints_div = $('#hints');
 	var n_hints = new_hints.length;
@@ -13,7 +13,7 @@ function incorrect_answer(guess, timeout, new_hints, unlocks) {
 		hints_div.append('<p>' + new_hints[i].time + ': ' + new_hints[i].text + '</p>');
 	}
 
-	var unlocks_div = $('#unlocks');
+	/*var unlocks_div = $('#unlocks');
 	unlocks_div.empty();
 
 	var n_unlocks = unlocks.length;
@@ -24,7 +24,7 @@ function incorrect_answer(guess, timeout, new_hints, unlocks) {
 		} else {
 			unlocks_div.append('<p>' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
 		}
-	}
+	}*/
 
 	var milliseconds = Date.parse(timeout) - Date.now();
 	var answer_button = $('#answer-button');
@@ -81,7 +81,6 @@ function doCooldown(milliseconds) {
 			.attr("fill-opacity", 0.3)
 			.attr("stroke-opacity", 0.2);
 	}, milliseconds - flashDuration);
-				
 
 	var text = g.append("text")
 		.attr("x", size / 2)
@@ -166,36 +165,52 @@ function addSVG() {
 		.attr("y", "0")
 		.attr(*/
 	var filter = defs.append("filter")
-	    .attr("id", "drop-shadow")
+		.attr("id", "drop-shadow")
 		.attr("width", "200%")
 		.attr("height", "200%");
 	filter.append("feGaussianBlur")
-	    .attr("in", "SourceAlpha")
-	    .attr("stdDeviation", 4)
-	    .attr("result", "blur");
+		.attr("in", "SourceAlpha")
+		.attr("stdDeviation", 4)
+		.attr("result", "blur");
 	filter.append("feOffset")
-	    .attr("in", "blur")
-	    .attr("dx", 4)
-	    .attr("dy", 4)
-	    .attr("result", "offsetBlur");
+		.attr("in", "blur")
+		.attr("dx", 4)
+		.attr("dy", 4)
+		.attr("result", "offsetBlur");
 	var feMerge = filter.append("feMerge");
 	feMerge.append("feMergeNode")
-	    .attr("in", "offsetBlur");
+		.attr("in", "offsetBlur");
 	feMerge.append("feMergeNode")
-	    .attr("in", "SourceGraphic");
+		.attr("in", "SourceGraphic");
+}
+
+function receivedNewAnswer(data) {
+	"use strict"
+	content = data['content'];
+	var guesses_table = $('#guesses');
+	guesses_table.append('<tr><td>' + content['by'] + '</td><td>' + content['guess'] + '</td><td>' + content['correct'] + '</td><td>' + content['unlocks'] + '</td></tr>');
 }
 
 function openEventSocket(data) {
 	"use strict";
 	var ws_scheme = (window.location.protocol == "https:" ? "wss" : "ws") + '://';
-	var sock = new WebSocket(ws_scheme + window.location.host + '/ws/test');
+	var sock = new WebSocket(ws_scheme + window.location.host + '/ws' + window.location.pathname);
 	sock.onmessage = function(e) {
 		var data = JSON.parse(e.data);
-		console.log(data['message']);
-	};
+		if (data['type'] == 'new_guess' || data['type'] == 'old_guess') {
+			receivedNewAnswer(data);
+		} else if (data['type'] == 'error') {
+			console.log(data['error']);
+		} else {
+			console.log('Invalid message type ' + data['type']);
+			console.log(data['content']);
+		}
+	}
+	sock.onerror = function(e) {
+		message('Websocket is broken. You will not receive new information without refreshing the page.');
+	}
 	sock.onopen = function(e) {
-		sock.send(JSON.stringify({'message': 'hello'}));
-		sock.send(JSON.stringify({'message': 'goodbye'}));
+		sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}));
 	};
 }
 
@@ -252,7 +267,7 @@ $(function() {
 					button.removeAttr('disabled');
 					correct_answer(data.url, data.text);
 				} else {
-					incorrect_answer(data.guess, data.timeout, data.new_hints, data.unlocks);
+					incorrect_answer(data.guess, data.timeout, data.new_hints);
 				}
 			},
 			error: function(xhr, status, error) {

@@ -36,6 +36,7 @@ from teams.mixins import TeamMixin
 from . import models, rules, runtimes, utils
 from .forms import BulkUploadForm
 from .mixins import EpisodeUnlockedMixin, PuzzleAdminMixin, PuzzleUnlockedMixin
+from .consumers import PuzzleEventWebsocket
 from events.models import Attendance
 from events.utils import annotate_userprofile_queryset_with_seat
 
@@ -607,30 +608,13 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 response['url'] = reverse('event')
                 response['url'] += f'#episode-{episode_number}'
         else:
-            all_unlocks = models.Unlock.objects.filter(puzzle=request.puzzle)
-            unlocks = []
-            for u in all_unlocks:
-                correct_guesses = u.unlocked_by(request.team)
-                if not correct_guesses:
-                    continue
-
-                guesses = [g.guess for g in correct_guesses]
-                # Get rid of duplicates but preserve order
-                duplicates = set()
-                guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
-                unlocks.append({'guesses': guesses,
-                                'text': u.text,
-                                'new': guess in correct_guesses})
 
             response['guess'] = given_answer
             response['timeout'] = str(now + minimum_time)
             response['new_hints'] = new_hints
-            response['unlocks'] = unlocks
         response['correct'] = str(correct).lower()
-        from asgiref.sync import async_to_sync
-        from channels.layers import get_channel_layer
-        layer = get_channel_layer()
-        async_to_sync(layer.group_send)('test_channel', {'type': 'answer', 'message': response})
+        response['by'] = request.user.username
+        #PuzzleEventWebsocket.send_message(request.puzzle, request.team, {'type': 'answer', 'message': response})
 
         return JsonResponse(response)
 

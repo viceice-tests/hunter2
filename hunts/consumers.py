@@ -11,10 +11,16 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.dispatch import receiver
+from django.db.models.signals import post_save
+from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
+from channels.layers import get_channel_layer
 import json
 
 from events.models import Domain
+from .models import Guess
+from . import models, utils
 
 def activate_tenant(f):
     def wrapper(self, *args, **kwargs):
@@ -26,7 +32,15 @@ def activate_tenant(f):
 
     return wrapper
 
+class TenantMixin:
+    def dispatch(self, *args, **kwargs):
+        try:
+            self.scope['tenant'].activate()
+        except (AttributeError, KeyError):
+            raise ValueError('%s has no scope or no tenant on its scope' % self)
+        return super().dispatch(*args, **kwargs)
 
+    
 class TeamMixin:
     @activate_tenant
     def websocket_connect(self, message):
@@ -45,35 +59,105 @@ class TeamMixin:
         return super().websocket_connect(message)
 
 
-# MRO is important as long as TeamMixin uses websocket_connect().
-class PuzzleEventWebsocket(TeamMixin, JsonWebsocketConsumer):
-    def get_team(self):
-        self.team = self.user.profile.team_at(self.scope['tenant'])
+# It is important this class uses a synchronous Consumer, because each one of these consumers runs in a
+# different thread. Asynchronous consumers can suspend while another consumer in the same thread runs.
+# This would break, because the active tenant may need to be different between each consumer.
+class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
+    @classmethod
+    def group_name(cls, puzzle, team):
+        return f'puzzle-{puzzle.id}.events.team-{team.id}' 
 
-    @activate_tenant
+    @classmethod
+    def send_message(cls, puzzle, team, message):
+        layer = get_channel_layer()
+        async_to_sync(layer.group_send)(cls.group_name(puzzle, team), message)
+
     def connect(self):
-        self.user = self.scope['user']
-        print(self.team)
-        self.channel_layer.group_add('test_channel', self.channel_name)
+        keywords = self.scope['url_route']['kwargs']
+        episode_number = keywords['episode_number']
+        puzzle_number = keywords['puzzle_number']
+        self.episode, self.puzzle = utils.event_episode_puzzle(self.scope['tenant'], episode_number, puzzle_number)
+        async_to_sync(self.channel_layer.group_add)(
+            self.group_name(self.puzzle, self.team), self.channel_name
+        )
         self.accept()
 
     def disconnect(self, close_code):
-        self.channel_layer.group_discard('test_channel', self.channel_name)
+        async_to_sync(self.channel_layer.group_discard)(
+            self.group_name(self.puzzle, self.scope['team']), self.channel_name
+        )
 
     def receive_json(self, content):
-        data = content
-        if data['message'] == 'hello':
-            message = 'hello, ' + str(self.scope['user'])
-        else:
-            message = 'uwotm8'
+        if 'type' not in content:
+            self._error('no type in message')
+            return
 
-        self.send_json({
-            'message': message,
+        if content['type'] == 'guesses-plz':
+            if 'from' not in content:
+                self._error('required field "from" is missing')
+                return
+            self.send_old_guesses(content['from'])
+        else:
+            self._error('invalid request type')
+
+    def _error(self, message):
+        self.send_json({'type': 'error', 'error': message})
+
+    @classmethod
+    def _new_guess(cls, sender, instance, created, raw, *args, **kwargs):
+        # Do not trigger unless this was a newly created guess.
+        # Note this means an admin modifying a guess will not trigger anything.
+        if not created or raw:
+            return
+
+        # required info:
+        # guess, correctness, new unlocks, timestamp, whodunnit
+        all_unlocks = models.Unlock.objects.filter(puzzle=instance.for_puzzle)
+        unlocks = []
+        for u in all_unlocks:
+            if any([u.validate_guess(guess) for u in self.unlockanswer_set.all()]):
+                unlocks.append(u.text)
+
+        cls.send_message(instance.for_puzzle, instance.by_team, {
+            'type': 'answer',
+            'message': {
+                # TODO hash with id or something idunno
+                'timestamp': str(instance.given),
+                'guess': instance.guess,
+                'correct': instance.correct_for is not None,
+                'by': instance.by.username,
+                'unlocks': unlocks
+            }
         })
+
+    def send_old_guesses(self, start):
+        self.scope['tenant'].activate()
+        if start == 'all':
+            guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team)
+        else:
+            guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team, given__gt=start)
+
+        # TODO can this be unified with _new_guess?
+        # TODO grab old code to get unlocks efficiently
+        for g in guesses:
+            self.send_json({
+                'type': 'old_guess',
+                'content': {
+                    # TODO hash with id or something idunno
+                    'timestamp': str(g.given),
+                    'guess': g.guess,
+                    'correct': g.correct_for is not None,
+                    'by': g.by.username,
+                    'unlocks': []
+                }
+            })
 
     def answer(self, event):
         message = event['message']
 
-        self.send({
-            'message': message,
+        self.send_json({
+            'type': 'new_guess',
+            'content': message,
         })
+
+post_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)

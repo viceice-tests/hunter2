@@ -77,4 +77,16 @@ $(function() {
 });
 </script>
 {% endif %}
+
+<h3>Guesses <button id="guesses-button" class="btn" data-toggle="collapse" data-target="#guesses-container" >Show</button></h3>
+<div id="guesses-container" class="collapse">
+	<table id="guesses">
+		<tr class="guess-viewer-header">
+			<th>User</th>
+			<th>Guess</th>
+			<th>Correct?</th>
+			<th>Unlocks?</th>
+		</tr>
+	</table>
+</div>
 {% endblock %}
