@@ -184,11 +184,16 @@ function addSVG() {
 		.attr("in", "SourceGraphic");
 }
 
+var guesses = [];
+
 function receivedNewAnswer(data) {
 	"use strict"
 	content = data['content'];
-	var guesses_table = $('#guesses');
-	guesses_table.append('<tr><td>' + content['by'] + '</td><td>' + content['guess'] + '</td><td>' + content['correct'] + '</td><td>' + content['unlocks'] + '</td></tr>');
+	if (!guesses.includes(content['timestamp'])) {
+		var guesses_table = $('#guesses');
+		guesses_table.append('<tr><td>' + content['by'] + '</td><td>' + content['guess'] + '</td><td>' + content['correct'] + '</td><td>' + content['unlocks'] + '</td></tr>');
+		guesses.push(content['timestamp']);
+	}
 }
 
 function openEventSocket(data) {
@@ -210,6 +215,7 @@ function openEventSocket(data) {
 		message('Websocket is broken. You will not receive new information without refreshing the page.');
 	}
 	sock.onopen = function(e) {
+		sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}));
 		sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}));
 	};
 }

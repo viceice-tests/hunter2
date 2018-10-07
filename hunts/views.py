@@ -613,7 +613,7 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             response['new_hints'] = new_hints
         response['correct'] = str(correct).lower()
         response['by'] = request.user.username
-        #PuzzleEventWebsocket.send_message(request.puzzle, request.team, {'type': 'answer', 'message': response})
+        #PuzzleEventWebsocket._send_message(request.puzzle, request.team, {'type': 'answer', 'message': response})
 
         return JsonResponse(response)
 
