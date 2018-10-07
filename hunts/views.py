@@ -36,7 +36,6 @@ from teams.mixins import TeamMixin
 from . import models, rules, runtimes, utils
 from .forms import BulkUploadForm
 from .mixins import EpisodeUnlockedMixin, PuzzleAdminMixin, PuzzleUnlockedMixin
-from .consumers import PuzzleEventWebsocket
 from events.models import Attendance
 from events.utils import annotate_userprofile_queryset_with_seat
 

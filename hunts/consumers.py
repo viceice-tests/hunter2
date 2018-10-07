@@ -11,16 +11,15 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.dispatch import receiver
 from django.db.models.signals import post_save
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
-import json
+from collections import defaultdict
 
-from events.models import Domain
 from .models import Guess
 from . import models, utils
+
 
 def activate_tenant(f):
     def wrapper(self, *args, **kwargs):
@@ -32,6 +31,7 @@ def activate_tenant(f):
 
     return wrapper
 
+
 class TenantMixin:
     def dispatch(self, *args, **kwargs):
         try:
@@ -40,7 +40,7 @@ class TenantMixin:
             raise ValueError('%s has no scope or no tenant on its scope' % self)
         return super().dispatch(*args, **kwargs)
 
-    
+
 class TeamMixin:
     @activate_tenant
     def websocket_connect(self, message):
@@ -65,7 +65,7 @@ class TeamMixin:
 class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     @classmethod
     def group_name(cls, puzzle, team):
-        return f'puzzle-{puzzle.id}.events.team-{team.id}' 
+        return f'puzzle-{puzzle.id}.events.team-{team.id}'
 
     @classmethod
     def send_message(cls, puzzle, team, message):
@@ -110,22 +110,24 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         if not created or raw:
             return
 
+        guess = instance
+
         # required info:
         # guess, correctness, new unlocks, timestamp, whodunnit
-        all_unlocks = models.Unlock.objects.filter(puzzle=instance.for_puzzle)
+        all_unlocks = models.Unlock.objects.filter(puzzle=guess.for_puzzle)
         unlocks = []
         for u in all_unlocks:
-            if any([u.validate_guess(guess) for u in self.unlockanswer_set.all()]):
+            if any([a.validate_guess(guess) for a in u.unlockanswer_set.all()]):
                 unlocks.append(u.text)
 
-        cls.send_message(instance.for_puzzle, instance.by_team, {
+        cls.send_message(guess.for_puzzle, guess.by_team, {
             'type': 'answer',
             'message': {
                 # TODO hash with id or something idunno
-                'timestamp': str(instance.given),
-                'guess': instance.guess,
-                'correct': instance.correct_for is not None,
-                'by': instance.by.username,
+                'timestamp': str(guess.given),
+                'guess': guess.guess,
+                'correct': guess.correct_for is not None,
+                'by': guess.by.username,
                 'unlocks': unlocks
             }
         })
@@ -139,6 +141,17 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
 
         # TODO can this be unified with _new_guess?
         # TODO grab old code to get unlocks efficiently
+        all_unlocks = models.Unlock.objects.filter(puzzle=self.puzzle)
+        unlocks = defaultdict(list)
+        for u in all_unlocks:
+            correct_guesses = u.unlocked_by(self.team)
+            if not correct_guesses:
+                continue
+
+            correct_guesses = set(correct_guesses)
+            for g in correct_guesses:
+                unlocks[g].append(u.text)
+
         for g in guesses:
             self.send_json({
                 'type': 'old_guess',
@@ -148,7 +161,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     'guess': g.guess,
                     'correct': g.correct_for is not None,
                     'by': g.by.username,
-                    'unlocks': []
+                    'unlocks': unlocks[g]
                 }
             })
 
@@ -159,5 +172,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             'type': 'new_guess',
             'content': message,
         })
+
 
 post_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
