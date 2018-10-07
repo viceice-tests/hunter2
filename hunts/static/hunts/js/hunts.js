@@ -216,7 +216,6 @@ function openEventSocket(data) {
 	}
 	sock.onopen = function(e) {
 		sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}));
-		sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}));
 	};
 }
 
