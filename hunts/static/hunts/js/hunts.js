@@ -212,7 +212,7 @@ function openEventSocket(data) {
 		var data = JSON.parse(e.data);
 		if (data['type'] == 'new_guess' || data['type'] == 'old_guess') {
 			receivedNewAnswer(data['content']);
-		} else if (data['type'] == 'new_unlock') {
+		} else if (data['type'] == 'new_unlock' || data['type'] == 'old_unlock') {
 			receivedNewUnlock(data['content']);
 		} else if (data['type'] == 'error') {
 			console.log(data['error']);

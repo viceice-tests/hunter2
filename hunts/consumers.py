@@ -80,7 +80,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     @classmethod
     def _send_message(cls, puzzle, team, message):
         layer = get_channel_layer()
-        async_to_sync(layer.group_send)(cls._group_name(puzzle, team), message)
+        async_to_sync(layer.group_send)(cls._group_name(puzzle, team), {'type': 'send_json_msg', 'content': message})
 
     def connect(self):
         keywords = self.scope['url_route']['kwargs']
@@ -110,6 +110,12 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         else:
             self._error('invalid request type')
 
+    def send_json_msg(self, content, close=False):
+        # For some reason consumer dispatch doesn't strip off the outer dictionary with 'type': 'send_json'
+        # (or whatever method name) so we override and do it here. This saves us having to define a separate
+        # method which just calls send_json for each type of message.
+        super().send_json(content['content'])
+
     def _error(self, message):
         self.send_json({'type': 'error', 'error': message})
 
@@ -138,8 +144,8 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 })
 
         cls._send_message(guess.for_puzzle, guess.by_team, {
-            'type': 'answer',
-            'message': {
+            'type': 'new_guess',
+            'content': {
                 # TODO hash with id or something idunno
                 'timestamp': str(guess.given),
                 'guess': guess.guess,
@@ -167,6 +173,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             for g in correct_guesses:
                 unlocks[g].append(u.text)
 
+        # TODO: separate out sending the unlocks to a send_old_unlocks method
         for g in guesses:
             self.send_json({
                 'type': 'old_guess',
@@ -179,14 +186,15 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     'unlocks': unlocks[g]
                 }
             })
+            for u in unlocks[g]:
+                self.send_json({
+                    'type': 'old_unlock',
+                    'content': {
+                        'guess': g.guess,
+                        'unlock': u
+                    }
+                })
 
-    def answer(self, event):
-        message = event['message']
-
-        self.send_json({
-            'type': 'new_guess',
-            'content': message,
-        })
 
     @classmethod
     def _new_unlockanswer(cls, sender, instance, created, raw, *args, **kwargs):
@@ -208,21 +216,14 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         for g in guesses:
             if unlockanswer.validate_guess(g):
                 cls._send_message(puzzle, g.by_team, {
-                    'type': 'unlock',
-                    'message': {
+                    'type': 'new_unlock',
+                    'content': {
                         'guess': g.guess,
                         'unlock': unlock.text
                     }
                 })
         # TODO: notify about unlocks that are no longer valid
 
-    def unlock(self, event):
-        message = event['message']
-
-        self.send_json({
-            'type': 'new_unlock',
-            'content': message
-        })
 
 post_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
 post_save.connect(PuzzleEventWebsocket._new_unlockanswer, sender=models.UnlockAnswer)
