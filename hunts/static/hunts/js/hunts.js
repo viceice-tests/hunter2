@@ -13,19 +13,6 @@ function incorrect_answer(guess, timeout, new_hints) {
 		hints_div.append('<p>' + new_hints[i].time + ': ' + new_hints[i].text + '</p>');
 	}
 
-	/*var unlocks_div = $('#unlocks');
-	unlocks_div.empty();
-
-	var n_unlocks = unlocks.length;
-	for (let i = 0; i < n_unlocks; i++) {
-		var guesses = unlocks[i].guesses.join(', ');
-		if (unlocks[i].new) {
-			unlocks_div.append('<p class="new-unlock">' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
-		} else {
-			unlocks_div.append('<p>' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
-		}
-	}*/
-
 	var milliseconds = Date.parse(timeout) - Date.now();
 	var answer_button = $('#answer-button');
 	doCooldown(milliseconds);
@@ -186,14 +173,35 @@ function addSVG() {
 
 var guesses = [];
 
-function receivedNewAnswer(data) {
+function receivedNewAnswer(content) {
 	"use strict"
-	content = data['content'];
 	if (!guesses.includes(content['timestamp'])) {
 		var guesses_table = $('#guesses');
 		guesses_table.append('<tr><td>' + content['by'] + '</td><td>' + content['guess'] + '</td><td>' + content['correct'] + '</td><td>' + content['unlocks'] + '</td></tr>');
 		guesses.push(content['timestamp']);
 	}
+}
+
+var unlocks = {};
+
+function receivedNewUnlock(content) {
+	"use strict"
+	if (!(content['unlock'] in unlocks)) {
+		unlocks[content['unlock']] = [];
+	}
+	unlocks[content['unlock']].push(content['guess']);
+	var unlocks_div = $('#unlocks');
+	//unlocks_div.empty();
+
+	//var n_unlocks = unlocks.length;
+	//for (let i = 0; i < n_unlocks; i++) {
+	//	var guesses = unlocks[i].guesses.join(', ');
+	//	if (unlocks[i].new) {
+	//		unlocks_div.append('<p class="new-unlock">' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
+	//	} else {
+	//		unlocks_div.append('<p>' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
+	//	}
+	//}
 }
 
 function openEventSocket(data) {
@@ -203,7 +211,9 @@ function openEventSocket(data) {
 	sock.onmessage = function(e) {
 		var data = JSON.parse(e.data);
 		if (data['type'] == 'new_guess' || data['type'] == 'old_guess') {
-			receivedNewAnswer(data);
+			receivedNewAnswer(data['content']);
+		} else if (data['type'] == 'new_unlock') {
+			receivedNewUnlock(data['content']);
 		} else if (data['type'] == 'error') {
 			console.log(data['error']);
 		} else {

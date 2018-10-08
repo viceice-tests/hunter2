@@ -129,6 +129,13 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         for u in all_unlocks:
             if any([a.validate_guess(guess) for a in u.unlockanswer_set.all()]):
                 unlocks.append(u.text)
+                cls._send_message(guess.for_puzzle, guess.by_team, {
+                    'type': 'unlock',
+                    'message': {
+                        'guess': guess.guess,
+                        'unlock': u.text
+                    }
+                })
 
         cls._send_message(guess.for_puzzle, guess.by_team, {
             'type': 'answer',
@@ -181,5 +188,41 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             'content': message,
         })
 
+    @classmethod
+    def _new_unlockanswer(cls, sender, instance, created, raw, *args, **kwargs):
+        if raw:
+            return
+
+        unlockanswer = instance
+        unlock = unlockanswer.unlock
+        puzzle = unlock.puzzle
+
+        # TODO: performance check. This means that whenever an unlock is added, every single guess on that puzzle is
+        # going to be tested against that guess immediately. *Should* be fine since it's one query and doing the
+        # validation is mostly simple. Could be costly with lua runtimes...
+        guesses = models.Guess.objects.filter(
+            for_puzzle=puzzle
+        ).select_related(
+            'by_team', 
+        )
+        for g in guesses:
+            if unlockanswer.validate_guess(g):
+                cls._send_message(puzzle, g.by_team, {
+                    'type': 'unlock',
+                    'message': {
+                        'guess': g.guess,
+                        'unlock': unlock.text
+                    }
+                })
+        # TODO: notify about unlocks that are no longer valid
+
+    def unlock(self, event):
+        message = event['message']
+
+        self.send_json({
+            'type': 'new_unlock',
+            'content': message
+        })
 
 post_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
+post_save.connect(PuzzleEventWebsocket._new_unlockanswer, sender=models.UnlockAnswer)
