@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import post_save
+from django.db.models.signals import pre_save, post_save
 from asgiref.sync import async_to_sync
 from channels.consumer import get_handler_name
 from channels.generic.websocket import JsonWebsocketConsumer
@@ -107,6 +107,11 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 self._error('required field "from" is missing')
                 return
             self.send_old_guesses(content['from'])
+        elif content['type'] == 'unlocks-plz':
+            if 'from' not in content:
+                self._error('required field "from" is missing')
+                return
+            self.send_old_unlocks(content['from'])
         else:
             self._error('invalid request type')
 
@@ -136,8 +141,8 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             if any([a.validate_guess(guess) for a in u.unlockanswer_set.all()]):
                 unlocks.append(u.text)
                 cls._send_message(guess.for_puzzle, guess.by_team, {
-                    'type': 'unlock',
-                    'message': {
+                    'type': 'new_unlock',
+                    'content': {
                         'guess': guess.guess,
                         'unlock': u.text
                     }
@@ -186,6 +191,28 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     'unlocks': unlocks[g]
                 }
             })
+
+    def send_old_unlocks(self, start):
+        if start == 'all':
+            guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team)
+        else:
+            guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team, given__gt=start)
+
+        all_unlocks = models.Unlock.objects.filter(puzzle=self.puzzle)
+        unlocks = defaultdict(list)
+        for u in all_unlocks:
+            # Performance note: 1 query per unlock
+            correct_guesses = u.unlocked_by(self.team)
+            if not correct_guesses:
+                continue
+
+            correct_guesses = set(correct_guesses)
+            for g in correct_guesses:
+                unlocks[g].append(u.text)
+
+        # TODO: something for sorting unlocks? The View sorts them as in the admin, but this is not alterable,
+        # even though it is often meaningful.
+        for g in guesses:
             for u in unlocks[g]:
                 self.send_json({
                     'type': 'old_unlock',
@@ -195,9 +222,9 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     }
                 })
 
-
     @classmethod
     def _new_unlockanswer(cls, sender, instance, created, raw, *args, **kwargs):
+        # TODO remove old unlock entries if created == False
         if raw:
             return
 
@@ -224,6 +251,63 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 })
         # TODO: notify about unlocks that are no longer valid
 
+    @classmethod
+    def _changed_unlock(cls, sender, instance, raw, *args, **kwargs):
+        # TODO use this for hints too
+        if raw:
+            return
+        if not instance.id:
+            # New unlocks are boring; we will then notify via the unlockanswer hook
+            return
+        unlock = instance
+        old = models.Unlock.objects.filter(id=unlock.id).select_related('puzzle').get()
+
+        puzzle = unlock.puzzle
+        # This could conceivably be different if someone adds an unlock to the wrong puzzle! Probably never going
+        # to happen. Better safe than sorry.
+        old_puzzle = old.puzzle
+
+        guesses = models.Guess.objects.filter(
+            for_puzzle=puzzle
+        ).select_related(
+            'by_team', 
+        )
+        if puzzle == old.puzzle:
+            done_teams = []
+            for g in guesses:
+                if g.by_team in done_teams:
+                    continue
+                if any([u.validate_guess(g) for u in old.unlockanswer_set.all()]):
+                    done_teams.append(g.by_team)
+                    cls._send_message(old_puzzle, g.by_team, {
+                        'type': 'change_unlock',
+                        'content': {
+                            'old': old.text,
+                            'new': unlock.text
+                        }
+                    })
+        else:
+            for g in guesses:
+                if any([u.validate_guess(g) for u in old.unlockanswer_set.all()]):
+                    # If the puzzles are different we send *one* message to delete unlocks with that text to the
+                    # old puzzle websocket, then add the unlock to the new puzzle, one guess at a time.
+                    if g.by_team not in done_teams:
+                        cls._send_message(old_puzzle, g.by_team, {
+                            'type': 'delete_unlock',
+                            'content': {
+                                'unlock': old.text,
+                            }
+                        })
+                    done_teams.append(g.by_team)
+                    cls._send_message(puzzle, g.by_team, {
+                        'type': 'new_unlock',
+                        'content': {
+                            'guess': g.guess,
+                            'unlock': old.text
+                        }
+                    })
+
 
 post_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
 post_save.connect(PuzzleEventWebsocket._new_unlockanswer, sender=models.UnlockAnswer)
+pre_save.connect(PuzzleEventWebsocket._changed_unlock, sender=models.Unlock)

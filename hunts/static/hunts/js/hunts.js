@@ -184,24 +184,31 @@ function receivedNewAnswer(content) {
 
 var unlocks = {};
 
+function updateUnlocks() {
+	"use strict"
+	var entries = Object.entries(unlocks);
+	entries.sort();
+	var list = d3.select('#unlocks')
+		.selectAll('p')
+		.data(entries)
+		.text(function (d, i) {
+			return d[1].join(', ') + ': ' + d[0];
+		})
+		.enter()
+		.append('p')
+		.exit()
+		.remove();
+}
+
 function receivedNewUnlock(content) {
 	"use strict"
 	if (!(content['unlock'] in unlocks)) {
 		unlocks[content['unlock']] = [];
 	}
-	unlocks[content['unlock']].push(content['guess']);
-	var unlocks_div = $('#unlocks');
-	//unlocks_div.empty();
-
-	//var n_unlocks = unlocks.length;
-	//for (let i = 0; i < n_unlocks; i++) {
-	//	var guesses = unlocks[i].guesses.join(', ');
-	//	if (unlocks[i].new) {
-	//		unlocks_div.append('<p class="new-unlock">' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
-	//	} else {
-	//		unlocks_div.append('<p>' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>');
-	//	}
-	//}
+	if (!unlocks[content['unlock']].includes(content['guess'])) {
+		unlocks[content['unlock']].push(content['guess']);
+	}
+	updateUnlocks();
 }
 
 function openEventSocket(data) {
@@ -225,7 +232,8 @@ function openEventSocket(data) {
 		message('Websocket is broken. You will not receive new information without refreshing the page.');
 	}
 	sock.onopen = function(e) {
-		sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}));
+		//sock.send(JSON.stringify({'type': 'unlocks-plz', 'from': 'all'}));
+		//sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}));
 	};
 }
 
