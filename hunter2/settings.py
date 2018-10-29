@@ -10,9 +10,11 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-from .utils import load_or_create_secret_key
 import environ
 import logging
+import os
+
+from .utils import load_or_create_secret_key
 
 # Load the current environment profile
 root = environ.Path(__file__) - 2
@@ -127,6 +129,7 @@ SHARED_APPS = (
     'sortedm2m',
     'sortedm2m_filter_horizontal_widget',
     'url_tools',
+    'webpack_loader',
 )
 if USE_SILK:  # nocover
     SHARED_APPS += ('silk',)
@@ -201,9 +204,19 @@ STATIC_ROOT = '/static/'
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (
-    'hunter2/static',
-    'hunts/static',
+    os.path.join(BASE_DIR, 'assets'),
 )
+
+WEBPACK_LOADER = {
+    'DEFAULT': {
+        'CACHE': not DEBUG,
+        'BUNDLE_DIR_NAME': 'js/webpack_bundles/',  # must end with slash
+        'STATS_FILE': os.path.join(BASE_DIR, 'webpack-stats.json'),
+        'POLL_INTERVAL': 0.1,
+        'TIMEOUT': None,
+        'IGNORE': ['.+\.hot-update.js', '.+\.map']
+    }
+}
 
 SECURE_BROWSER_XSS_FILTER = True
 

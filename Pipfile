@@ -1,12 +1,9 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
 Django = "*"
 PyYAML = "*"
 channels = "*"
@@ -28,6 +25,7 @@ django-sortedm2m = "*"
 django-sortedm2m-filter-horizontal-widget = "*"
 django-tenants = { git = "https://github.com/tomturner/django-tenants.git", ref = "0a5ff14478e44f55ea566d020e0252bb6ca5ac24" }
 django-url-tools-py3 = "*"
+django-webpack-loader = "*"
 factory_boy = "*"
 freezegun = "*"
 lupa = "*"
@@ -39,9 +37,7 @@ rules = "*"
 validators = "*"
 wait = "*"
 
-
 [dev-packages]
-
 django-silk = "==0.7.0"
 ipython = "*"
 ptpython = "*"
