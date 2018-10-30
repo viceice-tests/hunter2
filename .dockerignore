@@ -2,7 +2,9 @@
 .*
 # Ignore docker-related files
 Dockerfile
+Dockerfile.*
 docker-compose.yml
+docker-compose.*.yml
 # Ignore coverage report folder
 coverage
 # Ignore nginx folder

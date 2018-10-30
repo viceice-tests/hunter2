@@ -1,3 +1,7 @@
+ARG build_tag=latest
+FROM registry.gitlab.com/hunter2.app/hunter2/webpack:${build_tag} AS webpack
+
+
 FROM registry.gitlab.com/rconan/docker-pipenv:2018.7.1-1 AS req_export
 
 ARG DEVELOPMENT=
@@ -49,6 +53,7 @@ RUN apk add --no-cache \
 COPY --from=python_build /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages
 COPY --from=lua_build /opt/hunter2 /opt/hunter2
 COPY . /usr/src/app
+COPY --from=webpack /usr/src/app/webpack-stats.json /usr/src/app
 
 WORKDIR /usr/src/app
 

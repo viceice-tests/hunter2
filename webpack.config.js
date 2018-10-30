@@ -14,8 +14,8 @@ module.exports = {
 	mode: 'production',
 
 	output: {
-		path: path.resolve('./assets/js/webpack_bundles/'),
-		filename: "[name]-[hash].js",
+		path: path.resolve('./assets/js/'),
+		filename: "[name]/[hash].js",
 		libraryTarget: 'var',
 		library: '[name]'
 	},

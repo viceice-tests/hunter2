@@ -38,6 +38,6 @@ export function configureCSRF() {
 }
 
 export function configureSentry(dsn) {
-		"use strict";
-		Raven.config(dsn).install();
+	"use strict";
+	Raven.config(dsn).install();
 }
