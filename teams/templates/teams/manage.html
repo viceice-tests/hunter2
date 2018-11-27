@@ -1,10 +1,6 @@
 {% extends "teams/base.html" %}
 {% load static %}
 
-{% block script %}
-<script src="{% static 'teams/js/team.js' %}" defer></script>
-{% endblock %}
-
 {% block content %}
 <h1>Team</h1>
 {% if team.is_explicit %}

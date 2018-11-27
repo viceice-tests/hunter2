@@ -16,7 +16,6 @@
 		<link rel="stylesheet" href="{% static 'hunter2/css/base.css' %}" type="text/css" />
 
 		{% block style %}{% endblock %}
-		{% block script %}{% endblock %}
 		{% analytical_head_bottom %}
 	</head>
 	<body>
@@ -78,5 +77,6 @@
 			hunter2.configureSentry('{% sentry_public_dsn "https" %}');
 			hunter2.configureCSRF();
 		</script>
+		{% block script %}{% endblock %}
 	</body>
 </html>
