@@ -6,9 +6,9 @@ module.exports = {
 	context: __dirname,
 
 	entry: {
-		hunter2: './hunter2/js/index.js'
+		hunter2: './hunter2/js/index.js',
 		//hunts: './hunts/js/index.js'
-		//teams: './teams/js/index.js'
+		teams: './teams/js/index.js'
 	},
 
 	mode: 'production',
