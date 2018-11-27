@@ -7,6 +7,7 @@ module.exports = {
 
 	entry: {
 		hunter2: '../hunter2/js/index.js',
+		teams: '../teams/js/index.js'
 	},
 
 	mode: 'production',
