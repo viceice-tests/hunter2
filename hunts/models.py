@@ -52,7 +52,7 @@ class Puzzle(models.Model):
     )
     soln_content = models.TextField(blank=True, default='', verbose_name="Solution content")
 
-    start_date = models.DateTimeField(blank=True, default=timezone.now)
+    start_date = models.DateTimeField(blank=True, default=timezone.now, help_text='Date/Time for puzzle to start. Ignored if the episode the puzzle is in is parallel.')
     headstart_granted = models.DurationField(
         default=timedelta(),
         help_text='How much headstart this puzzle gives to later episodes which gain headstart from this episode'
@@ -91,14 +91,18 @@ class Puzzle(models.Model):
 
         raise RuntimeError("Could not find Puzzle pk when iterating episode's puzzle list")
 
-    # Takes the team parameter for compatability with Episode.started()
-    # Will be useful if we add puzzle head starts later
     def started(self, team):
-        return self.start_date < timezone.now()
+        """Determine whether this puzzle should be available to teams yet.
+
+        Puzzles in linear episodes are always available if their episode has started.
+        Puzzles in parallel episodes become available at their individual start time.
+        """
+        episode = self.episode_set.get()
+        return self.start_date < timezone.now() or not episode.parallel
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
-        episode = self.episode_set.get(event=team.at_event)
+        episode = self.episode_set.get()
         return episode.event.end_date < timezone.now() or \
             episode.unlocked_by(team) and episode._puzzle_unlocked_by(self, team)
 
