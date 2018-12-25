@@ -214,6 +214,7 @@ function receivedNewUnlock(content) {
 function openEventSocket(data) {
 	"use strict";
 	var ws_scheme = (window.location.protocol == "https:" ? "wss" : "ws") + '://';
+	// TODO use robust-websocket or something
 	var sock = new WebSocket(ws_scheme + window.location.host + '/ws' + window.location.pathname);
 	sock.onmessage = function(e) {
 		var data = JSON.parse(e.data);

@@ -223,7 +223,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 })
 
     @classmethod
-    def _new_unlockanswer(cls, sender, instance, created, raw, *args, **kwargs):
+    def _new_unlockanswer(cls, sender, instance, raw, *args, **kwargs):
         # TODO remove old unlock entries if created == False
         if raw:
             return
@@ -232,14 +232,30 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         unlock = unlockanswer.unlock
         puzzle = unlock.puzzle
 
-        # TODO: performance check. This means that whenever an unlock is added, every single guess on that puzzle is
-        # going to be tested against that guess immediately. *Should* be fine since it's one query and doing the
-        # validation is mostly simple. Could be costly with lua runtimes...
+        # TODO: performance check. This means that whenever an unlock is added or changed, every single guess on
+        # that puzzle is going to be tested against that guess immediately. *Should* be fine since it's one query
+        # and doing the validation is mostly simple. Could be costly with lua runtimes...
         guesses = models.Guess.objects.filter(
             for_puzzle=puzzle
         ).select_related(
             'by_team', 
         )
+        if unlockanswer.id:
+            old_unlockanswer = models.UnlockAnswer.objects.filter(id=unlockanswer.id).select_related('unlock').get()
+            old_unlock = old_unlockanswer.unlock
+            if old_unlock != unlock:
+                # Why did this happen?!
+                pass
+            others = unlock.unlockanswer_set.exclude(id=unlockanswer.id)
+            for g in guesses:
+                if old_unlockanswer.validate_guess(g) and not any(a.validate_guess(g) for a in others):
+                    cls._send_message(old_unlock.puzzle, g.by_team, {
+                        'type': 'delete_unlockguess',
+                        'content': {
+                            'guess': g.guess,
+                            'unlock': old_unlock.text,
+                        }
+                    })
         for g in guesses:
             if unlockanswer.validate_guess(g):
                 cls._send_message(puzzle, g.by_team, {
@@ -249,7 +265,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                         'unlock': unlock.text
                     }
                 })
-        # TODO: notify about unlocks that are no longer valid
 
     @classmethod
     def _changed_unlock(cls, sender, instance, raw, *args, **kwargs):
@@ -309,5 +324,5 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
 
 
 post_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
-post_save.connect(PuzzleEventWebsocket._new_unlockanswer, sender=models.UnlockAnswer)
+pre_save.connect(PuzzleEventWebsocket._new_unlockanswer, sender=models.UnlockAnswer)
 pre_save.connect(PuzzleEventWebsocket._changed_unlock, sender=models.Unlock)
