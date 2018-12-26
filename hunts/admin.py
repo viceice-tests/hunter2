@@ -66,6 +66,7 @@ class SolutionFileInline(NestedTabularInline):
 
 class HintInline(NestedTabularInline):
     model = models.Hint
+    fields = ('text', 'time')
     ordering = ('time',)
     extra = 0
 
@@ -105,6 +106,7 @@ class NewUnlockAnswerInline(UnlockAnswerInline):
 
 @admin.register(models.Unlock)
 class UnlockAdmin(NestedModelAdmin):
+    fields = ('text', 'puzzle')
     inlines = [
         NewUnlockAnswerInline,
     ]
@@ -120,6 +122,7 @@ class UnlockAdmin(NestedModelAdmin):
 
 class UnlockInline(NestedStackedInline):
     model = models.Unlock
+    fields = ('text', )
     inlines = [
         UnlockAnswerInline,
     ]
