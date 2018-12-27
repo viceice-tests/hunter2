@@ -56,12 +56,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='hint',
             name='id',
-            field=models.UUIDField(null=True),
+            field=models.UUIDField(null=True, editable=False),
         ),
         migrations.AddField(
             model_name='unlock',
             name='id',
-            field=models.UUIDField(null=True),
+            field=models.UUIDField(null=True, editable=False),
         ),
         migrations.RunPython(
             code=gen_uuid,
@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='hint',
             name='id',
-            field=models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False),
+            field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False),
         ),
         migrations.AlterField(
             model_name='unlock',
@@ -84,7 +84,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='unlock',
             name='id',
-            field=models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False),
+            field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False),
         ),
         migrations.AddField(
             model_name='UnlockAnswer',
