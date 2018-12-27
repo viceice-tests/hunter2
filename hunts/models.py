@@ -52,7 +52,10 @@ class Puzzle(models.Model):
     )
     soln_content = models.TextField(blank=True, default='', verbose_name="Solution content")
 
-    start_date = models.DateTimeField(blank=True, default=timezone.now, help_text='Date/Time for puzzle to start. Ignored if the episode the puzzle is in is parallel.')
+    start_date = models.DateTimeField(
+        blank=True, default=timezone.now,
+        help_text='Date/Time for puzzle to start. Ignored if the episode the puzzle is in is parallel.'
+    )
     headstart_granted = models.DurationField(
         default=timedelta(),
         help_text='How much headstart this puzzle gives to later episodes which gain headstart from this episode'
