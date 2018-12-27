@@ -179,6 +179,7 @@ class SolutionFile(models.Model):
 
 
 class Clue(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     text = models.TextField(help_text="Text displayed when this clue is unlocked")
 
