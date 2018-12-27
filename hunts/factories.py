@@ -146,7 +146,7 @@ class AnswerFactory(factory.django.DjangoModelFactory):
     @staticmethod
     def _generate_regex_answer():
         # TODO: Extend to abitrary regex & use exrex to solve.
-        return f'{Faker().word()}\d\d\d'
+        return fr'{Faker().word()}\d\d\d'
 
     @staticmethod
     def _generate_lua_answer():
