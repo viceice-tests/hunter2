@@ -45,13 +45,15 @@ class EditProfileView(LoginRequiredMixin, View):
         password_form = ChangePasswordForm(user=request.user) if request.user.has_usable_password() else SetPasswordForm(user=request.user)
         profile_formset = forms.UserProfileFormset(instance=request.user)
         attendance_formset = forms.AttendanceFormset(instance=request.user.profile, queryset=request.user.profile.attendance_set.filter(event=request.tenant))
-        steam_linked = request.user.socialaccount_set.exists()  # This condition breaks down if we support multiple social accounts.
+        steam_account = request.user.socialaccount_set.first()  # This condition breaks down if we support multiple social accounts.
+        if steam_account:
+            steam_account = steam_account.uid.replace('openid/id', 'profiles')  # This is heavily steam specific
         context = {
             'user_form': user_form,
             'password_form': password_form,
             'profile_formset': profile_formset,
             'attendance_formset': attendance_formset,
-            'steam_linked': steam_linked,
+            'steam_account': steam_account,
         }
         return TemplateResponse(
             request,
