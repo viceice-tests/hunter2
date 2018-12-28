@@ -517,7 +517,7 @@ class EpisodeBehaviourTest(EventTestCase):
             self.assertEqual(response.status_code, 200)
             GuessFactory(by=user, for_puzzle=started_linear_episode_started_puzzle, correct=True)  # Create guess to progress
             started_linear_episode_not_started_puzzle = PuzzleFactory(episode=started_linear_episode, start_date=tz_time + datetime.timedelta(minutes=1))
-            response = self.client.get(started_linear_episode_started_puzzle.get_absolute_url())
+            response = self.client.get(started_linear_episode_not_started_puzzle.get_absolute_url())
             self.assertEqual(response.status_code, 200)  # Puzzle start time should be ignored for linear episode
 
     def test_headstarts(self):
