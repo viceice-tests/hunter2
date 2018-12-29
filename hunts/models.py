@@ -565,7 +565,7 @@ class Episode(models.Model):
 
     def _puzzle_unlocked_by(self, puzzle, team):
         now = timezone.now()
-        started_puzzles = self.puzzles
+        started_puzzles = self.puzzles.all()
         if self.parallel:
             started_puzzles = started_puzzles.filter(start_date__lt=now)
         if self.parallel or self.event.end_date < now:
@@ -579,7 +579,7 @@ class Episode(models.Model):
 
     def unlocked_puzzles(self, team):
         now = timezone.now()
-        started_puzzles = self.puzzles
+        started_puzzles = self.puzzles.all()
         if self.parallel:
             started_puzzles = started_puzzles.filter(start_date__lt=now)
         if self.parallel or self.event.end_date < now:
