@@ -54,7 +54,7 @@ class Puzzle(models.Model):
 
     start_date = models.DateTimeField(
         blank=True, default=timezone.now,
-        help_text='Date/Time for puzzle to start. Ignored if the episode the puzzle is in is parallel.'
+        help_text='Date/Time for puzzle to start. Only applies if the puzzle is part of a parallel episode.'
     )
     headstart_granted = models.DurationField(
         default=timedelta(),

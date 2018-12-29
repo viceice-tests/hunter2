@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='puzzle',
             name='start_date',
-            field=models.DateTimeField(blank=True, default=django.utils.timezone.now, help_text='Date/Time for puzzle to start. Ignored if the episode the puzzle is in is parallel.'),
+            field=models.DateTimeField(blank=True, default=django.utils.timezone.now, help_text='Date/Time for puzzle to start. Only applies if the puzzle is part of a parallel episode.'),
         ),
     ]
