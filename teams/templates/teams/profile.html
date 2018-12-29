@@ -13,8 +13,12 @@
 	<button type="submit">Update</button>
 </form>
 {% endspaceless %}
-{% if not steam_linked %}
-<h2>Link your Steam account</h2>
+<h2>Steam Account</h2>
+{% if steam_account %}
+<p>Your account is linked to the following Steam account</p>
+<a href="{{ steam_account }}">{{ steam_account }}</a>
+{% else %}
+<p>Link your Steam account using the link below</p>
 {% include "socialaccount/snippets/provider_list.html" with process="connect" %}
 {% endif %}
 {% if request.user.has_usable_password %}

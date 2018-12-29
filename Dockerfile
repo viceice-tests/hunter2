@@ -54,7 +54,7 @@ WORKDIR /usr/src/app
 
 RUN addgroup -g 500 -S django \
  && adduser -h /usr/src/app -s /sbin/nologin -G django -S -u 500 django \
- && install -d -g django -o django /config /static /uploads/events /uploads/puzzles /uploads/solutions
+ && install -d -g django -o django /config /uploads/events /uploads/puzzles /uploads/solutions
 USER django
 
 VOLUME ["/config", "/uploads/events", "/uploads/puzzles", "/uploads/solutions"]
