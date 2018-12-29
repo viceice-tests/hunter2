@@ -12,7 +12,6 @@
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.sites.shortcuts import get_current_site
 from django.db import connection
 from django_tenants.middleware import TenantMainMiddleware
 
