@@ -19,7 +19,6 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include, path
 from django.views.defaults import page_not_found, server_error, bad_request, permission_denied
 from django.views.csrf import csrf_failure
-from django_prometheus.urls import urlpatterns as prometheus_patterns
 
 from accounts.urls import urlpatterns as accounts_patterns
 from hunts.urls import urlpatterns as hunts_patterns
@@ -43,7 +42,6 @@ urlpatterns = [
     + accounts_patterns \
     + hunts_patterns \
     + teams_patterns \
-    + prometheus_patterns
 
 if settings.DEBUG:
 
