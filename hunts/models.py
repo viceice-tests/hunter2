@@ -101,7 +101,7 @@ class Puzzle(models.Model):
         Puzzles in parallel episodes become available at their individual start time.
         """
         episode = self.episode_set.get()
-        return self.start_date < timezone.now() or not episode.parallel
+        return not episode.parallel or self.start_date < timezone.now()
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
