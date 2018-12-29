@@ -35,7 +35,7 @@ puzzlepatterns = [
 ]
 
 episodepatterns = [
-    path('', views.Episode.as_view(), name='episode'),
+    path('', views.EpisodeIndex.as_view(), name='episode_index'),
     path('content', views.EpisodeContent.as_view(), name='episode_content'),
     path('pz/<int:puzzle_number>/', include(puzzlepatterns)),
 ]

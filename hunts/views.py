@@ -54,7 +54,12 @@ class Index(TemplateView):
         }
 
 
-class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
+class EpisodeIndex(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
+    def get(self, request, episode_number):
+        return redirect(request.episode.get_absolute_url(), permanent=True)
+
+
+class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
     def get(self, request, episode_number):
         puzzles = request.episode.unlocked_puzzles(request.team)
         for puzzle in puzzles:
@@ -81,26 +86,6 @@ class Episode(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
                 'episode': request.episode.name,
                 'flavour': flavour,
                 'position': position,
-                'episode_number': episode_number,
-                'puzzles': puzzles,
-            }
-        )
-
-
-class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
-    def get(self, request, episode_number):
-        puzzles = request.episode.unlocked_puzzles(request.team)
-        for puzzle in puzzles:
-            puzzle.done = puzzle.answered_by(request.team)
-
-        files = {f.slug: f.file.url for f in request.tenant.eventfile_set.filter(slug__isnull=False)}
-        flavour = Template(request.episode.flavour).safe_substitute(**files)
-
-        return TemplateResponse(
-            request,
-            'hunts/episode_content.html',
-            context={
-                'flavour': flavour,
                 'episode_number': episode_number,
                 'puzzles': puzzles,
             }
@@ -397,6 +382,17 @@ class EventIndex(LoginRequiredMixin, View):
 
         event = request.tenant
 
+        positions = utils.finishing_positions(event)
+        if request.team in positions:
+            position = positions.index(request.team)
+            if position < 3:
+                position = {0: 'first', 1: 'second', 2: 'third'}[position]
+            else:
+                position += 1
+                position = f'in position {position}'
+        else:
+            position = None
+
         episodes = [
             e for e in
             models.Episode.objects.filter(event=event.id).order_by('start_date')
@@ -413,6 +409,7 @@ class EventIndex(LoginRequiredMixin, View):
             context={
                 'event_title':  event.name,
                 'episodes':     list(episodes),
+                'position':     position,
             }
         )
 
@@ -604,12 +601,12 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 response['url'] = reverse('puzzle', kwargs={'episode_number': episode_number, 'puzzle_number': next})
             else:
                 response['text'] = f'back to {request.episode.name}'
-                response['url'] = reverse('event')
-                response['url'] += f'#episode-{episode_number}'
+                response['url'] = request.episode.get_absolute_url()
         else:
 
             response['guess'] = given_answer
-            response['timeout'] = str(now + minimum_time)
+            response['timeout_length'] = minimum_time.total_seconds() * 1000
+            response['timeout_end'] = str(now + minimum_time)
             response['new_hints'] = new_hints
         response['correct'] = str(correct).lower()
         response['by'] = request.user.username

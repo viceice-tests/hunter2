@@ -1,12 +1,15 @@
-{% extends "teams/base.html" %}
-
-{% block page_header %}
-<h1>{{ episode }}</h1>
 {% if position %}
 <p>You came {{ position }} in this episode!</p>
 {% endif %}
-{% endblock %}
-
-{% block content %}
-{% include "hunts/episode_content.html" %}
-{% endblock %}
+{% if flavour %}<div class="episode-flavour">{{ flavour | safe }}</div>{% endif %}
+<div class="container-fluid puzzle-list">
+{% for puzzle in puzzles %}
+{% if puzzle.done %}
+<div class="puzzle-box puzzle-done">
+{% else %}
+<div class="puzzle-box puzzle-available">
+{% endif %}
+	<a class="puzzle-link" href="{% url 'puzzle' episode_number forloop.counter %}">{{ puzzle.title }}</a>
+</div>
+{% endfor %}
+</div>
