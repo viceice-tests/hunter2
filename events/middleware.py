@@ -38,11 +38,9 @@ class EventMiddleware(object):
 
 class TenantMiddleware(TenantMainMiddleware):
     def process_request(self, request):
-        hostname = self.hostname_from_request(request)
-
-        # This is our addition to this method to support a "default" site with no tenant object.
-        site = get_current_site(request)
-        if hostname == site.domain:
+        try:
+            super().process_request(request)
+        except self.TENANT_NOT_FOUND_EXCEPTION:
             connection.set_schema_to_public()
             request.tenant = None
             if hasattr(settings, 'PUBLIC_SCHEMA_URLCONF'):
@@ -50,7 +48,3 @@ class TenantMiddleware(TenantMainMiddleware):
 
             # This path bypasses the cache clear in the superclass
             ContentType.objects.clear_cache()
-
-            return
-
-        return super().process_request(request)

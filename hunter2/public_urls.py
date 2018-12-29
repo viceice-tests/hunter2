@@ -19,6 +19,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include, path
 from django.views.defaults import page_not_found, server_error, bad_request, permission_denied
 from django.views.csrf import csrf_failure
+from django_prometheus.urls import urlpatterns as prometheus_patterns
 
 from . import settings
 from .views import DefaultEventView
@@ -36,7 +37,8 @@ urlpatterns = [
     path('', DefaultEventView.as_view(), name='index'),
 ] \
     + staticfiles_urlpatterns() \
-    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
+    + prometheus_patterns
 
 if settings.DEBUG:
 
