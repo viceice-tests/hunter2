@@ -514,7 +514,7 @@ class EpisodeBehaviourTest(EventTestCase):
                 start_date=tz_time - datetime.timedelta(minutes=1)
             )
             response = self.client.get(not_started_parallel_episode_started_puzzle.get_absolute_url())
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, 302)  # Not started episode overrides started puzzle
             not_started_parallel_episode_not_started_puzzle = PuzzleFactory(
                 episode=not_started_parallel_episode,
                 start_date=tz_time + datetime.timedelta(minutes=1)
