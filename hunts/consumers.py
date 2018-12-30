@@ -69,7 +69,6 @@ class TeamMixin:
             return
         return super().websocket_connect(message)
 
-
 # It is important this class uses a synchronous Consumer, because each one of these consumers runs in a
 # different thread. Asynchronous consumers can suspend while another consumer in the same thread runs.
 # This would break, because the active tenant may need to be different between each consumer.
@@ -125,6 +124,86 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     def _error(self, message):
         self.send_json({'type': 'error', 'error': message})
 
+    #def messagetype(func):
+    #    @classmethod
+    #    def classversion(cls, puzzle, team, *args):
+    #        cls._send_message(puzzle, team, func(*args))
+
+    #    def objectversion(self, *args):
+    #        self.send_json(func(*args))
+
+    #    setattr(PuzzleEventWebsocket, func.__name__ + '_to', classversion)
+    #    return objectversion
+
+    #@messagetype
+    #def send_new_unlock(guess, unlock):
+    #    return {
+    #        'type': 'new_unlock',
+    #        'content': {
+    #            'guess': guess.guess,
+    #            'unlock': unlock.text,
+    #            'unlock_uid': encode_uuid(u.id)
+    #        }
+    #    }
+
+    ###
+    ### These class methods define the JS server -> client protocol of the websocket
+    ###
+
+    @classmethod
+    def send_new_unlock(cls, guess, unlock):
+        cls._send_message(guess.for_puzzle, guess.by_team, {
+            'type': 'new_unlock',
+            'content': {
+                'guess': guess.guess,
+                'unlock': unlock.text,
+                'unlock_uid': encode_uuid(unlock.id)
+            }
+        })
+
+    @classmethod
+    def send_new_guess(cls, guess, unlocks):
+        cls._send_message(guess.for_puzzle, guess.by_team, {
+            'type': 'new_guess',
+            'content': {
+                # TODO hash with id or something idunno
+                'timestamp': str(guess.given),
+                'guess': guess.guess,
+                'correct': guess.correct_for is not None,
+                'by': guess.by.username,
+                'unlocks': unlocks
+            }
+        })
+
+    @classmethod
+    def send_change_unlock(old_unlock, new_unlock, guess):
+        cls._send_message(old_unlock.puzzle, guess.by_team, {
+            'type': 'change_unlock',
+            'content': {
+                'old': old_unlock.text,
+                'new': new_unlock.text
+            }
+        })
+
+    @classmethod
+    def send_delete_unlock(unlock, guess):
+        cls._send_message(unlock.puzzle, guess.by_team, {
+            'type': 'delete_unlock',
+            'content': {
+                'unlock_uid': encode_uuid(unlock.id),
+            }
+        })
+
+    @classmethod
+    def send_delete_unlockguess(old_unlock, guess):
+        cls._send_message(old_unlock.puzzle, guess.by_team, {
+            'type': 'delete_unlockguess',
+            'content': {
+                'guess': guess.guess,
+                'unlock': encode_uuid(old_unlock.id),
+            }
+        })
+
     @classmethod
     def _new_guess(cls, sender, instance, created, raw, *args, **kwargs):
         # Do not trigger unless this was a newly created guess.
@@ -141,26 +220,9 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         for u in all_unlocks:
             if any([a.validate_guess(guess) for a in u.unlockanswer_set.all()]):
                 unlocks.append(u.text)
-                cls._send_message(guess.for_puzzle, guess.by_team, {
-                    'type': 'new_unlock',
-                    'content': {
-                        'guess': guess.guess,
-                        'unlock': u.text,
-                        'unlock_uid': encode_uuid(u.id)
-                    }
-                })
+                cls.send_new_unlock(guess, u)
 
-        cls._send_message(guess.for_puzzle, guess.by_team, {
-            'type': 'new_guess',
-            'content': {
-                # TODO hash with id or something idunno
-                'timestamp': str(guess.given),
-                'guess': guess.guess,
-                'correct': guess.correct_for is not None,
-                'by': guess.by.username,
-                'unlocks': unlocks
-            }
-        })
+        cls.send_new_guess(guess, unlocks)
 
     def send_old_guesses(self, start):
         if start == 'all':
@@ -180,8 +242,9 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             for g in correct_guesses:
                 unlocks[g].append(u.text)
 
-        # TODO: separate out sending the unlocks to a send_old_unlocks method
         for g in guesses:
+            # TODO work out what to do with protocol that can be sent straight back out on
+            # the same websocket. Note this is currently sharing the protocol of new_guess.
             self.send_json({
                 'type': 'old_guess',
                 'content': {
@@ -213,9 +276,10 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 unlocks[g].append(u.text)
 
         # TODO: something for sorting unlocks? The View sorts them as in the admin, but this is not alterable,
-        # even though it is often meaningful.
+        # even though it is often meaningful. Currently JS sorts them alphabetically.
         for g in guesses:
             for u in unlocks[g]:
+                # TODO same issue as old_guess above
                 self.send_json({
                     'type': 'old_unlock',
                     'content': {
@@ -247,28 +311,17 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             old_unlockanswer = models.UnlockAnswer.objects.filter(id=unlockanswer.id).select_related('unlock').get()
             old_unlock = old_unlockanswer.unlock
             if old_unlock != unlock:
-                # Why did this happen?!
+                # TODO: do we need to handle when some muppet moved an unlockanswer manually to another unlock?
                 pass
             others = unlock.unlockanswer_set.exclude(id=unlockanswer.id)
             for g in guesses:
                 if old_unlockanswer.validate_guess(g) and not any(a.validate_guess(g) for a in others):
-                    cls._send_message(old_unlock.puzzle, g.by_team, {
-                        'type': 'delete_unlockguess',
-                        'content': {
-                            'guess': g.guess,
-                            'unlock': old_unlock.text,
-                        }
-                    })
+                    # The unlockanswer was the only one giving us this and it no longer does
+                    cls.send_delete_unlockguess(old_unlock, g)
         for g in guesses:
             if unlockanswer.validate_guess(g):
-                cls._send_message(puzzle, g.by_team, {
-                    'type': 'new_unlock',
-                    'content': {
-                        'guess': g.guess,
-                        'unlock': unlock.text,
-                        'unlock_uid': encode_uuid(unlock.id)
-                    }
-                })
+                # Just notify about all guesses that match this answer. Some may already have done so but that's OK.
+                cls.send_new_unlock_to(g, unlock)
 
     @classmethod
     def _changed_unlock(cls, sender, instance, raw, *args, **kwargs):
@@ -284,7 +337,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         puzzle = unlock.puzzle
         # This could conceivably be different if someone adds an unlock to the wrong puzzle! Probably never going
         # to happen. Better safe than sorry.
-        old_puzzle = old.puzzle
 
         guesses = models.Guess.objects.filter(
             for_puzzle=puzzle
@@ -298,36 +350,19 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     continue
                 if any([u.validate_guess(g) for u in old.unlockanswer_set.all()]):
                     done_teams.append(g.by_team)
-                    cls._send_message(old_puzzle, g.by_team, {
-                        'type': 'change_unlock',
-                        'content': {
-                            'old': old.text,
-                            'new': unlock.text
-                        }
-                    })
+                    cls.send_change_unlock(old, unlock, g)
         else:
             for g in guesses:
                 if any([u.validate_guess(g) for u in old.unlockanswer_set.all()]):
-                    # If the puzzles are different we send *one* message to delete unlocks with that text to the
+                    # If the puzzles are different we send *one* message to delete that unlock to the
                     # old puzzle websocket, then add the unlock to the new puzzle, one guess at a time.
                     if g.by_team not in done_teams:
-                        cls._send_message(old_puzzle, g.by_team, {
-                            'type': 'delete_unlock',
-                            'content': {
-                                'unlock_uid': encode_uuid(old.id),
-                            }
-                        })
+                        cls.send_delete_unlock(unlock, g)
                     done_teams.append(g.by_team)
-                    cls._send_message(puzzle, g.by_team, {
-                        'type': 'new_unlock',
-                        'content': {
-                            'guess': g.guess,
-                            'unlock': old.text,
-                            'unlock_uid': encode_uuid(old.id)
-                        }
-                    })
+                    cls.send_new_unlock_to(g, old)
 
 
 post_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
 pre_save.connect(PuzzleEventWebsocket._new_unlockanswer, sender=models.UnlockAnswer)
 pre_save.connect(PuzzleEventWebsocket._changed_unlock, sender=models.Unlock)
+# TODO: delete signals
