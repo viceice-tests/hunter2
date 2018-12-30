@@ -196,12 +196,16 @@ var unlocks = {};
 function updateUnlocks() {
 	"use strict"
 	var entries = Object.entries(unlocks);
-	entries.sort();
+	entries.sort(function (a, b) {
+		if (a.unlock < b.unlock) return -1;
+		else if(a.unlock > b.unlock) return 1;
+		return 0;
+	});
 	var list = d3.select('#unlocks')
 		.selectAll('p')
 		.data(entries)
 		.text(function (d, i) {
-			return d[1].join(', ') + ': ' + d[0];
+			return d[1].guesses.join(', ') + ': ' + d[1].unlock;
 		})
 		.enter()
 		.append('p')
@@ -211,11 +215,11 @@ function updateUnlocks() {
 
 function receivedNewUnlock(content) {
 	"use strict"
-	if (!(content['unlock'] in unlocks)) {
-		unlocks[content['unlock']] = [];
+	if (!(content['unlock_uid'] in unlocks)) {
+		unlocks[content['unlock_uid']] = {'unlock': content['unlock'], 'guesses': []};
 	}
-	if (!unlocks[content['unlock']].includes(content['guess'])) {
-		unlocks[content['unlock']].push(content['guess']);
+	if (!unlocks[content['unlock_uid']]['guesses'].includes(content['guess'])) {
+		unlocks[content['unlock_uid']]['guesses'].push(content['guess']);
 	}
 	updateUnlocks();
 }

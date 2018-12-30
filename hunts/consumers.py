@@ -20,6 +20,7 @@ from channels.db import database_sync_to_async
 from collections import defaultdict
 
 from .models import Guess
+from .utils import encode_uuid
 from . import models, utils
 
 
@@ -144,7 +145,8 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     'type': 'new_unlock',
                     'content': {
                         'guess': guess.guess,
-                        'unlock': u.text
+                        'unlock': u.text,
+                        'unlock_uid': encode_uuid(u.id)
                     }
                 })
 
@@ -218,7 +220,8 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     'type': 'old_unlock',
                     'content': {
                         'guess': g.guess,
-                        'unlock': u
+                        'unlock': u,
+                        'unlock_uid': encode_uuid(u.id)
                     }
                 })
 
@@ -262,7 +265,8 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     'type': 'new_unlock',
                     'content': {
                         'guess': g.guess,
-                        'unlock': unlock.text
+                        'unlock': unlock.text,
+                        'unlock_uid': encode_uuid(unlock.id)
                     }
                 })
 
@@ -310,7 +314,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                         cls._send_message(old_puzzle, g.by_team, {
                             'type': 'delete_unlock',
                             'content': {
-                                'unlock': old.text,
+                                'unlock_uid': encode_uuid(old.id),
                             }
                         })
                     done_teams.append(g.by_team)
@@ -318,7 +322,8 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                         'type': 'new_unlock',
                         'content': {
                             'guess': g.guess,
-                            'unlock': old.text
+                            'unlock': old.text,
+                            'unlock_uid': encode_uuid(old.id)
                         }
                     })
 

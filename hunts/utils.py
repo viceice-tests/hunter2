@@ -12,6 +12,7 @@
 
 
 from collections import defaultdict
+from base64 import urlsafe_b64encode
 from django.http import Http404
 
 
@@ -56,3 +57,7 @@ def finishing_positions(event):
             team_times[team] = max(times)
 
     return sorted(team_times.keys(), key=lambda t: team_times[t])
+
+
+def encode_uuid(uuid):
+    return urlsafe_b64encode(uuid.bytes).strip(b'=').decode('ascii')
