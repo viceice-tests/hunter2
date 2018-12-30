@@ -46,7 +46,7 @@ image:app:
       - diagram/models.dot
 
 image:metrics:
-  stage: web-doc-test
+  stage: build-app
   variables:
     SERVICE: metrics
   script:
