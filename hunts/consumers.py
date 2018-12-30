@@ -124,28 +124,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     def _error(self, message):
         self.send_json({'type': 'error', 'error': message})
 
-    #def messagetype(func):
-    #    @classmethod
-    #    def classversion(cls, puzzle, team, *args):
-    #        cls._send_message(puzzle, team, func(*args))
-
-    #    def objectversion(self, *args):
-    #        self.send_json(func(*args))
-
-    #    setattr(PuzzleEventWebsocket, func.__name__ + '_to', classversion)
-    #    return objectversion
-
-    #@messagetype
-    #def send_new_unlock(guess, unlock):
-    #    return {
-    #        'type': 'new_unlock',
-    #        'content': {
-    #            'guess': guess.guess,
-    #            'unlock': unlock.text,
-    #            'unlock_uid': encode_uuid(u.id)
-    #        }
-    #    }
-
     ###
     ### These class methods define the JS server -> client protocol of the websocket
     ###
