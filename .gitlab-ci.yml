@@ -45,6 +45,20 @@ image:app:
       - "${SERVICE}.tar"
       - diagram/models.dot
 
+image:metrics:
+  stage: web-doc-test
+  variables:
+    SERVICE: metrics
+  script:
+    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
+    - docker-compose build --build-arg app_tag="${GIT_DESCRIBE}" "${SERVICE}"
+    - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
+  artifacts:
+    expire_in: 90 days
+    name: metrics-container
+    paths:
+      - "${SERVICE}.tar"
+
 image:web:
   stage: web-doc-test
   dependencies:
@@ -100,6 +114,21 @@ release:app:
     - image:app
   variables:
     SERVICE: app
+  script:
+    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
+    - docker load -i "${SERVICE}.tar"
+    - docker-compose push "${SERVICE}"
+    - docker tag "${IMAGE_TAG}" "${CI_REGISTRY_IMAGE}/${SERVICE}"
+    - docker push "${CI_REGISTRY_IMAGE}/${SERVICE}"
+  only:
+    - master
+
+release:metrics:
+  stage: release
+  dependencies:
+    - image:metrics
+  variables:
+    SERVICE: metrics
   script:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
     - docker load -i "${SERVICE}.tar"

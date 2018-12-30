@@ -34,12 +34,11 @@ services:
       - DATA_SOURCE_NAME=postgresql://postgres@db:5432/?sslmode=disable
       image: wrouesnel/postgres_exporter:v0.4.7
   metrics:
-    image: prom/prometheus:v2.6.0
+    image: registry.gitlab.com/hunter2.app/hunter2/metrics:${H2_IMAGE_VERSION:-latest}
     ports:
       - 127.0.0.1:9090:9090
     volumes:
       - metrics:/prometheus
-      - ${PWD:-.}/prometheus.yml:/etc/prometheus/prometheus.yml
   redis:
     image: redis:5.0.3-alpine3.8
     volumes:

@@ -288,3 +288,5 @@ if USE_SILK:  # nocover
     SILKY_PYTHON_PROFILER_BINARY = True
     # Well, the following path is rubbish but I cba doing it properly for now
     SILKY_PYTHON_PROFILER_RESULT_PATH = '/uploads/events/'
+
+PROMETHEUS_EXPORT_MIGRATIONS = False
