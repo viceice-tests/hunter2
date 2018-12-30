@@ -271,7 +271,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     # handler: Unlockanswer.pre_save
     @classmethod
     def _new_unlockanswer(cls, sender, instance, raw, *args, **kwargs):
-        # TODO remove old unlock entries if created == False
         if raw:
             return
 
