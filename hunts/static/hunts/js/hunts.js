@@ -183,7 +183,7 @@ function addSVG() {
 var guesses = [];
 
 function receivedNewAnswer(content) {
-	"use strict"
+	"use strict";
 	if (!guesses.includes(content['timestamp'])) {
 		var guesses_table = $('#guesses');
 		guesses_table.append('<tr><td>' + content['by'] + '</td><td>' + content['guess'] + '</td><td>' + content['correct'] + '</td><td>' + content['unlocks'] + '</td></tr>');
@@ -194,7 +194,7 @@ function receivedNewAnswer(content) {
 var unlocks = {};
 
 function updateUnlocks() {
-	"use strict"
+	"use strict";
 	var entries = Object.entries(unlocks);
 	entries.sort(function (a, b) {
 		if (a.unlock < b.unlock) return -1;
@@ -214,13 +214,47 @@ function updateUnlocks() {
 }
 
 function receivedNewUnlock(content) {
-	"use strict"
+	"use strict";
 	if (!(content['unlock_uid'] in unlocks)) {
 		unlocks[content['unlock_uid']] = {'unlock': content['unlock'], 'guesses': []};
 	}
 	if (!unlocks[content['unlock_uid']]['guesses'].includes(content['guess'])) {
 		unlocks[content['unlock_uid']]['guesses'].push(content['guess']);
 	}
+	updateUnlocks();
+}
+
+function receivedChangeUnlock(content) {
+	"use strict";
+	if (!(content.unlock_uid in unlocks)) {
+		console.log('WebSocket changed invalid unlock: ' + content.unlock_uid);
+		return;
+	}
+	unlocks[content.unlock_uid].unlock = content.unlock;
+	updateUnlocks();
+}
+
+function receivedDeleteUnlock(content) {
+	"use strict";
+	if (!(content.unlock_uid in unlocks)) {
+		console.log('WebSocket deleted invalid unlock: ' + content.unlock_uid);
+		return;
+	}
+	unlocks.pop(content.unlock_uid);
+	updateUnlocks();
+}
+
+function receivedDeleteUnlockGuess(content) {
+	"use strict";
+	if (!(content.unlock_uid in unlocks)) {
+		console.log('WebSocket deleted guess for invalid unlock: ' + content.unlock_uid);
+		return;
+	}
+	if (!(unlocks[content.unlock_uid].guesses.includes(content.guess))) {
+		console.log('WebSocket deleted invalid guess: ' + content.guess);
+		return;
+	}
+	unlocks[content.unlock_uid].guesses.pop(content.guess);
 	updateUnlocks();
 }
 
@@ -235,6 +269,12 @@ function openEventSocket(data) {
 			receivedNewAnswer(data['content']);
 		} else if (data['type'] == 'new_unlock' || data['type'] == 'old_unlock') {
 			receivedNewUnlock(data['content']);
+		} else if (data['type'] == 'change_unlock') {
+			receivedChangeUnlock(data['content']);
+		} else if (data['type'] == 'delete_unlock') {
+			receivedDeleteUnlock(data['content']);
+		} else if (data['type'] == 'delete_unlockguess') {
+			receivedDeleteUnlockGuess(data['content']);
 		} else if (data['type'] == 'error') {
 			console.log(data['error']);
 		} else {

@@ -158,8 +158,8 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         cls._send_message(old_unlock.puzzle, guess.by_team, {
             'type': 'change_unlock',
             'content': {
-                'old': old_unlock.text,
-                'new': new_unlock.text
+                'unlock': new_unlock.text,
+                'unlock_uid': encode_uuid(old_unlock.id)
             }
         })
 
@@ -178,7 +178,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             'type': 'delete_unlockguess',
             'content': {
                 'guess': guess.guess,
-                'unlock': encode_uuid(old_unlock.id),
+                'unlock_uid': encode_uuid(old_unlock.id),
             }
         })
 
