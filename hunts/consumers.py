@@ -285,7 +285,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         guesses = models.Guess.objects.filter(
             for_puzzle=puzzle
         ).select_related(
-            'by_team', 
+            'by_team'
         )
         if unlockanswer.id:
             old_unlockanswer = models.UnlockAnswer.objects.filter(id=unlockanswer.id).select_related('unlock').get()
@@ -322,7 +322,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         guesses = models.Guess.objects.filter(
             for_puzzle=puzzle
         ).select_related(
-            'by_team', 
+            'by_team'
         )
         if puzzle == old.puzzle:
             done_teams = []
