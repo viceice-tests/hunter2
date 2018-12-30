@@ -255,6 +255,9 @@ function receivedDeleteUnlockGuess(content) {
 		return;
 	}
 	unlocks[content.unlock_uid].guesses.pop(content.guess);
+	if (unlocks[content.unlock_uid].guesses.length == 0) {
+		unlocks.pop(content.unlock_uid);
+	}
 	updateUnlocks();
 }
 
