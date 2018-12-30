@@ -300,7 +300,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         for g in guesses:
             if unlockanswer.validate_guess(g):
                 # Just notify about all guesses that match this answer. Some may already have done so but that's OK.
-                cls.send_new_unlock_to(g, unlock)
+                cls.send_new_unlock(g, unlock)
 
     # handler: Unlock.pre_save
     @classmethod
@@ -339,7 +339,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     if g.by_team not in done_teams:
                         cls.send_delete_unlock(unlock, g)
                     done_teams.append(g.by_team)
-                    cls.send_new_unlock_to(g, old)
+                    cls.send_new_unlock(g, old)
 
     # handler: UnlockAnswer.pre_delete
     @classmethod
