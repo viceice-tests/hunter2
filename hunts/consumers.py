@@ -149,12 +149,13 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 'guess': guess.guess,
                 'correct': guess.correct_for is not None,
                 'by': guess.by.username,
+                # TODO: is there any real reason to send unlocks with the guess?!
                 'unlocks': unlocks
             }
         })
 
     @classmethod
-    def send_change_unlock(old_unlock, new_unlock, guess):
+    def send_change_unlock(cls, old_unlock, new_unlock, guess):
         cls._send_message(old_unlock.puzzle, guess.by_team, {
             'type': 'change_unlock',
             'content': {
@@ -164,7 +165,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         })
 
     @classmethod
-    def send_delete_unlock(unlock, guess):
+    def send_delete_unlock(cls, unlock, guess):
         cls._send_message(unlock.puzzle, guess.by_team, {
             'type': 'delete_unlock',
             'content': {
@@ -173,7 +174,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         })
 
     @classmethod
-    def send_delete_unlockguess(old_unlock, guess):
+    def send_delete_unlockguess(cls, old_unlock, guess):
         cls._send_message(old_unlock.puzzle, guess.by_team, {
             'type': 'delete_unlockguess',
             'content': {
