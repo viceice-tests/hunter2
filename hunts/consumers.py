@@ -182,6 +182,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             }
         })
 
+    # handler: Guess.post_save
     @classmethod
     def _new_guess(cls, sender, instance, created, raw, *args, **kwargs):
         # Do not trigger unless this was a newly created guess.
@@ -267,6 +268,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     }
                 })
 
+    # handler: Unlockanswer.pre_save
     @classmethod
     def _new_unlockanswer(cls, sender, instance, raw, *args, **kwargs):
         # TODO remove old unlock entries if created == False
@@ -301,6 +303,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 # Just notify about all guesses that match this answer. Some may already have done so but that's OK.
                 cls.send_new_unlock_to(g, unlock)
 
+    # handler: Unlock.pre_save
     @classmethod
     def _changed_unlock(cls, sender, instance, raw, *args, **kwargs):
         # TODO use this for hints too
@@ -339,8 +342,57 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     done_teams.append(g.by_team)
                     cls.send_new_unlock_to(g, old)
 
+    # handler: UnlockAnswer.pre_delete
+    @classmethod
+    def _deleted_unlockanswer(cls, sender, instance, *args):
+        #TODO if the Unlock is being deleted it will cascade to the answers. In that case
+        # we don't actually need to send events for them.
+        unlockanswer = instance
+        unlock = unlockanswer.unlock
+        puzzle = unlock.puzzle
+
+        guesses = models.Guess.objects.filter(
+            for_puzzle=puzzle,
+        ).select_related(
+            'by_team',
+        )
+
+        others = unlock.unlockanswer_set.exclude(id=unlockanswer.id)
+
+        done_teams = []
+
+        for g in guesses:
+            if g.by_team in done_teams:
+                continue
+            if unlockanswer.validate_guess(g) and not any(a.validate_guess(g) for a in others):
+                cls.send_delete_unlockguess(g)
+                done_teams.append(g.by_team)
+
+    # handler: Unlock.pre_delete
+    @classmethod
+    def _deleted_unlock(cls, sender, instance, *args):
+        unlock = instance
+        puzzle = unlock.puzzle
+
+        guesses = models.Guess.objects.filter(
+            for_puzzle=puzzle
+        ).select_related(
+            'by_team',
+        )
+
+        done_teams = []
+
+        for g in guesses:
+            if g.by_team in done_teams:
+                continue
+            if any([u.validate_guess(g) for u in instance.unlockanswer_set.all()]):
+                done_teams.append(g.by_team)
+                cls.send_delete_unlock(unlock, g)
+
 
 post_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
 pre_save.connect(PuzzleEventWebsocket._new_unlockanswer, sender=models.UnlockAnswer)
 pre_save.connect(PuzzleEventWebsocket._changed_unlock, sender=models.Unlock)
-# TODO: delete signals
+
+pre_delete.connect(PuzzleEventWebsocket._deleted_unlockanswer, sender=models.UnlockAnswer)
+pre_delete.connect(PuzzleEventWebsocket._deleted_unlock, sender=models.Unlock)
