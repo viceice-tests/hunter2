@@ -140,7 +140,6 @@ class GuessAdmin(admin.ModelAdmin):
 @admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdmin):
     change_form_template = 'hunts/admin/change_puzzle.html'
-    ordering = ('episode__start_date', 'start_date', 'pk')
     inlines = [
         PuzzleFileInline,
         SolutionFileInline,
@@ -199,11 +198,25 @@ class PuzzleAdmin(NestedModelAdmin):
         qs = super().get_queryset(request)
         # TODO prefetch_related?
         # Optimisation: add the counts so that we don't have to perform extra queries for them
-        return qs.annotate(
+        through = models.Puzzle.episode_set.through
+        qs = qs.annotate(
             answer_count=Count('answer', distinct=True),
             hint_num=Count('hint', distinct=True),
             unlock_count=Count('unlock', distinct=True)
+        ).extra(  # This screams that we've outgrown the ManyToManyField but re-implementing the ordering is non-trivial
+            tables=(
+                through._meta.db_table,
+            ),
+            where=(
+                f'{through._meta.db_table}.puzzle_id = {models.Puzzle._meta.db_table}.id',
+            ),
+            order_by=(
+                'episode__start_date',
+                f'{through._meta.db_table}.{through._sort_field_name}',
+            ),
         )
+        print(qs.query)
+        return qs
 
     # The following three methods do nothing if popup is True. This removes everything else from
     # the form except the inline.
