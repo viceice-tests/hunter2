@@ -255,6 +255,17 @@ class PuzzleAdmin(NestedModelAdmin):
 
 @admin.register(models.Episode)
 class EpisodeAdmin(NestedModelAdmin):
+    class Form(forms.ModelForm):
+        class Meta:
+            model = models.Episode
+            exclude = []
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields['prequels'].queryset = models.Episode.objects.exclude(id__exact=self.instance.id)
+            self.fields['headstart_from'].queryset = models.Episode.objects.exclude(id__exact=self.instance.id)
+
+    form = Form
     ordering = ['start_date', 'pk']
     list_display = ('event_change', 'name', 'start_date', 'check_flavour', 'num_puzzles', 'total_headstart')
     list_editable = ('start_date',)
