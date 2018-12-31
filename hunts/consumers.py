@@ -11,13 +11,17 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, pre_delete
 from asgiref.sync import async_to_sync
 from channels.consumer import get_handler_name
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
 from collections import defaultdict
+from threading import Timer
+from time import sleep
+from datetime import timedelta
+from django.utils import timezone
 
 from .models import Guess
 from .utils import encode_uuid
@@ -30,7 +34,7 @@ def activate_tenant(f):
             self.scope['tenant'].activate()
         except (AttributeError, KeyError):
             raise ValueError('%s has no scope or no tenant on its scope' % self)
-        return f(self, *args, **kwargs)
+        return f(*args, **kwargs)
 
     return wrapper
 
@@ -90,9 +94,12 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(
             self._group_name(self.puzzle, self.team), self.channel_name
         )
+        self.setup_hint_timers()
         self.accept()
 
     def disconnect(self, close_code):
+        for t in self.hint_timers.values():
+            t.cancel()
         async_to_sync(self.channel_layer.group_discard)(
             self._group_name(self.puzzle, self.scope['team']), self.channel_name
         )
@@ -123,6 +130,23 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
 
     def _error(self, message):
         self.send_json({'type': 'error', 'error': message})
+
+    def setup_hint_timers(self):
+        self.hint_timers = {}
+        data = models.TeamPuzzleData.objects.get(puzzle=self.puzzle, team=self.team)
+        if data.start_time is None:
+            return
+        elapsed = timezone.now() - data.start_time 
+        for hint in self.puzzle.hint_set.all():
+            delay = hint.time - elapsed
+            print(delay.total_seconds())
+            if delay.total_seconds() > 0:
+                self.schedule_hint(hint, delay)
+
+    def schedule_hint(self, hint, delay):
+        t = Timer(delay.total_seconds(), activate_tenant(self.send_new_hint), args=(self, self.team, hint))
+        self.hint_timers[hint.id] = t
+        t.start()
 
     ###
     ### These class methods define the JS server -> client protocol of the websocket
@@ -182,6 +206,20 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 'unlock_uid': encode_uuid(old_unlock.id),
             }
         })
+
+    def send_new_hint(self, team, hint, **kwargs):
+        print("sending hint")
+        del self.hint_timers[hint.id]
+
+        self.send_json({
+            'type': 'new_hint',
+            'content': {
+                'hint': hint.text,
+                'hint_uid': encode_uuid(hint.id),
+                'time': str(hint.time)
+            }
+        })
+
 
     # handler: Guess.post_save
     @classmethod
@@ -344,7 +382,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
 
     # handler: UnlockAnswer.pre_delete
     @classmethod
-    def _deleted_unlockanswer(cls, sender, instance, *args):
+    def _deleted_unlockanswer(cls, sender, instance, *args, **kwargs):
         #TODO if the Unlock is being deleted it will cascade to the answers. In that case
         # we don't actually need to send events for them.
         unlockanswer = instance
@@ -370,7 +408,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
 
     # handler: Unlock.pre_delete
     @classmethod
-    def _deleted_unlock(cls, sender, instance, *args):
+    def _deleted_unlock(cls, sender, instance, *args, **kwargs):
         unlock = instance
         puzzle = unlock.puzzle
 
