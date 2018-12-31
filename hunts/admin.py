@@ -258,7 +258,7 @@ class EpisodeAdmin(NestedModelAdmin):
     class Form(forms.ModelForm):
         class Meta:
             model = models.Episode
-            exclude = []
+            exclude = ['event']
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -270,6 +270,10 @@ class EpisodeAdmin(NestedModelAdmin):
     list_display = ('event_change', 'name', 'start_date', 'check_flavour', 'num_puzzles', 'total_headstart')
     list_editable = ('start_date',)
     list_display_links = ('name',)
+
+    def save_model(self, request, obj, form, change):
+        obj.event = request.tenant
+        super().save_model(request, obj, form, change)
 
     def view_on_site(self, obj):
         return obj.get_absolute_url()
