@@ -139,11 +139,11 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         elapsed = timezone.now() - data.start_time 
         for hint in self.puzzle.hint_set.all():
             delay = hint.time - elapsed
-            print(delay.total_seconds())
             if delay.total_seconds() > 0:
                 self.schedule_hint(hint, delay)
 
     def schedule_hint(self, hint, delay):
+        # Because this runs in a new thread, we must wrap send_new_hint with activate_tenant
         t = Timer(delay.total_seconds(), activate_tenant(self.send_new_hint), args=(self, self.team, hint))
         self.hint_timers[hint.id] = t
         t.start()
@@ -208,7 +208,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         })
 
     def send_new_hint(self, team, hint, **kwargs):
-        print("sending hint")
         del self.hint_timers[hint.id]
 
         self.send_json({
