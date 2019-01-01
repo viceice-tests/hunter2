@@ -10,17 +10,16 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import pre_save, post_save, pre_delete
+from collections import defaultdict
+from threading import Timer
+
 from asgiref.sync import async_to_sync
 from channels.consumer import get_handler_name
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
-from collections import defaultdict
-from threading import Timer
-from time import sleep
-from datetime import timedelta
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.signals import pre_save, post_save, pre_delete
 from django.utils import timezone
 
 from .models import Guess
@@ -72,6 +71,7 @@ class TeamMixin:
             self.close()
             return
         return super().websocket_connect(message)
+
 
 # It is important this class uses a synchronous Consumer, because each one of these consumers runs in a
 # different thread. Asynchronous consumers can suspend while another consumer in the same thread runs.
@@ -136,7 +136,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         data = models.TeamPuzzleData.objects.get(puzzle=self.puzzle, team=self.team)
         if data.start_time is None:
             return
-        elapsed = timezone.now() - data.start_time 
+        elapsed = timezone.now() - data.start_time
         for hint in self.puzzle.hint_set.all():
             delay = hint.time - elapsed
             if delay.total_seconds() > 0:
@@ -218,7 +218,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 'time': str(hint.time)
             }
         })
-
 
     # handler: Guess.post_save
     @classmethod
@@ -382,7 +381,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     # handler: UnlockAnswer.pre_delete
     @classmethod
     def _deleted_unlockanswer(cls, sender, instance, *args, **kwargs):
-        #TODO if the Unlock is being deleted it will cascade to the answers. In that case
+        # TODO if the Unlock is being deleted it will cascade to the answers. In that case
         # we don't actually need to send events for them.
         unlockanswer = instance
         unlock = unlockanswer.unlock
