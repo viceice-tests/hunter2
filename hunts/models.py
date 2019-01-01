@@ -95,10 +95,10 @@ class Puzzle(models.Model):
         raise RuntimeError("Could not find Puzzle pk when iterating episode's puzzle list")
 
     def started(self, team):
-        """Determine whether this puzzle should be available to teams yet.
+        """Determine whether this puzzle should be visible to teams yet.
 
-        Puzzles in linear episodes are always available if their episode has started.
-        Puzzles in parallel episodes become available at their individual start time.
+        Puzzles in linear episodes are always visible if their episode has started.
+        Puzzles in parallel episodes become visible at their individual start time.
         """
         episode = self.episode_set.get()
         return not episode.parallel or self.start_date < timezone.now()
