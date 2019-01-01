@@ -52,7 +52,10 @@ class Puzzle(models.Model):
     )
     soln_content = models.TextField(blank=True, default='', verbose_name="Solution content")
 
-    start_date = models.DateTimeField(blank=True, default=timezone.now)
+    start_date = models.DateTimeField(
+        blank=True, default=timezone.now,
+        help_text='Date/Time for puzzle to start. Only applies if the puzzle is part of a parallel episode.'
+    )
     headstart_granted = models.DurationField(
         default=timedelta(),
         help_text='How much headstart this puzzle gives to later episodes which gain headstart from this episode'
@@ -91,14 +94,18 @@ class Puzzle(models.Model):
 
         raise RuntimeError("Could not find Puzzle pk when iterating episode's puzzle list")
 
-    # Takes the team parameter for compatability with Episode.started()
-    # Will be useful if we add puzzle head starts later
     def started(self, team):
-        return self.start_date < timezone.now()
+        """Determine whether this puzzle should be visible to teams yet.
+
+        Puzzles in linear episodes are always visible if their episode has started.
+        Puzzles in parallel episodes become visible at their individual start time.
+        """
+        episode = self.episode_set.get()
+        return not episode.parallel or self.start_date < timezone.now()
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
-        episode = self.episode_set.get(event=team.at_event)
+        episode = self.episode_set.get()
         return episode.event.end_date < timezone.now() or \
             episode.unlocked_by(team) and episode._puzzle_unlocked_by(self, team)
 
@@ -559,7 +566,9 @@ class Episode(models.Model):
 
     def _puzzle_unlocked_by(self, puzzle, team):
         now = timezone.now()
-        started_puzzles = self.puzzles.filter(start_date__lt=now)
+        started_puzzles = self.puzzles.all()
+        if self.parallel:
+            started_puzzles = started_puzzles.filter(start_date__lt=now)
         if self.parallel or self.event.end_date < now:
             return puzzle in started_puzzles
         else:
@@ -571,7 +580,9 @@ class Episode(models.Model):
 
     def unlocked_puzzles(self, team):
         now = timezone.now()
-        started_puzzles = self.puzzles.filter(start_date__lt=now)
+        started_puzzles = self.puzzles.all()
+        if self.parallel:
+            started_puzzles = started_puzzles.filter(start_date__lt=now)
         if self.parallel or self.event.end_date < now:
             return started_puzzles
         else:
