@@ -15,6 +15,8 @@ var symbolsPathList = [
 	{path: "M -3,0 A 3,3 0 1 1 -3,0.0000001Z", strokeWidth: 2, fillOpacity: 0}, // O
 ];
 
+var hiddenOpacity = 0.1;
+
 // Fuck JS and its lack of a standard library
 var entityMap = {
 	'&': '&amp;',
@@ -30,6 +32,7 @@ var entityMap = {
 
 var globalData = null;
 var timeout = null;
+var invisteams = [];
 
 function escapeHtml (string) {
 	"use strict";
@@ -49,7 +52,9 @@ function getStats(force) {
 	$.get('stats_content/' + $('#episode').val(), {}, function (data) {
 		// Get new stats 5 seconds after we got last stats
 		timeout = setTimeout(getStats, 5000);
-		globalData = data; drawGraph();
+		globalData = data;
+		drawGraph();
+		restoreView(invisteams);
 	});
 }
 
@@ -477,10 +482,17 @@ function drawLegend(data, colours, symbols) {
 	// Transform each group to a position just right of the main graph, and down some for each line
 	var updateLegend = enterLegend.merge(legend);
 	// Hide/show graph stuff
-	var hiddenOpacity = 0.1;
 	updateLegend.on("click", function(d, i) {
 		if (d3.event.ctrlKey) {
 			var currentlyinvis = d3.select('[class~="invis"]' + teamClass(d)).empty();
+			if (currentlyinvis) {
+				i = invisteams.indexOf(d.team);
+				if (i > -1) {
+					invisteams.splice(i, 1);
+				}
+			} else {
+				invisteams.push(d.team);
+			}
 			d3.selectAll(teamClass(d))
 				.classed("invis", currentlyinvis)
 				.transition(200)
@@ -489,12 +501,14 @@ function drawLegend(data, colours, symbols) {
 			// If all others are invis and this isn't, unhide all. Otherwise hide all but this one.
 			var unhideAll = d3.selectAll('.hide-team:not([class~="invis"]):not(' + teamClass(d) + ')').empty();
 			if (unhideAll) {
+				invisteams = [];
 				d3.selectAll(".hide-team")
 					.classed("invis", false)
 					.transition(200)
 					.style("opacity", 1);
 			} else {
 				// The second transition overrides the first, so only the second selection has to be complicated
+				invisteams = [d.team];
 				d3.selectAll(".hide-team")
 					.classed("invis", true)
 					.transition(200)
@@ -593,6 +607,18 @@ function typeChanged(ev) {
 	}[graphType];
 	if (globalData) {
 		drawGraph();
+	}
+}
+
+function restoreView(invisteams) {
+	"use strict";
+	var nteams = invisteams.length;
+	for (var i=0; i<nteams; i++) {
+		var team = invisteams[i];
+		var teamclass = '.team-' + escapeHtml(team);
+		d3.selectAll(teamclass)
+			.classed("invis", invisteams)
+			.style("opacity", invisteams ? hiddenOpacity : 1);
 	}
 }
 
