@@ -290,6 +290,23 @@ function receivedNewHint(content) {
 	updateHints();
 }
 
+function receivedError(content) {
+	"use strict";
+	console.log(content.error);
+}
+
+var socketHandlers = {
+	'new_guess': receivedNewAnswer,
+	'old_guess': receivedNewAnswer,
+	'new_unlock': receivedNewUnlock,
+	'old_unlock': receivedNewUnlock,
+	'change_unlock': receivedChangeUnlock,
+	'delete_unlock': receivedDeleteUnlock,
+	'delete_unlockguess': receivedDeleteUnlockGuess,
+	'new_hint': receivedNewHint,
+	'error': receivedError
+}
+
 function openEventSocket(data) {
 	"use strict";
 	var ws_scheme = (window.location.protocol == "https:" ? "wss" : "ws") + '://';
@@ -297,23 +314,13 @@ function openEventSocket(data) {
 	var sock = new WebSocket(ws_scheme + window.location.host + '/ws' + window.location.pathname);
 	sock.onmessage = function(e) {
 		var data = JSON.parse(e.data);
-		if (data['type'] == 'new_guess' || data['type'] == 'old_guess') {
-			receivedNewAnswer(data['content']);
-		} else if (data['type'] == 'new_unlock' || data['type'] == 'old_unlock') {
-			receivedNewUnlock(data['content']);
-		} else if (data['type'] == 'change_unlock') {
-			receivedChangeUnlock(data['content']);
-		} else if (data['type'] == 'delete_unlock') {
-			receivedDeleteUnlock(data['content']);
-		} else if (data['type'] == 'delete_unlockguess') {
-			receivedDeleteUnlockGuess(data['content']);
-		} else if (data['type'] == 'new_hint') {
-			receivedNewHint(data['content']);
-		} else if (data['type'] == 'error') {
-			console.log(data['error']);
-		} else {
+
+		if (!(data.type in socketHandlers)) {
 			console.log('Invalid message type ' + data['type']);
 			console.log(data['content']);
+		} else {
+			var handler = socketHandlers[data.type];
+			handler(data.content);
 		}
 	}
 	sock.onerror = function(e) {

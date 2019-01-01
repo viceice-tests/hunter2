@@ -129,7 +129,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         super().send_json(content['content'])
 
     def _error(self, message):
-        self.send_json({'type': 'error', 'error': message})
+        self.send_json({'type': 'error', 'content': {'error': message}})
 
     def setup_hint_timers(self):
         self.hint_timers = {}
