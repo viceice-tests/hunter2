@@ -204,11 +204,11 @@ function updateUnlocks() {
 	var list = d3.select('#unlocks')
 		.selectAll('p')
 		.data(entries)
+		.enter()
+		.append('p')
 		.text(function (d, i) {
 			return d[1].guesses.join(', ') + ': ' + d[1].unlock;
 		})
-		.enter()
-		.append('p')
 		.exit()
 		.remove();
 }
@@ -261,6 +261,35 @@ function receivedDeleteUnlockGuess(content) {
 	updateUnlocks();
 }
 
+var hints = {};
+
+function updateHints() {
+	"use strict";
+	var entries = Object.entries(hints);
+	entries.sort(function (a, b) {
+		if (a[1].time < b[1].time) return -1;
+		else if(a[1].time > b[1].time) return 1;
+		return 0;
+	});
+	var list = d3.select('#hints')
+		.selectAll('p')
+		.data(entries)
+		.enter()
+		.append('p')
+		.text(function (d, i) {
+			return d[1].time + ': ' + d[1].hint;
+		})
+		.exit()
+		.remove();
+}
+
+
+function receivedNewHint(content) {
+	"use strict";
+	hints[content.hint_uid] = {'time': content.time, 'hint': content.hint};
+	updateHints();
+}
+
 function openEventSocket(data) {
 	"use strict";
 	var ws_scheme = (window.location.protocol == "https:" ? "wss" : "ws") + '://';
@@ -278,6 +307,8 @@ function openEventSocket(data) {
 			receivedDeleteUnlock(data['content']);
 		} else if (data['type'] == 'delete_unlockguess') {
 			receivedDeleteUnlockGuess(data['content']);
+		} else if (data['type'] == 'new_hint') {
+			receivedNewHint(data['content']);
 		} else if (data['type'] == 'error') {
 			console.log(data['error']);
 		} else {
