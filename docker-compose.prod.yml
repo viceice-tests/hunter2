@@ -32,7 +32,7 @@ services:
       - db
     environment:
       - DATA_SOURCE_NAME=postgresql://postgres@db:5432/?sslmode=disable
-      image: wrouesnel/postgres_exporter:v0.4.7
+    image: wrouesnel/postgres_exporter:v0.4.7
   metrics:
     image: registry.gitlab.com/hunter2.app/hunter2/metrics:${H2_IMAGE_VERSION:-latest}
     ports:
