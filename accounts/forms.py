@@ -20,9 +20,9 @@ from . import models
 
 UserForm = modelform_factory(User, fields=('email', ))
 
-UserProfileFormset = inlineformset_factory(User, models.UserProfile, fields=[], can_delete=False)
+UserInfoFormset = inlineformset_factory(User, models.UserInfo, fields=('picture', ), can_delete=False)
 
-AttendanceFormset = inlineformset_factory(models.UserProfile, Attendance, fields=('seat', ), extra=0, can_delete=False)
+AttendanceFormset = inlineformset_factory(models.UserInfo, Attendance, fields=('seat', ), extra=0, can_delete=False)
 
 
 class UserProfileForm(forms.ModelForm):

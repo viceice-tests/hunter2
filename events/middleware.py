@@ -16,7 +16,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.db import connection
 from django_tenants.middleware import TenantMainMiddleware
 
-from accounts.models import UserProfile
+from accounts.models import UserInfo, UserProfile
 
 
 class EventMiddleware(object):
@@ -28,9 +28,10 @@ class EventMiddleware(object):
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if request.user.is_authenticated and request.tenant is not None:
-            (user, _) = UserProfile.objects.get_or_create(user=request.user)
+            UserProfile.objects.get_or_create(user=request.user)
+            (user, _) = UserInfo.objects.get_or_create(user=request.user)
             user.attendance_set.get_or_create(
-                user=request.user.profile,
+                user_info=request.user.info,
                 event=request.tenant,
             )
         return
