@@ -11,12 +11,15 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import uuid
+
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from django.urls import reverse
+from django_prometheus.models import ExportModelOperationsMixin
 from sortedm2m.fields import SortedManyToManyField
 from datetime import timedelta
 from enumfields import EnumField, Enum
@@ -25,7 +28,6 @@ from . import runtimes
 import accounts
 import events
 import teams
-import uuid
 
 
 class Puzzle(models.Model):
@@ -290,7 +292,7 @@ class Answer(models.Model):
         )
 
 
-class Guess(models.Model):
+class Guess(ExportModelOperationsMixin('guess'), models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
     by_team = models.ForeignKey(teams.models.Team, on_delete=models.SET_NULL, null=True, blank=True)

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "bbc2812c340a5cd1e5c91edf2b23627c83ba36edbe561c7b1666eb898e6dbe46"
+            "sha256": "fe661519126d00e9eb86901a8e2e1c846fd31d39ceecdd191fc8b469cc7f2a26"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -224,6 +224,14 @@
             "index": "pypi",
             "version": "==3.1.3"
         },
+        "django-prometheus": {
+            "hashes": [
+                "sha256:571d89a13e2547e1c3d19901f155bde8e101323fbcb0439363d670bc61c8c541",
+                "sha256:e8da2eb91cb20cfe0b8130305d34f3503766b7a08a244ce1031c36136beeb7a5"
+            ],
+            "index": "pypi",
+            "version": "==1.0.15"
+        },
         "django-sendfile": {
             "hashes": [
                 "sha256:f3065a55e602d002af327fe785449ff0a619b6f46ad2cb84730ccb49b31a73ca"
@@ -396,6 +404,12 @@
             ],
             "index": "pypi",
             "version": "==0.6.1"
+        },
+        "prometheus-client": {
+            "hashes": [
+                "sha256:e8c11ff5ca53de6c3d91e1510500611cafd1d247a937ec6c588a0a7cc3bef93c"
+            ],
+            "version": "==0.5.0"
         },
         "psycopg2": {
             "hashes": [

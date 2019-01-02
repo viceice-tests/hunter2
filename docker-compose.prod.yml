@@ -1,14 +1,6 @@
 version: '2.1'
 
 services:
-  db:
-    image: postgres:9.6.10-alpine
-    volumes:
-      - db:/var/lib/postgresql/data
-  redis:
-    image: redis:4.0.11-alpine3.8
-    volumes:
-      - redis:/data
   app:
     depends_on:
       - db
@@ -31,6 +23,32 @@ services:
       - uploads_events:/uploads/events
       - uploads_puzzles:/uploads/puzzles
       - uploads_solutions:/uploads/solutions
+  db:
+    image: postgres:9.6.11-alpine
+    volumes:
+      - db:/var/lib/postgresql/data
+  db_exporter:
+    depends_on:
+      - db
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres@db:5432/?sslmode=disable
+      image: wrouesnel/postgres_exporter:v0.4.7
+  metrics:
+    image: registry.gitlab.com/hunter2.app/hunter2/metrics:${H2_IMAGE_VERSION:-latest}
+    ports:
+      - 127.0.0.1:9090:9090
+    volumes:
+      - metrics:/prometheus
+  redis:
+    image: redis:5.0.3-alpine3.8
+    volumes:
+      - redis:/data
+  redis_exporter:
+    depends_on:
+      - redis
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    image: oliver006/redis_exporter:v0.25.0
   web:
     depends_on:
       - app
@@ -45,6 +63,7 @@ services:
 volumes:
   db: {}
   config: {}
+  metrics: {}
   redis: {}
   uploads_events: {}
   uploads_puzzles: {}

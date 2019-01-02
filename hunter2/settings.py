@@ -119,6 +119,7 @@ SHARED_APPS = (
     'django.contrib.staticfiles',
     'django_extensions',
     'django_fullclean',
+    'django_prometheus',
     'django_tenants',
     'nested_admin',
     'raven.contrib.django.raven_compat',
@@ -170,6 +171,7 @@ MEDIA_ROOT = '/uploads/'
 MEDIA_URL = '/media/'
 
 MIDDLEWARE = (
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'events.middleware.TenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
@@ -183,6 +185,7 @@ MIDDLEWARE = (
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 )
 if USE_SILK:  # nocover
     MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
@@ -285,3 +288,5 @@ if USE_SILK:  # nocover
     SILKY_PYTHON_PROFILER_BINARY = True
     # Well, the following path is rubbish but I cba doing it properly for now
     SILKY_PYTHON_PROFILER_RESULT_PATH = '/uploads/events/'
+
+PROMETHEUS_EXPORT_MIGRATIONS = False
