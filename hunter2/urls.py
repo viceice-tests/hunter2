@@ -41,7 +41,7 @@ urlpatterns = [
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
     + accounts_patterns \
     + hunts_patterns \
-    + teams_patterns \
+    + teams_patterns
 
 if settings.DEBUG:
 
