@@ -197,8 +197,8 @@ function updateUnlocks() {
 	"use strict";
 	var entries = Object.entries(unlocks);
 	entries.sort(function (a, b) {
-		if (a.unlock < b.unlock) return -1;
-		else if(a.unlock > b.unlock) return 1;
+		if (a[1].unlock < b[1].unlock) return -1;
+		else if(a[1].unlock > b[1].unlock) return 1;
 		return 0;
 	});
 	var list = d3.select('#unlocks')
