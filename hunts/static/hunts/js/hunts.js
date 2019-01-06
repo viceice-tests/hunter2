@@ -203,13 +203,14 @@ function updateUnlocks() {
 	});
 	var list = d3.select('#unlocks')
 		.selectAll('p')
-		.data(entries)
-		.enter()
+		.data(entries);
+	list.enter()
 		.append('p')
+		.merge(list)
 		.text(function (d, i) {
 			return d[1].guesses.join(', ') + ': ' + d[1].unlock;
-		})
-		.exit()
+		});
+	list.exit()
 		.remove();
 }
 
@@ -240,7 +241,7 @@ function receivedDeleteUnlock(content) {
 		console.log('WebSocket deleted invalid unlock: ' + content.unlock_uid);
 		return;
 	}
-	unlocks.pop(content.unlock_uid);
+	delete unlocks[content.unlock_uid];
 	updateUnlocks();
 }
 
@@ -251,12 +252,14 @@ function receivedDeleteUnlockGuess(content) {
 		return;
 	}
 	if (!(unlocks[content.unlock_uid].guesses.includes(content.guess))) {
-		console.log('WebSocket deleted invalid guess: ' + content.guess);
+		console.log('WebSocket deleted invalid guess (can happen if team made identical guesses): ' + content.guess);
 		return;
 	}
-	unlocks[content.unlock_uid].guesses.pop(content.guess);
+	var unlockguesses = unlocks[content.unlock_uid].guesses;
+	var i = unlockguesses.indexOf(content.guess);
+	unlockguesses.splice(i, 1);
 	if (unlocks[content.unlock_uid].guesses.length == 0) {
-		unlocks.pop(content.unlock_uid);
+		delete unlocks[content.unlock_uid];
 	}
 	updateUnlocks();
 }
@@ -273,13 +276,14 @@ function updateHints() {
 	});
 	var list = d3.select('#hints')
 		.selectAll('p')
-		.data(entries)
-		.enter()
+		.data(entries);
+	list.enter()
 		.append('p')
+		.merge(list)
 		.text(function (d, i) {
 			return d[1].time + ': ' + d[1].hint;
-		})
-		.exit()
+		});
+	list.exit()
 		.remove();
 }
 
@@ -327,7 +331,7 @@ function openEventSocket(data) {
 		message('Websocket is broken. You will not receive new information without refreshing the page.');
 	}
 	sock.onopen = function(e) {
-		//sock.send(JSON.stringify({'type': 'unlocks-plz', 'from': 'all'}));
+		sock.send(JSON.stringify({'type': 'unlocks-plz', 'from': 'all'}));
 		//sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}));
 	};
 }
