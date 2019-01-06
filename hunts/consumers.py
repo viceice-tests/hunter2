@@ -19,15 +19,17 @@ from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import pre_save, post_save, pre_delete
-from django.utils import timezone
+from django.db import transaction
+from django.db.models.signals import pre_save, pre_delete
 
+from teams.models import Team
 from .models import Guess
 from .utils import encode_uuid
 from . import models, utils
 
 
 def activate_tenant(f):
+    """Decorator for use on methods which must be run with an active tenant, but which are not run through tenant middleware"""
     def wrapper(self, *args, **kwargs):
         try:
             self.scope['tenant'].activate()
@@ -73,13 +75,38 @@ class TeamMixin:
         return super().websocket_connect(message)
 
 
+# TODO: we need a delete version of this
+def pre_save_handler(func):
+    """The purpose of this decorator is to connect signal handlers to consumer class methods.
+
+    Before the normal signature of the signal handler, func is passed the class (as a normal classmethod) and "old",
+    the instance in the database before save was called (or None). func will then be called after the current
+    transaction has been successfully committed, ensuring that the instance argument is stored in the database and
+    accessible via database connections in other threads, and that data is ready to be sent to clients."""
+    def inner(cls, sender, instance, *args, **kwargs):
+        if instance.pk:
+            old = type(instance).objects.get(pk=instance.pk)
+        else:
+            old = None
+
+        def after_commit():
+            func(cls, old, sender, instance, *args, **kwargs)
+
+        transaction.on_commit(after_commit)
+
+    return classmethod(inner)
+
+
 # It is important this class uses a synchronous Consumer, because each one of these consumers runs in a
 # different thread. Asynchronous consumers can suspend while another consumer in the same thread runs.
 # This would break, because the active tenant may need to be different between each consumer.
 class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     @classmethod
-    def _group_name(cls, puzzle, team):
-        return f'puzzle-{puzzle.id}.events.team-{team.id}'
+    def _group_name(cls, puzzle, team=None):
+        if team:
+            return f'puzzle-{puzzle.id}.events.team-{team.id}'
+        else:
+            return f'puzzle-{puzzle.id}.events'
 
     @classmethod
     def _send_message(cls, puzzle, team, message):
@@ -94,12 +121,16 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(
             self._group_name(self.puzzle, self.team), self.channel_name
         )
+        async_to_sync(self.channel_layer.group_add)(
+            self._group_name(self.puzzle), self.channel_name
+        )
         self.setup_hint_timers()
         self.accept()
 
     def disconnect(self, close_code):
         for t in self.hint_timers.values():
             t.cancel()
+        # TODO this is broken for some reason??
         async_to_sync(self.channel_layer.group_discard)(
             self._group_name(self.puzzle, self.scope['team']), self.channel_name
         )
@@ -133,16 +164,23 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
 
     def setup_hint_timers(self):
         self.hint_timers = {}
-        data = models.TeamPuzzleData.objects.get(puzzle=self.puzzle, team=self.team)
-        if data.start_time is None:
-            return
-        elapsed = timezone.now() - data.start_time
         for hint in self.puzzle.hint_set.all():
-            delay = hint.time - elapsed
-            if delay.total_seconds() > 0:
-                self.schedule_hint(hint, delay)
+            self.schedule_hint(hint)
 
-    def schedule_hint(self, hint, delay):
+    def schedule_hint(self, hint=None, content=None):
+        if hint is None:
+            try:
+                hint = models.Hint.objects.get(id=content['hint_uid'])
+            except (TypeError, KeyError):
+                raise ValueError('Cannot schedule a hint without either a hint instance or a dictionary with `hint_uid` key.')
+        try:
+            self.hint_timers[hint.id].cancel()
+        except KeyError:
+            pass
+
+        delay = hint.delay_for_team(self.team)
+        if delay is None or delay.total_seconds() < 0:
+            return
         # Because this runs in a new thread, we must wrap send_new_hint with activate_tenant
         t = Timer(delay.total_seconds(), activate_tenant(self.send_new_hint), args=(self, self.team, hint))
         self.hint_timers[hint.id] = t
@@ -207,27 +245,48 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             }
         })
 
-    def send_new_hint(self, team, hint, **kwargs):
-        del self.hint_timers[hint.id]
-
-        self.send_json({
+    @classmethod
+    def _new_hint_json(self, hint):
+        return {
             'type': 'new_hint',
             'content': {
                 'hint': hint.text,
                 'hint_uid': encode_uuid(hint.id),
                 'time': str(hint.time)
             }
+        }
+
+    @classmethod
+    def send_new_hint_to_team(cls, team, hint):
+        cls._send_message(hint.puzzle, team, cls._new_hint_json(hint))
+
+    def send_new_hint(self, team, hint, **kwargs):
+        # This can be called by the scheduled timer, or in response to the Hint object changing, which will mean there
+        # is no timer set.
+        try:
+            self.hint_timers[hint.id].cancel()
+            del self.hint_timers[hint.id]
+        except KeyError:
+            pass
+
+        self.send_json(self._new_hint_json(hint))
+
+    @classmethod
+    def send_delete_hint(cls, team, hint):
+        cls._send_message(hint.puzzle, team, {
+            'type': 'delete_hint',
+            'content': {
+                'hint_uid': encode_uuid(hint.id)
+            }
         })
 
-    # handler: Guess.post_save
-    @classmethod
-    def _new_guess(cls, sender, instance, created, raw, *args, **kwargs):
+    # handler: Guess.pre_save
+    @pre_save_handler
+    def _new_guess(cls, old, sender, guess, raw, *args, **kwargs):
         # Do not trigger unless this was a newly created guess.
         # Note this means an admin modifying a guess will not trigger anything.
-        if not created or raw:
+        if old or raw:
             return
-
-        guess = instance
 
         # required info:
         # guess, correctness, new unlocks, timestamp, whodunnit
@@ -289,7 +348,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
 
             correct_guesses = set(correct_guesses)
             for g in correct_guesses:
-                unlocks[g].append(u.text)
+                unlocks[g].append(u)
 
         # TODO: something for sorting unlocks? The View sorts them as in the admin, but this is not alterable,
         # even though it is often meaningful. Currently JS sorts them alphabetically.
@@ -300,14 +359,14 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     'type': 'old_unlock',
                     'content': {
                         'guess': g.guess,
-                        'unlock': u,
+                        'unlock': u.text,
                         'unlock_uid': encode_uuid(u.id)
                     }
                 })
 
     # handler: Unlockanswer.pre_save
-    @classmethod
-    def _new_unlockanswer(cls, sender, instance, raw, *args, **kwargs):
+    @pre_save_handler
+    def _new_unlockanswer(cls, old_unlockanswer, sender, instance, raw, *args, **kwargs):
         if raw:
             return
 
@@ -323,8 +382,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         ).select_related(
             'by_team'
         )
-        if unlockanswer.id:
-            old_unlockanswer = models.UnlockAnswer.objects.filter(id=unlockanswer.id).select_related('unlock').get()
+        if old_unlockanswer:
             old_unlock = old_unlockanswer.unlock
             if old_unlock != unlock:
                 # TODO: do we need to handle when some muppet moved an unlockanswer manually to another unlock?
@@ -340,26 +398,25 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 cls.send_new_unlock(g, unlock)
 
     # handler: Unlock.pre_save
-    @classmethod
-    def _changed_unlock(cls, sender, instance, raw, *args, **kwargs):
+    @pre_save_handler
+    def _changed_unlock(cls, old, sender, instance, raw, *args, **kwargs):
         # TODO use this for hints too
         if raw:
             return
-        if not instance.id:
+        if not old:
             # New unlocks are boring; we will then notify via the unlockanswer hook
             return
+
         unlock = instance
-        old = models.Unlock.objects.filter(id=unlock.id).select_related('puzzle').get()
-
         puzzle = unlock.puzzle
-        # This could conceivably be different if someone adds an unlock to the wrong puzzle! Probably never going
-        # to happen. Better safe than sorry.
-
         guesses = models.Guess.objects.filter(
             for_puzzle=puzzle
         ).select_related(
             'by_team'
         )
+
+        # This could conceivably be different if someone adds an unlock to the wrong puzzle! Probably never going
+        # to happen. Better safe than sorry.
         if puzzle == old.puzzle:
             done_teams = []
             for g in guesses:
@@ -377,6 +434,27 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                         cls.send_delete_unlock(unlock, g)
                     done_teams.append(g.by_team)
                     cls.send_new_unlock(g, old)
+
+    # handler: Hint.pre_save
+    @pre_save_handler
+    def _new_hint(cls, old, sender, instance, raw, *args, **kwargs):
+        if raw:
+            return
+        hint = instance
+        if hint.puzzle != old.puzzle:
+            raise NotImplemented
+
+        for team in Team.objects.all():
+            data = models.PuzzleData(hint.puzzle, team)
+            if hint.unlocked_by(team, data):
+                # This will kill the old timer
+                cls.send_new_hint_to_team(team, hint)
+                # hehe old-timer
+            else:
+                if old and old.unlocked_by(team, data):
+                    cls.send_delete_hint(team, hint)
+                layer = get_channel_layer()
+                async_to_sync(layer.group_send)(cls._group_name(hint.puzzle, team), {'type': 'schedule_hint', 'hint_uid': str(hint.id)})
 
     # handler: UnlockAnswer.pre_delete
     @classmethod
@@ -426,9 +504,10 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 cls.send_delete_unlock(unlock, g)
 
 
-post_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
+pre_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
 pre_save.connect(PuzzleEventWebsocket._new_unlockanswer, sender=models.UnlockAnswer)
 pre_save.connect(PuzzleEventWebsocket._changed_unlock, sender=models.Unlock)
+pre_save.connect(PuzzleEventWebsocket._new_hint, sender=models.Hint)
 
 pre_delete.connect(PuzzleEventWebsocket._deleted_unlockanswer, sender=models.UnlockAnswer)
 pre_delete.connect(PuzzleEventWebsocket._deleted_unlock, sender=models.Unlock)

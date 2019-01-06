@@ -294,6 +294,16 @@ function receivedNewHint(content) {
 	updateHints();
 }
 
+function receivedDeleteHint(content) {
+	"use strict";
+	if (!(content.hint_uid in hints)) {
+		console.log('WebSocket deleted invalid hint: ' + content.hint_uid);
+		return;
+	}
+	delete hints[content.hint_uid];
+	updateHints();
+}
+
 function receivedError(content) {
 	"use strict";
 	console.log(content.error);
@@ -308,6 +318,7 @@ var socketHandlers = {
 	'delete_unlock': receivedDeleteUnlock,
 	'delete_unlockguess': receivedDeleteUnlockGuess,
 	'new_hint': receivedNewHint,
+	'delete_hint': receivedDeleteHint,
 	'error': receivedError
 }
 
@@ -319,6 +330,7 @@ function openEventSocket(data) {
 	sock.onmessage = function(e) {
 		var data = JSON.parse(e.data);
 
+		//console.log(data)
 		if (!(data.type in socketHandlers)) {
 			console.log('Invalid message type ' + data['type']);
 			console.log(data['content']);
