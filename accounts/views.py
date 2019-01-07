@@ -20,7 +20,9 @@ from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.views import View
 from django.views.generic.detail import DetailView
+from django_tenants.utils import tenant_context
 
+from teams.models import Team
 from . import forms, models
 
 
@@ -45,9 +47,25 @@ class ProfileView(DetailView):
 
     def get_context_data(self, object):
         context = super().get_context_data(object=object)
-        profile = object.user.profile
-        context['participations'] = profile.teams.filter(is_admin=False).select_related('at_event')
-        context['administrations'] = profile.teams.filter(is_admin=True).select_related('at_event')
+        context['participations'] = list()
+        context['administrations'] = list()
+        for attendance in object.attendance_set.all().order_by('-event__end_date').select_related('event'):
+            event = attendance.event
+            with tenant_context(event):
+                try:
+                    team = Team.objects.filter(members=object.user.profile).get()
+                    if team.is_admin:
+                        context['administrations'] += [{
+                            "event": attendance.event.name,
+                            "team": team.name,
+                        }]
+                    else:
+                        context['participations'] += [{
+                            "event": attendance.event.name,
+                            "team": team.name,
+                        }]
+                except Team.DoesNotExist:
+                    pass
         return context
 
 
