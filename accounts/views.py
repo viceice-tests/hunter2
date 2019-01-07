@@ -55,15 +55,15 @@ class ProfileView(DetailView):
                 try:
                     team = Team.objects.filter(members=object.user.profile).get()
                     if team.is_admin:
-                        context['administrations'] += [{
+                        context['administrations'].append({
                             "event": attendance.event.name,
                             "team": team.name,
-                        }]
+                        })
                     else:
-                        context['participations'] += [{
+                        context['participations'].append({
                             "event": attendance.event.name,
                             "team": team.name,
-                        }]
+                        })
                 except Team.DoesNotExist:
                     pass
         return context
