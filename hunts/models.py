@@ -197,7 +197,7 @@ class Clue(models.Model):
 
 
 class Hint(Clue):
-    time = models.DurationField()
+    time = models.DurationField(help_text='Time after anyone on the team first loads the puzzle to display this hint')
 
     def __str__(self):
         return f'Hint unlocked after {self.time}'
