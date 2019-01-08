@@ -234,7 +234,7 @@ class UnlockAnswer(models.Model):
         if name == 'unlock':
             try:
                 current_value = getattr(self, name, None)
-            except:
+            except UnlockAnswer.DoesNotExist:
                 current_value = None
             if current_value is not None and current_value != value:
                 raise ValueError('UnlockAnswer.unlock is immutable and cannot be changed')
