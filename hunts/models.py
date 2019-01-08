@@ -293,6 +293,7 @@ class Answer(models.Model):
 
 
 class Guess(ExportModelOperationsMixin('guess'), models.Model):
+    id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
     by_team = models.ForeignKey(teams.models.Team, on_delete=models.SET_NULL, null=True, blank=True)
