@@ -18,7 +18,7 @@ from django.db import connection
 from faker import Faker
 from faker.providers import BaseProvider
 
-from accounts.factories import UserProfileFactory
+from accounts.factories import UserInfoFactory
 from .models import Event
 
 
@@ -110,8 +110,8 @@ class EventFileFactory(factory.django.DjangoModelFactory):
 class AttendanceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'events.Attendance'
-        django_get_or_create = ('event', 'user')
+        django_get_or_create = ('event', 'user_info')
 
-    user = factory.SubFactory(UserProfileFactory)
+    user_info = factory.SubFactory(UserInfoFactory)
     event = factory.SubFactory(EventFactory)
     seat = factory.Faker('bothify', text='??##', letters='ABCDEFGHJKLMNPQRSTUVWXYZ')

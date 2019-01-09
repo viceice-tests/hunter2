@@ -66,7 +66,7 @@ class EventFile(models.Model):
 
 
 class Attendance(models.Model):
-    user = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
+    user_info = models.ForeignKey(accounts.models.UserInfo, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     seat = models.CharField(
         max_length=12,
@@ -76,4 +76,4 @@ class Attendance(models.Model):
     )
 
     class Meta:
-        unique_together = (('event', 'user'), )
+        unique_together = (('event', 'user_info'), )

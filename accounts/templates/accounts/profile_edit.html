@@ -4,7 +4,7 @@
 <h1>Account</h1>
 <h2>Update your details</h2>
 {% spaceless %}
-<form action="." method="post">
+<form action="" method="post">
 	{% csrf_token %}
 	{{ user_form.as_p }}
 	{{ profile_formset.as_p }}

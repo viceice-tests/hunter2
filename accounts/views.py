@@ -19,7 +19,10 @@ from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.views import View
+from django.views.generic.detail import DetailView
+from django_tenants.utils import tenant_context
 
+from teams.models import Team
 from . import forms, models
 
 
@@ -38,13 +41,39 @@ class UserProfileAutoComplete(LoginRequiredMixin, autocomplete.Select2QuerySetVi
         return qs
 
 
+class ProfileView(DetailView):
+    model = models.UserInfo
+    template_name = 'accounts/profile.html'
+
+    def get_context_data(self, object):
+        context = super().get_context_data(object=object)
+        context['participations'] = list()
+        context['administrations'] = list()
+        for attendance in object.attendance_set.all().order_by('-event__end_date').select_related('event'):
+            event = attendance.event
+            with tenant_context(event):
+                try:
+                    team = Team.objects.filter(members=object.user.profile).get()
+                    attendance_info = {
+                        "event": attendance.event.name,
+                        "team": team.name,
+                    }
+                    if team.is_admin:
+                        context['administrations'].append(attendance_info)
+                    else:
+                        context['participations'].append(attendance_info)
+                except Team.DoesNotExist:
+                    pass
+        return context
+
+
 class EditProfileView(LoginRequiredMixin, View):
 
     def get(self, request):
         user_form = forms.UserForm(instance=request.user)
         password_form = ChangePasswordForm(user=request.user) if request.user.has_usable_password() else SetPasswordForm(user=request.user)
-        profile_formset = forms.UserProfileFormset(instance=request.user)
-        attendance_formset = forms.AttendanceFormset(instance=request.user.profile, queryset=request.user.profile.attendance_set.filter(event=request.tenant))
+        profile_formset = forms.UserInfoFormset(instance=request.user)
+        attendance_formset = forms.AttendanceFormset(instance=request.user.info, queryset=request.user.info.attendance_set.filter(event=request.tenant))
         steam_account = request.user.socialaccount_set.first()  # This condition breaks down if we support multiple social accounts.
         if steam_account:
             steam_account = steam_account.uid.replace('openid/id', 'profiles')  # This is heavily steam specific
@@ -57,7 +86,7 @@ class EditProfileView(LoginRequiredMixin, View):
         }
         return TemplateResponse(
             request,
-            'teams/profile.html',
+            'accounts/profile_edit.html',
             context=context,
         )
 
@@ -65,7 +94,7 @@ class EditProfileView(LoginRequiredMixin, View):
         user_form = forms.UserForm(request.POST, instance=request.user)
         if user_form.is_valid():
             created_user = user_form.save(commit=False)
-            profile_formset = forms.UserProfileFormset(request.POST, instance=created_user)
+            profile_formset = forms.UserInfoFormset(request.POST, instance=created_user)
             if profile_formset.is_valid():
                 created_profile = profile_formset[0].save(commit=False)
                 attendance_formset = forms.AttendanceFormset(request.POST, instance=created_profile)
@@ -74,3 +103,4 @@ class EditProfileView(LoginRequiredMixin, View):
                     profile_formset.save()
                     attendance_formset.save()
                     return HttpResponseRedirect(reverse('edit_profile'))
+        return self.get(request)
