@@ -13,6 +13,7 @@
 
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.utils import timezone
 from django_tenants.models import TenantMixin, DomainMixin
 
 from .fields import SingleTrueBooleanField
@@ -48,6 +49,9 @@ class Event(TenantMixin):
 
     def __str__(self):
         return self.name
+
+    def is_over(self):
+        return self.end_date < timezone.now()
 
     def save(self, verbosity=0, *args, **kwargs):
         super().save(verbosity, *args, **kwargs)

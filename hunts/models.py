@@ -10,10 +10,10 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import itertools
+import secrets
 import uuid
 from datetime import timedelta
-import secrets
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -29,6 +29,7 @@ from seal.models import SealableModel
 import accounts
 import events
 import teams
+from teams.models import TeamRole
 from . import utils
 from .runtimes import Runtime
 
@@ -60,6 +61,9 @@ class Episode(models.Model):
 
     def get_absolute_url(self):
         return reverse('event') + '#episode-{}'.format(self.get_relative_id())
+
+    def all_sequels(self):
+        return set(itertools.chain(self.sequels.all(), *[e.all_sequels() for e in self.sequels.all()]))
 
     def follows(self, episode):
         """Does this episode follow the provied episode by one or more prequel relationships?"""
@@ -336,6 +340,7 @@ class Puzzle(OrderedModel):
         # Select related to avoid a load of queries for answers and teams
         correct_guesses = Guess.objects.filter(
             for_puzzle=self,
+            by_team__role=TeamRole.PLAYER,
         ).order_by(
             'given'
         ).select_related('correct_for', 'by_team')

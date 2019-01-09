@@ -18,6 +18,7 @@ module.exports = {
     hunts_about:             'hunts/scss/about.scss',
     hunts_event:             'hunts/js/event.js',
     hunts_puzzle:            'hunts/js/puzzle.js',
+    hunts_stats:             'hunts/js/stats.js',
     teams_manage:            'teams/js/manage.js',
   },
 

@@ -50,9 +50,10 @@ episodepatterns = [
 eventpatterns = [
     path('', views.player.EventIndex.as_view(), name='event'),
     path('about', views.player.AboutView.as_view(), name='about'),
-    path('rules', views.player.RulesView.as_view(), name='rules'),
-    path('help', views.player.HelpView.as_view(), name='help'),
     path('examples', views.player.ExamplesView.as_view(), name='examples'),
+    path('help', views.player.HelpView.as_view(), name='help'),
+    path('rules', views.player.RulesView.as_view(), name='rules'),
+    path('stats', views.player.StatsView.as_view(), name='player_stats'),
     path('ep/<int:episode_number>/', include(episodepatterns)),
     path('puzzle/<puzzle_url_id>/', views.player.AbsolutePuzzleView.as_view(), name='puzzle_permalink'),
     path('puzzle/<puzzle_url_id>/<path:path>', views.player.AbsolutePuzzleView.as_view()),
