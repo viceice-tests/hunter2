@@ -54,16 +54,14 @@ class ProfileView(DetailView):
             with tenant_context(event):
                 try:
                     team = Team.objects.filter(members=object.user.profile).get()
+                    attendance_info = {
+                        "event": attendance.event.name,
+                        "team": team.name,
+                    }
                     if team.is_admin:
-                        context['administrations'].append({
-                            "event": attendance.event.name,
-                            "team": team.name,
-                        })
+                        context['administrations'].append(attendance_info)
                     else:
-                        context['participations'].append({
-                            "event": attendance.event.name,
-                            "team": team.name,
-                        })
+                        context['participations'].append(attendance_info)
                 except Team.DoesNotExist:
                     pass
         return context
