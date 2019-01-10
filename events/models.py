@@ -59,7 +59,10 @@ def event_file_path(instance, filename):
 class EventFile(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     slug = models.SlugField()
-    file = models.FileField(upload_to=event_file_path)
+    file = models.FileField(
+        upload_to=event_file_path,
+        help_text='The extension of the uploaded file will determine the Content-Type of the file when served',
+    )
 
     class Meta:
         unique_together = (('event', 'slug'), )
