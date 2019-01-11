@@ -140,7 +140,6 @@ class GuessAdmin(admin.ModelAdmin):
 @admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdmin):
     change_form_template = 'hunts/admin/change_puzzle.html'
-    ordering = ('episode__start_date', 'start_date', 'pk')
     inlines = [
         PuzzleFileInline,
         SolutionFileInline,
@@ -199,11 +198,25 @@ class PuzzleAdmin(NestedModelAdmin):
         qs = super().get_queryset(request)
         # TODO prefetch_related?
         # Optimisation: add the counts so that we don't have to perform extra queries for them
-        return qs.annotate(
+        through = models.Puzzle.episode_set.through
+        qs = qs.annotate(
             answer_count=Count('answer', distinct=True),
             hint_num=Count('hint', distinct=True),
             unlock_count=Count('unlock', distinct=True)
+        ).extra(  # This screams that we've outgrown the ManyToManyField but re-implementing the ordering is non-trivial
+            tables=(
+                through._meta.db_table,
+            ),
+            where=(
+                f'{through._meta.db_table}.puzzle_id = {models.Puzzle._meta.db_table}.id',
+            ),
+            order_by=(
+                'episode__start_date',
+                f'{through._meta.db_table}.{through._sort_field_name}',
+            ),
         )
+        print(qs.query)
+        return qs
 
     # The following three methods do nothing if popup is True. This removes everything else from
     # the form except the inline.
@@ -255,10 +268,25 @@ class PuzzleAdmin(NestedModelAdmin):
 
 @admin.register(models.Episode)
 class EpisodeAdmin(NestedModelAdmin):
+    class Form(forms.ModelForm):
+        class Meta:
+            model = models.Episode
+            exclude = ['event']
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields['prequels'].queryset = models.Episode.objects.exclude(id__exact=self.instance.id)
+            self.fields['headstart_from'].queryset = models.Episode.objects.exclude(id__exact=self.instance.id)
+
+    form = Form
     ordering = ['start_date', 'pk']
     list_display = ('event_change', 'name', 'start_date', 'check_flavour', 'num_puzzles', 'total_headstart')
     list_editable = ('start_date',)
     list_display_links = ('name',)
+
+    def save_model(self, request, obj, form, change):
+        obj.event = request.tenant
+        super().save_model(request, obj, form, change)
 
     def view_on_site(self, obj):
         return obj.get_absolute_url()

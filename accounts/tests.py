@@ -13,10 +13,16 @@
 
 from django.test import TestCase
 
-from accounts.factories import UserProfileFactory
+from accounts.factories import UserInfoFactory, UserProfileFactory, UserFactory
 
 
 class FactoryTests(TestCase):
 
+    def test_user_info_factory_default_construction(self):
+        UserInfoFactory.create()
+
     def test_user_profile_factory_default_construction(self):
         UserProfileFactory.create()
+
+    def test_user_factory_default_construction(self):
+        UserFactory.create()

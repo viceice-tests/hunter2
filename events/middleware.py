@@ -19,7 +19,7 @@ from django_tenants.middleware import TenantMainMiddleware
 
 from channels.middleware import BaseMiddleware
 
-from accounts.models import UserProfile
+from accounts.models import UserInfo, UserProfile
 from .models import Domain
 
 
@@ -32,9 +32,10 @@ class EventMiddleware(object):
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if request.user.is_authenticated and request.tenant is not None:
-            (user, _) = UserProfile.objects.get_or_create(user=request.user)
+            UserProfile.objects.get_or_create(user=request.user)
+            (user, _) = UserInfo.objects.get_or_create(user=request.user)
             user.attendance_set.get_or_create(
-                user=request.user.profile,
+                user_info=request.user.info,
                 event=request.tenant,
             )
         return
@@ -42,11 +43,9 @@ class EventMiddleware(object):
 
 class TenantMiddleware(TenantMainMiddleware):
     def process_request(self, request):
-        hostname = self.hostname_from_request(request)
-
-        # This is our addition to this method to support a "default" site with no tenant object.
-        site = get_current_site(request)
-        if hostname == site.domain:
+        try:
+            super().process_request(request)
+        except self.TENANT_NOT_FOUND_EXCEPTION:
             connection.set_schema_to_public()
             request.tenant = None
             if hasattr(settings, 'PUBLIC_SCHEMA_URLCONF'):
