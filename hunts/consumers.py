@@ -211,8 +211,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 'guess': guess.guess,
                 'correct': guess.correct_for is not None,
                 'by': guess.by.username,
-                # TODO: is there any real reason to send unlocks with the guess?!
-                'unlocks': unlocks
             }
         })
 
@@ -306,17 +304,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team, given__gt=start)
 
         # TODO can this be unified with _new_guess?
-        all_unlocks = models.Unlock.objects.filter(puzzle=self.puzzle)
-        unlocks = defaultdict(list)
-        for u in all_unlocks:
-            correct_guesses = u.unlocked_by(self.team)
-            if not correct_guesses:
-                continue
-
-            correct_guesses = set(correct_guesses)
-            for g in correct_guesses:
-                unlocks[g].append(u.text)
-
         for g in guesses:
             # TODO work out what to do with protocol that can be sent straight back out on
             # the same websocket. Note this is currently sharing the protocol of new_guess.
@@ -328,7 +315,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     'guess': g.guess,
                     'correct': g.correct_for is not None,
                     'by': g.by.username,
-                    'unlocks': unlocks[g]
                 }
             })
 

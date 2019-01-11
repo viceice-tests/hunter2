@@ -186,7 +186,7 @@ function receivedNewAnswer(content) {
 	"use strict";
 	if (!guesses.includes(content['timestamp'])) {
 		var guesses_table = $('#guesses');
-		guesses_table.append('<tr><td>' + content['by'] + '</td><td>' + content['guess'] + '</td><td>' + content['correct'] + '</td><td>' + content['unlocks'] + '</td></tr>');
+		guesses_table.append('<tr><td>' + content['by'] + '</td><td>' + content['guess'] + '</td><td>' + content['correct'] + '</td></tr>');
 		guesses.push(content['timestamp']);
 	}
 }
