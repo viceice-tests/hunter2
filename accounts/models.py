@@ -11,6 +11,9 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import uuid
+import warnings
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -35,7 +38,28 @@ class UserProfile(models.Model):
         return self.teams.filter(at_event=event).exclude(name=None).exists()
 
     def attendance_at(self, event):
-        return self.attendance_set.get(event=event)
+        warnings.warn('Attendance has been moved to UserInfo model', DeprecationWarning)
+        return self.user.info.attendance_set.get(event=event)
 
     def team_at(self, event):
         return self.teams.get(at_event=event)
+
+
+# Today this is a new model because it needs an unenumerable key since it will be used in a URL.
+# Later we will migrate references to users to use this model too and deprecate UserProfile
+class UserInfo(models.Model):
+    class Manager(models.Manager):
+        def get_queryset(self):
+            return super().get_queryset().select_related('user')
+
+    id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='info')
+    picture = models.URLField(help_text='Paste a URL to an image for your profile picture')
+    objects = Manager()
+
+    @property
+    def username(self):
+        return self.user.username
+
+    def attendance_at(self, event):
+        return self.attendance_set.get(event=event)

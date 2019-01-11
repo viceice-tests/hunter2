@@ -41,7 +41,7 @@ def announcements(request):
             (Q(event__isnull=True) | Q(event=request.tenant)) &
             (Q(puzzle__isnull=True)))
 
-    if request.user.is_authenticated and request.user.profile.attendance_at(request.tenant).seat == '':
+    if request.user.is_authenticated and request.user.info.attendance_at(request.tenant).seat == '':
         current_announcements = list(current_announcements) + [models.Announcement(
             event=request.tenant,
             title='No Seat Set',

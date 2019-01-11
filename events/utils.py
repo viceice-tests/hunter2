@@ -16,4 +16,5 @@ from events.models import Attendance
 
 
 def annotate_userprofile_queryset_with_seat(queryset, event):
-    return queryset.annotate(seat=Subquery(Attendance.objects.filter(user=OuterRef('pk'), event=event).values('seat')))
+    # This involves an ugly double join until UserProfile deprecation is complete
+    return queryset.annotate(seat=Subquery(Attendance.objects.filter(user_info__user=OuterRef('pk'), event=event).values('seat')))

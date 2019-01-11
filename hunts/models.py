@@ -194,6 +194,7 @@ class Clue(models.Model):
 
     class Meta:
         abstract = True
+        unique_together = (('puzzle', 'text'), )
 
 
 class Hint(Clue):
