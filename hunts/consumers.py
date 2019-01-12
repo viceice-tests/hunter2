@@ -20,7 +20,7 @@ from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models.signals import pre_save, pre_delete
+from django.db.models.signals import pre_save, pre_delete, post_delete
 
 from teams.models import Team
 from .models import Guess
@@ -75,7 +75,6 @@ class TeamMixin:
         return super().websocket_connect(message)
 
 
-# TODO: we need a delete version of this
 def pre_save_handler(func):
     """The purpose of this decorator is to connect signal handlers to consumer class methods.
 
@@ -84,9 +83,9 @@ def pre_save_handler(func):
     transaction has been successfully committed, ensuring that the instance argument is stored in the database and
     accessible via database connections in other threads, and that data is ready to be sent to clients."""
     def inner(cls, sender, instance, *args, **kwargs):
-        if instance.pk:
+        try:
             old = type(instance).objects.get(pk=instance.pk)
-        else:
+        except ObjectDoesNotExist:
             old = None
 
         def after_commit():
@@ -96,6 +95,21 @@ def pre_save_handler(func):
 
     return classmethod(inner)
 
+
+#def post_delete_handler(func):
+#    """Connects signal handlers as pre_save_handler, but for post_delete.
+#
+#    For us pre- or post-delete doesn't make much difference. This decorator does NOT make it possible to get the
+#    instance from the database in another thread. This is why we hook post-delete, because the functionality is
+#    most similar. If we ever need that for some reason, we would need to use pre_delete and would sacrifice knowing
+#    that the transaction completed."""
+#    def inner(cls, sender, instance, *args, **kwargs):
+#        def after_commit():
+#            func(cls, sender, instance, *args, **kwargs)
+#
+#        transaction.on_commit(after_commit)
+#
+#    return classmethod(inner)
 
 # It is important this class uses a synchronous Consumer, because each one of these consumers runs in a
 # different thread. Asynchronous consumers can suspend while another consumer in the same thread runs.
@@ -427,7 +441,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         if raw:
             return
         hint = instance
-        if hint.puzzle != old.puzzle:
+        if old and hint.puzzle != old.puzzle:
             raise NotImplemented
 
         for team in Team.objects.all():
@@ -489,6 +503,16 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 done_teams.append(g.by_team)
                 cls.send_delete_unlock(unlock, g)
 
+    # handler: Hint.pre_delete
+    @classmethod
+    def _deleted_hint(cls, sender, instance, *arg, **kwargs):
+        hint = instance
+
+        for team in Team.objects.all():
+            data = models.PuzzleData(hint.puzzle, team)
+            if hint.unlocked_by(team, data):
+                cls.send_delete_hint(team, hint)
+
 
 pre_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
 pre_save.connect(PuzzleEventWebsocket._new_unlockanswer, sender=models.UnlockAnswer)
@@ -497,3 +521,4 @@ pre_save.connect(PuzzleEventWebsocket._new_hint, sender=models.Hint)
 
 pre_delete.connect(PuzzleEventWebsocket._deleted_unlockanswer, sender=models.UnlockAnswer)
 pre_delete.connect(PuzzleEventWebsocket._deleted_unlock, sender=models.Unlock)
+pre_delete.connect(PuzzleEventWebsocket._deleted_hint, sender=models.Hint)
