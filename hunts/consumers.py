@@ -168,9 +168,8 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     def disconnect(self, close_code):
         for e in self.hint_events.values():
             self.scheduler.cancel(e)
-        # TODO this is broken for some reason??
         async_to_sync(self.channel_layer.group_discard)(
-            self._group_name(self.puzzle, self.scope['team']), self.channel_name
+            self._group_name(self.puzzle, self.team), self.channel_name
         )
 
     def receive_json(self, content):
