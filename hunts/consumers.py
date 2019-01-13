@@ -118,15 +118,15 @@ def pre_save_handler(func):
 class ThreadedScheduler(Thread):
     def __init__(self):
         super().__init__()
-        self.scheduler = scheduler(timefunc=timezone.now, delayfunc=lambda t: time.sleep(t.total_seconds()))
+        self.scheduler = scheduler()
 
     def run(self):
         while True:
             self.scheduler.run()
             time.sleep(0.1)
 
-    def schedule(self, time, callable, *args, **kwargs):
-        self.scheduler.enterabs(time, 0, callable, args, kwargs)
+    def schedule(self, delay, callable, *args, **kwargs):
+        self.scheduler.enter(delay, 0, callable, args, kwargs)
 
     def cancel(self, event):
         try:
@@ -218,11 +218,10 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         except KeyError:
             pass
 
-        time = hint.unlocks_at(self.team)
-        print(time, timezone.now())
-        if time is None or time < timezone.now():
+        delay = hint.delay_for_team(self.team).total_seconds()
+        if time is None or delay < 0:
             return
-        e = self.scheduler.schedule(time, activate_tenant(self.send_new_hint), self, self.team, hint)
+        e = self.scheduler.schedule(delay, activate_tenant(self.send_new_hint), self, self.team, hint)
         self.hint_events[hint.id] = e
 
     ###
