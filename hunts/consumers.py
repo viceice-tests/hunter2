@@ -11,7 +11,9 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import defaultdict
-from threading import Timer
+from sched import scheduler
+from threading import Thread
+import time
 
 from asgiref.sync import async_to_sync
 from channels.consumer import get_handler_name
@@ -21,6 +23,7 @@ from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models.signals import pre_save, pre_delete, post_delete
+from django.utils import timezone
 
 from teams.models import Team
 from .models import Guess
@@ -111,6 +114,27 @@ def pre_save_handler(func):
 #
 #    return classmethod(inner)
 
+
+class ThreadedScheduler(Thread):
+    def __init__(self):
+        super().__init__()
+        self.scheduler = scheduler(timefunc=timezone.now, delayfunc=lambda t: time.sleep(t.total_seconds()))
+
+    def run(self):
+        while True:
+            self.scheduler.run()
+            time.sleep(0.1)
+
+    def schedule(self, time, callable, *args, **kwargs):
+        self.scheduler.enterabs(time, 0, callable, args, kwargs)
+
+    def cancel(self, event):
+        try:
+            self.scheduler.cancel(event)
+        except ValueError:
+            pass
+
+
 # It is important this class uses a synchronous Consumer, because each one of these consumers runs in a
 # different thread. Asynchronous consumers can suspend while another consumer in the same thread runs.
 # This would break, because the active tenant may need to be different between each consumer.
@@ -142,8 +166,8 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         self.accept()
 
     def disconnect(self, close_code):
-        for t in self.hint_timers.values():
-            t.cancel()
+        for e in self.hint_events.values():
+            self.scheduler.cancel(e)
         # TODO this is broken for some reason??
         async_to_sync(self.channel_layer.group_discard)(
             self._group_name(self.puzzle, self.scope['team']), self.channel_name
@@ -177,9 +201,11 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         self.send_json({'type': 'error', 'content': {'error': message}})
 
     def setup_hint_timers(self):
-        self.hint_timers = {}
+        self.scheduler = ThreadedScheduler()
+        self.hint_events = {}
         for hint in self.puzzle.hint_set.all():
             self.schedule_hint(hint)
+        self.scheduler.start()
 
     def schedule_hint(self, hint=None, content=None):
         if hint is None:
@@ -188,17 +214,16 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             except (TypeError, KeyError):
                 raise ValueError('Cannot schedule a hint without either a hint instance or a dictionary with `hint_uid` key.')
         try:
-            self.hint_timers[hint.id].cancel()
+            self.scheduler.cancel(self.hint_events[hint.id])
         except KeyError:
             pass
 
-        delay = hint.delay_for_team(self.team)
-        if delay is None or delay.total_seconds() < 0:
+        time = hint.unlocks_at(self.team)
+        print(time, timezone.now())
+        if time is None or time < timezone.now():
             return
-        # Because this runs in a new thread, we must wrap send_new_hint with activate_tenant
-        t = Timer(delay.total_seconds(), activate_tenant(self.send_new_hint), args=(self, self.team, hint))
-        self.hint_timers[hint.id] = t
-        t.start()
+        e = self.scheduler.schedule(time, activate_tenant(self.send_new_hint), self, self.team, hint)
+        self.hint_events[hint.id] = e
 
     ###
     ### These class methods define the JS server -> client protocol of the websocket
@@ -276,8 +301,8 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         # This can be called by the scheduled timer, or in response to the Hint object changing, which will mean there
         # is no timer set.
         try:
-            self.hint_timers[hint.id].cancel()
-            del self.hint_timers[hint.id]
+            self.scheduler.cancel(self.hint_events[hint.id])
+            del self.hint_events[hint.id]
         except KeyError:
             pass
 
