@@ -1,4 +1,4 @@
-FROM registry.gitlab.com/rconan/docker-pipenv:2018.7.1-1 AS req_export
+FROM registry.gitlab.com/rconan/docker-pipenv:2018.11.29-0 AS req_export
 
 ARG DEVELOPMENT=
 COPY Pipfile Pipfile.lock /
@@ -7,7 +7,7 @@ RUN pipenv lock -r --keep-outdated > /requirements.txt
 RUN [ -z ${DEVELOPMENT} ] || pipenv lock -d -r --keep-outdated >> /requirements.txt
 
 
-FROM python:3.6.6-alpine3.8 AS runtime_base
+FROM python:3.7.2-alpine3.8 AS runtime_base
 
 RUN apk add --no-cache \
     lua5.2 \
@@ -49,7 +49,7 @@ RUN luarocks-5.2 install lua-imlib2 dev-2
 
 FROM runtime_base
 
-COPY --from=python_build /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages
+COPY --from=python_build /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/site-packages
 COPY --from=lua_build /opt/hunter2 /opt/hunter2
 COPY . /usr/src/app
 

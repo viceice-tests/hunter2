@@ -48,7 +48,7 @@ Copyright
 =======
 Hunter 2 is a platform for running online puzzle hunts. Further information can be found at https://www.hunter2.app/ including details of contributors.
 
-Copyright (C) 2017-2018  The Hunter 2 contributors.
+Copyright (C) 2017-2019  The Hunter 2 contributors.
 
 Hunter 2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 

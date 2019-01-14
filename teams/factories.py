@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import collections
+from collections.abc import Iterable
 
 import factory
 from faker import Faker
@@ -34,7 +34,7 @@ class TeamFactory(factory.django.DjangoModelFactory):
             return
 
         if extracted:
-            for member in (extracted if isinstance(extracted, collections.Iterable) else (extracted,)):
+            for member in (extracted if isinstance(extracted, Iterable) else (extracted,)):
                 self.members.add(member)
 
 
