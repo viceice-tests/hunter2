@@ -10,12 +10,26 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+from urllib.parse import urlparse
+
 from django.urls import reverse
 
-from hunter2.utils import wwwize
+from .utils import wwwize
+from . import settings
 
 
 def login_url(request):
     return {
         'login_url': wwwize(reverse('account_login'), request),
+    }
+
+
+def sentry_dsn(request):
+    dsn = settings.SENTRY_DSN
+    if dsn:
+        # If we have an old-style Sentry DSN with a password we need to strip it
+        stripped = dsn._replace(netloc=f'{dsn.username}@{dsn.hostname}')
+        dsn = stripped.geturl()
+    return {
+        'sentry_dsn': dsn,
     }
