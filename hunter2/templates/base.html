@@ -1,48 +1,56 @@
 {% load analytical %}
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
-	<head>
-		{% analytical_head_top %}
-		<title>{{ request.site.name }}</title>
-		<meta charset="UTF-8" />
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+<html lang="en" class="h-100">
+<head>
+	{% analytical_head_top %}
 
-		{% if sentry_dsn %}
-		<script src="https://browser.sentry-cdn.com/4.5.2/bundle.min.js" integrity="sha384-B40T8JbVXw6SvEWUzdCliv4rtB06EhQznO11FvvMJ7pWnniode1Ggyu4VPk9L8l1" crossorigin="anonymous"></script>
-		<script>Sentry.init({ dsn: '{{ sentry_dsn }}' });</script>
-		{% endif %}
+	{# Required meta tags #}
+	<meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-		<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+	{# Sentry #}
+	{% if sentry_dsn %}
+	<script src="https://browser.sentry-cdn.com/4.5.2/bundle.min.js" integrity="sha384-B40T8JbVXw6SvEWUzdCliv4rtB06EhQznO11FvvMJ7pWnniode1Ggyu4VPk9L8l1" crossorigin="anonymous"></script>
+	<script>Sentry.init({ dsn: '{{ sentry_dsn }}' });</script>
+	{% endif %}
 
-		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+	{# Bootstrap JS, CSS & dependancies #}
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
 
-		<link rel="stylesheet" href="{% static 'hunter2/css/base.css' %}" type="text/css" />
-		<script src="{% static 'hunter2/js/base.js' %}"></script>
+	{# Base Hunter2 JS & CSS #}
+	<link rel="stylesheet" href="{% static 'hunter2/css/base.css' %}" type="text/css" />
+	<script src="{% static 'hunter2/js/base.js' %}"></script>
 
-		{% block style %}{% endblock %}
-		{% block script %}{% endblock %}
-		{% analytical_head_bottom %}
-	</head>
-	<body>
-		{% analytical_body_top %}
-		<noscript>
-			You do not have JavaScript Enabled. JavaScript is required to access and take part in a hunt.
-		</noscript>
+	{# Event specific theming #}
+	{% block style %}{% endblock %}
+	{% block script %}{% endblock %}
 
+	<title>{{ request.site.name }}</title>
+
+	{% analytical_head_bottom %}
+</head>
+<body class="d-flex flex-column h-100">
+	{% analytical_body_top %}
+
+	<header>
 		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
-				<span class="navbar-toggler-icon"></span>
+
+			{% block topbar_title %}
+				<a class="nav-brand" href="{% url 'index' %}">Home</a>
+			{% endblock %}
+
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar" aria-controls="collapsibleNavbar" aria-expanded="false" aria-label="Toggle navigation">
+			  <span class="navbar-toggler-icon"></span>
 			</button>
 
 			<div class="collapse navbar-collapse" id="collapsibleNavbar">
 				<ul class="navbar-nav">
-					{% block topbar_left %}
-						<li class="navbar-brand"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
-					{% endblock %}
+					{% block topbar_left %}{% endblock %}
 				</ul>
 
 				<ul class="navbar-nav ml-auto">
@@ -50,35 +58,51 @@
 						{% if user.is_authenticated %}
 							<li class="nav-item"><a class="nav-link" href="{% url 'edit_profile' %}" id="navUser">Account</a></li>
 							<li class="nav-item"><a class="nav-link" href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
-							<form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form>
+							<li class="nav-item"><form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form></li>
 						{% else %}
 							<li class="nav-item"><a class="nav-link" href="{{ login_url }}" id="navLogin">Login</a></li>
 						{% endif %}
 					{% endblock %}
 				</ul>
-		  	</div>
+			</div>
 		</nav>
+	</header>
 
-		{% block debug %}{% endblock %}
+	{# Debugging information include #}
+	{% block debug %}{% endblock %}
+
+	<main class="flex-shrink-0">
 		<div class="container-fluid pt-3">
-            {% block announcements %}{% endblock %}
+			{# Annoucements & Javascript Warning #}
+			<noscript>
+				<div class="alert alert-danger" role="alert">
+						<strong>You do not have JavaScript Enabled</strong> JavaScript is required to access and take part in a hunt.
+				</div>
+			</noscript>
+			{% block announcements %}{% endblock %}
+
 			<header class="container pt-3">
 				{% block page_header %}{% endblock page_header%}
 			</header>
-			{% if wide %}
-				<div id="content" class="container-fluid pt-3">
-			{% else %}
-				<div id="content" class="container pt-3">
-			{% endif %}
-			{% block content %}
-				If you're seeing this, contact the site administrators.
-			{% endblock content %}
+
+			<div id="content" class="container{% if wide %}-fluid{% endif %} pt-3">
+				{% block content %}If you're seeing this, contact the site administrators.{% endblock content %}
 			</div>
-			<footer class="container-fluid">
-				<p>Built with <a href="https://hunter2.app/">Hunter2</a>. Copyright &copy; 2017-2019  The Hunter 2 Contributors<br />
-				Hunter 2 is free software: you can redistribute it and/or modify it under the terms of the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">GNU Affero General Public License</a> as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.<br />
-			</footer>
 		</div>
-		{% analytical_body_bottom %}
-	</body>
+	</main>
+
+	<footer class="footer mt-auto py-3">
+	    <div class="container-fluid">
+			<p class="text-muted">
+				Built with <a href="https://hunter2.app/">Hunter2</a>. Copyright &copy; 2017-2019  The Hunter 2 Contributors
+			</p>
+			<p class="text-muted">
+				Hunter 2 is free software: you can redistribute it and/or modify it under the terms of the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">GNU Affero General Public License</a>
+				as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+			</p>
+	    </div>
+	</footer>
+
+	{% analytical_body_bottom %}
+</body>
 </html>
