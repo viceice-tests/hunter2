@@ -110,6 +110,7 @@ SHARED_APPS = (
     'allauth.socialaccount',
     'allauth.socialaccount.providers.openid',
     'analytical',
+    'bootstrap4',
     'channels',
     'dal',
     'dal_select2',
