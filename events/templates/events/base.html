@@ -27,9 +27,9 @@
 {% endblock %}
 
 {% block announcements %}
-			{% for announcement in announcements %}
-			<div class="alert {{ announcement.css_type }}" role="alert">
-				<strong>{{ announcement.title }}</strong> {{ announcement.message }}
-			</div>
-			{% endfor %}
+	{% for announcement in announcements %}
+		<div class="alert {{ announcement.css_type }}" role="alert">
+			<strong>{{ announcement.title }}</strong> {{ announcement.message }}
+		</div>
+	{% endfor %}
 {% endblock %}
