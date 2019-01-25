@@ -10,12 +10,11 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 from collections import defaultdict
-from sched import scheduler
-from threading import Thread
 import time
 
-from asgiref.sync import async_to_sync
+from asgiref.sync import async_to_sync, sync_to_async
 from channels.consumer import get_handler_name
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
@@ -115,29 +114,6 @@ def pre_save_handler(func):
 #    return classmethod(inner)
 
 
-class ThreadedScheduler(Thread):
-    def __init__(self):
-        super().__init__()
-        self.scheduler = scheduler()
-
-    def run(self):
-        while True:
-            self.scheduler.run()
-            time.sleep(0.1)
-
-    def schedule(self, delay, callable, *args, **kwargs):
-        self.scheduler.enter(delay, 0, callable, args, kwargs)
-
-    def cancel(self, event):
-        try:
-            self.scheduler.cancel(event)
-        except ValueError:
-            pass
-
-
-# It is important this class uses a synchronous Consumer, because each one of these consumers runs in a
-# different thread. Asynchronous consumers can suspend while another consumer in the same thread runs.
-# This would break, because the active tenant may need to be different between each consumer.
 class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     @classmethod
     def _group_name(cls, puzzle, team=None):
@@ -167,7 +143,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
 
     def disconnect(self, close_code):
         for e in self.hint_events.values():
-            self.scheduler.cancel(e)
+            e.cancel()
         async_to_sync(self.channel_layer.group_discard)(
             self._group_name(self.puzzle, self.team), self.channel_name
         )
@@ -200,11 +176,9 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         self.send_json({'type': 'error', 'content': {'error': message}})
 
     def setup_hint_timers(self):
-        self.scheduler = ThreadedScheduler()
         self.hint_events = {}
         for hint in self.puzzle.hint_set.all():
             self.schedule_hint(hint)
-        self.scheduler.start()
 
     def schedule_hint(self, hint=None, content=None):
         if hint is None:
@@ -213,15 +187,17 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             except (TypeError, KeyError):
                 raise ValueError('Cannot schedule a hint without either a hint instance or a dictionary with `hint_uid` key.')
         try:
-            self.scheduler.cancel(self.hint_events[hint.id])
+            self.hint_events[hint.id].cancel()
         except KeyError:
             pass
 
         delay = hint.delay_for_team(self.team).total_seconds()
         if time is None or delay < 0:
             return
-        e = self.scheduler.schedule(delay, activate_tenant(self.send_new_hint), self, self.team, hint)
-        self.hint_events[hint.id] = e
+        loop = sync_to_async.threadlocal.main_event_loop
+        print(delay)
+        task = loop.create_task(self.send_new_hint(self.team, hint, delay))
+        self.hint_events[hint.id] = task
 
     ###
     ### These class methods define the JS server -> client protocol of the websocket
@@ -295,16 +271,15 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     def send_new_hint_to_team(cls, team, hint):
         cls._send_message(hint.puzzle, team, cls._new_hint_json(hint))
 
-    def send_new_hint(self, team, hint, **kwargs):
-        # This can be called by the scheduled timer, or in response to the Hint object changing, which will mean there
-        # is no timer set.
+    async def send_new_hint(self, team, hint, delay, **kwargs):
+        await asyncio.sleep(delay)
         try:
-            self.scheduler.cancel(self.hint_events[hint.id])
+            self.hint_events[hint.id].cancel()
             del self.hint_events[hint.id]
         except KeyError:
             pass
 
-        self.send_json(self._new_hint_json(hint))
+        await self.base_send.awaitable({'type': 'websocket.send', 'text': self.encode_json(self._new_hint_json(hint))})
 
     @classmethod
     def send_delete_hint(cls, team, hint):
