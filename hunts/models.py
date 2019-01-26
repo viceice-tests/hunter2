@@ -12,6 +12,7 @@
 
 
 import uuid
+from datetime import timedelta
 
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
@@ -21,13 +22,12 @@ from django.utils import timezone
 from django.urls import reverse
 from django_prometheus.models import ExportModelOperationsMixin
 from sortedm2m.fields import SortedManyToManyField
-from datetime import timedelta
 from enumfields import EnumField, Enum
-from . import runtimes
 
 import accounts
 import events
 import teams
+from . import runtimes
 
 
 class Puzzle(models.Model):
@@ -260,13 +260,24 @@ class Unlock(Clue):
 
 
 class UnlockAnswer(models.Model):
-    unlock = models.ForeignKey(Unlock, on_delete=models.CASCADE)
+    unlock = models.ForeignKey(Unlock, editable=False, on_delete=models.CASCADE)
     runtime = models.CharField(
         max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC,
         verbose_name='Validator',
         help_text='Processor to use to check whether guess unlocks this unlock',
     )
     guess = models.TextField()
+
+    def __setattr__(self, name, value):
+        # Inspired by django-immutablemodel but this project is unmaintained and we don't need the general case
+        if name == 'unlock':
+            try:
+                current_value = getattr(self, name, None)
+            except UnlockAnswer.DoesNotExist:
+                current_value = None
+            if current_value is not None and current_value != value:
+                raise ValueError('UnlockAnswer.unlock is immutable and cannot be changed')
+        super().__setattr__(name, value)
 
     def __str__(self):
         if self.runtime == runtimes.STATIC or self.runtime == runtimes.REGEX:
@@ -334,6 +345,7 @@ class Answer(models.Model):
 
 
 class Guess(ExportModelOperationsMixin('guess'), models.Model):
+    id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
     by_team = models.ForeignKey(teams.models.Team, on_delete=models.SET_NULL, null=True, blank=True)
