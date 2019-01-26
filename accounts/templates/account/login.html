@@ -16,9 +16,9 @@
 			<h3>Social Account</h3>
 			{% if socialaccount_providers %}
 				<p>
-					{% blocktrans with site.name as site_name %}Please sign in with one
-					of your existing third party accounts. Or, <a href="{{ signup_url }}">sign up</a>
-					for a {{ site_name }} account and sign in below:{% endblocktrans %}
+					{% blocktrans with site.name as site_name %}
+						Please sign in with one of your existing third party accounts:
+					{% endblocktrans %}
 				</p>
 
 				<div class="socialaccount_ballot">
@@ -46,13 +46,15 @@
 					<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
 				{% endif %}
 				{% buttons %}
-					<a class="btn btn-secondary" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
 					<button class="btn btn-primary" type="submit">{% trans "Sign In" %}</button>
+					<a class="btn btn-secondary" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
 				{% endbuttons %}
 			</form>
 			<p>
 				If you don't already have an account, you can register below:
-
+				{% buttons %}
+					<a class="btn btn-secondary" href="{{ signup_url }}">Sign Up</a>
+				{% endbuttons %}
 			</p>
 		</div>
 	</div>
