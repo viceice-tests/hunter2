@@ -180,12 +180,14 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         for hint in self.puzzle.hint_set.all():
             self.schedule_hint(hint)
 
-    def schedule_hint(self, hint=None, content=None):
-        if hint is None:
-            try:
-                hint = models.Hint.objects.get(id=content['hint_uid'])
-            except (TypeError, KeyError):
-                raise ValueError('Cannot schedule a hint without either a hint instance or a dictionary with `hint_uid` key.')
+    def schedule_hint_msg(self, message):
+        try:
+            hint = models.Hint.objects.get(id=message['hint_uid'])
+        except (TypeError, KeyError):
+            raise ValueError('Cannot schedule a hint without either a hint instance or a dictionary with `hint_uid` key.')
+        self.schedule_hint(hint)
+
+    def schedule_hint(self, hint):
         try:
             self.hint_events[hint.id].cancel()
         except KeyError:
@@ -195,9 +197,18 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         if time is None or delay < 0:
             return
         loop = sync_to_async.threadlocal.main_event_loop
-        print(delay)
+        # run the hint sender function on the asyncio event loop so we don't have to bother writing scheduler stuff
         task = loop.create_task(self.send_new_hint(self.team, hint, delay))
         self.hint_events[hint.id] = task
+
+    def cancel_scheduled_hint(self, content):
+        hint = models.Hint.objects.get(id=content['hint_uid'])
+
+        try:
+            self.hint_events[hint.id].cancel()
+            del self.hint_events[hint.id]
+        except KeyError:
+            pass
 
     ###
     ### These class methods define the JS server -> client protocol of the websocket
@@ -272,14 +283,18 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         cls._send_message(hint.puzzle, team, cls._new_hint_json(hint))
 
     async def send_new_hint(self, team, hint, delay, **kwargs):
+        # We can't have a sync function (added to the event loop via call_later) because it would have to call back
+        # ultimately to SyncConsumer's send method, which is wrapped in async_to_sync, which refuses to run in a thread
+        # with a running asyncio event loop.
+        # See https://github.com/django/asgiref/issues/56
         await asyncio.sleep(delay)
-        try:
-            self.hint_events[hint.id].cancel()
-            del self.hint_events[hint.id]
-        except KeyError:
-            pass
 
+        # AsyncConsumer replaces its own base_send attribute with an async_to_sync wrapped version if the instance is (a
+        # subclass of) SyncConsumer. While bizarre, the original async function is available as AsyncToSync.awaitable.
+        # We also have to reproduce the functionality of JsonWebsocketConsumer and WebsocketConsumer here (they don't
+        # have async versions.)
         await self.base_send.awaitable({'type': 'websocket.send', 'text': self.encode_json(self._new_hint_json(hint))})
+        del self.hint_events[hint.id]
 
     @classmethod
     def send_delete_hint(cls, team, hint):
@@ -444,15 +459,14 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
 
         for team in Team.objects.all():
             data = models.PuzzleData(hint.puzzle, team)
+            layer = get_channel_layer()
             if hint.unlocked_by(team, data):
-                # This will kill the old timer
+                async_to_sync(layer.group_send)(cls._group_name(hint.puzzle, team), {'type': 'cancel_scheduled_hint', 'hint_uid': str(hint.id)})
                 cls.send_new_hint_to_team(team, hint)
-                # hehe old-timer
             else:
                 if old and old.unlocked_by(team, data):
                     cls.send_delete_hint(team, hint)
-                layer = get_channel_layer()
-                async_to_sync(layer.group_send)(cls._group_name(hint.puzzle, team), {'type': 'schedule_hint', 'hint_uid': str(hint.id)})
+                async_to_sync(layer.group_send)(cls._group_name(hint.puzzle, team), {'type': 'schedule_hint_msg', 'hint_uid': str(hint.id)})
 
     # handler: UnlockAnswer.pre_delete
     @classmethod
