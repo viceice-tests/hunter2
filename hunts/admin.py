@@ -215,7 +215,6 @@ class PuzzleAdmin(NestedModelAdmin):
                 f'{through._meta.db_table}.{through._sort_field_name}',
             ),
         )
-        print(qs.query)
         return qs
 
     # The following three methods do nothing if popup is True. This removes everything else from
