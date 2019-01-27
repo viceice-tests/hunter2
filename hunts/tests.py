@@ -1120,3 +1120,12 @@ class GuessTeamDenormalisationTests(EventTestCase):
         guess2.refresh_from_db()
         self.assertEqual(guess1.by_team, self.team2, "by_team denormalisation consistent with user's team")
         self.assertEqual(guess2.by_team, self.team1, "by_team denormalisation consistent with user's team")
+
+
+class UnlockAnswerTests(EventTestCase):
+    def test_unlock_immutable(self):
+        unlockanswer = UnlockAnswerFactory()
+        new_unlock = UnlockFactory()
+        with self.assertRaises(ValueError):
+            unlockanswer.unlock = new_unlock
+            unlockanswer.save()

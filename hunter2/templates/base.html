@@ -1,5 +1,4 @@
 {% load analytical %}
-{% load raven %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -10,8 +9,10 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-		<script src="https://cdn.ravenjs.com/3.24.2/raven.min.js" integrity="sha256-aQcL/lJFlqXoaB8IUpqp21jpU+SAjUm9WFRxJmroQKc=" crossorigin="anonymous"></script>
-		<script>Raven.config('{% sentry_public_dsn "https" %}').install()</script>
+		{% if sentry_dsn %}
+		<script src="https://browser.sentry-cdn.com/4.5.2/bundle.min.js" integrity="sha384-B40T8JbVXw6SvEWUzdCliv4rtB06EhQznO11FvvMJ7pWnniode1Ggyu4VPk9L8l1" crossorigin="anonymous"></script>
+		<script>Sentry.init({ dsn: '{{ sentry_dsn }}' });</script>
+		{% endif %}
 
 		<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
@@ -74,7 +75,7 @@
 			{% endblock content %}
 			</div>
 			<footer class="container-fluid">
-				<p>Built with <a href="https://hunter2.app/">Hunter2</a>. Copyright &copy; 2017-2018  The Hunter 2 Contributors<br />
+				<p>Built with <a href="https://hunter2.app/">Hunter2</a>. Copyright &copy; 2017-2019  The Hunter 2 Contributors<br />
 				Hunter 2 is free software: you can redistribute it and/or modify it under the terms of the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">GNU Affero General Public License</a> as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.<br />
 			</footer>
 		</div>
