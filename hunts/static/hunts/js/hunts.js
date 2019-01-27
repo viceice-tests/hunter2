@@ -184,10 +184,10 @@ var guesses = [];
 
 function receivedNewAnswer(content) {
 	"use strict";
-	if (!guesses.includes(content['timestamp'])) {
+	if (!guesses.includes(content['guess_uid'])) {
 		var guesses_table = $('#guesses');
 		guesses_table.append('<tr><td>' + content['by'] + '</td><td>' + content['guess'] + '</td><td>' + content['correct'] + '</td></tr>');
-		guesses.push(content['timestamp']);
+		guesses.push(content['guess_uid']);
 	}
 }
 

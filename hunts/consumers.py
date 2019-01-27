@@ -230,9 +230,9 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         cls._send_message(guess.for_puzzle, guess.by_team, {
             'type': 'new_guess',
             'content': {
-                # TODO hash with id or something idunno
                 'timestamp': str(guess.given),
                 'guess': guess.guess,
+                'guess_uid': encode_uuid(guess.id),
                 'correct': guess.correct_for is not None,
                 'by': guess.by.username,
             }
