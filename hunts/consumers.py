@@ -340,6 +340,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                     # TODO hash with id or something idunno
                     'timestamp': str(g.given),
                     'guess': g.guess,
+                    'guess_uid': encode_uuid(g.id),
                     'correct': g.correct_for is not None,
                     'by': g.by.username,
                 }
