@@ -65,7 +65,7 @@ class TenantWebsocketMiddleware(BaseMiddleware):
         try:
             host = headers[b'host'].decode('idna')
         except UnicodeDecodeError:
-            raise ValueError('TenantWebsocketMiddleware got malformed origin %s' % url.hostname.decode('ascii', errors='ignore'))
+            raise ValueError('TenantWebsocketMiddleware got malformed origin %s' % headers[b'host'])
 
         # urlparse will fail to parse an absolute URL without initial //
         domain = urlparse('//' + host).hostname
