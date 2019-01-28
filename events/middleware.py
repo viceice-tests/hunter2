@@ -60,17 +60,15 @@ class TenantMiddleware(TenantMainMiddleware):
 
 class TenantWebsocketMiddleware(BaseMiddleware):
     def populate_scope(self, scope):
-        try:
-            headers = dict(scope['headers'])
-            origin = headers[b'origin']
-        except KeyError:
-            raise ValueError('Websocket connected without origin header, which is required by TenantWebsocketMiddleware.')
+        headers = dict(scope['headers'])
 
-        url = urlparse(origin)
         try:
-            domain = url.hostname.decode('ascii')
+            host = headers[b'host'].decode('idna')
         except UnicodeDecodeError:
             raise ValueError('TenantWebsocketMiddleware got malformed origin %s' % url.hostname.decode('ascii', errors='ignore'))
+
+        # urlparse will fail to parse an absolute URL without initial //
+        domain = urlparse('//' + host).hostname
 
         try:
             scope['tenant'] = Domain.objects.get(domain=domain).tenant
