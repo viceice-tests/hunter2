@@ -12,7 +12,6 @@
 
 
 from accounts.models import UserProfile
-from events.models import Event
 from .models import Team
 
 
