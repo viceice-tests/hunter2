@@ -11,11 +11,11 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 from urllib.parse import urlparse
+
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection, close_old_connections
 from django_tenants.middleware import TenantMainMiddleware
-
 from channels.middleware import BaseMiddleware
 
 from accounts.models import UserInfo, UserProfile

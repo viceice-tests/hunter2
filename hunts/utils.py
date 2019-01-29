@@ -11,8 +11,9 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from collections import defaultdict
 from base64 import urlsafe_b64encode
+from collections import defaultdict
+
 from django.http import Http404
 
 

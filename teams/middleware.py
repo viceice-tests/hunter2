@@ -14,7 +14,6 @@
 from accounts.models import UserProfile
 from events.models import Event
 from .models import Team
-from channels.middleware import BaseMiddleware
 
 
 class TeamMiddleware(object):

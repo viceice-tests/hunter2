@@ -13,6 +13,7 @@
 
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
+
 import hunts.routing
 from events.middleware import TenantWebsocketMiddleware
 

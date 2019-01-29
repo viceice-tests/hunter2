@@ -603,7 +603,6 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 response['text'] = f'back to {request.episode.name}'
                 response['url'] = request.episode.get_absolute_url()
         else:
-
             response['guess'] = given_answer
             response['timeout_length'] = minimum_time.total_seconds() * 1000
             response['timeout_end'] = str(now + minimum_time)

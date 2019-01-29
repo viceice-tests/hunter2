@@ -366,15 +366,6 @@ $(function() {
 	}
 	field.keyup(fieldKeyup);
 	openEventSocket();
-	/*$.ajax({
-		type: 'GET',
-		url: '/wsauth',
-		success: openEventSocket,
-		error: function(xhr, status, error) {
-			message("Unable to authenticate for websocket. You will not get automatic updates.");
-		},
-		dataType: 'json'
-	});*/
 
 	$('.form-inline').submit(function(e) {
 		e.preventDefault();
