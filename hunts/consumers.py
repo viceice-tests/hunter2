@@ -21,8 +21,7 @@ from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models.signals import pre_save, pre_delete, post_delete
-from django.utils import timezone
+from django.db.models.signals import pre_save, pre_delete
 
 from teams.models import Team
 from .models import Guess
