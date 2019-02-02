@@ -26,6 +26,7 @@ class EventAwareTestCase(TransactionTestCase):
     def _fixture_teardown(self):
         for event in Event.objects.all():
             event.delete(force_drop=True)
+            Event.deactivate()
         super()._fixture_teardown()
 
 

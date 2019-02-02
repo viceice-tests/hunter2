@@ -75,7 +75,7 @@ class TenantWebsocketMiddleware(BaseMiddleware):
         except Domain.DoesNotExist:
             raise ValueError('No tenant Domain matching origin %s' % domain)
 
-        close_old_connections()
+        #close_old_connections()
 
     async def resolve_scope(self, scope):
         # Unsure how you're actually supposed to correctly subclass Channels Middleware.

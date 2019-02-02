@@ -53,6 +53,10 @@ def pre_save_handler(func):
 
 
 class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.connected = False
+
     @classmethod
     def _group_name(cls, puzzle, team=None):
         event = puzzle.episode.event
@@ -78,9 +82,12 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             self._group_name(self.puzzle), self.channel_name
         )
         self.setup_hint_timers()
+        self.connected = True
         self.accept()
 
     def disconnect(self, close_code):
+        if not self.connected:
+            return
         for e in self.hint_events.values():
             e.cancel()
         async_to_sync(self.channel_layer.group_discard)(

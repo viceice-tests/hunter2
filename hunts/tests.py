@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import asyncio
 import datetime
 import random
 
@@ -20,10 +21,13 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 from parameterized import parameterized
+from channels.testing import WebsocketCommunicator
+from django_tenants.test.client import TenantClient
 
 from accounts.factories import UserProfileFactory
-from events.factories import EventFactory, EventFileFactory
-from events.test import EventTestCase
+from events.factories import EventFactory, EventFileFactory, DomainFactory
+from events.models import Event
+from events.test import EventTestCase, EventAwareTestCase
 from teams.factories import TeamFactory, TeamMemberFactory
 from . import runtimes, utils
 from .factories import (
@@ -44,6 +48,8 @@ from .factories import (
     UserPuzzleDataFactory,
 )
 from .models import PuzzleData, TeamPuzzleData
+from hunter2.routing import application as websocket_app
+from .test_websockets import AuthCommunicator
 
 
 class FactoryTests(EventTestCase):
@@ -1148,3 +1154,107 @@ class UnlockAnswerTests(EventTestCase):
         with self.assertRaises(ValueError):
             unlockanswer.unlock = new_unlock
             unlockanswer.save()
+
+
+class TestPuzzleWebsocket(EventAwareTestCase):
+    def setUp(self):
+        self.tenant = EventFactory(max_team_size=2)
+        self.domain = DomainFactory(tenant=self.tenant)
+        self.tenant.activate()
+        self.headers = [
+            (b'origin', b'hunter2.local'),
+            (b'host', self.domain.domain.encode('idna'))
+        ]
+        self.client = TenantClient(self.tenant)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        Event.deactivate()
+        try:
+            cls.loop = asyncio.get_event_loop()
+        except RuntimeError:
+            print("loop did not already exist")
+            cls.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(cls.loop)
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls.loop.close()
+
+    def run_async(self, coro):
+        async def wrapper(result, *args, **kwargs):
+            try:
+                r = await coro(*args, **kwargs)
+            except Exception as e:
+                result.set_exception(e)
+            else:
+                result.set_result(r)
+
+        def inner(*args, **kwargs):
+            result = asyncio.Future()
+            if not self.loop.is_running():
+                try:
+                    self.loop.run_until_complete(wrapper(result, *args, **kwargs))
+                finally:
+                    pass
+            else:
+                print("loop was already running")
+                self.loop.call_soon_threadsafe(wrapper(result, *args, **kwargs))
+            return result.result()
+
+        return inner
+
+    def test_anonymous_access(self):
+        pz = self.run_in_loop(PuzzleFactory)()
+        ep = pz.episode
+        url = 'ws/hunt/ep/%d/pz/%d/' % (ep.get_relative_id(), pz.get_relative_id())
+
+        comm = WebsocketCommunicator(websocket_app, url, headers=self.headers)
+        connected, subprotocol = self.run_async(comm.connect)()
+
+        self.assertFalse(connected)
+        self.run_async(comm.disconnect)()
+
+    def test_good_access(self):
+        pz = PuzzleFactory()
+        ep = pz.episode
+        profile = TeamMemberFactory()
+        url = 'ws/hunt/ep/%d/pz/%d/' % (ep.get_relative_id(), pz.get_relative_id())
+
+        comm = AuthCommunicator(websocket_app, url, scope={'user': profile.user}, headers=self.headers)
+        connected, subprotocol = self.run_async(comm.connect)()
+        self.assertTrue(connected)
+        self.run_async(comm.disconnect)()
+
+    def test_same_team_sees_guesses(self):
+        pz = PuzzleFactory()
+        ep = pz.episode
+        team = TeamFactory()
+        u1 = UserProfileFactory()
+        u2 = UserProfileFactory()
+        team.members.add(u1)
+        team.members.add(u2)
+        team.save()
+
+        url = 'ws/hunt/ep/%d/pz/%d/' % (ep.get_relative_id(), pz.get_relative_id())
+
+        comm1 = AuthCommunicator(websocket_app, url, scope={'user': u1.user}, headers=self.headers)
+        comm2 = AuthCommunicator(websocket_app, url, scope={'user': u2.user}, headers=self.headers)
+
+        self.run_async(comm1.connect)()
+        self.run_async(comm2.connect)()
+
+        g = GuessFactory(for_puzzle=pz, correct=False, by=u1)
+        g.save()
+
+        try:
+            output = self.run_async(comm2.receive_json_from)()
+        except asyncio.TimeoutError:
+            self.fail('WebSocket did nothing in response to a submitted guess')
+
+        self.assertEqual(output['type'], 'new_guess')
+        self.assertEqual(output['content']['guess'], g.guess)
+        self.assertEqual(output['content']['correct'], False)
+        self.assertEqual(output['content']['by'], u1.user.username)

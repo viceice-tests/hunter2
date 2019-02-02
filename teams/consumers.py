@@ -23,7 +23,7 @@ class TeamMixin:
         try:
             user = self.scope['user'].profile
             self.team = user.team_at(self.scope['tenant'])
-        except ObjectDoesNotExist:
+        except (ObjectDoesNotExist, AttributeError):
             # A user on the website will never open the websocket without getting a userprofile and team.
             self.close()
             return
