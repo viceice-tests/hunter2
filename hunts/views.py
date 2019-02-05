@@ -439,7 +439,8 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             # Get rid of duplicates but preserve order
             duplicates = set()
             guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
-            unlocks.append({'guesses': guesses, 'text': mark_safe(u.text)})
+            unlock_text = mark_safe(u.text)  # nosec unlock text is provided by puzzle admins, we consider this safe
+            unlocks.append({'guesses': guesses, 'text': unlock_text})
 
         event_files = {f.slug: f.file.url for f in request.tenant.eventfile_set.filter(slug__isnull=False)}
         puzzle_files = {f.slug: reverse(
