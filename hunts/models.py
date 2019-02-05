@@ -611,6 +611,10 @@ class Episode(models.Model):
     def headstart_applied(self, team):
         """The headstart that the team has acquired that will be applied to this episode"""
         seconds = sum([e.headstart_granted(team).total_seconds() for e in self.headstart_from.all()])
+        try:
+            seconds += self.headstart_set.get(team=team).headstart_adjustment.total_seconds()
+        except Headstart.DoesNotExist:
+            pass
         return timedelta(seconds=seconds)
 
     def headstart_granted(self, team):
@@ -647,6 +651,12 @@ class Episode(models.Model):
                     break
 
             return result
+
+
+class Headstart(models.Model):
+    episode = models.ForeignKey(Episode, on_delete=models.CASCADE)
+    team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
+    headstart_adjustment = models.DurationField(default=timedelta(), help_text='Time difference to apply to the headstart for the team on the specified episode. This will apply in addition to any headstart they earn through other mechanisms.')
 
 
 class AnnouncementType(Enum):
