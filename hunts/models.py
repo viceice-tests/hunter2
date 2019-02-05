@@ -656,7 +656,10 @@ class Episode(models.Model):
 class Headstart(models.Model):
     episode = models.ForeignKey(Episode, on_delete=models.CASCADE)
     team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
-    headstart_adjustment = models.DurationField(default=timedelta(), help_text='Time difference to apply to the headstart for the team on the specified episode. This will apply in addition to any headstart they earn through other mechanisms.')
+    headstart_adjustment = models.DurationField(
+        default=timedelta(),
+        help_text='Time difference to apply to the headstart for the team on the specified episode. This will apply in addition to any headstart they earn through other mechanisms.',
+    )
 
 
 class AnnouncementType(Enum):
