@@ -659,7 +659,7 @@ class Headstart(models.Model):
     headstart_adjustment = models.DurationField(
         default=timedelta(),
         help_text=(
-            'Time difference to apply to the headstart for the team on the specified episode.'
+            'Time difference to apply to the headstart for the team on the specified episode. '
             'This will apply in addition to any headstart they earn through other mechanisms.'
         ),
     )
