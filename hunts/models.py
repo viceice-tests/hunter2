@@ -664,6 +664,11 @@ class Headstart(models.Model):
         ),
     )
 
+    class Meta:
+        unique_together = (
+            ('episode', 'team'),
+        )
+
 
 class AnnouncementType(Enum):
     INFO = 'I'
