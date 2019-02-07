@@ -31,6 +31,7 @@ from .factories import (
     AnswerFactory,
     EpisodeFactory,
     GuessFactory,
+    HeadstartFactory,
     HintFactory,
     PuzzleFactory,
     PuzzleFileFactory,
@@ -60,6 +61,10 @@ class FactoryTests(EventTestCase):
     @staticmethod
     def test_puzzle_file_factory_default_construction():
         PuzzleFileFactory.create()
+
+    @staticmethod
+    def test_headstart_factory_default_construction():
+        HeadstartFactory.create()
 
     @staticmethod
     def test_hint_factory_default_construction():
@@ -564,6 +569,25 @@ class EpisodeBehaviourTest(EventTestCase):
 
         # Test that headstart does not apply in the wrong direction
         self.assertEqual(episode1.headstart_applied(team), datetime.timedelta(minutes=0))
+
+    def test_headstart_adjustment(self):
+        headstart = HeadstartFactory()
+
+        episode = headstart.episode
+        team = headstart.team
+
+        self.assertEqual(episode.headstart_applied(team), headstart.headstart_adjustment)
+
+    def test_headstart_adjustment_with_episode_headstart(self):
+        episode1 = EpisodeFactory()
+        episode2 = EpisodeFactory(event=episode1.event, headstart_from=episode1)
+        puzzle = PuzzleFactory(episode=episode1)
+        user = UserProfileFactory()
+        team = TeamFactory(at_event=episode1.event, members=user)
+        GuessFactory(for_puzzle=puzzle, by=user, correct=True)
+        headstart = HeadstartFactory(episode=episode2, team=team)
+
+        self.assertEqual(episode2.headstart_applied(team), puzzle.headstart_granted + headstart.headstart_adjustment)
 
     def test_next_linear_puzzle(self):
         linear_episode = EpisodeFactory(parallel=False)

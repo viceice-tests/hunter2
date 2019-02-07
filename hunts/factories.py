@@ -320,6 +320,15 @@ class EpisodeFactory(factory.django.DjangoModelFactory):
                 self.headstart_from.add(puzzle)
 
 
+class HeadstartFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'hunts.Headstart'
+
+    episode = factory.SubFactory(EpisodeFactory)
+    team = factory.SubFactory(TeamFactory)
+    headstart_adjustment = factory.Faker('time_delta', end_datetime=timedelta(minutes=60))
+
+
 class AnnouncementFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'hunts.Announcement'

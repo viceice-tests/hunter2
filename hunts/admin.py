@@ -340,4 +340,5 @@ class AnnoucementAdmin(admin.ModelAdmin):
     list_display_links = ('title', )
 
 
+admin.site.register(models.Headstart)
 admin.site.register(models.TeamPuzzleData)
