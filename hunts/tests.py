@@ -203,7 +203,7 @@ class LuaValidationTests(EventTestCase):
 class AnswerSubmissionTests(EventTestCase):
     def setUp(self):
         self.puzzle = PuzzleFactory()
-        self.episode = self.puzzle.episode_set.get()
+        self.episode = self.puzzle.episode
         self.event = self.episode.event
         self.user = TeamMemberFactory(team__at_event=self.event)
         self.url = reverse('answer', kwargs={
@@ -264,7 +264,7 @@ class AnswerSubmissionTests(EventTestCase):
 class PuzzleStartTimeTests(EventTestCase):
     def test_start_times(self):
         self.puzzle = PuzzleFactory()
-        self.episode = self.puzzle.episode_set.get()
+        self.episode = self.puzzle.episode
         self.event = self.episode.event
         self.user = TeamMemberFactory(team__at_event=self.event)
 
@@ -432,11 +432,6 @@ class PuzzleAccessTests(EventTestCase):
 
 
 class EpisodeBehaviourTest(EventTestCase):
-    def test_reuse_puzzle(self):
-        puzzles = PuzzleFactory.create_batch(2)
-        with self.assertRaises(ValidationError, msg='Reusing a puzzle raises a ValidationError'):
-            puzzles[0].episode_set.get().puzzles.add(puzzles[1])
-
     def test_linear_episodes_are_linear(self):
         linear_episode = EpisodeFactory(parallel=False)
         PuzzleFactory.create_batch(10, episode=linear_episode)
@@ -449,13 +444,13 @@ class EpisodeBehaviourTest(EventTestCase):
         self.assertTrue(linear_episode.unlocked_by(team), msg='Episode is unlocked by team')
         self.assertFalse(linear_episode.parallel, msg='Episode is not set as parallel')
 
-        for i in range(1, linear_episode.puzzles.count() + 1):
+        for i in range(1, linear_episode.puzzle_set.count() + 1):
             # Test we have unlocked the question, but not answered it yet.
             self.assertTrue(linear_episode.get_puzzle(i).unlocked_by(team), msg=f'Puzzle[{i}] is unlocked')
             self.assertFalse(linear_episode.get_puzzle(i).answered_by(team), msg=f'Puzzle[{i}] is not answered')
 
             # Test that we have not unlocked the next puzzle before answering.
-            if i < linear_episode.puzzles.count():
+            if i < linear_episode.puzzle_set.count():
                 self.assertFalse(linear_episode.get_puzzle(i + 1).unlocked_by(team), msg=f'Puzzle[{i + 1}] is not unlocked until previous puzzle answered')
 
             # Answer the question and assert that it's now answered.
@@ -472,7 +467,7 @@ class EpisodeBehaviourTest(EventTestCase):
         self.assertTrue(parallel_episode.parallel)
 
         # Ensure all puzzles in a parallel episode are unlocked.
-        for puzzle in parallel_episode.puzzles.all():
+        for puzzle in parallel_episode.puzzle_set.all():
             self.assertTrue(puzzle.unlocked_by(team), msg='Puzzle unlocked in parallel episode')
 
     def test_can_see_all_puzzles_after_event_end(self):
@@ -555,7 +550,7 @@ class EpisodeBehaviourTest(EventTestCase):
         headstart = datetime.timedelta()
         self.assertEqual(episode1.headstart_granted(team), datetime.timedelta(minutes=0), "No headstart when puzzles unanswered")
 
-        for i in range(1, episode1.puzzles.count() + 1):
+        for i in range(1, episode1.puzzle_set.count() + 1):
             # Start answering puzzles
             GuessFactory.create(for_puzzle=episode1.get_puzzle(i), by=user, correct=True)
             self.assertTrue(episode1.get_puzzle(i).answered_by(team), msg=f'Correct guess has answered puzzle[{i}]')
@@ -601,7 +596,7 @@ class EpisodeBehaviourTest(EventTestCase):
         self.assertTrue(linear_episode.unlocked_by(team), msg='Episode is unlocked by team')
         self.assertFalse(linear_episode.parallel, msg='Episode is not set as parallel')
 
-        for i in range(1, linear_episode.puzzles.count() + 1):
+        for i in range(1, linear_episode.puzzle_set.count() + 1):
             # Test we have unlocked the question, but not answered it yet.
             self.assertEqual(linear_episode.next_puzzle(team), i, msg=f'Puzzle[{i}]\'s next puzzle is Puzzle[{i + 1}]')
 
@@ -622,7 +617,7 @@ class EpisodeBehaviourTest(EventTestCase):
         self.assertTrue(parallel_episode.parallel, msg='Episode is not set as parallel')
 
         # Answer all questions in a random order.
-        answer_order = list(range(1, parallel_episode.puzzles.count() + 1))
+        answer_order = list(range(1, parallel_episode.puzzle_set.count() + 1))
         random.shuffle(answer_order)
 
         for i in answer_order:
@@ -788,7 +783,7 @@ class FileUploadTests(EventTestCase):
 
     def test_load_solution_with_eventfile(self):
         puzzle = PuzzleFactory(content='content', soln_content=f'${{{self.eventfile.slug}}}')
-        episode_number = puzzle.episode_set.get().get_relative_id()
+        episode_number = puzzle.episode.get_relative_id()
         puzzle_number = puzzle.get_relative_id()
         self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
         with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
@@ -804,7 +799,7 @@ class FileUploadTests(EventTestCase):
         puzzlefile = PuzzleFileFactory(puzzle=puzzle)
         puzzle.soln_content = f'${{{puzzlefile.slug}}}'
         puzzle.save()
-        episode_number = puzzle.episode_set.get().get_relative_id()
+        episode_number = puzzle.episode.get_relative_id()
         puzzle_number = puzzle.get_relative_id()
         self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
         with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
@@ -820,7 +815,7 @@ class FileUploadTests(EventTestCase):
         solutionfile = SolutionFileFactory(puzzle=puzzle)
         puzzle.soln_content = f'${{{solutionfile.slug}}}'
         puzzle.save()
-        episode_number = puzzle.episode_set.get().get_relative_id()
+        episode_number = puzzle.episode.get_relative_id()
         puzzle_number = puzzle.get_relative_id()
         self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
         with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
@@ -837,7 +832,7 @@ class FileUploadTests(EventTestCase):
         solutionfile = SolutionFileFactory(puzzle=puzzle, slug=puzzlefile.slug)
         puzzle.soln_content = f'${{{solutionfile.slug}}}'
         puzzle.save()
-        episode_number = puzzle.episode_set.get().get_relative_id()
+        episode_number = puzzle.episode.get_relative_id()
         puzzle_number = puzzle.get_relative_id()
         self.tenant.save()  # To ensure the date we're freezing is correct after any factory manipulation
         with freezegun.freeze_time(self.tenant.end_date + datetime.timedelta(seconds=1)):
@@ -1009,28 +1004,28 @@ class EventWinningTests(EventTestCase):
 
         self.assertEqual(utils.finishing_positions(self.event), [])
 
-        for pz in self.ep1.puzzles.all():
+        for pz in self.ep1.puzzle_set.all():
             for user in (self.user1, self.user2):
                 GuessFactory.create(for_puzzle=pz, by=user, correct=True)
         # We need to complete both episodes
         self.assertEqual(utils.finishing_positions(self.event), [])
 
         # both teams complete episode 2, but now their episode 1 guesses are wrong
-        for pz in self.ep1.puzzles.all():
+        for pz in self.ep1.puzzle_set.all():
             for g in pz.guess_set.all():
                 g.delete()
-        for pz in self.ep1.puzzles.all():
+        for pz in self.ep1.puzzle_set.all():
             for user in (self.user1, self.user2):
                 GuessFactory.create(for_puzzle=pz, by=user, correct=False)
 
-        for pz in self.ep2.puzzles.all():
+        for pz in self.ep2.puzzle_set.all():
             for user in (self.user1, self.user2):
                 GuessFactory.create(for_puzzle=pz, by=user, correct=True)
         # Should still have no-one finished
         self.assertEqual(utils.finishing_positions(self.event), [])
 
         # Make correct Episode 1 guesses again
-        for pz in self.ep1.puzzles.all() | self.ep2.puzzles.all():
+        for pz in self.ep1.puzzle_set.all() | self.ep2.puzzle_set.all():
             for g in pz.guess_set.all():
                 g.delete()
             for user in (self.user1, self.user2):
@@ -1039,7 +1034,7 @@ class EventWinningTests(EventTestCase):
         self.assertEqual(utils.finishing_positions(self.event), [self.team1, self.team2])
 
         # Swap order
-        for pz in self.ep1.puzzles.all():
+        for pz in self.ep1.puzzle_set.all():
             for g in pz.guess_set.filter(by=self.user1):
                 g.given = timezone.now()
                 g.save()

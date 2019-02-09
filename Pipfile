@@ -23,6 +23,7 @@ django-environ = "*"
 django-extensions = "*"
 django-fullclean = { git = "https://github.com/riconnon/django-fullclean.git", ref = "0.0.4+whitelist" }
 django-nested-admin = "*"
+django-ordered-model = "*"
 django-prometheus = "*"
 django-sendfile = "*"
 django-solo = "*"
