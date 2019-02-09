@@ -44,17 +44,6 @@ class EpisodeFactory(factory.django.DjangoModelFactory):
     parallel = factory.Faker('boolean')
 
     @factory.post_generation
-    def puzzles(self, create, extracted, **kwargs):
-        if not create:
-            # Simple build, do nothing.
-            return
-
-        if extracted:
-            # A list of puzzles were passed in, use them
-            for puzzle in (extracted if isinstance(extracted, collections.Iterable) else (extracted,)):
-                self.puzzles.add(puzzle)
-
-    @factory.post_generation
     def prequels(self, create, extracted, **kwargs):
         if not create:
             # Simple build, do nothing.

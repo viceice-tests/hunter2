@@ -16,7 +16,7 @@ from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from accounts.models import UserProfile
 from teams.models import Team
-from .models import Episode, Guess, Puzzle
+from .models import Episode, Guess
 
 
 @receiver(m2m_changed, sender=Episode.prequels.through)
