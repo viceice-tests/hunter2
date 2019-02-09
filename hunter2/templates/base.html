@@ -71,12 +71,7 @@
 			</footer>
 		</div>
 		{% analytical_body_bottom %}
-
 		{% render_bundle 'hunter2' 'js' %}
-		<script>
-			hunter2.configureSentry('{% sentry_public_dsn "https" %}');
-			hunter2.configureCSRF();
-		</script>
 		{% block script %}{% endblock %}
 	</body>
 </html>

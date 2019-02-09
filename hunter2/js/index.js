@@ -1,5 +1,4 @@
 var $ = require('jquery');
-import Raven from 'raven-js';
 
 function getCookie(name) {
 	"use strict";
@@ -35,9 +34,4 @@ export function configureCSRF() {
 		},
 		contentType: 'application/json'
 	});
-}
-
-export function configureSentry(dsn) {
-	"use strict";
-	Raven.config(dsn).install();
 }
