@@ -14,7 +14,7 @@
     "url": "https://gitlab.com/ihunt/hunter2/issues"
   },
   "scripts": {
-    "start": "/node_modules/.bin/webpack-dev-server --config webpack.config.js",
+    "start": "/node_modules/.bin/webpack-dev-server --config webpack.config.js --watch",
     "build": "/node_modules/.bin/webpack --config webpack.config.js --display-error-details"
   },
   "devDependencies": {

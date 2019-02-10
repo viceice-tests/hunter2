@@ -26,7 +26,7 @@ module.exports = {
     port: 4000,
   },
 
-  watch: true,
+  watch: false,
   watchOptions: {
     aggregateTimeout: 300,
     poll: 1000,
@@ -38,9 +38,9 @@ module.exports = {
         test: /\.(scss)$/,
         use: [
           MiniCssExtractPlugin.loader,
-          'css-loader',
-          'postcss-loader',
-          'sass-loader'
+          'css-loader?sourceMap',
+          'postcss-loader?sourceMap',
+          'sass-loader?sourceMap'
         ]
       }
     ]

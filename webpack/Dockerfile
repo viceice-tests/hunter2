@@ -6,5 +6,5 @@ RUN npm install
 WORKDIR /usr/src/app
 
 EXPOSE 4000
-ENTRYPOINT ["npm"]
+ENTRYPOINT ["npm", "run-script"]
 CMD ["start"]

@@ -35,13 +35,14 @@ RUN apk add --no-cache \
 RUN luarocks-5.2 install lua-cjson 2.1.0-1
 RUN luarocks-5.2 install lua-imlib2 dev-2
 
-#FROM registry.gitlab.com/rconan/docker-webpack:4.23.1-1 AS webpack
-#
-#WORKDIR /usr/src/app
-#COPY . .
-#RUN npm install \
-# && /node_modules/.bin/webpack --config webpack.config.js \
-# && rm -rf node_modules
+
+FROM node:11-alpine as webpack_build
+
+WORKDIR /usr/src/app
+COPY . .
+RUN npm install \
+ && ./node_modules/.bin/webpack --config webpack.config.js --mode=production
+
 
 FROM python:3.6.6-alpine3.8
 
@@ -51,10 +52,10 @@ RUN apk add --no-cache \
     postgresql-libs \
     imlib2
 
-COPY --from=python_build /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages
-COPY --from=lua_build /opt/hunter2 /opt/hunter2
+COPY --from=python_build /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages/
+COPY --from=lua_build /opt/hunter2 /opt/hunter2/
 COPY . /usr/src/app
-#COPY --from=webpack /usr/src/app/webpack-stats.json /usr/src/app
+COPY --from=webpack_build /usr/src/app/webpack-stats.json /usr/src/app/assets /usr/src/app/
 
 WORKDIR /usr/src/app
 
