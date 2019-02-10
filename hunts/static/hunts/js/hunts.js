@@ -322,15 +322,18 @@ var socketHandlers = {
 	'error': receivedError
 }
 
+var lastUpdated;
+
 function openEventSocket(data) {
 	"use strict";
 	var ws_scheme = (window.location.protocol == "https:" ? "wss" : "ws") + '://';
 	// TODO use robust-websocket or something
-	var sock = new WebSocket(ws_scheme + window.location.host + '/ws' + window.location.pathname);
+	var sock = new RobustWebSocket(ws_scheme + window.location.host + '/ws' + window.location.pathname);
 	sock.onmessage = function(e) {
 		var data = JSON.parse(e.data);
+		lastUpdated = Date.now();
 
-		//console.log(data)
+		console.log(data)
 		if (!(data.type in socketHandlers)) {
 			console.log('Invalid message type ' + data['type']);
 			console.log(data['content']);
@@ -343,12 +346,14 @@ function openEventSocket(data) {
 		message('Websocket is broken. You will not receive new information without refreshing the page.');
 	}
 	sock.onopen = function(e) {
-		sock.send(JSON.stringify({'type': 'unlocks-plz', 'from': 'all'}));
-		//sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}));
+		if (lastUpdated != undefined) {
+			sock.send(JSON.stringify({'type': 'guesses-plz', 'from': lastUpdated}));
+		} else {
+			sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}));
+		}
+		sock.send(JSON.stringify({'type': 'unlocks-plz'}));
 	};
 }
-
-var last_updated = Date.now();
 
 $(function() {
 	"use strict";
@@ -376,7 +381,6 @@ $(function() {
 		}
 		button.attr('disabled', true);
 		var data = {
-			last_updated: last_updated,
 			answer: field.val()
 		};
 		$.ajax({
@@ -387,7 +391,6 @@ $(function() {
 			success: function(data) {
 				field.val('');
 				fieldKeyup();
-				last_updated = Date.now();
 				if (data.correct == "true") {
 					button.removeAttr('disabled');
 					correct_answer(data.url, data.text);

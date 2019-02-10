@@ -13,6 +13,7 @@
 import asyncio
 from collections import defaultdict
 import time
+from datetime import datetime
 
 from asgiref.sync import async_to_sync, sync_to_async
 from channels.consumer import get_handler_name
@@ -22,6 +23,7 @@ from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models.signals import pre_save, pre_delete
+from django.utils import timezone
 
 from teams.models import Team
 from .models import Guess
@@ -159,10 +161,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 return
             self.send_old_guesses(content['from'])
         elif content['type'] == 'unlocks-plz':
-            if 'from' not in content:
-                self._error('required field "from" is missing')
-                return
-            self.send_old_unlocks(content['from'])
+            self.send_old_unlocks()
         else:
             self._error('invalid request type')
 
@@ -325,10 +324,11 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         cls.send_new_guess(guess, unlocks)
 
     def send_old_guesses(self, start):
-        if start == 'all':
-            guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team)
-        else:
+        if start != 'all':
+            start = datetime.fromtimestamp(int(start) // 1000, timezone.utc)
             guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team, given__gt=start)
+        else:
+            guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team)
 
         # TODO can this be unified with _new_guess?
         for g in guesses:
@@ -346,11 +346,8 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 }
             })
 
-    def send_old_unlocks(self, start):
-        if start == 'all':
-            guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team)
-        else:
-            guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team, given__gt=start)
+    def send_old_unlocks(self):
+        guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team)
 
         all_unlocks = models.Unlock.objects.filter(puzzle=self.puzzle)
         unlocks = defaultdict(list)

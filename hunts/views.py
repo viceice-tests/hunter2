@@ -571,17 +571,6 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         data = models.PuzzleData(request.puzzle, request.team)
 
-        last_updated = request.POST.get('last_updated')
-        if last_updated and data.tp_data.start_time:
-            last_updated = datetime.fromtimestamp(int(last_updated) // 1000, timezone.utc)
-            new_hints = request.puzzle.hint_set.filter(
-                time__gt=(last_updated - data.tp_data.start_time),
-                time__lt=(now - data.tp_data.start_time),
-            )
-            new_hints = [{'time': str(hint.time), 'text': hint.text} for hint in new_hints]
-        else:
-            new_hints = []
-
         # Put answer in DB
         guess = models.Guess(
             guess=given_answer,
@@ -606,7 +595,6 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             response['guess'] = given_answer
             response['timeout_length'] = minimum_time.total_seconds() * 1000
             response['timeout_end'] = str(now + minimum_time)
-            response['new_hints'] = new_hints
         response['correct'] = str(correct).lower()
         response['by'] = request.user.username
         # PuzzleEventWebsocket._send_message(request.puzzle, request.team, {'type': 'answer', 'message': response})
