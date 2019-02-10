@@ -338,4 +338,4 @@ class AnnouncementFactory(factory.django.DjangoModelFactory):
     title = factory.Faker('sentence')
     posted = factory.Faker('date_time_this_month', tzinfo=pytz.utc)
     message = factory.Faker('text')
-    type = factory.LazyFunction(lambda: choice(list(AnnouncementType)))
+    type = factory.LazyFunction(lambda: choice(list(AnnouncementType)))  # nosec random is fine for testing
