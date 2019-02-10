@@ -4,18 +4,18 @@ const BundleTracker = require('webpack-bundle-tracker');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
-  mode: 'production',
+  devtool: 'source-map',
+  mode: 'development',
   context: '/usr/src/app',
 
   entry: {
-    app: './app.js',
     hunter2: './hunter2/js/index.js',
     teams: './teams/js/index.js',
   },
 
   output: {
-    path: path.resolve('assets/js/'),
-    publicPath: 'http://localhost:4000/assets/js/',
+    path: path.resolve('assets/'),
+    publicPath: 'http://localhost:4000/assets/',
     filename: '[name]/[hash].js',
     libraryTarget: 'var',
     library: '[name]'
@@ -24,7 +24,6 @@ module.exports = {
   devServer: {
     host: "0.0.0.0",
     port: 4000,
-    hot: true
   },
 
   watch: true,
@@ -50,9 +49,7 @@ module.exports = {
   plugins: [
     new BundleTracker({filename: './webpack-stats.json'}), // Required for django-webpack-loader
     new MiniCssExtractPlugin({
-      filename: '[name].css',
-      chunkFilename: '[chunkhash].css'
+      filename: '[name]/[hash].css',
     }),
-    new webpack.HotModuleReplacementPlugin()
   ]
 };
