@@ -19,7 +19,6 @@ from django.urls import path, reverse
 from django.db.models import Count, Sum
 from nested_admin import NestedModelAdmin, NestedModelAdminMixin, NestedStackedInline, NestedTabularInline
 from ordered_model.admin import OrderedModelAdmin
-from sortedm2m_filter_horizontal_widget.forms import SortedFilteredSelectMultiple
 
 from . import models
 from .forms import AnswerForm
@@ -271,11 +270,6 @@ class EpisodeAdmin(NestedModelAdmin):
             puzzles_count=Count('puzzle', distinct=True),
             headstart_sum=Sum('puzzle__headstart_granted'),
         )
-
-    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
-        if db_field.name == 'puzzles':
-            kwargs['widget'] = SortedFilteredSelectMultiple()
-        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def event_change(self, obj):
         return format_html(

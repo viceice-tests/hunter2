@@ -4,6 +4,22 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def populate_puzzle_episode(apps, schema_editor):
+    Episode = apps.get_model('hunts', 'Episode')
+    for episode in Episode.objects.all():
+        for i, puzzle in enumerate(episode.puzzles.all()):
+            puzzle.new_episode = episode
+            puzzle.order = i
+            puzzle.save()
+
+
+def populate_episode_puzzles(apps, schema_editor):
+    Episode = apps.get_model('hunts', 'Episode')
+    for episode in Episode.objects.all():
+        episode.puzzles.set(episode.puzzle_set.all())
+        episode.save()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,6 +27,30 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AddField(
+            model_name='puzzle',
+            name='new_episode',  # Naming it 'episode' straight away would mess with the reverse relation of the existing ManyToMany
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='hunts.Episode'),
+        ),
+        migrations.AddField(
+            model_name='puzzle',
+            name='order',
+            field=models.PositiveIntegerField(db_index=True, default=1, editable=False, verbose_name='order'),
+            preserve_default=False,
+        ),
+        migrations.RunPython(
+            code=populate_puzzle_episode,
+            reverse_code=populate_episode_puzzles,
+        ),
+        migrations.RenameField(
+            model_name='puzzle',
+            old_name='new_episode',
+            new_name='episode',
+        ),
+        migrations.RemoveField(
+            model_name='episode',
+            name='puzzles',
+        ),
         migrations.AlterModelOptions(
             name='episode',
             options={'ordering': ('start_date',)},
@@ -18,20 +58,5 @@ class Migration(migrations.Migration):
         migrations.AlterModelOptions(
             name='puzzle',
             options={'ordering': ('episode', 'order')},
-        ),
-        migrations.RemoveField(
-            model_name='episode',
-            name='puzzles',
-        ),
-        migrations.AddField(
-            model_name='puzzle',
-            name='episode',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='hunts.Episode'),
-        ),
-        migrations.AddField(
-            model_name='puzzle',
-            name='order',
-            field=models.PositiveIntegerField(db_index=True, default=1, editable=False, verbose_name='order'),
-            preserve_default=False,
         ),
     ]

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7c2b92fd8c7b44d4ddfbd8bd0869883b0c4aa68818d381535a71c5a292df3c32"
+            "sha256": "a903d933796b8934773f365e5a5a38c1660c99eae30995f3ed3f2233f6c60778"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -273,13 +273,6 @@
             ],
             "index": "pypi",
             "version": "==1.5.0"
-        },
-        "django-sortedm2m-filter-horizontal-widget": {
-            "hashes": [
-                "sha256:ca8425e05a87bffac5b4e64adfb2cee91c96e074d66fe28ab263ad21f4687269"
-            ],
-            "index": "pypi",
-            "version": "==1.3.2"
         },
         "django-tenants": {
             "git": "https://github.com/tomturner/django-tenants.git",
