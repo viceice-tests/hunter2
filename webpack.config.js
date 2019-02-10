@@ -14,8 +14,8 @@ module.exports = {
   },
 
   output: {
-    path: path.resolve('assets/'),
-    publicPath: 'http://localhost:4000/assets/',
+    path: path.resolve('./assets/bundles/'),
+    publicPath: 'http://localhost:4000/assets/bundles/',
     filename: '[name]/[hash].js',
     libraryTarget: 'var',
     library: '[name]'
