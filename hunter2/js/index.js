@@ -1,4 +1,4 @@
-import('../static/hunter2/scss/base.scss');
+import '../static/hunter2/scss/base.scss';
 
 var $ = require('jquery');
 
