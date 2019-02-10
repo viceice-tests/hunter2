@@ -1,3 +1,5 @@
+import('../static/hunter2/scss/base.scss');
+
 var $ = require('jquery');
 
 function getCookie(name) {
