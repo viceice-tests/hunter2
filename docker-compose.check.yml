@@ -29,3 +29,5 @@ services:
       args:
         webpack_tag: 4.23.1-1
     image: ${IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/webpack}
+    volumes:
+      - ${PWD:-.}:/usr/src/app

@@ -1,6 +1,6 @@
 FROM node:11-alpine
 
-COPY package.json /
+COPY package.json package-lock.json /
 RUN npm install
 
 WORKDIR /usr/src/app

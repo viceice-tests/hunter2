@@ -16,7 +16,8 @@
   "scripts": {
     "start": "/node_modules/.bin/webpack-dev-server --config webpack.dev.js --watch",
     "build:dev": "/node_modules/.bin/webpack --config webpack.dev.js --display-error-details",
-    "build:prod": "/node_modules/.bin/webpack --config webpack.prod.js"
+    "build:prod": "/node_modules/.bin/webpack --config webpack.prod.js",
+    "lock": "npm install --package-lock-only"
   },
   "devDependencies": {
     "webpack": "^4.29.3",
