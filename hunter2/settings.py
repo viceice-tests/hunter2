@@ -19,8 +19,6 @@ from .utils import load_or_create_secret_key
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
-from .utils import load_or_create_secret_key
-
 # Load the current environment profile
 root = environ.Path(__file__) - 2
 env = environ.Env()
