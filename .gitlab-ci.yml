@@ -117,9 +117,9 @@ test:app:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
     - docker load -i "${SERVICE}.tar"
     - install -d -m 777 coverage
-    - docker-compose run -e H2_TEST_SEED=1 -v "${PWD}/coverage:/usr/src/app/coverage" --entrypoint "python" "${SERVICE}" -Wd -m coverage run --source . --rcfile coveragerc manage.py test -v 2
-    - docker run -v "${PWD}/coverage:/usr/src/app/coverage" --entrypoint "python" "${IMAGE_TAG}" -m coverage html --rcfile coveragerc
-    - docker run -v "${PWD}/coverage:/usr/src/app/coverage" --entrypoint "python" "${IMAGE_TAG}" -m coverage report --rcfile coveragerc
+    - docker-compose run -e H2_TEST_SEED=1 -v "${PWD}/coverage:/usr/src/app/coverage" --entrypoint "python" "${SERVICE}" -Wd -m coverage run --source . manage.py test -v 2
+    - docker run -v "${PWD}/coverage:/usr/src/app/coverage" --entrypoint "python" "${IMAGE_TAG}" -m coverage html
+    - docker run -v "${PWD}/coverage:/usr/src/app/coverage" --entrypoint "python" "${IMAGE_TAG}" -m coverage report
   artifacts:
     expire_in: 180 days
     name: coverage
