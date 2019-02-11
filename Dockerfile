@@ -41,7 +41,7 @@ FROM node:11-alpine as webpack_build
 WORKDIR /usr/src/app
 COPY . .
 RUN npm install \
- && ./node_modules/.bin/webpack --config webpack.config.js --mode=production
+ && ./node_modules/.bin/webpack --config webpack.prod.js
 
 
 FROM python:3.6.6-alpine3.8
@@ -55,9 +55,9 @@ RUN apk add --no-cache \
 COPY --from=python_build /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages/
 COPY --from=lua_build /opt/hunter2 /opt/hunter2/
 COPY . /usr/src/app
-COPY --from=webpack_build /usr/src/app/webpack-stats.json /usr/src/app/assets /usr/src/app/
-
 WORKDIR /usr/src/app
+COPY --from=webpack_build /usr/src/app/webpack-stats.json .
+COPY --from=webpack_build /usr/src/app/assets ./assets
 
 RUN addgroup -g 500 -S django \
  && adduser -h /usr/src/app -s /sbin/nologin -G django -S -u 500 django \

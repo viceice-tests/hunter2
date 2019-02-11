@@ -4,8 +4,6 @@ const BundleTracker = require('webpack-bundle-tracker');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
-  devtool: 'source-map',
-  mode: 'development',
   context: '/usr/src/app',
 
   entry: {
@@ -14,22 +12,10 @@ module.exports = {
   },
 
   output: {
-    path: path.resolve('./assets/bundles/'),
-    publicPath: 'http://localhost:4000/assets/bundles/',
+    path: path.resolve('assets/bundles/'),
     filename: '[name]/[hash].js',
     libraryTarget: 'var',
     library: '[name]'
-  },
-
-  devServer: {
-    host: "0.0.0.0",
-    port: 4000,
-  },
-
-  watch: false,
-  watchOptions: {
-    aggregateTimeout: 300,
-    poll: 1000,
   },
 
   module: {
