@@ -31,6 +31,7 @@ from .factories import (
     AnswerFactory,
     EpisodeFactory,
     GuessFactory,
+    HeadstartFactory,
     HintFactory,
     PuzzleFactory,
     PuzzleFileFactory,
@@ -60,6 +61,10 @@ class FactoryTests(EventTestCase):
     @staticmethod
     def test_puzzle_file_factory_default_construction():
         PuzzleFileFactory.create()
+
+    @staticmethod
+    def test_headstart_factory_default_construction():
+        HeadstartFactory.create()
 
     @staticmethod
     def test_hint_factory_default_construction():
@@ -486,6 +491,58 @@ class EpisodeBehaviourTest(EventTestCase):
             team_puzzles = linear_episode.unlocked_puzzles(team)
             self.assertEqual(len(team_puzzles), num_puzzles, msg='After the event ends, all of the puzzles are unlocked')
 
+    def test_puzzle_start_dates(self):
+        with freezegun.freeze_time() as frozen_datetime:
+            tz_time = timezone.make_aware(frozen_datetime())
+            user = TeamMemberFactory()
+            self.client.force_login(user.user)
+
+            started_parallel_episode = EpisodeFactory(start_date=tz_time - datetime.timedelta(minutes=1), parallel=True)
+
+            started_parallel_episode_started_puzzle = PuzzleFactory(
+                episode=started_parallel_episode,
+                start_date=tz_time - datetime.timedelta(minutes=1)
+            )
+            response = self.client.get(started_parallel_episode_started_puzzle.get_absolute_url())
+            self.assertEqual(response.status_code, 200)
+            started_parallel_episode_not_started_puzzle = PuzzleFactory(
+                episode=started_parallel_episode,
+                start_date=tz_time + datetime.timedelta(minutes=1)
+            )
+            response = self.client.get(started_parallel_episode_not_started_puzzle.get_absolute_url())
+            self.assertEqual(response.status_code, 403)
+
+            not_started_parallel_episode = EpisodeFactory(start_date=tz_time + datetime.timedelta(minutes=1), parallel=True)
+
+            not_started_parallel_episode_started_puzzle = PuzzleFactory(
+                episode=not_started_parallel_episode,
+                start_date=tz_time - datetime.timedelta(minutes=1)
+            )
+            response = self.client.get(not_started_parallel_episode_started_puzzle.get_absolute_url())
+            self.assertEqual(response.status_code, 302)  # Not started episode overrides started puzzle
+            not_started_parallel_episode_not_started_puzzle = PuzzleFactory(
+                episode=not_started_parallel_episode,
+                start_date=tz_time + datetime.timedelta(minutes=1)
+            )
+            response = self.client.get(not_started_parallel_episode_not_started_puzzle.get_absolute_url())
+            self.assertEqual(response.status_code, 302)
+
+            started_linear_episode = EpisodeFactory(start_date=tz_time - datetime.timedelta(minutes=2), parallel=False)
+
+            started_linear_episode_started_puzzle = PuzzleFactory(
+                episode=started_linear_episode,
+                start_date=tz_time - datetime.timedelta(minutes=1)
+            )
+            response = self.client.get(started_linear_episode_started_puzzle.get_absolute_url())
+            self.assertEqual(response.status_code, 200)
+            GuessFactory(by=user, for_puzzle=started_linear_episode_started_puzzle, correct=True)  # Create guess to progress
+            started_linear_episode_not_started_puzzle = PuzzleFactory(
+                episode=started_linear_episode,
+                start_date=tz_time + datetime.timedelta(minutes=1)
+            )
+            response = self.client.get(started_linear_episode_not_started_puzzle.get_absolute_url())
+            self.assertEqual(response.status_code, 200)  # Puzzle start time should be ignored for linear episode
+
     def test_headstarts(self):
         # TODO: Replace with episode sequence factory?
         episode1 = EpisodeFactory()
@@ -512,6 +569,25 @@ class EpisodeBehaviourTest(EventTestCase):
 
         # Test that headstart does not apply in the wrong direction
         self.assertEqual(episode1.headstart_applied(team), datetime.timedelta(minutes=0))
+
+    def test_headstart_adjustment(self):
+        headstart = HeadstartFactory()
+
+        episode = headstart.episode
+        team = headstart.team
+
+        self.assertEqual(episode.headstart_applied(team), headstart.headstart_adjustment)
+
+    def test_headstart_adjustment_with_episode_headstart(self):
+        episode1 = EpisodeFactory()
+        episode2 = EpisodeFactory(event=episode1.event, headstart_from=episode1)
+        puzzle = PuzzleFactory(episode=episode1)
+        user = UserProfileFactory()
+        team = TeamFactory(at_event=episode1.event, members=user)
+        GuessFactory(for_puzzle=puzzle, by=user, correct=True)
+        headstart = HeadstartFactory(episode=episode2, team=team)
+
+        self.assertEqual(episode2.headstart_applied(team), puzzle.headstart_granted + headstart.headstart_adjustment)
 
     def test_next_linear_puzzle(self):
         linear_episode = EpisodeFactory(parallel=False)
@@ -1068,3 +1144,12 @@ class GuessTeamDenormalisationTests(EventTestCase):
         guess2.refresh_from_db()
         self.assertEqual(guess1.by_team, self.team2, "by_team denormalisation consistent with user's team")
         self.assertEqual(guess2.by_team, self.team1, "by_team denormalisation consistent with user's team")
+
+
+class UnlockAnswerTests(EventTestCase):
+    def test_unlock_immutable(self):
+        unlockanswer = UnlockAnswerFactory()
+        new_unlock = UnlockFactory()
+        with self.assertRaises(ValueError):
+            unlockanswer.unlock = new_unlock
+            unlockanswer.save()

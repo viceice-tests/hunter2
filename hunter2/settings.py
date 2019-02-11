@@ -16,6 +16,11 @@ import os
 
 from .utils import load_or_create_secret_key
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
+from .utils import load_or_create_secret_key
+
 # Load the current environment profile
 root = environ.Path(__file__) - 2
 env = environ.Env()
@@ -36,7 +41,7 @@ INTERNAL_IPS       = env.list      ('H2_INTERNAL_IPS',  default=['127.0.0.1'])
 EMAIL_CONFIG       = env.email_url ('H2_EMAIL_URL',     default='smtp://localhost:25')
 EMAIL_DOMAIN       = env.str       ('H2_EMAIL_DOMAIN',  default=BASE_DOMAIN)
 ADMINS             = env.list      ('H2_ADMINS',        default=[])
-RAVEN_DSN          = env.str       ('H2_SENTRY_DSN',    default=None)
+SENTRY_DSN         = env.url       ('H2_SENTRY_DSN',    default=None)
 SENDFILE_BACKEND   = env.str       ('H2_SENDFILE',      default='sendfile.backends.development')
 
 DATABASES = {
@@ -108,6 +113,7 @@ SHARED_APPS = (
     'allauth.socialaccount',
     'allauth.socialaccount.providers.openid',
     'analytical',
+    'bootstrap4',
     'channels',
     'dal',
     'dal_select2',
@@ -121,9 +127,9 @@ SHARED_APPS = (
     'django.contrib.staticfiles',
     'django_extensions',
     'django_fullclean',
+    'django_prometheus',
     'django_tenants',
     'nested_admin',
-    'raven.contrib.django.raven_compat',
     'rules.apps.AutodiscoverRulesConfig',
     'solo',
     'sortedm2m',
@@ -173,6 +179,7 @@ MEDIA_ROOT = '/uploads/'
 MEDIA_URL = '/media/'
 
 MIDDLEWARE = (
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'events.middleware.TenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
@@ -186,16 +193,20 @@ MIDDLEWARE = (
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
     'events.middleware.EventMiddleware',
     'teams.middleware.TeamMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 )
 if USE_SILK:  # nocover
     MIDDLEWARE = ('silk.middleware.SilkyMiddleware',) + MIDDLEWARE
 
 PUBLIC_SCHEMA_URLCONF = 'hunter2.public_urls'
 
-if RAVEN_DSN:  # nocover
-    RAVEN_CONFIG = {
-        'dsn': RAVEN_DSN
-    }
+if SENTRY_DSN:  # nocover
+    sentry_sdk.init(
+        dsn=SENTRY_DSN.geturl(),
+        integrations=(
+            DjangoIntegration(),
+        ),
+    )
 
 ROOT_URLCONF = 'hunter2.urls'
 
@@ -260,6 +271,7 @@ TEMPLATES = [
                 'teams.context_processors.event_team',
                 'hunts.context_processors.announcements',
                 'hunter2.context_processors.login_url',
+                'hunter2.context_processors.sentry_dsn',
             ],
         },
     },
@@ -298,3 +310,5 @@ if USE_SILK:  # nocover
     SILKY_PYTHON_PROFILER_BINARY = True
     # Well, the following path is rubbish but I cba doing it properly for now
     SILKY_PYTHON_PROFILER_RESULT_PATH = '/uploads/events/'
+
+PROMETHEUS_EXPORT_MIGRATIONS = False

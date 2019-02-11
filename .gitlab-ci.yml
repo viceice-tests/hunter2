@@ -1,10 +1,10 @@
-image: registry.gitlab.com/rconan/docker-and-compose:1.22.0-2
+image: registry.gitlab.com/rconan/docker-and-compose:1.23.2-0
 
 variables:
   DOCKER_DRIVER: overlay2
 
 services:
-  - docker:18.06.1-ce-dind
+  - docker:18.09.1-dind
 
 stages:
   - check-webpack
@@ -56,6 +56,20 @@ image:app:
   artifacts:
     expire_in: 90 days
     name: app-container
+    paths:
+      - "${SERVICE}.tar"
+
+image:metrics:
+  stage: build-app
+  variables:
+    SERVICE: metrics
+  script:
+    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
+    - docker-compose build --build-arg app_tag="${GIT_DESCRIBE}" "${SERVICE}"
+    - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
+  artifacts:
+    expire_in: 90 days
+    name: metrics-container
     paths:
       - "${SERVICE}.tar"
 
@@ -113,12 +127,41 @@ test:app:
       - coverage/
   coverage: /\d+\%\s*$/
 
+test:sast:
+  stage: web-doc-test
+  allow_failure: true
+  script:
+    - export SP_VERSION=$(echo "$CI_SERVER_VERSION" | sed 's/^\([0-9]*\)\.\([0-9]*\).*/\1-\2-stable/')
+    - docker run
+        --env SAST_CONFIDENCE_LEVEL="${SAST_CONFIDENCE_LEVEL:-3}"
+        --volume "$PWD:/code"
+        --volume /var/run/docker.sock:/var/run/docker.sock
+        "registry.gitlab.com/gitlab-org/security-products/sast:$SP_VERSION" /app/bin/run /code
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+
 release:app:
   stage: release
   dependencies:
     - image:app
   variables:
     SERVICE: app
+  script:
+    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
+    - docker load -i "${SERVICE}.tar"
+    - docker-compose push "${SERVICE}"
+    - docker tag "${IMAGE_TAG}" "${CI_REGISTRY_IMAGE}/${SERVICE}"
+    - docker push "${CI_REGISTRY_IMAGE}/${SERVICE}"
+  only:
+    - master
+
+release:metrics:
+  stage: release
+  dependencies:
+    - image:metrics
+  variables:
+    SERVICE: metrics
   script:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
     - docker load -i "${SERVICE}.tar"

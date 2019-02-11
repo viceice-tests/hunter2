@@ -11,21 +11,23 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import uuid
+from datetime import timedelta
+
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from django.urls import reverse
+from django_prometheus.models import ExportModelOperationsMixin
 from sortedm2m.fields import SortedManyToManyField
-from datetime import timedelta
 from enumfields import EnumField, Enum
-from . import runtimes
 
 import accounts
 import events
 import teams
-import uuid
+from . import runtimes
 
 
 class Puzzle(models.Model):
@@ -36,23 +38,37 @@ class Puzzle(models.Model):
 
     runtime = models.CharField(
         max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC,
-        help_text="Runtime for generating the question content"
+        verbose_name='Puzzle page renderer',
+        help_text='Renderer for generating the main puzzle page',
     )
-    content = models.TextField()
+    content = models.TextField(
+        verbose_name='Puzzle page content',
+        help_text='Main puzzle page content, generated using the puzzle renderer',
+    )
 
     cb_runtime = models.CharField(
-        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC, verbose_name="Callback runtime",
-        help_text="Runtime for responding to an AJAX callback for this question, should return JSON"
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC, verbose_name='AJAX callback processor',
+        help_text='Processor used to execute the callback script in response to AJAX requests'
     )
-    cb_content = models.TextField(blank=True, default='', verbose_name="Callback content")
+    cb_content = models.TextField(
+        blank=True, default='', verbose_name='AJAX callback script',
+        help_text='Script for generating AJAX responses for callbacks made by puzzle',
+    )
 
     soln_runtime = models.CharField(
-        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC, verbose_name="Solution runtime",
-        help_text="Runtime for generating the question solution"
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC, verbose_name="Solution renderer",
+        help_text="Renderer for generating the question solution"
     )
-    soln_content = models.TextField(blank=True, default='', verbose_name="Solution content")
+    soln_content = models.TextField(
+        blank=True, default='',
+        verbose_name='Solution content',
+        help_text='Content to be displayed to all users on the puzzle page after the event has completed'
+    )
 
-    start_date = models.DateTimeField(blank=True, default=timezone.now)
+    start_date = models.DateTimeField(
+        blank=True, default=timezone.now,
+        help_text='Date/Time for puzzle to start. Only applies if the puzzle is part of a parallel episode.'
+    )
     headstart_granted = models.DurationField(
         default=timedelta(),
         help_text='How much headstart this puzzle gives to later episodes which gain headstart from this episode'
@@ -91,14 +107,18 @@ class Puzzle(models.Model):
 
         raise RuntimeError("Could not find Puzzle pk when iterating episode's puzzle list")
 
-    # Takes the team parameter for compatability with Episode.started()
-    # Will be useful if we add puzzle head starts later
     def started(self, team):
-        return self.start_date < timezone.now()
+        """Determine whether this puzzle should be visible to teams yet.
+
+        Puzzles in linear episodes are always visible if their episode has started.
+        Puzzles in parallel episodes become visible at their individual start time.
+        """
+        episode = self.episode_set.get()
+        return not episode.parallel or self.start_date < timezone.now()
 
     def unlocked_by(self, team):
         # Is this puzzle playable?
-        episode = self.episode_set.get(event=team.at_event)
+        episode = self.episode_set.get()
         return episode.event.end_date < timezone.now() or \
             episode.unlocked_by(team) and episode._puzzle_unlocked_by(self, team)
 
@@ -160,9 +180,20 @@ def solution_file_path(instance, filename):
 
 class PuzzleFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    slug = models.CharField(max_length=50, help_text="Include the URL of the file in puzzle content using $slug or ${slug}.", blank=True, null=True)
-    url_path = models.CharField(max_length=50, help_text='The path you want to appear in the URL. Can include "directories" using /')
-    file = models.FileField(upload_to=puzzle_file_path)
+    slug = models.CharField(
+        max_length=50, blank=True, null=True,
+        verbose_name='Template Slug',
+        help_text="Include the URL of the file in puzzle content using $slug or ${slug}.",
+    )
+    url_path = models.CharField(
+        max_length=50,
+        verbose_name='URL Filename',
+        help_text='The file path you want to appear in the URL. Can include "directories" using /',
+    )
+    file = models.FileField(
+        upload_to=puzzle_file_path,
+        help_text='The extension of the uploaded file will determine the Content-Type of the file when served',
+    )
 
     class Meta:
         unique_together = (('puzzle', 'slug'), ('puzzle', 'url_path'))
@@ -170,24 +201,40 @@ class PuzzleFile(models.Model):
 
 class SolutionFile(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    slug = models.CharField(max_length=50, help_text="Include the URL of the file in solution content using $slug or ${slug}.", blank=True, null=True)
-    url_path = models.CharField(max_length=50, help_text='The path you want to appear in the URL. Can include "directories" using /')
-    file = models.FileField(upload_to=solution_file_path)
+    slug = models.CharField(
+        max_length=50, blank=True, null=True,
+        verbose_name='Template Slug',
+        help_text="Include the URL of the file in puzzle content using $slug or ${slug}.",
+    )
+    url_path = models.CharField(
+        max_length=50,
+        verbose_name='URL Filename',
+        help_text='The file path you want to appear in the URL. Can include "directories" using /',
+    )
+    file = models.FileField(
+        upload_to=solution_file_path,
+        help_text='The extension of the uploaded file will determine the Content-Type of the file when served',
+    )
 
     class Meta:
         unique_together = (('puzzle', 'slug'), ('puzzle', 'url_path'))
 
 
 class Clue(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     text = models.TextField(help_text="Text displayed when this clue is unlocked")
 
     class Meta:
         abstract = True
+        unique_together = (('puzzle', 'text'), )
 
 
 class Hint(Clue):
-    time = models.DurationField()
+    time = models.DurationField(
+        verbose_name='Delay',
+        help_text='Time after anyone on the team first loads the puzzle to display this hint'
+    )
 
     def __str__(self):
         return f'Hint unlocked after {self.time}'
@@ -213,11 +260,24 @@ class Unlock(Clue):
 
 
 class UnlockAnswer(models.Model):
-    unlock = models.ForeignKey(Unlock, on_delete=models.CASCADE)
+    unlock = models.ForeignKey(Unlock, editable=False, on_delete=models.CASCADE)
     runtime = models.CharField(
-        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC,
+        verbose_name='Validator',
+        help_text='Processor to use to check whether guess unlocks this unlock',
     )
     guess = models.TextField()
+
+    def __setattr__(self, name, value):
+        # Inspired by django-immutablemodel but this project is unmaintained and we don't need the general case
+        if name == 'unlock':
+            try:
+                current_value = getattr(self, name, None)
+            except UnlockAnswer.DoesNotExist:
+                current_value = None
+            if current_value is not None and current_value != value:
+                raise ValueError('UnlockAnswer.unlock is immutable and cannot be changed')
+        super().__setattr__(name, value)
 
     def __str__(self):
         if self.runtime == runtimes.STATIC or self.runtime == runtimes.REGEX:
@@ -242,7 +302,9 @@ class UnlockAnswer(models.Model):
 class Answer(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     runtime = models.CharField(
-        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC
+        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC,
+        verbose_name='Validator',
+        help_text='Processor to use to check whether guess is correct',
     )
     answer = models.TextField()
 
@@ -282,7 +344,8 @@ class Answer(models.Model):
         )
 
 
-class Guess(models.Model):
+class Guess(ExportModelOperationsMixin('guess'), models.Model):
+    id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
     by_team = models.ForeignKey(teams.models.Team, on_delete=models.SET_NULL, null=True, blank=True)
@@ -548,6 +611,10 @@ class Episode(models.Model):
     def headstart_applied(self, team):
         """The headstart that the team has acquired that will be applied to this episode"""
         seconds = sum([e.headstart_granted(team).total_seconds() for e in self.headstart_from.all()])
+        try:
+            seconds += self.headstart_set.get(team=team).headstart_adjustment.total_seconds()
+        except Headstart.DoesNotExist:
+            pass
         return timedelta(seconds=seconds)
 
     def headstart_granted(self, team):
@@ -557,7 +624,9 @@ class Episode(models.Model):
 
     def _puzzle_unlocked_by(self, puzzle, team):
         now = timezone.now()
-        started_puzzles = self.puzzles.filter(start_date__lt=now)
+        started_puzzles = self.puzzles.all()
+        if self.parallel:
+            started_puzzles = started_puzzles.filter(start_date__lt=now)
         if self.parallel or self.event.end_date < now:
             return puzzle in started_puzzles
         else:
@@ -569,7 +638,9 @@ class Episode(models.Model):
 
     def unlocked_puzzles(self, team):
         now = timezone.now()
-        started_puzzles = self.puzzles.filter(start_date__lt=now)
+        started_puzzles = self.puzzles.all()
+        if self.parallel:
+            started_puzzles = started_puzzles.filter(start_date__lt=now)
         if self.parallel or self.event.end_date < now:
             return started_puzzles
         else:
@@ -580,6 +651,23 @@ class Episode(models.Model):
                     break
 
             return result
+
+
+class Headstart(models.Model):
+    episode = models.ForeignKey(Episode, on_delete=models.CASCADE)
+    team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
+    headstart_adjustment = models.DurationField(
+        default=timedelta(),
+        help_text=(
+            'Time difference to apply to the headstart for the team on the specified episode. '
+            'This will apply in addition to any headstart they earn through other mechanisms.'
+        ),
+    )
+
+    class Meta:
+        unique_together = (
+            ('episode', 'team'),
+        )
 
 
 class AnnouncementType(Enum):

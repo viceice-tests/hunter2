@@ -18,6 +18,16 @@ import pytz
 from django.contrib.auth.models import User
 
 
+class UserInfoFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'accounts.UserInfo'
+
+    # We pass in profile=None to prevent UserFactory from creating another profile
+    # (this disables the RelatedFactory)
+    user = factory.SubFactory('accounts.factories.UserFactory', info=None)
+    picture = factory.Faker('url')
+
+
 class UserProfileFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'accounts.UserProfile'
@@ -45,7 +55,8 @@ class UserFactory(factory.django.DjangoModelFactory):
     last_login = factory.LazyAttribute(lambda o: factory.Faker('date_time_between_dates', datetime_start=o.date_joined, tzinfo=pytz.utc).generate({}))
 
     # We pass in 'user' to link the generated Profile to our just-generated User
-    # This will call UserProfileFactory(user=our_new_user), thus skipping the SubFactory.
+    # This will call UserInfoFactory(user=our_new_user), thus skipping the SubFactory.
+    info = factory.RelatedFactory(UserInfoFactory, 'user')
     profile = factory.RelatedFactory(UserProfileFactory, 'user')
 
     @factory.lazy_attribute_sequence

@@ -146,7 +146,7 @@ class AnswerFactory(factory.django.DjangoModelFactory):
     @staticmethod
     def _generate_regex_answer():
         # TODO: Extend to abitrary regex & use exrex to solve.
-        return f'{Faker().word()}\d\d\d'
+        return fr'{Faker().word()}\d\d\d'
 
     @staticmethod
     def _generate_lua_answer():
@@ -320,6 +320,15 @@ class EpisodeFactory(factory.django.DjangoModelFactory):
                 self.headstart_from.add(puzzle)
 
 
+class HeadstartFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'hunts.Headstart'
+
+    episode = factory.SubFactory(EpisodeFactory)
+    team = factory.SubFactory(TeamFactory)
+    headstart_adjustment = factory.Faker('time_delta', end_datetime=timedelta(minutes=60))
+
+
 class AnnouncementFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'hunts.Announcement'
@@ -329,4 +338,4 @@ class AnnouncementFactory(factory.django.DjangoModelFactory):
     title = factory.Faker('sentence')
     posted = factory.Faker('date_time_this_month', tzinfo=pytz.utc)
     message = factory.Faker('text')
-    type = factory.LazyFunction(lambda: choice(list(AnnouncementType)))
+    type = factory.LazyFunction(lambda: choice(list(AnnouncementType)))  # nosec random is fine for testing

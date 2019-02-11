@@ -59,14 +59,17 @@ def event_file_path(instance, filename):
 class EventFile(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     slug = models.SlugField()
-    file = models.FileField(upload_to=event_file_path)
+    file = models.FileField(
+        upload_to=event_file_path,
+        help_text='The extension of the uploaded file will determine the Content-Type of the file when served',
+    )
 
     class Meta:
         unique_together = (('event', 'slug'), )
 
 
 class Attendance(models.Model):
-    user = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
+    user_info = models.ForeignKey(accounts.models.UserInfo, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     seat = models.CharField(
         max_length=12,
@@ -76,4 +79,4 @@ class Attendance(models.Model):
     )
 
     class Meta:
-        unique_together = (('event', 'user'), )
+        unique_together = (('event', 'user_info'), )

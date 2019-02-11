@@ -1,25 +1,25 @@
 version: '2.1'
 
 services:
+  pipenv:
+    environment:
+      - http_proxy
+      - https_proxy
+    image: registry.gitlab.com/rconan/docker-pipenv:2018.11.29-0
+    command: lock
+    volumes:
+      - ${PWD:-.}:/code
   dot:
     command: -v -Tsvg -o/files/diagram/models.svg /files/diagram/models.dot
     image: registry.gitlab.com/rconan/docker-graphviz:2.40.1-0
     volumes:
       - ${PWD:-.}:/files
-  flake8:
-    image: registry.gitlab.com/rconan/docker-flake8:3.5.0-4
-    volumes:
-      - ${PWD:-.}:/code
   jshint:
     image: registry.gitlab.com/rconan/docker-jshint:2.9.6-0
     volumes:
       - ${PWD:-.}:/code
-  pipenv:
-    environment:
-      - http_proxy
-      - https_proxy
-    image: registry.gitlab.com/rconan/docker-pipenv:2018.10.13-0
-    command: lock
+  flake8:
+    image: registry.gitlab.com/rconan/docker-flake8:3.5.0-4
     volumes:
       - ${PWD:-.}:/code
   webpack:

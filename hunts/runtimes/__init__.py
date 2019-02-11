@@ -24,12 +24,12 @@ REGEX        = 'R'
 STATIC       = 'S'
 
 RUNTIME_CHOICES = (
-    (STATIC,       'Static Runtime'),
-    (CASED_STATIC, 'Case Sensitive Static Runtime'),
-    (REGEX,        'Regex Runtime'),
-    (CASED_REGEX,  'Case Sensitive Regex Runtime'),
-    (IFRAME,       'IFrame Runtime'),
-    (LUA,          'Lua Runtime'),
+    (STATIC,       'Static'),
+    (CASED_STATIC, 'Case Sensitive Static'),
+    (REGEX,        'Regex'),
+    (CASED_REGEX,  'Case Sensitive Regex'),
+    (IFRAME,       'IFrame'),
+    (LUA,          'Lua'),
 )
 
 

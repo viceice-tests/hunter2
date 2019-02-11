@@ -13,12 +13,14 @@ coverage = "*"
 django-allauth = { git = "https://github.com/riconnon/django-allauth.git", ref = "0.36.0+stateless" }
 django-analytical = "*"
 django-autocomplete-light = "*"
+django-bootstrap4 = "*"
 django-debug-toolbar = "*"
 django-enumfields = "*"
 django-environ = "*"
 django-extensions = "*"
 django-fullclean = { git = "https://github.com/riconnon/django-fullclean.git", ref = "0.0.4+whitelist" }
 django-nested-admin = "*"
+django-prometheus = "*"
 django-sendfile = "*"
 django-solo = "*"
 django-sortedm2m = "*"
@@ -27,13 +29,15 @@ django-tenants = { git = "https://github.com/tomturner/django-tenants.git", ref 
 django-url-tools-py3 = "*"
 django-webpack-loader = "*"
 factory_boy = "*"
+# This is actually a transitive dependancy via factory_boy but we need to specify the version
+faker = { git = "https://github.com/joke2k/faker.git", ref = "3e9ab81a55361de0f218f21755ba2f6511b18596" }
 freezegun = "*"
 lupa = "*"
 parameterized = "*"
 psycopg2 = "*"
 python3-openid = "*"
-raven = "*"
 rules = "*"
+sentry-sdk = "*"
 validators = "*"
 wait = "*"
 
