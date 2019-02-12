@@ -1,5 +1,6 @@
-# Ignore dotfiles in the top level dir (eg. .coverage or .git)
+# Ignore dotfiles in the top level dir (eg .git)
 .*
+!.coveragerc
 
 # Ignore docker-related files
 Dockerfile
