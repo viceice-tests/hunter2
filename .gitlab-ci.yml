@@ -7,7 +7,7 @@ services:
   - docker:18.09.1-dind
 
 stages:
-  - check-webpack
+  - check
   - build-app
   - web-doc-test
   - release
@@ -19,38 +19,20 @@ before_script:
   - ln -s docker-compose.test.yml docker-compose.yml
 
 check:flake8:
-  stage: check-webpack
+  stage: check
   script:
     - docker-compose -f docker-compose.check.yml run --rm flake8 --verbose
 
 check:jshint:
-  stage: check-webpack
+  stage: check
   script:
     - docker-compose -f docker-compose.check.yml run --rm jshint
-
-webpack:
-  stage: check-webpack
-  variables:
-    SERVICE: webpack
-  script:
-    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
-    - docker-compose -f docker-compose.check.yml build "${SERVICE}"
-    - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
-  artifacts:
-    expire_in: 90 days
-    name: webpack-container
-    paths:
-      - "${SERVICE}.tar"
-
 image:app:
   stage: build-app
-  dependencies:
-    - webpack
   variables:
     SERVICE: app
   script:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
-    - docker load -i webpack.tar
     - docker-compose build --build-arg build_tag="${GIT_DESCRIBE}" "${SERVICE}"
     - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
   artifacts:
@@ -77,13 +59,11 @@ image:web:
   stage: web-doc-test
   dependencies:
     - image:app
-    - webpack
   variables:
     SERVICE: web
   script:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
     - docker load -i app.tar
-    - docker load -i webpack.tar
     - docker-compose build --build-arg build_tag="${GIT_DESCRIBE}" "${SERVICE}"
     - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
   artifacts:
