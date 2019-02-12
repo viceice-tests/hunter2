@@ -28,7 +28,7 @@ function csrfSafeMethod(method) {
 	return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
 
-export function configureCSRF() {
+function configureCSRF() {
 	"use strict";
 	var csrftoken = getCookie('csrftoken');
 	$.ajaxSetup({
@@ -40,3 +40,6 @@ export function configureCSRF() {
 		contentType: 'application/json'
 	});
 }
+
+// TODO: Look at the best practice way of doing this.
+configureCSRF();
