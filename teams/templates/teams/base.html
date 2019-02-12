@@ -3,7 +3,7 @@
 {% load render_bundle from webpack_loader %}
 
 {% block script %}
-{% render_bundle 'teams' 'js' %}
+{% render_bundle 'teams' 'js' attrs='async' %}
 {{ block.super }}
 {% endblock %}
 

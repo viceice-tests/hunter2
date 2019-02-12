@@ -1,4 +1,4 @@
-var $ = require('jquery');
+import $ from 'jquery';
 
 function hideInvite(list_entry) {
 	"use strict";

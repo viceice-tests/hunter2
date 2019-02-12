@@ -1,3 +1,8 @@
+import '../scss/puzzle.scss';
+
+import $ from 'jquery';
+import * as d3 from "d3";
+
 function escapeHtml(text) {
 	"use strict";
 	return text.replace(/[\"&<>]/g, function (a) {
@@ -227,7 +232,7 @@ $(function() {
 		$.ajax({
 			type: 'POST',
 			url: 'an',
-			data: jQuery.param(data),
+			data: $.param(data),
 			contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
 			success: function(data) {
 				field.val('');

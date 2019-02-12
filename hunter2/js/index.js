@@ -1,6 +1,9 @@
 import '../scss/base.scss';
 
-var $ = require('jquery');
+import 'bootstrap';
+
+// Expose global $ for jquery for now
+require("expose-loader?$!jquery");
 
 function getCookie(name) {
 	"use strict";

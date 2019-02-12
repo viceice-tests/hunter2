@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block script %}
-{% render_bundle 'hunts_guesses' 'js' %}
+{% render_bundle 'hunts_guesses' 'js' attrs='async' %}
 {{ block.super }}
 {% endblock %}
 

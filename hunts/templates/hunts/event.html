@@ -18,7 +18,7 @@
 					       data-url="{% url 'episode_content' episode_number=episode.index %}" data-toggle="tab">{{ episode.name }}</a></li>
 				{% endfor %}
 			</ul>
-			<div class="tab-content">
+			<div class="tab-content" id="ep">
 				{% for episode in episodes %}
 					<div class="tab-pane" id="episode-{{ episode.index }}"></div>
 				{% endfor %}
@@ -30,8 +30,9 @@
 			No episodes are available.
 		</p>
 	{% endif %}
-	<script>
-		$(function () {
+	<script defer>
+		// TODO: Replace later as this is not-good practice.
+		window.onload = function () {
 			"use strict";
 			$('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
 				var url = $(this).data('url');
@@ -44,6 +45,6 @@
 			});
 			var hash = window.location.hash ? window.location.hash : '#episode-1';
 			$(`#ep-list a[href="${hash}"`).tab('show');
-		});
+		};
 	</script>
 {% endblock %}
