@@ -14,6 +14,7 @@ coverage
 # Ignore other docker image folders
 nginx
 webpack
+prometheus
 
 # Ignore webpack/npm/css configuration
 webpack-stats.json

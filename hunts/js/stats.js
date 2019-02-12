@@ -1,4 +1,4 @@
-/* globals d3 */
+import * as d3 from 'd3';
 
 // Keep the number of entries in here such that it has a large least common multiple with the number of colours.
 var symbolsPathList = [

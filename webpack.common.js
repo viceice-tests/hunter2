@@ -7,8 +7,11 @@ module.exports = {
   context: '/usr/src/app',
 
   entry: {
-    hunter2: './hunter2/js/index.js',
-    teams: './teams/js/index.js',
+    hunter2:       './hunter2/js/index.js',
+    teams:         './teams/js/index.js',
+    hunts_puzzle:  './hunts/js/puzzle.js',
+    hunts_stats:   './hunts/js/stats.js',
+    hunts_guesses: './hunts/js/guesses.js'
   },
 
   output: {
