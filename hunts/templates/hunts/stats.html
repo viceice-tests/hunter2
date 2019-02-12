@@ -3,13 +3,13 @@
 {% load render_bundle from webpack_loader %}
 
 {% block style %}
-{% render_bundle 'hunts_stats' 'css' %}
 {{ block.super }}
+{% render_bundle 'hunts_stats' 'css' %}
 {% endblock %}
 
 {% block script %}
-{% render_bundle 'hunts_stats' 'js' attrs='async' %}
 {{ block.super }}
+{% render_bundle 'hunts_stats' 'js' attrs='defer' %}
 {% endblock %}
 
 {% block page_header %}
