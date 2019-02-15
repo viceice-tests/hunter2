@@ -9,6 +9,7 @@ module.exports = {
   entry: {
     hunter2:       './hunter2/js/index.js',
     teams:         './teams/js/index.js',
+    hunts_event:   './hunts/js/event.js',
     hunts_puzzle:  './hunts/js/puzzle.js',
     hunts_stats:   './hunts/js/stats.js',
     hunts_guesses: './hunts/js/guesses.js'

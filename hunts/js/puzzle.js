@@ -259,3 +259,21 @@ $(function() {
 		});
 	});
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+  "use strict";
+  var content = $('#soln-content');
+  var button = $('#soln-button');
+
+  content.on('show.bs.collapse', function() {
+    var url = button.data('url');
+    $('#soln-text').load(url);
+    $(this).unbind('show.bs.collapse');
+  });
+  content.on('shown.bs.collapse', function() {
+    button.text('Hide Solution');
+  });
+  content.on('hidden.bs.collapse', function() {
+    button.text('Show Solution');
+  });
+});
