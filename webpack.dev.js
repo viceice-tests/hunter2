@@ -1,17 +1,22 @@
+'use strict';
+
 const merge = require('webpack-merge');
 const common = require('./webpack.common.js');
+
+const DEV_SERVER_HOST = process.env.H2_WEBPACK_DEV_HOST || "localhost";
+const DEV_SERVER_PORT = parseInt(process.env.H2_WEBPACK_DEV_PORT, 10) || 4000;
 
 module.exports = merge(common, {
   mode: 'development',
   devtool: 'source-map',
 
   output: {
-    publicPath: 'http://localhost:4000/assets/bundles/',
+    publicPath: `http://${DEV_SERVER_HOST}:${DEV_SERVER_PORT}/assets/bundles/`,
   },
 
   devServer: {
     host: "0.0.0.0",
-    port: 4000,
+    port: DEV_SERVER_PORT,
     disableHostCheck: true
   },
 

@@ -15,8 +15,11 @@ services:
     build:
       context: .
       dockerfile: webpack/Dockerfile
+    environment:
+      - H2_WEBPACK_DEV_HOST
+      - H2_WEBPACK_DEV_PORT
     ports:
-      - "4000:4000"
+      - "${H2_WEBPACK_DEV_PORT:-4000}:${H2_WEBPACK_DEV_PORT:-4000}"
     volumes:
       - ${PWD:-.}:/usr/src/app
   app:
