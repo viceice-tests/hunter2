@@ -10,14 +10,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-import environ
 import logging
 import os
 
-from .utils import load_or_create_secret_key
-
+import environ
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
+
+from .utils import load_or_create_secret_key
 
 # Load the current environment profile
 root = environ.Path(__file__) - 2
