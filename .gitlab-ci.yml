@@ -27,13 +27,14 @@ check:jshint:
   stage: check
   script:
     - docker-compose -f docker-compose.check.yml run --rm jshint
+
 image:app:
   stage: build-app
   variables:
     SERVICE: app
   script:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
-    - docker-compose build "${SERVICE}"
+    - docker-compose build --build-arg BUILD_TAG="${GIT_DESCRIBE}" "${SERVICE}"
     - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
   artifacts:
     expire_in: 90 days
@@ -47,7 +48,7 @@ image:metrics:
     SERVICE: metrics
   script:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
-    - docker-compose build --build-arg app_tag="${GIT_DESCRIBE}" "${SERVICE}"
+    - docker-compose build --build-arg BUILD_TAG="${GIT_DESCRIBE}" "${SERVICE}"
     - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
   artifacts:
     expire_in: 90 days
@@ -64,7 +65,7 @@ image:web:
   script:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
     - docker load -i app.tar
-    - docker-compose build "${SERVICE}"
+    - docker-compose build --build-arg BUILD_TAG="${GIT_DESCRIBE}" "${SERVICE}"
     - docker save -o "${SERVICE}.tar" "${IMAGE_TAG}"
   artifacts:
     expire_in: 90 days
