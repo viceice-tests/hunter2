@@ -1,5 +1,5 @@
-ARG app_tag=latest
-FROM registry.gitlab.com/hunter2.app/hunter2/app:${app_tag} AS app
+ARG build_tag=latest
+FROM registry.gitlab.com/hunter2.app/hunter2/app:${build_tag} AS app
 
 USER root
 RUN python manage.py collectstatic
