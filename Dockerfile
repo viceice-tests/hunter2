@@ -49,7 +49,7 @@ RUN luarocks-5.2 install lua-imlib2 dev-2
 
 
 # Build the production webpack'ed assets
-FROM node:11-alpine as webpack_build
+FROM node:11.9.0-alpine as webpack_build
 
 WORKDIR /usr/src/app
 COPY . .
