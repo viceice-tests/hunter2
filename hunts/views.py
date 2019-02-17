@@ -162,11 +162,10 @@ class GuessesContent(LoginRequiredMixin, View):
         puzzle = request.GET.get('puzzle')
         team = request.GET.get('team')
 
-        puzzles = models.Puzzle.objects.filter(episode__event=request.tenant)
         if puzzle:
-            puzzles = puzzles.filter(id=puzzle)
+            puzzles = models.Puzzle.objects.filter(id=puzzle)
         if episode:
-            puzzles = puzzles.filter(episode=episode)
+            puzzles = models.Puzzle.objects.filter(episode=episode)
 
         # The following query is heavily optimised. We only retrieve the fields we will use here and
         # in the template, and we select and prefetch related objects so as not to perform any extra
@@ -267,9 +266,7 @@ class StatsContent(LoginRequiredMixin, View):
             if not episodes.exists():
                 raise Http404
 
-        # Directly use the through relation for sorted M2M so we can sort the entire query.
-        episode_puzzles = models.Episode.puzzles.through.objects.filter(episode__in=episodes).select_related('puzzle')
-        puzzles = [ep.puzzle for ep in episode_puzzles.order_by('episode', 'sort_value')]
+        puzzles = Puzzle.objects.all()
 
         all_teams = teams.models.Team.objects.annotate(
             num_members=Count('members')
@@ -284,7 +281,6 @@ class StatsContent(LoginRequiredMixin, View):
         # (team, puzzle) pair i.e. a butt-ton. This comes at the cost of possibly seeing
         # a team doing worse than it really is.
         all_guesses = models.Guess.objects.filter(
-            for_puzzle__in=puzzles,
             correct_for__isnull=False,
         ).select_related('for_puzzle', 'by_team')
         correct_guesses = defaultdict(dict)

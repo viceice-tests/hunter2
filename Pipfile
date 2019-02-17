@@ -20,11 +20,11 @@ django-environ = "*"
 django-extensions = "*"
 django-fullclean = { git = "https://github.com/riconnon/django-fullclean.git", ref = "0.0.4+whitelist" }
 django-nested-admin = "*"
+django-ordered-model = { git = "https://github.com/fish-face/django-ordered-model.git", ref = "241510a0343a3d8430cfef81a7f69c534c1732ba" }
 django-prometheus = "*"
 django-sendfile = "*"
 django-solo = "*"
 django-sortedm2m = "*"
-django-sortedm2m-filter-horizontal-widget = "*"
 django-tenants = { git = "https://github.com/tomturner/django-tenants.git", ref = "0a5ff14478e44f55ea566d020e0252bb6ca5ac24" }
 django-url-tools-py3 = "*"
 django-webpack-loader = "*"

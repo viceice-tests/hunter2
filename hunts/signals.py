@@ -16,16 +16,7 @@ from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from accounts.models import UserProfile
 from teams.models import Team
-from .models import Episode, Guess, Puzzle
-
-
-@receiver(m2m_changed, sender=Episode.puzzles.through)
-def episode_puzzles_changed(sender, instance, action, pk_set, **kwargs):
-    if action == 'pre_add':
-        for puzzle_id in pk_set:
-            puzzle = Puzzle.objects.get(pk=puzzle_id)
-            if puzzle.episode_set.count() > 0:
-                raise ValidationError('Puzzle can only be used in one episode')
+from .models import Episode, Guess
 
 
 @receiver(m2m_changed, sender=Episode.prequels.through)

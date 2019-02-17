@@ -128,10 +128,9 @@ SHARED_APPS = (
     'django_prometheus',
     'django_tenants',
     'nested_admin',
+    'ordered_model',
     'rules.apps.AutodiscoverRulesConfig',
     'solo',
-    'sortedm2m',
-    'sortedm2m_filter_horizontal_widget',
     'url_tools',
     'webpack_loader',
 )
