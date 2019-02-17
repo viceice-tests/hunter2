@@ -10,23 +10,26 @@
 
 {% block script %}{% spaceless %}
 {% if event.theme.script %}
-<script>{{ event.theme.script }}</script>
+<script defer>{{ event.theme.script }}</script>
 {% else %}
 {{ block.super }}
 {% endif %}
 {% endspaceless %}{% endblock %}
 
+{% block topbar_title %}
+	<a class="navbar-brand" href="{% url 'index' %}">{{ event.name }}</a>
+{% endblock %}
+
 {% block topbar_left %}
-	<li class="nav-item"><a class="navbar-brand" href="{% url 'index' %}">{{ event.name }}</a></li>
 	<li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About</a></li>
 	<li class="nav-item"><a class="nav-link" href="{% url 'rules' %}">Rules</a></li>
 	<li class="nav-item"><a class="nav-link" href="{% url 'help' %}">Help</a></li>
 {% endblock %}
 
 {% block announcements %}
-			{% for announcement in announcements %}
-			<div class="alert {{ announcement.css_type }}" role="alert">
-				<strong>{{ announcement.title }}</strong> {{ announcement.message }}
-			</div>
-			{% endfor %}
+	{% for announcement in announcements %}
+		<div class="alert {{ announcement.css_type }}" role="alert">
+			<strong>{{ announcement.title }}</strong> {{ announcement.message }}
+		</div>
+	{% endfor %}
 {% endblock %}

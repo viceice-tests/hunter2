@@ -22,3 +22,11 @@ services:
     image: registry.gitlab.com/rconan/docker-flake8:3.5.0-4
     volumes:
       - ${PWD:-.}:/code
+  webpack:
+    build:
+      context: .
+      dockerfile: webpack/Dockerfile
+      args:
+        webpack_tag: 4.23.1-1
+    volumes:
+      - ${PWD:-.}:/usr/src/app

@@ -118,7 +118,7 @@ def pre_save_handler(func):
 class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     @classmethod
     def _group_name(cls, puzzle, team=None):
-        event = puzzle.episode_set.get().event
+        event = puzzle.episode.event
         if team:
             return f'event-{event.id}.puzzle-{puzzle.id}.events.team-{team.id}'
         else:
