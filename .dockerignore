@@ -1,9 +1,23 @@
-# Ignore dotfiles in the top level dir (eg. .coverage or .git)
+# Ignore dotfiles in the top level dir (eg .git)
 .*
+!.coveragerc
+
 # Ignore docker-related files
 Dockerfile
+Dockerfile.*
 docker-compose.yml
+docker-compose.*.yml
+
 # Ignore coverage report folder
 coverage
-# Ignore nginx folder
+
+# Ignore other docker image folders
 nginx
+webpack
+prometheus
+
+# Ignore webpack/npm/css configuration
+webpack-stats.json
+
+# Ignore generated caches
+__pycache__
