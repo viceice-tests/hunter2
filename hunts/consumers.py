@@ -16,16 +16,16 @@ import time
 from datetime import datetime
 
 from asgiref.sync import async_to_sync, sync_to_async
-from channels.consumer import get_handler_name
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
-from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models.signals import pre_save, pre_delete
 from django.utils import timezone
 
+from events.consumers import TenantMixin
 from teams.models import Team
+from teams.consumers import TeamMixin
 from .models import Guess
 from .utils import encode_uuid
 from . import models, utils
@@ -41,41 +41,6 @@ def activate_tenant(f):
         return f(*args, **kwargs)
 
     return wrapper
-
-
-class TenantMixin:
-    @database_sync_to_async
-    def dispatch(self, message):
-        # We have to completely override the method rather than call back to SyncConsumer's
-        # dispatch because that is *also* decorated with sync_to_async, so the handler will run in
-        # another thread... and the whole point here is to activate the tenant for the thread
-        # the handler will run in!
-        try:
-            self.scope['tenant'].activate()
-        except (AttributeError, KeyError):
-            raise ValueError('%s has no scope or no tenant on its scope' % self)
-        handler = getattr(self, get_handler_name(message), None)
-        if handler:
-            handler(message)
-        else:
-            raise ValueError("No handler for message type %s" % message["type"])
-
-
-class TeamMixin:
-    def websocket_connect(self, message):
-        # Add a team object to the scope. We can't do this in middleware because the user object
-        # isn't resolved yet (I don't know what causes it to be resolved, either...) and we can't do
-        # it in __init__ here because the middleware hasn't even run then, so we have no user or
-        # tenant or anything!
-        # This means this is a bit weirdly placed.
-        try:
-            user = self.scope['user'].profile
-            self.team = user.team_at(self.scope['tenant'])
-        except ObjectDoesNotExist:
-            # A user on the website will never open the websocket without getting a userprofile and team.
-            self.close()
-            return
-        return super().websocket_connect(message)
 
 
 def pre_save_handler(func):
