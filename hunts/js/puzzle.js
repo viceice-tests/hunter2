@@ -192,10 +192,10 @@ var guesses = [];
 
 function receivedNewAnswer(content) {
 	"use strict";
-	if (!guesses.includes(content['guess_uid'])) {
+	if (!guesses.includes(content.guess_uid)) {
 		var guesses_table = $('#guesses');
-		guesses_table.append('<tr><td>' + content['by'] + '</td><td>' + content['guess'] + '</td><td>' + content['correct'] + '</td></tr>');
-		guesses.push(content['guess_uid']);
+		guesses_table.append('<tr><td>' + content.by + '</td><td>' + content.guess + '</td><td>' + content.correct + '</td></tr>');
+		guesses.push(content.guess_uid);
 	}
 }
 
@@ -224,11 +224,11 @@ function updateUnlocks() {
 
 function receivedNewUnlock(content) {
 	"use strict";
-	if (!(content['unlock_uid'] in unlocks)) {
-		unlocks[content['unlock_uid']] = {'unlock': content['unlock'], 'guesses': []};
+	if (!(content.unlock_uid in unlocks)) {
+		unlocks[content.unlock_uid] = {'unlock': content.unlock, 'guesses': []};
 	}
-	if (!unlocks[content['unlock_uid']]['guesses'].includes(content['guess'])) {
-		unlocks[content['unlock_uid']]['guesses'].push(content['guess']);
+	if (!unlocks[content.unlock_uid].guesses.includes(content.guess)) {
+		unlocks[content.unlock_uid].guesses.push(content.guess);
 	}
 	updateUnlocks();
 }
@@ -328,7 +328,7 @@ var socketHandlers = {
 	'new_hint': receivedNewHint,
 	'delete_hint': receivedDeleteHint,
 	'error': receivedError
-}
+};
 
 var lastUpdated;
 
@@ -340,18 +340,18 @@ function openEventSocket(data) {
 		var data = JSON.parse(e.data);
 		lastUpdated = Date.now();
 
-		console.log(data)
+		console.log(data);
 		if (!(data.type in socketHandlers)) {
-			console.log('Invalid message type ' + data['type']);
-			console.log(data['content']);
+			console.log('Invalid message type ' + data.type);
+			console.log(data.content);
 		} else {
 			var handler = socketHandlers[data.type];
 			handler(data.content);
 		}
-	}
+	};
 	sock.onerror = function(e) {
 		message('Websocket is broken. You will not receive new information without refreshing the page.');
-	}
+	};
 	sock.onopen = function(e) {
 		if (lastUpdated != undefined) {
 			sock.send(JSON.stringify({'type': 'guesses-plz', 'from': lastUpdated}));
