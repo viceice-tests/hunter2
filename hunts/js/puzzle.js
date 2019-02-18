@@ -13,14 +13,8 @@ function escapeHtml(text) {
 	});
 }
 
-function incorrect_answer(guess, timeout_length, timeout, new_hints, unlocks) {
+function incorrect_answer(guess, timeout_length, timeout, unlocks) {
 	"use strict";
-	var hints_div = $('#hints');
-	var n_hints = new_hints.length;
-	for (let i = 0; i < n_hints; i++) {
-		hints_div.append('<p>' + new_hints[i].time + ': ' + new_hints[i].text + '</p>');
-	}
-
 	var milliseconds = Date.parse(timeout) - Date.now();
 	var difference = timeout_length - milliseconds;
 
@@ -38,12 +32,15 @@ function incorrect_answer(guess, timeout_length, timeout, new_hints, unlocks) {
 	}, milliseconds);
 }
 
-function correct_answer(url, text) {
+function correct_answer() {
 	"use strict";
 	var form = $('.form-inline');
-	form.after(`<div id="correct-answer-message">Correct! Taking you ${text}. <a class="puzzle-complete-redirect" href="${url}">go right now</a></div>`);
-	form.remove();
-	setTimeout(function () {window.location.href = url;}, 3000);
+	if (form.length) {
+		// We got a direct response before the WebSocket notified us (possibly because the WebSocket is broken
+		// in this case, we still want to tell the user that they got the right answer. If the WebSocket is
+		// working, this will be updated when it replies.
+		form.after(`<div id="correct-answer-message">Correct!</div>`);
+	}
 }
 
 function message(message, error) {
@@ -196,6 +193,29 @@ function receivedNewAnswer(content) {
 		var guesses_table = $('#guesses');
 		guesses_table.append('<tr><td>' + content.by + '</td><td>' + content.guess + '</td><td>' + content.correct + '</td></tr>');
 		guesses.push(content.guess_uid);
+		if (content.correct) {
+			var message = $('#correct-answer-message');
+			var html = `"${content.guess} was correct! Taking you ${content.text}. <a class="puzzle-complete-redirect" href="${content.redirect}">go right now</a>`;
+			if (message.length) {
+				// The server already replied so we already put up a temporary message; just update it
+				message.html(html);
+			} else {
+				// That did not happen, so add the message
+				var form = $('.form-inline');
+				form.after(`<div id="correct-answer-message">${html}</div>`);
+				form.remove();
+			}
+			setTimeout(function () {window.location.href = content.redirect;}, 3000);
+		}
+	}
+}
+
+function receivedOldAnswer(content) {
+	"use strict";
+	if (!guesses.includes(content.guess_uid)) {
+		var guesses_table = $('#guesses');
+		guesses_table.append('<tr><td>' + content.by + '</td><td>' + content.guess + '</td><td>' + content.correct + '</td></tr>');
+		guesses.push(content.guess_uid);
 	}
 }
 
@@ -319,7 +339,7 @@ function receivedError(content) {
 
 var socketHandlers = {
 	'new_guess': receivedNewAnswer,
-	'old_guess': receivedNewAnswer,
+	'old_guess': receivedOldAnswer,
 	'new_unlock': receivedNewUnlock,
 	'old_unlock': receivedNewUnlock,
 	'change_unlock': receivedChangeUnlock,
@@ -350,6 +370,7 @@ function openEventSocket(data) {
 		}
 	};
 	sock.onerror = function(e) {
+		//TODO this message is ugly and disappears after a while
 		message('Websocket is broken. You will not receive new information without refreshing the page.');
 	};
 	sock.onopen = function(e) {
@@ -400,9 +421,9 @@ $(function() {
 				fieldKeyup();
 				if (data.correct == "true") {
 					button.removeAttr('disabled');
-					correct_answer(data.url, data.text);
+					correct_answer();
 				} else {
-					incorrect_answer(data.guess, data.timeout_length, data.timeout_end, data.new_hints, data.unlocks);
+					incorrect_answer(data.guess, data.timeout_length, data.timeout_end, data.unlocks);
 				}
 			},
 			error: function(xhr, status, error) {

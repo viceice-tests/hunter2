@@ -578,15 +578,7 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         # Build the response JSON depending on whether the answer was correct
         response = {}
-        if correct:
-            next = request.episode.next_puzzle(request.team)
-            if next:
-                response['text'] = f'to the next puzzle'
-                response['url'] = reverse('puzzle', kwargs={'episode_number': episode_number, 'puzzle_number': next})
-            else:
-                response['text'] = f'back to {request.episode.name}'
-                response['url'] = request.episode.get_absolute_url()
-        else:
+        if not correct:
             response['guess'] = given_answer
             response['timeout_length'] = minimum_time.total_seconds() * 1000
             response['timeout_end'] = str(now + minimum_time)

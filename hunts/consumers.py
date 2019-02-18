@@ -163,15 +163,27 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
 
     @classmethod
     def send_new_guess(cls, guess, unlocks):
+        correct = guess.get_correct_for() is not None
+        content = {
+            'timestamp': str(guess.given),
+            'guess': guess.guess,
+            'guess_uid': encode_uuid(guess.id),
+            'correct': correct,
+            'by': guess.by.username,
+        }
+        if correct:
+            episode = guess.for_puzzle.episode
+            next = episode.next_puzzle(guess.by_team)
+            if next:
+                content['text'] = f'to the next puzzle'
+                content['redirect'] = next.get_absolute_url()
+            else:
+                content['text'] = f'back to {episode.name}'
+                content['redirect'] = episode.get_absolute_url()
+
         cls._send_message(guess.for_puzzle, guess.by_team, {
             'type': 'new_guess',
-            'content': {
-                'timestamp': str(guess.given),
-                'guess': guess.guess,
-                'guess_uid': encode_uuid(guess.id),
-                'correct': guess.correct_for is not None,
-                'by': guess.by.username,
-            }
+            'content': content
         })
 
     @classmethod
