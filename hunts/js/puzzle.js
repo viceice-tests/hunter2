@@ -187,12 +187,16 @@ function addSVG() {
 
 var guesses = [];
 
+function addAnswer(user, guess, correct, uid) {
+	var guesses_table = $('#guesses .guess-viewer-header');
+	guesses_table.after('<tr><td>' + user + '</td><td>' + guess + '</td><td>' + correct + '</td></tr>');
+	guesses.push(guess_uid);
+}
+
 function receivedNewAnswer(content) {
 	"use strict";
 	if (!guesses.includes(content.guess_uid)) {
-		var guesses_table = $('#guesses');
-		guesses_table.append('<tr><td>' + content.by + '</td><td>' + content.guess + '</td><td>' + content.correct + '</td></tr>');
-		guesses.push(content.guess_uid);
+		addAnswer(content.by, content.guess, content.correct, content.guess_uid);
 		if (content.correct) {
 			var message = $('#correct-answer-message');
 			var html = `"${content.guess} was correct! Taking you ${content.text}. <a class="puzzle-complete-redirect" href="${content.redirect}">go right now</a>`;
@@ -212,11 +216,7 @@ function receivedNewAnswer(content) {
 
 function receivedOldAnswer(content) {
 	"use strict";
-	if (!guesses.includes(content.guess_uid)) {
-		var guesses_table = $('#guesses');
-		guesses_table.append('<tr><td>' + content.by + '</td><td>' + content.guess + '</td><td>' + content.correct + '</td></tr>');
-		guesses.push(content.guess_uid);
-	}
+	addAnswer(content.by, content.guess, content.correct, content.guess_uid);
 }
 
 var unlocks = {};

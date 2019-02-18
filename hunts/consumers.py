@@ -273,11 +273,10 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         cls.send_new_guess(guess, unlocks)
 
     def send_old_guesses(self, start):
+        guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team).order_by('given')
         if start != 'all':
             start = datetime.fromtimestamp(int(start) // 1000, timezone.utc)
-            guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team, given__gt=start)
-        else:
-            guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team)
+            guesses = guesses.filter(given__gt=start)
 
         # TODO can this be unified with _new_guess?
         for g in guesses:
@@ -286,7 +285,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             self.send_json({
                 'type': 'old_guess',
                 'content': {
-                    # TODO hash with id or something idunno
                     'timestamp': str(g.given),
                     'guess': g.guess,
                     'guess_uid': encode_uuid(g.id),
