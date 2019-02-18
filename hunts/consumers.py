@@ -277,13 +277,19 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         if start != 'all':
             start = datetime.fromtimestamp(int(start) // 1000, timezone.utc)
             guesses = guesses.filter(given__gt=start)
+            # The client requested guesses from a certain point in time, i.e. it already has some.
+            # Even though these are "old" they're "new" in the sense that the user will never have
+            # seen them before so should trigger the same UI effect.
+            msg_type = 'new_guess'
+        else:
+            msg_type = 'old_guess'
 
         # TODO can this be unified with _new_guess?
         for g in guesses:
             # TODO work out what to do with protocol that can be sent straight back out on
             # the same websocket. Note this is currently sharing the protocol of new_guess.
             self.send_json({
-                'type': 'old_guess',
+                'type': msg_type,
                 'content': {
                     'timestamp': str(g.given),
                     'guess': g.guess,
