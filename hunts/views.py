@@ -15,7 +15,7 @@ from string import Template
 import tarfile
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files import File
@@ -565,8 +565,6 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         if request.tenant.end_date < now:
             return JsonResponse({'error': 'event is over'}, status=400)
-
-        data = models.PuzzleData(request.puzzle, request.team)
 
         # Put answer in DB
         guess = models.Guess(

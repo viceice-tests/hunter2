@@ -99,22 +99,6 @@ def pre_save_handler(func):
     return classmethod(inner)
 
 
-#def post_delete_handler(func):
-#    """Connects signal handlers as pre_save_handler, but for post_delete.
-#
-#    For us pre- or post-delete doesn't make much difference. This decorator does NOT make it possible to get the
-#    instance from the database in another thread. This is why we hook post-delete, because the functionality is
-#    most similar. If we ever need that for some reason, we would need to use pre_delete and would sacrifice knowing
-#    that the transaction completed."""
-#    def inner(cls, sender, instance, *args, **kwargs):
-#        def after_commit():
-#            func(cls, sender, instance, *args, **kwargs)
-#
-#        transaction.on_commit(after_commit)
-#
-#    return classmethod(inner)
-
-
 class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     @classmethod
     def _group_name(cls, puzzle, team=None):
@@ -209,9 +193,9 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         except KeyError:
             pass
 
-    ###
-    ### These class methods define the JS server -> client protocol of the websocket
-    ###
+    #
+    # These class methods define the JS server -> client protocol of the websocket
+    #
 
     @classmethod
     def send_new_unlock(cls, guess, unlock):
