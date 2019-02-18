@@ -162,7 +162,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         })
 
     @classmethod
-    def send_new_guess(cls, guess, unlocks):
+    def _new_guess_json(cls, guess):
         correct = guess.get_correct_for() is not None
         content = {
             'timestamp': str(guess.given),
@@ -180,6 +180,12 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             else:
                 content['text'] = f'back to {episode.name}'
                 content['redirect'] = episode.get_absolute_url()
+
+        return content
+
+    @classmethod
+    def send_new_guess(cls, guess):
+        content = cls._new_guess_json(guess)
 
         cls._send_message(guess.for_puzzle, guess.by_team, {
             'type': 'new_guess',
@@ -270,7 +276,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
                 unlocks.append(u.text)
                 cls.send_new_unlock(guess, u)
 
-        cls.send_new_guess(guess, unlocks)
+        cls.send_new_guess(guess)
 
     def send_old_guesses(self, start):
         guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team).order_by('given')
@@ -284,19 +290,11 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         else:
             msg_type = 'old_guess'
 
-        # TODO can this be unified with _new_guess?
         for g in guesses:
-            # TODO work out what to do with protocol that can be sent straight back out on
-            # the same websocket. Note this is currently sharing the protocol of new_guess.
+            content = self._new_guess_json(g)
             self.send_json({
                 'type': msg_type,
-                'content': {
-                    'timestamp': str(g.given),
-                    'guess': g.guess,
-                    'guess_uid': encode_uuid(g.id),
-                    'correct': g.correct_for is not None,
-                    'by': g.by.username,
-                }
+                'content': content
             })
 
     def send_old_unlocks(self):
