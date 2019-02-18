@@ -31,18 +31,6 @@ from .utils import encode_uuid
 from . import models, utils
 
 
-def activate_tenant(f):
-    """Decorator for use on methods which must be run with an active tenant, but which are not run through tenant middleware"""
-    def wrapper(self, *args, **kwargs):
-        try:
-            self.scope['tenant'].activate()
-        except (AttributeError, KeyError):
-            raise ValueError('%s has no scope or no tenant on its scope' % self)
-        return f(*args, **kwargs)
-
-    return wrapper
-
-
 def pre_save_handler(func):
     """The purpose of this decorator is to connect signal handlers to consumer class methods.
 
