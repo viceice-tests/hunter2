@@ -1,4 +1,7 @@
-document.addEventListener('DOMContentLoaded', function () {
+import $ from 'jquery';
+import 'bootstrap';
+
+$(function () {
   "use strict";
 
   $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {

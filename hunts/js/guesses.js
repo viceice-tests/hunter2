@@ -1,7 +1,7 @@
-import '../scss/guesses.scss';
-
 import $ from 'jquery';
+import 'bootstrap';
 
+import '../scss/guesses.scss';
 
 function updateGuesses(force) {
 	"use strict";
