@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import 'bootstrap/js/dist/collapse';
-import * as d3 from "d3";
+import { easeLinear, format, select } from "d3";
 
 import '../scss/puzzle.scss';
 
@@ -70,7 +70,7 @@ function message(message, error) {
 
 function doCooldown(milliseconds) {
 	"use strict";
-	var button = d3.select("#answer-button");
+	var button = select("#answer-button");
 	var size = button.node().getBoundingClientRect().width;
 	var g = button.select("svg")
 		.append("g");
@@ -82,7 +82,7 @@ function doCooldown(milliseconds) {
 	var flashDuration = 150;
 	path.transition()
 		.duration(milliseconds)
-		.ease(d3.easeLinear)
+		.ease(easeLinear)
 		.attrTween("d", function () { return drawSliceSquare(size); });
 
 	setTimeout(function () {
@@ -96,7 +96,7 @@ function doCooldown(milliseconds) {
 			.attr("stroke", "white")
 			.transition()
 			.duration(flashDuration)
-			.ease(d3.easeLinear)
+			.ease(easeLinear)
 			.attr("r", size / 2 * Math.SQRT2)
 			.attr("fill-opacity", 0.3)
 			.attr("stroke-opacity", 0.2);
@@ -115,12 +115,12 @@ function doCooldown(milliseconds) {
 
 	text.transition()
 		.duration(milliseconds)
-		.ease(d3.easeLinear)
+		.ease(easeLinear)
 		.tween("text", function () {
 			var oldthis = this;
 			return function (t) {
 				var time = milliseconds * (1-t) / 1000;
-				d3.select(oldthis).text(time < 1 ? d3.format(".1f")(time) : d3.format(".0f")(time));
+				select(oldthis).text(time < 1 ? format(".1f")(time) : format(".0f")(time));
 			};
 		});
 
@@ -159,7 +159,7 @@ function drawCooldownText(milliseconds) {
 	"use strict";
 	return function(proportion) {
 		var time = milliseconds * proportion / 1000;
-		d3.select(this).text(time < 1 ? d3.format(".1")(time) : d3.format("1")(time));
+		select(this).text(time < 1 ? format(".1")(time) : format("1")(time));
 	};
 }
 
@@ -172,7 +172,7 @@ function drawFlashSquare(size) {
 
 function addSVG() {
 	"use strict";
-	var button = d3.select("#answer-button");
+	var button = select("#answer-button");
 	if (button.empty()) {
 		return;
 	}
