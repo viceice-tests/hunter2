@@ -151,14 +151,18 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     #
 
     @classmethod
+    def _new_unlock_json(cls, guess, unlock):
+        return {
+            'guess': guess.guess,
+            'unlock': unlock.text,
+            'unlock_uid': encode_uuid(unlock.id)
+        }
+
+    @classmethod
     def send_new_unlock(cls, guess, unlock):
         cls._send_message(guess.for_puzzle, guess.by_team, {
             'type': 'new_unlock',
-            'content': {
-                'guess': guess.guess,
-                'unlock': unlock.text,
-                'unlock_uid': encode_uuid(unlock.id)
-            }
+            'content': self._new_unlock_json(guess, unlock)
         })
 
     @classmethod
@@ -316,14 +320,9 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
         # even though it is often meaningful. Currently JS sorts them alphabetically.
         for g in guesses:
             for u in unlocks[g]:
-                # TODO same issue as old_guess above
                 self.send_json({
                     'type': 'old_unlock',
-                    'content': {
-                        'guess': g.guess,
-                        'unlock': u.text,
-                        'unlock_uid': encode_uuid(u.id)
-                    }
+                    'content': self._new_unlock_json(g, u)
                 })
 
     # handler: Unlockanswer.pre_save
