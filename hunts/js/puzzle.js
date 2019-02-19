@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import 'bootstrap';
+import 'bootstrap/js/dist/collapse';
 import * as d3 from "d3";
 
 import '../scss/puzzle.scss';
