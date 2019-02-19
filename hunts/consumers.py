@@ -361,7 +361,6 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     # handler: Unlock.pre_save
     @pre_save_handler
     def _changed_unlock(cls, old, sender, instance, raw, *args, **kwargs):
-        # TODO use this for hints too
         if raw:
             return
         if not old:
