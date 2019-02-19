@@ -188,7 +188,7 @@ function addSVG() {
 var guesses = [];
 
 function addAnswer(user, guess, correct, guess_uid) {
-	"use strict":
+	"use strict";
 	var guesses_table = $('#guesses .guess-viewer-header');
 	guesses_table.after('<tr><td>' + user + '</td><td>' + guess + '</td></tr>');
 	guesses.push(guess_uid);
