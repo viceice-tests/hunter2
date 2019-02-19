@@ -376,10 +376,10 @@ function openEventSocket(data) {
 	sock.onopen = function(e) {
 		if (lastUpdated != undefined) {
 			sock.send(JSON.stringify({'type': 'guesses-plz', 'from': lastUpdated}));
+			sock.send(JSON.stringify({'type': 'unlocks-plz'}));
 		} else {
 			sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}));
 		}
-		sock.send(JSON.stringify({'type': 'unlocks-plz'}));
 	};
 }
 
