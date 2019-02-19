@@ -162,7 +162,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     def send_new_unlock(cls, guess, unlock):
         cls._send_message(guess.for_puzzle, guess.by_team, {
             'type': 'new_unlock',
-            'content': self._new_unlock_json(guess, unlock)
+            'content': cls._new_unlock_json(guess, unlock)
         })
 
     @classmethod
