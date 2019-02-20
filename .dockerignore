@@ -19,5 +19,9 @@ prometheus
 # Ignore webpack/npm/css configuration
 webpack-stats.json
 
+# Ignore content outputted by the webpack-dev-server
+assets
+node_modules
+
 # Ignore generated caches
 __pycache__
