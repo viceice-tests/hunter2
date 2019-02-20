@@ -1,8 +1,6 @@
 import $ from 'jquery';
 import 'bootstrap';
 
-import "hunter2/scss/base.scss";
-
 import setupJQueryAjaxCsrf from "hunter2/js/index.js";
 import * as invite from "./invite.js";
 import * as request from "./request.js";
