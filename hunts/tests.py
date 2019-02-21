@@ -27,7 +27,7 @@ from django_tenants.test.client import TenantClient
 from accounts.factories import UserProfileFactory
 from events.factories import EventFactory, EventFileFactory, DomainFactory
 from events.models import Event
-from events.test import EventTestCase, EventAwareTestCase
+from events.test import EventTestCase, AsyncEventTestCase
 from teams.factories import TeamFactory, TeamMemberFactory
 from . import runtimes, utils
 from .factories import (
@@ -49,8 +49,6 @@ from .factories import (
 )
 from .models import PuzzleData, TeamPuzzleData
 from hunter2.routing import application as websocket_app
-from .test_websockets import AuthCommunicator
-
 
 class FactoryTests(EventTestCase):
     # TODO: Consider reworking RUNTIME_CHOICES so this can be used.
@@ -1156,56 +1154,7 @@ class UnlockAnswerTests(EventTestCase):
             unlockanswer.save()
 
 
-class TestPuzzleWebsocket(EventAwareTestCase):
-    def setUp(self):
-        self.tenant = EventFactory(max_team_size=2)
-        self.domain = DomainFactory(tenant=self.tenant)
-        self.tenant.activate()
-        self.headers = [
-            (b'origin', b'hunter2.local'),
-            (b'host', self.domain.domain.encode('idna'))
-        ]
-        self.client = TenantClient(self.tenant)
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        Event.deactivate()
-        try:
-            cls.loop = asyncio.get_event_loop()
-        except RuntimeError:
-            print("loop did not already exist")
-            cls.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(cls.loop)
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        cls.loop.close()
-
-    def run_async(self, coro):
-        async def wrapper(result, *args, **kwargs):
-            try:
-                r = await coro(*args, **kwargs)
-            except Exception as e:
-                result.set_exception(e)
-            else:
-                result.set_result(r)
-
-        def inner(*args, **kwargs):
-            result = asyncio.Future()
-            if not self.loop.is_running():
-                try:
-                    self.loop.run_until_complete(wrapper(result, *args, **kwargs))
-                finally:
-                    pass
-            else:
-                print("loop was already running")
-                self.loop.call_soon_threadsafe(wrapper(result, *args, **kwargs))
-            return result.result()
-
-        return inner
-
+class TestPuzzleWebsocket(AsyncEventTestCase):
     def test_anonymous_access(self):
         pz = self.run_in_loop(PuzzleFactory)()
         ep = pz.episode
@@ -1240,14 +1189,26 @@ class TestPuzzleWebsocket(EventAwareTestCase):
 
         url = 'ws/hunt/ep/%d/pz/%d/' % (ep.get_relative_id(), pz.get_relative_id())
 
-        comm1 = AuthCommunicator(websocket_app, url, scope={'user': u1.user}, headers=self.headers)
-        comm2 = AuthCommunicator(websocket_app, url, scope={'user': u2.user}, headers=self.headers)
+        comm1 = self.get_communicator(websocket_app, url, {'user': u1.user})
+        comm2 = self.get_communicator(websocket_app, url, {'user': u2.user})
 
-        self.run_async(comm1.connect)()
-        self.run_async(comm2.connect)()
+        connected, _ = self.run_async(comm1.connect)()
+        self.assertTrue(connected)
+        connected, _ = self.run_async(comm2.connect)()
+        self.assertTrue(connected)
 
         g = GuessFactory(for_puzzle=pz, correct=False, by=u1)
         g.save()
+
+        try:
+            output = self.run_async(comm1.receive_json_from)()
+        except asyncio.TimeoutError:
+            self.fail('WebSocket did nothing in response to a submitted guess')
+
+        self.assertEqual(output['type'], 'new_guess')
+        self.assertEqual(output['content']['guess'], g.guess)
+        self.assertEqual(output['content']['correct'], False)
+        self.assertEqual(output['content']['by'], u1.user.username)
 
         try:
             output = self.run_async(comm2.receive_json_from)()

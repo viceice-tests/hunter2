@@ -90,21 +90,6 @@ class PytestTestRunner(object):
         return pytest.main(argv)
 
 
-class AuthCommunicator(WebsocketCommunicator):
-    def __init__(self, application, path, scope, headers=None, subprotocols=None):
-        if not isinstance(path, str):
-            raise TypeError("Expected str, got {}".format(type(path)))
-        parsed = urlparse(path)
-        self.scope = {
-            "type": "websocket",
-            "path": unquote(parsed.path),
-            "query_string": parsed.query.encode("utf-8"),
-            "headers": headers or [],
-            "subprotocols": subprotocols or [],
-        }
-        self.scope.update(scope)
-        ApplicationCommunicator.__init__(self, application, self.scope)
-
 def get_communicator(episode, puzzle, domain):
     url = 'ws/hunt/ep/%d/pz/%d/' % (episode.get_relative_id(), puzzle.get_relative_id())
     comm = WebsocketCommunicator(application, url, headers=[(b'host', domain.domain.encode('idna'))])
