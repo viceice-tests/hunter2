@@ -162,10 +162,11 @@ class GuessesContent(LoginRequiredMixin, View):
         puzzle = request.GET.get('puzzle')
         team = request.GET.get('team')
 
+        puzzles = models.Puzzle.objects.all()
         if puzzle:
-            puzzles = models.Puzzle.objects.filter(id=puzzle)
+            puzzles = puzzles.filter(id=puzzle)
         if episode:
-            puzzles = models.Puzzle.objects.filter(episode=episode)
+            puzzles = puzzles.filter(episode=episode)
 
         # The following query is heavily optimised. We only retrieve the fields we will use here and
         # in the template, and we select and prefetch related objects so as not to perform any extra
@@ -184,11 +185,11 @@ class GuessesContent(LoginRequiredMixin, View):
             'correct_for__id'
         ).annotate(
             byseat=Subquery(
-                Attendance.objects.filter(user=OuterRef('by'), event=self.request.tenant).values('seat')
+                Attendance.objects.filter(user_info__user__profile=OuterRef('by'), event=self.request.tenant).values('seat')
             )
         ).prefetch_related(
             Prefetch(
-                'for_puzzle__episode_set',
+                'for_puzzle__episode',
                 queryset=models.Episode.objects.only('id', 'name').all()
             )
         )
@@ -205,14 +206,6 @@ class GuessesContent(LoginRequiredMixin, View):
             guesses = guess_pages.page(1)
         except EmptyPage:
             guesses = guess_pages.page(guess_pages.num_pages)
-
-        for g in guesses:
-            # Using .get() here for some reason creates an extra query for each guess even though
-            # we have prefetched this relation. .all()[0] does not.
-            # We are monkey-patching here so that we can do guess.episode.<blah> in the template -
-            # otherwise we'd have to do guess.for_puzzle.episode_set.all.0.id etc there, which is
-            # too nasty.
-            g.episode = g.for_puzzle.episode_set.all()[0]
 
         if request.GET.get('highlight_unlocks'):
             for g in guesses:
