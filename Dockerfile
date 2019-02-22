@@ -53,8 +53,9 @@ FROM node:11.9.0-alpine as webpack_build
 
 WORKDIR /usr/src/app
 COPY . .
-RUN npm install \
- && ./node_modules/.bin/webpack --config webpack.prod.js
+
+RUN yarn install --frozen-lockfile
+RUN ./node_modules/.bin/webpack --config webpack.prod.js
 
 
 # Build the final image
