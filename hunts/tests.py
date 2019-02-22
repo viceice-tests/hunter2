@@ -863,6 +863,37 @@ class AdminTeamTests(EventTestCase):
         response = self.client.get(reverse('guesses'))
         self.assertEqual(response.status_code, 200)
 
+class AdminGuessesContentTests(EventTestCase):
+    def setUp(self):
+        self.episode = EpisodeFactory(event=self.tenant)
+        self.admin_user = TeamMemberFactory(team__at_event=self.tenant, team__is_admin=True)
+        puzzle = PuzzleFactory()
+        self.guesses = GuessFactory.create_batch(5, for_puzzle=puzzle)
+        self.url = reverse('guesses_content')
+
+    def test_can_view_guesses(self):
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_can_view_guesses_by_team(self):
+        team_id = self.guesses[0].by_team.id
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(f'{self.url}?team={team_id}')
+        self.assertEqual(response.status_code, 200)
+
+    def test_can_view_guesses_by_puzzle(self):
+        puzzle_id = self.guesses[0].for_puzzle.id
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(f'{self.url}?puzzle={puzzle_id}')
+        self.assertEqual(response.status_code, 200)
+
+    def test_can_view_guesses_by_episode(self):
+        episode_id = self.guesses[0].for_puzzle.episode.id
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(f'{self.url}?episode={episode_id}')
+        self.assertEqual(response.status_code, 200)
+
 
 class ProgressionTests(EventTestCase):
     def setUp(self):
