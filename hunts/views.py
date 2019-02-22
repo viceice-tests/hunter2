@@ -243,7 +243,7 @@ class Stats(LoginRequiredMixin, View):
 
 
 class StatsContent(LoginRequiredMixin, View):
-    def get(self, request, episode_id):
+    def get(self, request, episode_id=None):
         admin = rules.is_admin_for_event(request.user, request.tenant)
 
         if not admin:
@@ -254,12 +254,12 @@ class StatsContent(LoginRequiredMixin, View):
 
         # TODO select and prefetch all the things
         episodes = models.Episode.objects.filter(event=request.tenant).order_by('start_date')
-        if episode_id != 'all':
+        if episode_id is not None:
             episodes = episodes.filter(pk=episode_id)
             if not episodes.exists():
                 raise Http404
 
-        puzzles = Puzzle.objects.all()
+        puzzles = models.Puzzle.objects.all()
 
         all_teams = teams.models.Team.objects.annotate(
             num_members=Count('members')
