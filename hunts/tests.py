@@ -14,6 +14,7 @@
 import asyncio
 import datetime
 import random
+import time
 
 import freezegun
 from django.core.exceptions import ValidationError
@@ -1155,31 +1156,53 @@ class UnlockAnswerTests(EventTestCase):
 
 
 class TestPuzzleWebsocket(AsyncEventTestCase):
-    def test_anonymous_access(self):
-        pz = self.run_in_loop(PuzzleFactory)()
-        ep = pz.episode
-        url = 'ws/hunt/ep/%d/pz/%d/' % (ep.get_relative_id(), pz.get_relative_id())
+    def setUp(self):
+        super().setUp()
+        self.pz = PuzzleFactory()
+        self.ep = self.pz.episode
+        self.url = 'ws/hunt/ep/%d/pz/%d/' % (self.ep.get_relative_id(), self.pz.get_relative_id())
 
-        comm = WebsocketCommunicator(websocket_app, url, headers=self.headers)
+    def test_anonymous_access(self):
+        comm = WebsocketCommunicator(websocket_app, self.url, headers=self.headers)
         connected, subprotocol = self.run_async(comm.connect)()
 
         self.assertFalse(connected)
         self.run_async(comm.disconnect)()
 
-    def test_good_access(self):
-        pz = PuzzleFactory()
-        ep = pz.episode
+    def test_initial_connection(self):
+        ua = UnlockAnswerFactory(unlock__puzzle=self.pz)
         profile = TeamMemberFactory()
-        url = 'ws/hunt/ep/%d/pz/%d/' % (ep.get_relative_id(), pz.get_relative_id())
+        g = GuessFactory(for_puzzle=self.pz, guess=ua.guess, by=profile)
+        ua.save()
+        g.save()
 
-        comm = AuthCommunicator(websocket_app, url, scope={'user': profile.user}, headers=self.headers)
+        comm = self.get_communicator(websocket_app, self.url, {'user': profile.user})
         connected, subprotocol = self.run_async(comm.connect)()
         self.assertTrue(connected)
+        self.run_async(comm.send_json_to)({'type': 'guesses-plz', 'from': 'all'})
+        try:
+            output = self.run_async(comm.receive_json_from)()
+        except asyncio.TimeoutError:
+            self.fail('WebSocket did nothing in response to request for old guesses')
+
+        self.assertEqual(output['type'], 'old_guess')
+        self.assertEqual(output['content']['guess'], g.guess)
+        self.assertEqual(output['content']['by'], profile.user.username)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        self.run_async(comm.send_json_to)({'type': 'unlocks-plz'})
+        try:
+            output = self.run_async(comm.receive_json_from)()
+        except asyncio.TimeoutError:
+            self.fail('WebSocket did nothing in response to request for unlocks')
+
+        self.assertEqual(output['type'], 'old_unlock')
+        self.assertEqual(output['content']['unlock'], ua.unlock.text)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
         self.run_async(comm.disconnect)()
 
     def test_same_team_sees_guesses(self):
-        pz = PuzzleFactory()
-        ep = pz.episode
         team = TeamFactory()
         u1 = UserProfileFactory()
         u2 = UserProfileFactory()
@@ -1187,17 +1210,15 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         team.members.add(u2)
         team.save()
 
-        url = 'ws/hunt/ep/%d/pz/%d/' % (ep.get_relative_id(), pz.get_relative_id())
-
-        comm1 = self.get_communicator(websocket_app, url, {'user': u1.user})
-        comm2 = self.get_communicator(websocket_app, url, {'user': u2.user})
+        comm1 = self.get_communicator(websocket_app, self.url, {'user': u1.user})
+        comm2 = self.get_communicator(websocket_app, self.url, {'user': u2.user})
 
         connected, _ = self.run_async(comm1.connect)()
         self.assertTrue(connected)
         connected, _ = self.run_async(comm2.connect)()
         self.assertTrue(connected)
 
-        g = GuessFactory(for_puzzle=pz, correct=False, by=u1)
+        g = GuessFactory(for_puzzle=self.pz, correct=False, by=u1)
         g.save()
 
         try:
@@ -1219,3 +1240,50 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         self.assertEqual(output['content']['guess'], g.guess)
         self.assertEqual(output['content']['correct'], False)
         self.assertEqual(output['content']['by'], u1.user.username)
+
+    def test_other_team_sees_no_guesses(self):
+        u1 = TeamMemberFactory()
+        u2 = TeamMemberFactory()
+
+        comm1 = self.get_communicator(websocket_app, self.url, {'user': u1.user})
+        comm2 = self.get_communicator(websocket_app, self.url, {'user': u2.user})
+
+        connected, _ = self.run_async(comm1.connect)()
+        self.assertTrue(connected)
+        connected, _ = self.run_async(comm2.connect)()
+        self.assertTrue(connected)
+
+        g = GuessFactory(for_puzzle=self.pz, correct=False, by=u1)
+        g.save()
+
+        self.assertTrue(self.run_async(comm2.receive_nothing)())
+
+    def test_websocket_receives_hints(self):
+        delay = 1
+        hint = HintFactory(puzzle=self.pz, time=datetime.timedelta(seconds=delay))
+        user = TeamMemberFactory()
+        team = user.team_at(self.tenant)
+        data = PuzzleData(self.pz, team, user)
+        data.tp_data.start_time = timezone.now()
+        data.save()
+
+        comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
+        connected, subprotocol = self.run_async(comm.connect)()
+        self.assertTrue(connected)
+        print(comm.instance.hint_events)
+
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        time.sleep(delay / 2)
+
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        #frozen_datetime.tick(hint.time + datetime.timedelta(seconds=1))
+        time.sleep(delay / 2 + 1)
+        self.assertTrue(hint.unlocked_by(team, data))
+
+        try:
+            output = self.run_async(comm.receive_json_from)()
+        except asyncio.TimeoutError:
+            self.fail('WebSocket did not send unlocked hint')
+
