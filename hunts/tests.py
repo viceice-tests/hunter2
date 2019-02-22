@@ -868,6 +868,7 @@ class AdminTeamTests(EventTestCase):
         response = self.client.get(reverse('guesses'))
         self.assertEqual(response.status_code, 200)
 
+
 class AdminContentTests(EventTestCase):
     def setUp(self):
         self.episode = EpisodeFactory(event=self.tenant)
