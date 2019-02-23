@@ -54,7 +54,7 @@ class UserInfo(models.Model):
 
     id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='info')
-    picture = models.URLField(help_text='Paste a URL to an image for your profile picture')
+    picture = models.URLField(blank=True, help_text='Paste a URL to an image for your profile picture')
     objects = Manager()
 
     @property
