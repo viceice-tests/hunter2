@@ -95,6 +95,16 @@ class AsyncEventTestCase(EventAwareTestCase):
     def get_communicator(self, app, url, scope=None):
         return ScopeOverrideCommunicator(app, url, scope, headers=self.headers)
 
+    def receive_json(self, comm, msg='', no_fail=False):
+        try:
+            output = self.run_async(comm.receive_json_from)()
+        except asyncio.TimeoutError:
+            if no_fail:
+                return {}
+            else:
+                self.fail(msg)
+        return output
+
     def run_async(self, coro):
         async def wrapper(result, *args, **kwargs):
             try:

@@ -463,7 +463,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             if g.by_team in done_teams:
                 continue
             if unlockanswer.validate_guess(g) and not any(a.validate_guess(g) for a in others):
-                cls.send_delete_unlockguess(g)
+                cls.send_delete_unlockguess(unlock, g)
                 done_teams.append(g.by_team)
 
     # handler: Unlock.pre_delete
