@@ -1162,7 +1162,7 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         self.ep = self.pz.episode
         self.url = 'ws/hunt/ep/%d/pz/%d/' % (self.ep.get_relative_id(), self.pz.get_relative_id())
 
-    def test_anonymous_access(self):
+    def test_anonymous_access_fails(self):
         comm = WebsocketCommunicator(websocket_app, self.url, headers=self.headers)
         connected, subprotocol = self.run_async(comm.connect)()
 
@@ -1183,7 +1183,7 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         try:
             output = self.run_async(comm.receive_json_from)()
         except asyncio.TimeoutError:
-            self.fail('WebSocket did nothing in response to request for old guesses')
+            self.fail('Websocket did nothing in response to request for old guesses')
 
         self.assertEqual(output['type'], 'old_guess')
         self.assertEqual(output['content']['guess'], g.guess)
@@ -1194,7 +1194,7 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         try:
             output = self.run_async(comm.receive_json_from)()
         except asyncio.TimeoutError:
-            self.fail('WebSocket did nothing in response to request for unlocks')
+            self.fail('Websocket did nothing in response to request for unlocks')
 
         self.assertEqual(output['type'], 'old_unlock')
         self.assertEqual(output['content']['unlock'], ua.unlock.text)
@@ -1224,7 +1224,7 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         try:
             output = self.run_async(comm1.receive_json_from)()
         except asyncio.TimeoutError:
-            self.fail('WebSocket did nothing in response to a submitted guess')
+            self.fail('Websocket did nothing in response to a submitted guess')
 
         self.assertEqual(output['type'], 'new_guess')
         self.assertEqual(output['content']['guess'], g.guess)
@@ -1234,7 +1234,7 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         try:
             output = self.run_async(comm2.receive_json_from)()
         except asyncio.TimeoutError:
-            self.fail('WebSocket did nothing in response to a submitted guess')
+            self.fail('Websocket did nothing in response to a submitted guess')
 
         self.assertEqual(output['type'], 'new_guess')
         self.assertEqual(output['content']['guess'], g.guess)
@@ -1258,32 +1258,78 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
 
         self.assertTrue(self.run_async(comm2.receive_nothing)())
 
+    def test_correct_answer_forwards(self):
+        user = TeamMemberFactory()
+        g = GuessFactory(for_puzzle=self.pz, correct=False, by=user)
+        comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
+        connected, subprotocol = self.run_async(comm.connect)()
+        self.assertTrue(connected)
+
+        g = GuessFactory(for_puzzle=self.pz, correct=True, by=user)
+
+        self.assertTrue(self.pz.answered_by(user.team_at(self.tenant)))
+
+        try:
+            output = self.run_async(comm.receive_json_from)()
+        except asyncio.TimeoutError:
+            self.fail('Websocket did nothing in response to a submitted guess')
+
+        # We should be notified of the correct guess. Since the episode had just one puzzle,
+        # we are now done with that episode and should be redirected back to the episode.
+        self.assertEqual(output['type'], 'new_guess')
+        self.assertEqual(output['content']['guess'], g.guess)
+        self.assertEqual(output['content']['correct'], True)
+        self.assertEqual(output['content']['by'], user.user.username)
+        self.assertEqual(output['content']['redirect'], self.ep.get_absolute_url(), 'Websocket did not redirect to the episode after completing that episode')
+
+        # Now add another puzzle. We should be redirected to that puzzle, since it is the
+        # unique unfinished puzzle on the episode.
+        pz2 = PuzzleFactory(episode=self.ep)
+        g.delete()
+        g.save()
+
+        try:
+            output = self.run_async(comm.receive_json_from)()
+        except asyncio.TimeoutError:
+            self.fail('Websocket did nothing in response to a submitted guess')
+
+        self.assertEqual(output['type'], 'new_guess')
+        self.assertEqual(output['content']['guess'], g.guess)
+        self.assertEqual(output['content']['correct'], True)
+        self.assertEqual(output['content']['by'], user.user.username)
+        self.assertEqual(output['content']['redirect'], pz2.get_absolute_url(), 'Websocket did not redirect to the next available puzzle when completing one of two puzzles on an episode')
+
     def test_websocket_receives_hints(self):
-        delay = 1
-        hint = HintFactory(puzzle=self.pz, time=datetime.timedelta(seconds=delay))
+        delay = 0.1
+
         user = TeamMemberFactory()
         team = user.team_at(self.tenant)
         data = PuzzleData(self.pz, team, user)
         data.tp_data.start_time = timezone.now()
         data.save()
+        hint = HintFactory(puzzle=self.pz, time=datetime.timedelta(seconds=delay))
 
         comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
         connected, subprotocol = self.run_async(comm.connect)()
         self.assertTrue(connected)
-        print(comm.instance.hint_events)
 
-        self.assertTrue(self.run_async(comm.receive_nothing)())
+        # account for delays getting started
+        remaining = hint.delay_for_team(team).total_seconds()
+        if remaining < 0:
+            raise Exception('Websocket hint scheduling test took too long to start up')
 
-        time.sleep(delay / 2)
+        # wait for half the remaining time for output
+        self.assertTrue(self.run_async(comm.receive_nothing)(remaining / 2))
 
-        self.assertTrue(self.run_async(comm.receive_nothing)())
-
+        # advance time by all the remaining time
         #frozen_datetime.tick(hint.time + datetime.timedelta(seconds=1))
-        time.sleep(delay / 2 + 1)
+        time.sleep(remaining / 2)
         self.assertTrue(hint.unlocked_by(team, data))
 
         try:
             output = self.run_async(comm.receive_json_from)()
         except asyncio.TimeoutError:
-            self.fail('WebSocket did not send unlocked hint')
+            self.fail('Websocket did not send unlocked hint')
 
+        self.assertEqual(output['type'], 'new_hint')
+        self.assertEqual(output['content']['hint'], hint.text)

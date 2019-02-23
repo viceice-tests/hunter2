@@ -20,7 +20,8 @@ from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models.signals import pre_save, pre_delete
+from django.db.models.signals import pre_save, post_save, pre_delete
+from django.dispatch import receiver
 from django.utils import timezone
 
 from events.consumers import TenantMixin
@@ -47,9 +48,25 @@ def pre_save_handler(func):
         def after_commit():
             func(cls, old, sender, instance, *args, **kwargs)
 
-        transaction.on_commit(after_commit)
+        if transaction.get_autocommit():
+            # in this case we want to wait until *post* save so the new object is in the db, which on_commit
+            # will not do. Instead, do nothing but set an attribute on the instance to the callback, and
+            # call it later in a post_save receiver.
+            instance._hybrid_save_cb = after_commit
+        else:
+            transaction.on_commit(after_commit)
 
     return classmethod(inner)
+
+
+@receiver(post_save)
+def hybrid_save_signal_dispatcher(sender, instance, **kwargs):
+    # This checks for the attribute set by the above signal handler and calls it if it exists.
+    hybrid_cb = getattr(instance, '_hybrid_save_cb', None)
+    if hybrid_cb:
+        # No need to pass args because this will always be a closure with the args from pre_save
+        instance._hybrid_save_cb = None
+        hybrid_cb()
 
 
 class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
@@ -186,6 +203,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
             episode = guess.for_puzzle.episode
             next = episode.next_puzzle(guess.by_team)
             if next:
+                next = episode.get_puzzle(next)
                 content['text'] = f'to the next puzzle'
                 content['redirect'] = next.get_absolute_url()
             else:
