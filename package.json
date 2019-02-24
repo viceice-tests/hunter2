@@ -1,20 +1,20 @@
 {
-  "name": "hunter2-webpack-server",
-  "version": "0.1.0",
+  "name": "hunter2",
+  "version": "0.2.0",
   "author": "The Hunter 2 contributors",
   "license": "AGPL-3.0-or-later",
   "private": true,
   "description": "Hunter 2 is a platform for running puzzle hunts",
-  "homepage": "https://gitlab.com/ihunt/hunter2#readme",
+  "homepage": "https://gitlab.com/hunter2.app/hunter2#readme",
   "repository": {
     "type": "git",
-    "url": "https://git@gitlab.com/ihunt/hunter2.git"
+    "url": "https://git@gitlab.com/hunter2.app/hunter2.git"
   },
   "bugs": {
-    "url": "https://gitlab.com/ihunt/hunter2/issues"
+    "url": "https://gitlab.com/hunter2.app/hunter2/issues"
   },
   "scripts": {
-    "start": "/node_modules/.bin/webpack-dev-server --config webpack.dev.js --watch"
+    "start": "webpack-dev-server --config webpack.dev.js --watch"
   },
   "devDependencies": {
     "webpack": "^4.29.3",
