@@ -68,12 +68,14 @@ class ProfileView(DetailView):
 
 
 class EditProfileView(LoginRequiredMixin, View):
+    def _get_profile_formset(self, request):
+        return forms.UserInfoFormset(instance=request.user)
 
-    def get(self, request):
-        user_form = forms.UserForm(instance=request.user)
+    def _get_attendance_formset(self, request):
+        return forms.AttendanceFormset(instance=request.user.info, queryset=request.user.info.attendance_set.filter(event=request.tenant))
+
+    def _render(self, request, user_form, profile_formset, attendance_formset):
         password_form = ChangePasswordForm(user=request.user) if request.user.has_usable_password() else SetPasswordForm(user=request.user)
-        profile_formset = forms.UserInfoFormset(instance=request.user)
-        attendance_formset = forms.AttendanceFormset(instance=request.user.info, queryset=request.user.info.attendance_set.filter(event=request.tenant))
         steam_account = request.user.socialaccount_set.first()  # This condition breaks down if we support multiple social accounts.
         if steam_account:
             steam_account = steam_account.uid.replace('openid/id', 'profiles')  # This is heavily steam specific
@@ -90,8 +92,16 @@ class EditProfileView(LoginRequiredMixin, View):
             context=context,
         )
 
+    def get(self, request):
+        user_form = forms.UserForm(instance=request.user)
+        profile_formset = self._get_profile_formset(request)
+        attendance_formset = self._get_attendance_formset(request)
+        return self._render(request, user_form, profile_formset, attendance_formset)
+
     def post(self, request):
         user_form = forms.UserForm(request.POST, instance=request.user)
+        profile_formset = None
+        attendance_formset = None
         if user_form.is_valid():
             created_user = user_form.save(commit=False)
             profile_formset = forms.UserInfoFormset(request.POST, instance=created_user)
@@ -103,4 +113,8 @@ class EditProfileView(LoginRequiredMixin, View):
                     profile_formset.save()
                     attendance_formset.save()
                     return HttpResponseRedirect(reverse('edit_profile'))
-        return self.get(request)
+        if not profile_formset:
+            profile_formset = self._get_profile_formset(request)
+        if not attendance_formset:
+            attendance_formset = self._get_attendance_formset(request)
+        return self._render(request, user_form, profile_formset, attendance_formset)

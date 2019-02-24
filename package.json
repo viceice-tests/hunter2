@@ -14,10 +14,7 @@
     "url": "https://gitlab.com/ihunt/hunter2/issues"
   },
   "scripts": {
-    "start": "/node_modules/.bin/webpack-dev-server --config webpack.dev.js --watch",
-    "build:dev": "/node_modules/.bin/webpack --config webpack.dev.js --display-error-details",
-    "build:prod": "/node_modules/.bin/webpack --config webpack.prod.js",
-    "lock": "npm install --package-lock-only"
+    "start": "/node_modules/.bin/webpack-dev-server --config webpack.dev.js --watch"
   },
   "devDependencies": {
     "webpack": "^4.29.3",
