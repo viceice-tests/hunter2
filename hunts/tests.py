@@ -11,7 +11,6 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import asyncio
 import datetime
 import random
 import time
@@ -23,11 +22,9 @@ from django.urls import reverse
 from django.utils import timezone
 from parameterized import parameterized
 from channels.testing import WebsocketCommunicator
-from django_tenants.test.client import TenantClient
 
 from accounts.factories import UserProfileFactory
-from events.factories import EventFactory, EventFileFactory, DomainFactory
-from events.models import Event
+from events.factories import EventFactory, EventFileFactory
 from events.test import EventTestCase, AsyncEventTestCase
 from teams.factories import TeamFactory, TeamMemberFactory
 from . import runtimes, utils
@@ -51,6 +48,7 @@ from .factories import (
 from .models import PuzzleData, TeamPuzzleData
 from .utils import encode_uuid
 from hunter2.routing import application as websocket_app
+
 
 class FactoryTests(EventTestCase):
     # TODO: Consider reworking RUNTIME_CHOICES so this can be used.
@@ -1196,13 +1194,13 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
 
     def test_initial_connection(self):
         ua1 = UnlockAnswerFactory(unlock__puzzle=self.pz)
-        ua2 = UnlockAnswerFactory(unlock__puzzle=self.pz, guess=ua1.guess + '_different')
+        ua2 = UnlockAnswerFactory(unlock__puzzle=self.pz, guess=ua1.guess + '_different')  # noqa: F841
         profile = TeamMemberFactory()
         g1 = GuessFactory(for_puzzle=self.pz, by=profile)
-        g1.given = given=timezone.now() - datetime.timedelta(days=1)
+        g1.given = timezone.now() - datetime.timedelta(days=1)
         g1.save()
         g2 = GuessFactory(for_puzzle=self.pz, guess=ua1.guess, by=profile)
-        g2.given = given=timezone.now()
+        g2.given = timezone.now()
         g2.save()
 
         comm = self.get_communicator(websocket_app, self.url, {'user': profile.user})
@@ -1334,7 +1332,9 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         self.assertEqual(output['content']['guess'], g.guess)
         self.assertEqual(output['content']['correct'], True)
         self.assertEqual(output['content']['by'], user.user.username)
-        self.assertEqual(output['content']['redirect'], pz2.get_absolute_url(), 'Websocket did not redirect to the next available puzzle when completing one of two puzzles on an episode')
+        self.assertEqual(output['content']['redirect'], pz2.get_absolute_url(),
+                         'Websocket did not redirect to the next available puzzle when completing'
+                         'one of two puzzles on an episode')
 
         self.run_async(comm.disconnect)()
 
@@ -1456,6 +1456,9 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         self.run_async(comm_eve.disconnect)()
 
     def test_websocket_receives_hints(self):
+        # It would be better to mock the asyncio event loop in order to fake advancing time
+        # but that's too much effort (and freezegun doesn't support it yet) so just use
+        # short delays and hope.
         delay = 0.1
 
         user = TeamMemberFactory()
@@ -1478,7 +1481,6 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         self.assertTrue(self.run_async(comm.receive_nothing)(remaining / 2))
 
         # advance time by all the remaining time
-        #frozen_datetime.tick(hint.time + datetime.timedelta(seconds=1))
         time.sleep(remaining / 2)
         self.assertTrue(hint.unlocked_by(team, data))
 

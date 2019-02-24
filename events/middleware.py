@@ -60,6 +60,8 @@ class TenantMiddleware(TenantMainMiddleware):
 
 class TenantWebsocketMiddleware(BaseMiddleware):
     def populate_scope(self, scope):
+        close_old_connections()
+
         headers = dict(scope['headers'])
 
         try:
@@ -74,8 +76,6 @@ class TenantWebsocketMiddleware(BaseMiddleware):
             scope['tenant'] = Domain.objects.get(domain=domain).tenant
         except Domain.DoesNotExist:
             raise ValueError('No tenant Domain matching origin %s' % domain)
-
-        #close_old_connections()
 
     async def resolve_scope(self, scope):
         # Unsure how you're actually supposed to correctly subclass Channels Middleware.

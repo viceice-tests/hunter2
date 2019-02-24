@@ -53,7 +53,7 @@ def pre_save_handler(func):
             # will not do. Instead, do nothing but set an attribute on the instance to the callback, and
             # call it later in a post_save receiver.
             instance._hybrid_save_cb = after_commit
-        else: # nocover
+        else:  # nocover
             transaction.on_commit(after_commit)
 
     return classmethod(inner)
@@ -293,7 +293,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     def _new_guess(cls, old, sender, guess, raw, *args, **kwargs):
         # Do not trigger unless this was a newly created guess.
         # Note this means an admin modifying a guess will not trigger anything.
-        if raw: # nocover
+        if raw:  # nocover
             return
         if old:
             return
@@ -355,7 +355,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     # handler: Unlockanswer.pre_save
     @pre_save_handler
     def _new_unlockanswer(cls, old_unlockanswer, sender, instance, raw, *args, **kwargs):
-        if raw: # nocover
+        if raw:  # nocover
             return
 
         unlockanswer = instance
@@ -388,7 +388,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     # handler: Unlock.pre_save
     @pre_save_handler
     def _changed_unlock(cls, old, sender, instance, raw, *args, **kwargs):
-        if raw: # nocover
+        if raw:  # nocover
             return
         if not old:
             # New unlocks are boring; we will then notify via the unlockanswer hook
@@ -425,7 +425,7 @@ class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
     # handler: Hint.pre_save
     @pre_save_handler
     def _new_hint(cls, old, sender, instance, raw, *args, **kwargs):
-        if raw: # nocover
+        if raw:  # nocover
             return
         hint = instance
         if old and hint.puzzle != old.puzzle:
