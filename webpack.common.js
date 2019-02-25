@@ -1,7 +1,7 @@
-const path = require('path');
-const webpack = require('webpack');
-const BundleTracker = require('webpack-bundle-tracker');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const path = require('path')
+const webpack = require('webpack')
+const BundleTracker = require('webpack-bundle-tracker')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 module.exports = {
   context: '/usr/src/app',
@@ -49,4 +49,4 @@ module.exports = {
       path.resolve('./node_modules'),
     ],
   },
-};
+}
