@@ -577,7 +577,6 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             response['timeout_end'] = str(now + minimum_time)
         response['correct'] = str(correct).lower()
         response['by'] = request.user.username
-        # PuzzleEventWebsocket._send_message(request.puzzle, request.team, {'type': 'answer', 'message': response})
 
         return JsonResponse(response)
 
