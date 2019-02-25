@@ -1,7 +1,6 @@
 import $ from 'jquery'
 
 function hide(list_entry) {
-  'use strict'
   if (!list_entry.siblings().length) {
     $('#req-div').hide('slow')
   }
@@ -11,16 +10,14 @@ function hide(list_entry) {
 }
 
 export function cancel(event) {
-  'use strict'
   var target = $(event.target)
   var list_entry = target.closest('li')
-  var list = target.closest('ul')
   $.post(
     target.data('team') + '/cancelrequest'
   ).done(function() {
     $('#req-error').text('').hide('fast')
     hide(list_entry)
-  }).fail(function(jqXHR, textStatus, error) {
+  }).fail(function(jqXHR) {
     var message = jqXHR.responseJSON.message
     if (jqXHR.responseJSON['delete']) {
       hide(list_entry)
@@ -30,7 +27,6 @@ export function cancel(event) {
 }
 
 export function create(event) {
-  'use strict'
   event.preventDefault()
   var target = $(event.target)
   var field = target.find('select[name=team]')
@@ -45,19 +41,13 @@ export function create(event) {
     list_entry.find('span').append(cancel_link)
     $('#req-list').append(list_entry)
     list_entry.fadeIn('slow')
-  }).fail(function(jqXHR, textStatus, error) {
+  }).fail(function(jqXHR) {
     var message = jqXHR.responseJSON.message
-    if (jqXHR.responseJSON['delete']) {
-      list_entry.fadeOut('slow', function() {
-        $(this).remove()
-      })
-    }
     $('#req-error').text(message).show('fast')
   })
 }
 
 export function accept(event) {
-  'use strict'
   var target = $(event.target)
   var prefix = target.data('team') ? `${target.data('team')}/` : ''
   var list_entry = target.closest('li')
@@ -68,7 +58,7 @@ export function accept(event) {
     hide(list_entry)
     var new_element = $(`<li>${data.username}<span style="float: right">&nbsp;${data.seat}</span></li>`)
     $('#member-list').append(new_element)
-  }).fail(function(jqXHR, textStatus, error) {
+  }).fail(function(jqXHR) {
     var message = jqXHR.responseJSON.message
     if (jqXHR.responseJSON['delete']) {
       hide(list_entry)
@@ -78,7 +68,6 @@ export function accept(event) {
 }
 
 export function decline(event) {
-  'use strict'
   var target = $(event.target)
   var prefix = target.data('team') ? `${target.data('team')}/` : ''
   var list_entry = target.closest('li')
@@ -87,7 +76,7 @@ export function decline(event) {
   ).done(function() {
     $('#req-error').text('').hide('fast')
     hide(list_entry)
-  }).fail(function(jqXHR, textStatus, error) {
+  }).fail(function(jqXHR) {
     var message = jqXHR.responseJSON.message
     if (jqXHR.responseJSON['delete']) {
       hide(list_entry)

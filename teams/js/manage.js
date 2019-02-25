@@ -5,7 +5,7 @@ import * as invite from './invite.js'
 import * as request from './request.js'
 
 $(function(){
-  'use strict'
+  setupJQueryAjaxCsrf()
 
   setupJQueryAjaxCsrf()
 

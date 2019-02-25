@@ -1,7 +1,6 @@
 import $ from 'jquery'
 
 function hide(list_entry) {
-  'use strict'
   if (!list_entry.siblings().length) {
     $('#inv-div').hide('slow')
   }
@@ -11,7 +10,6 @@ function hide(list_entry) {
 }
 
 export function cancel(event) {
-  'use strict'
   var target = $(event.target)
   var prefix = target.data('team') ? `${target.data('team')}/` : ''
   var list_entry = target.closest('li')
@@ -20,7 +18,7 @@ export function cancel(event) {
   ).done(function() {
     $('#inv-error').text('').hide('fast')
     hide(list_entry)
-  }).fail(function(jqXHR, textStatus, error) {
+  }).fail(function(jqXHR) {
     var message = jqXHR.responseJSON.message
     if (jqXHR.responseJSON['delete']) {
       hide(list_entry)
@@ -30,7 +28,6 @@ export function cancel(event) {
 }
 
 export function create(event) {
-  'use strict'
   event.preventDefault()
   var target = $(event.target)
   var field = target.find('select[name=user]')
@@ -50,14 +47,13 @@ export function create(event) {
     $('#inv-list').append(list_entry)
     list_entry.fadeIn('slow')
     field.empty()
-  }).fail(function(jqXHR, textStatus, error) {
+  }).fail(function(jqXHR) {
     var message = jqXHR.responseJSON.message
     $('#inv-error').text(message).show('fast')
   })
 }
 
 export function accept(event) {
-  'use strict'
   var target = $(event.target)
   var prefix = target.data('team') ? `${target.data('team')}/` : ''
   var list_entry = target.closest('li')
@@ -65,7 +61,7 @@ export function accept(event) {
     prefix + 'acceptinvite'
   ).done(function() {
     location.reload()
-  }).fail(function(jqXHR, textStatus, error) {
+  }).fail(function(jqXHR) {
     var message = jqXHR.responseJSON.message
     if (jqXHR.responseJSON['delete']) {
       hide(list_entry)
@@ -75,7 +71,6 @@ export function accept(event) {
 }
 
 export function decline(event) {
-  'use strict'
   var target = $(event.target)
   var prefix = target.data('team') ? `${target.data('team')}/` : ''
   var list_entry = target.closest('li')
@@ -84,7 +79,7 @@ export function decline(event) {
   ).done(function() {
     $('#inv-error').text('').hide('fast')
     hide(list_entry)
-  }).fail(function(jqXHR, textStatus, error) {
+  }).fail(function(jqXHR) {
     var message = jqXHR.responseJSON.message
     if (jqXHR.responseJSON['delete']) {
       hide(list_entry)

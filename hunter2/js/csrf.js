@@ -1,7 +1,6 @@
 import $ from 'jquery';
 
 function getCookie(name) {
-  'use strict'
   var cookieValue = null
   if (document.cookie && document.cookie !== '') {
     var cookies = document.cookie.split(';')
@@ -18,13 +17,11 @@ function getCookie(name) {
 }
 
 function csrfSafeMethod(method) {
-  'use strict'
   // these HTTP methods do not require CSRF protection
   return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method))
 }
 
 export default function setupJQueryAjaxCsrf() {
-  'use strict'
   var csrftoken = getCookie('csrftoken')
   $.ajaxSetup({
     beforeSend: function(xhr, settings) {

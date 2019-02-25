@@ -7,14 +7,12 @@ import '../scss/puzzle.scss'
 import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js'
 
 function escapeHtml(text) {
-  'use strict'
-  return text.replace(/[\"&<>]/g, function (a) {
+  return text.replace(/["&<>]/g, function (a) {
     return { '"': '&quot;', '&': '&amp;', '<': '&lt;', '>': '&gt;' }[a]
   })
 }
 
 function incorrect_answer(guess, timeout_length, timeout, new_hints, unlocks) {
-  'use strict'
   var hints_div = $('#hints')
   var n_hints = new_hints.length
   for (let i = 0; i < n_hints; i++) {
@@ -52,7 +50,6 @@ function incorrect_answer(guess, timeout_length, timeout, new_hints, unlocks) {
 }
 
 function correct_answer(url, text) {
-  'use strict'
   var form = $('.form-inline')
   form.after(`<div id="correct-answer-message">Correct! Taking you ${text}. <a class="puzzle-complete-redirect" href="${url}">go right now</a></div>`)
   form.remove()
@@ -60,13 +57,11 @@ function correct_answer(url, text) {
 }
 
 function message(message, error) {
-  'use strict'
   var error_msg = $('<p class="submission-error" title="' + error + '">' + message + '</p>')
   error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(5000, function(){$(this).remove()})
 }
 
 function doCooldown(milliseconds) {
-  'use strict'
   var button = select('#answer-button')
   var size = button.node().getBoundingClientRect().width
   var g = button.select('svg')
@@ -98,7 +93,6 @@ function doCooldown(milliseconds) {
       .attr('fill-opacity', 0.3)
       .attr('stroke-opacity', 0.2)
   }, milliseconds - flashDuration)
-				
 
   var text = g.append('text')
     .attr('x', size / 2)
@@ -127,14 +121,13 @@ function doCooldown(milliseconds) {
 }
 
 function drawSliceSquare(size) {
-  'use strict'
   return function(proportion) {
     var angle = (proportion * Math.PI * 2) - Math.PI / 2
     var x = Math.cos(angle) * size
     var y = Math.sin(angle) * size
     var pathString = 'M ' + size / 2 + ',0' +
-						' L ' + size / 2 + ',' + size / 2 +
-						' l ' + x + ',' + y
+            ' L ' + size / 2 + ',' + size / 2 +
+            ' l ' + x + ',' + y
     var pathEnd = ' Z'
     if (proportion < 0.875) {
       pathEnd = ' L 0,0 Z' + pathEnd
@@ -152,23 +145,20 @@ function drawSliceSquare(size) {
   }
 }
 
-function drawCooldownText(milliseconds) {
-  'use strict'
+export function drawCooldownText(milliseconds) {
   return function(proportion) {
     var time = milliseconds * proportion / 1000
     select(this).text(time < 1 ? format('.1')(time) : format('1')(time))
   }
 }
 
-function drawFlashSquare(size) {
-  'use strict'
-  return function(t) {
+export function drawFlashSquare() {
+  return function() {
     return ''
   }
 }
 
 function addSVG() {
-  'use strict'
   var button = select('#answer-button')
   if (button.empty()) {
     return
@@ -181,39 +171,33 @@ function addSVG() {
   var defs = svg.append('defs')
 
   /*var filter = defs.append("filter")
-		.attr("id", "drop-shadow")
-		.attr("x", "0")
-		.attr("y", "0")
-		.attr(*/
+    .attr("id", "drop-shadow")
+    .attr("x", "0")
+    .attr("y", "0")
+    .attr(*/
   var filter = defs.append('filter')
-	    .attr('id', 'drop-shadow')
+    .attr('id', 'drop-shadow')
     .attr('width', '200%')
     .attr('height', '200%')
   filter.append('feGaussianBlur')
-	    .attr('in', 'SourceAlpha')
-	    .attr('stdDeviation', 4)
-	    .attr('result', 'blur')
+    .attr('in', 'SourceAlpha')
+    .attr('stdDeviation', 4)
+    .attr('result', 'blur')
   filter.append('feOffset')
-	    .attr('in', 'blur')
-	    .attr('dx', 4)
-	    .attr('dy', 4)
-	    .attr('result', 'offsetBlur')
+    .attr('in', 'blur')
+    .attr('dx', 4)
+    .attr('dy', 4)
+    .attr('result', 'offsetBlur')
   var feMerge = filter.append('feMerge')
   feMerge.append('feMergeNode')
-	    .attr('in', 'offsetBlur')
+    .attr('in', 'offsetBlur')
   feMerge.append('feMergeNode')
-	    .attr('in', 'SourceGraphic')
+    .attr('in', 'SourceGraphic')
 }
 
 var last_updated = Date.now()
 
-function setupSolutionDisplay() {
-  'use strict'
-}
-
 $(function() {
-  'use strict'
-
   setupJQueryAjaxCsrf()
 
   addSVG()

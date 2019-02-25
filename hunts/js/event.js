@@ -4,15 +4,13 @@ import 'bootstrap'
 import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js'
 
 $(function () {
-  'use strict'
-
   setupJQueryAjaxCsrf()
 
-  $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
+  $('a[data-toggle="tab"]').on('show.bs.tab', function () {
     var url = $(this).data('url')
     var target = $(this).attr('href')
     var tab = $(this)
-    $(target).load(url, function (result) {
+    $(target).load(url, function () {
       tab.tab('show')
       window.location.hash = target.substr(1)
     })

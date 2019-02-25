@@ -1,33 +1,46 @@
 module.exports = {
     'env': {
         'browser': true,
-        'es6': true
+        'es6': true,
     },
     'extends': 'eslint:recommended',
     'globals': {
         'Atomics': 'readonly',
-        'SharedArrayBuffer': 'readonly'
+        'SharedArrayBuffer': 'readonly',
     },
     'parserOptions': {
         'ecmaVersion': 2018,
-        'sourceType': 'module'
+        'sourceType': 'module',
     },
     'rules': {
         'indent': [
             'error',
-            2
+            2,
         ],
         'linebreak-style': [
             'error',
-            'unix'
+            'unix',
+        ],
+        'overrides': [
+            {
+                'env': {
+                    'commonjs': true,
+                },
+                'files': [
+                    'webpack.*.js',
+                ],
+            },
         ],
         'quotes': [
             'error',
-            'single'
+            'single',
         ],
         'semi': [
             'error',
-            'never'
-        ]
+            'never',
+        ],
+        'strict': [
+            'error',
+        ],
     }
 }
