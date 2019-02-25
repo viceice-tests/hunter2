@@ -60,4 +60,3 @@ volumes:
   uploads_events: {}
   uploads_puzzles: {}
   uploads_solutions: {}
-  redis: {}
