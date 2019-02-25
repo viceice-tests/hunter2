@@ -53,10 +53,6 @@ class TenantMiddleware(TenantMainMiddleware):
             # This path bypasses the cache clear in the superclass
             ContentType.objects.clear_cache()
 
-            return
-
-        return super().process_request(request)
-
 
 class TenantWebsocketMiddleware(BaseMiddleware):
     def populate_scope(self, scope):
