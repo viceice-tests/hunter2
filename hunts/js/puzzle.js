@@ -6,9 +6,6 @@ import '../scss/puzzle.scss';
 
 import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js';
 
-// Expose global $ for jquery for now
-require("expose-loader?$!jquery");
-
 function escapeHtml(text) {
 	"use strict";
 	return text.replace(/[\"&<>]/g, function (a) {
