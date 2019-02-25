@@ -12,6 +12,17 @@ module.exports = {
         'ecmaVersion': 2018,
         'sourceType': 'module',
     },
+    'overrides': [
+        {
+            'env': {
+                'node': true,
+            },
+            'files': [
+                'postcss.config.js',
+                'webpack.*.js',
+            ],
+        },
+    ],
     'rules': {
         'indent': [
             'error',
@@ -20,16 +31,6 @@ module.exports = {
         'linebreak-style': [
             'error',
             'unix',
-        ],
-        'overrides': [
-            {
-                'env': {
-                    'commonjs': true,
-                },
-                'files': [
-                    'webpack.*.js',
-                ],
-            },
         ],
         'quotes': [
             'error',
