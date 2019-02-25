@@ -83,9 +83,7 @@ class AsyncEventTestCase(EventAwareTestCase):
         try:
             cls.loop = asyncio.get_event_loop()
         except RuntimeError:
-            print("loop did not already exist")
-            cls.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(cls.loop)
+            raise RuntimeError('Could not create asyncio event loop; something is messing with event loop policy which probably means tests will not run as expected.')
 
     @classmethod
     def tearDownClass(cls):
@@ -122,8 +120,7 @@ class AsyncEventTestCase(EventAwareTestCase):
                 finally:
                     pass
             else:
-                print("loop was already running")
-                self.loop.call_soon_threadsafe(wrapper(result, *args, **kwargs))
+                raise RuntimeError('Event loop was already running. AsyncEventTestCase always stops the loop, so something else is using it in a way this is not designed for.')
             return result.result()
 
         return inner
