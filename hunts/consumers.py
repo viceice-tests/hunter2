@@ -24,7 +24,7 @@ from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
 from django.utils import timezone
 
-from events.consumers import TenantMixin
+from events.consumers import EventMixin
 from teams.models import Team
 from teams.consumers import TeamMixin
 from .models import Guess
@@ -69,7 +69,7 @@ def hybrid_save_signal_dispatcher(sender, instance, **kwargs):
         hybrid_cb()
 
 
-class PuzzleEventWebsocket(TenantMixin, TeamMixin, JsonWebsocketConsumer):
+class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.connected = False

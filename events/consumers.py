@@ -26,7 +26,7 @@ def activate_tenant(f):
     return wrapper
 
 
-class TenantMixin:
+class EventMixin:
     @database_sync_to_async
     @activate_tenant
     def dispatch(self, message):
