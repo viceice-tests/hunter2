@@ -8,6 +8,8 @@ import * as request from "./request.js";
 $(function(){
   "use strict";
 
+  setupJQueryAjaxCsrf();
+
   $('#inv-create').on('submit', invite.create);
   $('.inv-accept').on('click', invite.accept);
   $('.inv-deny').on('click', invite.decline);
