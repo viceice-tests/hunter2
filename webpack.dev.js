@@ -15,7 +15,7 @@ module.exports = merge(common, {
   devServer: {
     host: '0.0.0.0',
     port: DEV_SERVER_PORT,
-    disableHostCheck: true
+    disableHostCheck: true,
   },
 
   watchOptions: {

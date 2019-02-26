@@ -1,6 +1,6 @@
 import $ from 'jquery'
 
-import setupJQueryAjaxCsrf from "hunter2/js/csrf.js"
+import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js'
 import * as invite from './invite.js'
 import * as request from './request.js'
 

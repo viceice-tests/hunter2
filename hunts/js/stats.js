@@ -1,7 +1,7 @@
 import $ from 'jquery'
-import * as d3 from "d3"
+import * as d3 from 'd3'
 
-import '../scss/stats.scss';
+import '../scss/stats.scss'
 
 import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js'
 
@@ -32,7 +32,7 @@ var entityMap = {
   '/': '&#x2F;',
   '`': '&#x60;',
   '=': '&#x3D;',
-  ' ': '&nbsp;'
+  ' ': '&nbsp;',
 }
 
 var globalData = null

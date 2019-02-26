@@ -1,4 +1,4 @@
-import $ from 'jquery';
+import $ from 'jquery'
 
 function getCookie(name) {
   var cookieValue = null
@@ -29,6 +29,6 @@ export default function setupJQueryAjaxCsrf() {
         xhr.setRequestHeader('X-CSRFToken', csrftoken)
       }
     },
-    contentType: 'application/json'
+    contentType: 'application/json',
   })
 }

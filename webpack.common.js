@@ -11,7 +11,7 @@ module.exports = {
     hunts_event:   './hunts/js/event.js',
     hunts_puzzle:  './hunts/js/puzzle.js',
     hunts_stats:   './hunts/js/stats.js',
-    hunts_guesses: './hunts/js/guesses.js'
+    hunts_guesses: './hunts/js/guesses.js',
   },
 
   module: {
@@ -22,17 +22,17 @@ module.exports = {
           MiniCssExtractPlugin.loader,
           'css-loader?sourceMap',
           'postcss-loader?sourceMap',
-          'sass-loader?sourceMap'
-        ]
-      }
-    ]
+          'sass-loader?sourceMap',
+        ],
+      },
+    ],
   },
 
   output: {
     path: path.resolve('assets/bundles/'),
     filename: '[name]/[hash].js',
     libraryTarget: 'var',
-    library: '[name]'
+    library: '[name]',
   },
 
   plugins: [

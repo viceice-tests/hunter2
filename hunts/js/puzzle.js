@@ -224,7 +224,7 @@ $(function() {
     button.attr('disabled', true)
     var data = {
       last_updated: last_updated,
-      answer: field.val()
+      answer: field.val(),
     }
     $.ajax({
       type: 'POST',
@@ -250,7 +250,7 @@ $(function() {
           message('There was an error submitting the answer.', error)
         }
       },
-      dataType: 'json'
+      dataType: 'json',
     })
   })
 
