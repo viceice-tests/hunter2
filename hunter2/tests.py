@@ -98,7 +98,7 @@ class MigrationsTests(TestCase):
                 check_changes=True,
                 stdout=output
             )
-        except SystemExit as e:
+        except SystemExit:
             self.fail("There are missing migrations:\n %s" % output.getvalue())
 
 
