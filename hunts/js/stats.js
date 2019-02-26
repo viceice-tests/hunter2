@@ -1,7 +1,7 @@
-import '../scss/stats.scss';
-
 import $ from 'jquery';
 import * as d3 from "d3";
+
+import '../scss/stats.scss';
 
 import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js';
 
