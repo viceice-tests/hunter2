@@ -3,6 +3,8 @@ import '../scss/stats.scss';
 import $ from 'jquery';
 import * as d3 from "d3";
 
+import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js';
+
 // Keep the number of entries in here such that it has a large least common multiple with the number of colours.
 var symbolsPathList = [
 	{path: "M -3,-3 L 3,3 M 3,-3 L -3,3", strokeWidth: 2, fillOpacity: 0}, // X
@@ -631,6 +633,9 @@ var drawFunction = drawCompletion;
 
 $(function () {
 	"use strict";
+
+	setupJQueryAjaxCsrf();
+
 	$.get('episode_list', {}, function (episodes) {
 		var select = $('#episode');
 		select.children(':not([value="all"])').remove();
