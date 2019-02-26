@@ -14,9 +14,9 @@ services:
     image: registry.gitlab.com/rconan/docker-graphviz:2.40.1-0
     volumes:
       - ${PWD:-.}:/files
-  jshint:
-    command: ["/usr/bin/find", ".", "-path", "./node_modules", "-prune", "-o", "-name", "*.js", "-exec", "/node_modules/jshint/bin/jshint", "{}", "+"]
-    image: registry.gitlab.com/rconan/docker-jshint:2.9.6-0
+  eslint:
+    command: ["."]
+    image: registry.gitlab.com/rconan/docker-eslint:5.14.1-0
     volumes:
       - ${PWD:-.}:/code
   flake8:
