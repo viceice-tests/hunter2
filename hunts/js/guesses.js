@@ -35,7 +35,7 @@ function getQueryParam(param) {
 $(function () {
 	"use strict";
 
-	setupJQueryAjazCsrf();
+	setupJQueryAjaxCsrf();
 
 	updateGuesses(true);
 	var autoUpdate = $('#auto-update');

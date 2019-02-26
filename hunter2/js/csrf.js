@@ -1,3 +1,4 @@
+import $ from 'jquery';
 
 function getCookie(name) {
 	"use strict";
