@@ -1,5 +1,7 @@
 import '../scss/base.scss';
 
+import $ from 'jquery';
+
 import 'bootstrap';
 import setupJQueryAjaxCsrf from './csrf';
 
