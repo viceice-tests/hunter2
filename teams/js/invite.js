@@ -1,6 +1,6 @@
 import $ from 'jquery';
 
-function hideInvite(list_entry) {
+function hide(list_entry) {
 	"use strict";
 	if (!list_entry.siblings().length) {
 		$('#inv-div').hide('slow');
@@ -10,7 +10,26 @@ function hideInvite(list_entry) {
 	});
 }
 
-export function createInvite(event) {
+export function cancel(event) {
+	"use strict";
+	var target = $(event.target);
+	var prefix = target.data('team') ? `${target.data('team')}/` : '';
+	var list_entry = target.closest('li');
+	$.post(
+		prefix + 'cancelinvite', JSON.stringify({ user: target.data('user') })
+	).done(function() {
+		$('#inv-error').text('').hide('fast');
+		hide(list_entry);
+	}).fail(function(jqXHR, textStatus, error) {
+		var message = jqXHR.responseJSON.message;
+		if (jqXHR.responseJSON['delete']) {
+			hide(list_entry);
+		}
+		$('#inv-error').text(message).show('fast');
+	});
+}
+
+export function create(event) {
 	"use strict";
 	event.preventDefault();
 	var target = $(event.target);
@@ -21,12 +40,13 @@ export function createInvite(event) {
 		target.attr('action'), JSON.stringify({ user: user })
 	).done(function(data) {
 		$('#inv-error').text('').hide('fast');
-		var cancel = $(`<a href="#" class="inv-cancel" data-user="${user}" onclick="cancelInvite()">Cancel</a>`);
+		var cancel_link = $(`<a href="#" class="inv-cancel" data-user="${user}">Cancel</a>`);
+		cancel_link.on('click', cancel);
 		if (team) {
-			cancel.data('team', team);
+			cancel_link.data('team', team);
 		}
 		var list_entry = $(`<li style="display: none;">${data.username} has been invited<span style="float: right;">&nbsp;</span></li>`);
-		list_entry.find('span').append(cancel);
+		list_entry.find('span').append(cancel_link);
 		$('#inv-list').append(list_entry);
 		list_entry.fadeIn('slow');
 		field.empty();
@@ -36,26 +56,7 @@ export function createInvite(event) {
 	});
 }
 
-export function cancelInvite(event) {
-	"use strict";
-	var target = $(event.target);
-	var prefix = target.data('team') ? `${target.data('team')}/` : '';
-	var list_entry = target.closest('li');
-	$.post(
-		prefix + 'cancelinvite', JSON.stringify({ user: target.data('user') })
-	).done(function() {
-		$('#inv-error').text('').hide('fast');
-		hide_invite(list_entry);
-	}).fail(function(jqXHR, textStatus, error) {
-		var message = jqXHR.responseJSON.message;
-		if (jqXHR.responseJSON['delete']) {
-			hide_invite(list_entry);
-		}
-		$('#inv-error').text(message).show('fast');
-	});
-}
-
-export function acceptInvite(event) {
+export function accept(event) {
 	"use strict";
 	var target = $(event.target);
 	var prefix = target.data('team') ? `${target.data('team')}/` : '';
@@ -67,13 +68,13 @@ export function acceptInvite(event) {
 	}).fail(function(jqXHR, textStatus, error) {
 		var message = jqXHR.responseJSON.message;
 		if (jqXHR.responseJSON['delete']) {
-			hide_invite(list_entry);
+			hide(list_entry);
 		}
 		$('#inv-error').text(message).show('fast');
 	});
 }
 
-export function declineInvite(event) {
+export function decline(event) {
 	"use strict";
 	var target = $(event.target);
 	var prefix = target.data('team') ? `${target.data('team')}/` : '';
@@ -82,11 +83,11 @@ export function declineInvite(event) {
 		prefix + 'denyinvite'
 	).done(function() {
 		$('#inv-error').text('').hide('fast');
-		hide_invite(list_entry);
+		hide(list_entry);
 	}).fail(function(jqXHR, textStatus, error) {
 		var message = jqXHR.responseJSON.message;
 		if (jqXHR.responseJSON['delete']) {
-			hide_invite(list_entry);
+			hide(list_entry);
 		}
 		$('#inv-error').text(message).show('fast');
 	});

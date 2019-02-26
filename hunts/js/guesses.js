@@ -1,7 +1,9 @@
+import $ from 'jquery';
+import 'bootstrap';
+
 import '../scss/guesses.scss';
 
-import $ from 'jquery';
-
+import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js';
 
 function updateGuesses(force) {
 	"use strict";
@@ -32,6 +34,9 @@ function getQueryParam(param) {
 
 $(function () {
 	"use strict";
+
+	setupJQueryAjazCsrf();
+
 	updateGuesses(true);
 	var autoUpdate = $('#auto-update');
 	var page = parseInt(getQueryParam('page'));

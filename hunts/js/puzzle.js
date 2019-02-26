@@ -1,9 +1,13 @@
-import '../scss/puzzle.scss';
-
 import $ from 'jquery';
+import 'bootstrap';
 import * as d3 from "d3";
 
-import { configureCSRF } from '../../hunter2/js/index.js';
+import '../scss/puzzle.scss';
+
+import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js';
+
+// Expose global $ for jquery for now
+require("expose-loader?$!jquery");
 
 function escapeHtml(text) {
 	"use strict";
@@ -169,6 +173,9 @@ function drawFlashSquare(size) {
 function addSVG() {
 	"use strict";
 	var button = d3.select("#answer-button");
+	if (button.empty()) {
+		return;
+	}
 	var svg = button.append("svg");
 	var size = button.node().getBoundingClientRect().width;
 	svg.attr("width", size)
@@ -203,8 +210,15 @@ function addSVG() {
 
 var last_updated = Date.now();
 
+function setupSolutionDisplay() {
+  "use strict";
+}
+
 $(function() {
 	"use strict";
+
+	setupJQueryAjaxCsrf();
+
 	addSVG();
 
 	let field = $('#answer-entry');
@@ -258,22 +272,21 @@ $(function() {
 			dataType: 'json'
 		});
 	});
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-  "use strict";
-  var content = $('#soln-content');
-  var button = $('#soln-button');
+	var soln_content = $('#soln-content');
+	var soln_button = $('#soln-button');
 
-  content.on('show.bs.collapse', function() {
-    var url = button.data('url');
-    $('#soln-text').load(url);
-    $(this).unbind('show.bs.collapse');
-  });
-  content.on('shown.bs.collapse', function() {
-    button.text('Hide Solution');
-  });
-  content.on('hidden.bs.collapse', function() {
-    button.text('Show Solution');
-  });
+	if (soln_content.length && soln_button.length) {
+		soln_content.on('show.bs.collapse', function() {
+			var url = soln_button.data('url');
+			$('#soln-text').load(url);
+			$(this).unbind('show.bs.collapse');
+		});
+		soln_content.on('shown.bs.collapse', function() {
+			soln_button.text('Hide Solution');
+		});
+		soln_content.on('hidden.bs.collapse', function() {
+			soln_button.text('Show Solution');
+		});
+	}
 });
