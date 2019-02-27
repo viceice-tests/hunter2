@@ -409,44 +409,6 @@ $(function() {
     })
   })
 
-  $('.form-inline').submit(function(e) {
-    e.preventDefault()
-    var form = $(e.target)
-    var button = form.children('button')
-    if (button.attr('disabled') == true) {
-      return
-    }
-    button.attr('disabled', true)
-    var data = {
-      answer: field.val(),
-    }
-    $.ajax({
-      type: 'POST',
-      url: 'an',
-      data: $.param(data),
-      contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
-      success: function(data) {
-        field.val('')
-        fieldKeyup()
-        if (data.correct == 'true') {
-          button.removeAttr('disabled')
-          correct_answer()
-        } else {
-          incorrect_answer(data.guess, data.timeout_length, data.timeout_end, data.unlocks)
-        }
-      },
-      error: function(xhr, status, error) {
-        button.removeAttr('disabled')
-        if (xhr.responseJSON && xhr.responseJSON.error == 'too fast') {
-          message('Slow down there, sparky! You\'re supposed to wait 5s between submissions.', '')
-        } else {
-          message('There was an error submitting the answer.', error)
-        }
-      },
-      dataType: 'json',
-    })
-  })
-
   var soln_content = $('#soln-content')
   var soln_button = $('#soln-button')
 
