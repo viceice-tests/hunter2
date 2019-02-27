@@ -1,10 +1,11 @@
-import '../scss/base.scss';
+import $ from 'jquery'
+import 'bootstrap'
 
-import 'bootstrap';
-import setupJQueryAjaxCsrf from './csrf';
+import '../scss/base.scss'
 
-// Expose global $ for jquery for now
-require("expose-loader?$!jquery");
+import setupJQueryAjaxCsrf from './csrf'
 
 // TODO: Look at the best practice way of doing this.
-setupJQueryAjaxCsrf();
+$(function() {
+  setupJQueryAjaxCsrf()
+})

@@ -21,8 +21,9 @@
 
 	<title>{{ request.site.name }}</title>
 
+	{% block script %}
 	{% render_bundle 'hunter2' 'js' attrs='defer' %}
-	{% block script %}{% endblock %}
+	{% endblock %}
 
 	{% analytical_head_bottom %}
 </head>

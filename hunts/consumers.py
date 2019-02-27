@@ -429,7 +429,7 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
             return
         hint = instance
         if old and hint.puzzle != old.puzzle:
-            raise NotImplemented
+            raise NotImplementedError
 
         for team in Team.objects.all():
             data = models.PuzzleData(hint.puzzle, team)

@@ -23,10 +23,10 @@ check:flake8:
   script:
     - docker-compose -f docker-compose.check.yml run --rm flake8 --verbose
 
-check:jshint:
+check:eslint:
   stage: check
   script:
-    - docker-compose -f docker-compose.check.yml run --rm jshint
+    - docker-compose -f docker-compose.check.yml run --rm eslint
 
 image:app:
   stage: build-app
