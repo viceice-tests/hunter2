@@ -1,3 +1,5 @@
+import 'hunter2/js/sentry.js'
+
 import $ from 'jquery'
 import 'bootstrap/js/dist/collapse'
 import { easeLinear, format, select } from 'd3'
