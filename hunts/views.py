@@ -21,7 +21,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files import File
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Count, OuterRef, Prefetch, Subquery
-from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
@@ -151,12 +151,15 @@ class Guesses(LoginRequiredMixin, View):
         )
 
 
-class GuessesContent(LoginRequiredMixin, View):
+class GuessesList(LoginRequiredMixin, View):
     def get(self, request):
         admin = rules.is_admin_for_event(request.user, request.tenant)
 
         if not admin:
-            return HttpResponseForbidden()
+            return JsonResponse({
+                'result': 'Forbidden',
+                'message': 'Must be an admin to list guesses',
+            }, status=403)
 
         episode = request.GET.get('episode')
         puzzle = request.GET.get('puzzle')
@@ -218,7 +221,7 @@ class GuessesContent(LoginRequiredMixin, View):
         current_url = reverse('guesses')
         current_url += '?' + request.GET.urlencode()
 
-        return TemplateResponse(
+        return JsonResponse(
             request,
             'hunts/guesses_content.html',
             context={
