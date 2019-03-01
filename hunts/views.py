@@ -12,6 +12,7 @@
 
 from os import path
 from string import Template
+from urllib.parse import quote_plus
 import tarfile
 
 from collections import defaultdict
@@ -210,25 +211,51 @@ class GuessesList(LoginRequiredMixin, View):
         except EmptyPage:
             guesses = guess_pages.page(guess_pages.num_pages)
 
+        guesses_list = [
+            {
+                'add_answer_url': f'{reverse("admin:hunts_answer_add")}?for_puzzle={g.for_puzzle.id}&answer={quote_plus(g.guess)}',
+                'add_unlock_url': f'{reverse("admin:hunts_unlock_add")}?puzzle={g.for_puzzle.id}&new_guess={quote_plus(g.guess)}',
+                'correct': bool(g.get_correct_for()),
+                'episode': {
+                    'id': g.for_puzzle.episode.id,
+                    'name': g.for_puzzle.episode.name,
+                },
+                'given': g.given,
+                'guess': g.guess,
+                'puzzle': {
+                    'id': g.for_puzzle.id,
+                    'title': g.for_puzzle.title,
+                    'admin_url': reverse('admin:hunts_puzzle_change', kwargs={'object_id': g.for_puzzle.id}),
+                    'site_url': g.for_puzzle.get_absolute_url(),
+                },
+                'team': {
+                    'id': g.by_team.id,
+                    'name': g.by_team.name,
+                },
+                'time_on_puzzle': g.time_on_puzzle(),
+                'user': {
+                    'id': g.by.id,
+                    'name': g.by.username,
+                    'seat': g.byseat,
+                },
+                'unlocked': False,
+            } for g in guesses
+        ]
+
         if request.GET.get('highlight_unlocks'):
-            for g in guesses:
+            for g, gl in zip(guesses, guesses_list):
                 unlockanswers = models.UnlockAnswer.objects.filter(unlock__puzzle=g.for_puzzle)
-                if any([a.validate_guess(g) for a in unlockanswers]):
-                    g.unlocked = True
+                gl.unlocked = any([a.validate_guess(g) for a in unlockanswers])
 
-        # Grab the current URL (which is not the URL of *this* view) so that we can manipulate the query string
-        # in the template.
-        current_url = reverse('guesses')
-        current_url += '?' + request.GET.urlencode()
-
-        return JsonResponse(
-            request,
-            'hunts/guesses_content.html',
-            context={
-                'guesses': guesses,
-                'current_url': current_url
-            }
-        )
+        return JsonResponse({
+            'guesses': guesses_list,
+            'pages': {
+                'current': guesses.number,
+                'next': guesses.next_page_number() if guesses.has_next() else 0,
+                'previous': guesses.previous_page_number() if guesses.has_previous() else 0,
+                'total': guesses.paginator.num_pages,
+            },
+        })
 
 
 class Stats(LoginRequiredMixin, View):

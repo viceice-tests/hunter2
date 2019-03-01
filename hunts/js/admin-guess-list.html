@@ -1,0 +1,55 @@
+<div class="admin-guess-list">
+	<p><a href="?">Clear filters</a></p>
+	<p>
+		<input type="checkbox" v-model="autoUpdate" id="auto-update" />
+		<label for="auto-update">Update automatically</label>
+	</p>
+
+	<table id="guesses-table">
+		<tr class="guess-viewer-header">
+			<th>Episode</th>
+			<th>Puzzle</th>
+			<th>User &amp; Team</th>
+			<th>Seat</th>
+			<th>Guess</th>
+			<th>Time given</th>
+			<th>Time on puzzle</th>
+		</tr>
+		<tr v-for="guess in guesses" class="guess-viewer-guess" v-bind:class="{ correct: guess.correct, unlocked: guess.unlocked }">
+			<td><a v-bind:href="'?episode=' + guess.episode.id">{{ guess.episode.name }}</a></td>
+			<td>
+				<a v-bind:href="'?puzzle=' + guess.puzzle.id">{{ guess.puzzle.title }}</a>
+				<span class="shortcuts">(
+					<a v-bind:href="guess.puzzle.admin_url">E</a>
+					<a v-bind:href="guess.puzzle.site_url">V</a>
+				)</span>
+			</td>
+			<td>
+				<a v-bind:href="'?team=' + guess.team.id">
+					<span class="user">{{ guess.user.name }}</span>
+					<span class="team" v-if="guess.team.name">({{ guess.team.name }})</span>
+				</a>
+			</td>
+			<td>{{ guess.user.seat }}</td>
+			<td class="guess">
+				{{ guess.guess }}
+				<span class="shortcuts">(
+					<a v-bind:href="guess.add_answer_url">A</a>
+					<a v-bind:href="guess.add_unlock_url">U</a>
+				)</span>
+			</td>
+			<td>{{ guess.given }}</td>
+			<td>{{ guess.time_on_puzzle }}</td>
+		</tr>
+	</table>
+
+	<div class="pagination">
+		<span class="step-links">
+			<a v-if="pages.previous" v-bind:href="pages.previous">previous</a>
+			<span class="current">
+				Page {{ pages.current }} of {{ pages.total }}.
+			</span>
+			<a v-if="pages.next" v-bind:href="pages.next">next</a>
+		</span>
+	</div>
+</div>

@@ -17,10 +17,6 @@
 {% endblock %}
 
 {% block content %}
-<p><a href="?">Clear filters</a></p>
-<p><input type="checkbox" checked="checked" id="auto-update"> <label for="auto-update">Update automatically</label></p>
-<div id="guesses-container">
-	Waiting for content...
-</div>
+<admin-guess-list href="{% url 'guesses_list' %}" />
 {% endblock %}
 
