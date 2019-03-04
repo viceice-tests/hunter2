@@ -1,5 +1,3 @@
-import 'hunter2/js/sentry.js'
-
 import $ from 'jquery'
 import 'bootstrap'
 

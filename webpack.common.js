@@ -6,6 +6,7 @@ module.exports = {
   context: '/usr/src/app',
 
   entry: {
+    sentry:        'hunter2/js/sentry.js',
     hunter2:       'hunter2/js/index.js',
     teams_manage:  'teams/js/manage.js',
     hunts_event:   'hunts/js/event.js',
