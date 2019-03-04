@@ -145,7 +145,11 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
         UnlockInline,
     ]
     # TODO: once episode is a ForeignKey make it editable
-    list_display = ('episode', 'title', 'start_date', 'check_flavour', 'check_solution', 'headstart_granted', 'answers', 'hints', 'unlocks', 'move_up_down_links')
+    list_display = (
+        'episode', 'title', 'start_date', 'headstart_granted',
+        'check_flavour', 'check_solution', 'answers', 'hints', 'unlocks',
+        'move_up_down_links'
+    )
     list_editable = ('episode', 'start_date', 'headstart_granted')
     list_display_links = ('title',)
     popup = False
