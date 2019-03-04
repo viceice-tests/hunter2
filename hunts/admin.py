@@ -145,7 +145,11 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
         UnlockInline,
     ]
     # TODO: once episode is a ForeignKey make it editable
-    list_display = ('episode', 'title', 'start_date', 'check_flavour', 'headstart_granted', 'answers', 'hints', 'unlocks', 'move_up_down_links')
+    list_display = (
+        'episode', 'title', 'start_date', 'headstart_granted',
+        'check_flavour', 'check_solution', 'answers', 'hints', 'unlocks',
+        'move_up_down_links'
+    )
     list_editable = ('episode', 'start_date', 'headstart_granted')
     list_display_links = ('title',)
     popup = False
@@ -226,8 +230,14 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
     def check_flavour(self, obj):
         return bool(obj.flavour)
 
-    check_flavour.short_description = 'tasty?'
+    check_flavour.short_description = 'flavour?'
     check_flavour.boolean = True
+
+    def check_solution(self, obj):
+        return bool(obj.soln_content)
+
+    check_solution.short_description = 'solution?'
+    check_solution.boolean = True
 
     def answers(self, obj):
         return format_html('<a href="{}/answers/">{}</a>', obj.pk, obj.answer_count)
@@ -283,7 +293,7 @@ class EpisodeAdmin(NestedModelAdmin):
     def check_flavour(self, obj):
         return bool(obj.flavour)
 
-    check_flavour.short_description = 'tasty?'
+    check_flavour.short_description = 'flavour?'
     check_flavour.boolean = True
 
     def num_puzzles(self, obj):
