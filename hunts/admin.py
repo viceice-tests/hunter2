@@ -160,9 +160,9 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
         # Expose three extra views for editing answers, hints and unlocks without anything else
         urls = super().get_urls()
         urls = [
-            path('<int:puzzle_id>/answers/', self.onlyinlines_view(AnswerInline)),
-            path('<int:puzzle_id>/hints/', self.onlyinlines_view(HintInline)),
-            path('<int:puzzle_id>/unlocks/', self.onlyinlines_view(UnlockInline))
+            path('<str:puzzle_id>/answers/', self.onlyinlines_view(AnswerInline)),
+            path('<str:puzzle_id>/hints/', self.onlyinlines_view(HintInline)),
+            path('<str:puzzle_id>/unlocks/', self.onlyinlines_view(UnlockInline))
         ] + urls
         return urls
 
