@@ -176,17 +176,18 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
         def the_view(self, request, puzzle_id):
             # We use this flag to see if we should hide other stuff
             self.popup = True
-            # Only display the given inline
-            old_inlines = self.inlines
-            self.inlines = (inline,)
 
-            response = self.change_view(request, puzzle_id)
+            try:
+                # Only display the given inline
+                old_inlines = self.inlines
+                self.inlines = (inline,)
 
-            # Reset
-            self.popup = False
-            self.inlines = old_inlines
+                return self.change_view(request, puzzle_id)
 
-            return response
+            finally:
+                # Reset
+                self.popup = False
+                self.inlines = old_inlines
 
         # Bind the above function as a method of this class so that it gets self.
         return self.admin_site.admin_view(the_view.__get__(self, self.__class__))
