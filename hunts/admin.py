@@ -164,9 +164,9 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
         # Expose three extra views for editing answers, hints and unlocks without anything else
         urls = super().get_urls()
         urls = [
-            path('<int:puzzle_id>/answers/', self.onlyinlines_view(AnswerInline)),
-            path('<int:puzzle_id>/hints/', self.onlyinlines_view(HintInline)),
-            path('<int:puzzle_id>/unlocks/', self.onlyinlines_view(UnlockInline))
+            path('<str:puzzle_id>/answers/', self.onlyinlines_view(AnswerInline)),
+            path('<str:puzzle_id>/hints/', self.onlyinlines_view(HintInline)),
+            path('<str:puzzle_id>/unlocks/', self.onlyinlines_view(UnlockInline))
         ] + urls
         return urls
 
@@ -180,17 +180,18 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
         def the_view(self, request, puzzle_id):
             # We use this flag to see if we should hide other stuff
             self.popup = True
-            # Only display the given inline
-            old_inlines = self.inlines
-            self.inlines = (inline,)
 
-            response = self.change_view(request, puzzle_id)
+            try:
+                # Only display the given inline
+                old_inlines = self.inlines
+                self.inlines = (inline,)
 
-            # Reset
-            self.popup = False
-            self.inlines = old_inlines
+                return self.change_view(request, puzzle_id)
 
-            return response
+            finally:
+                # Reset
+                self.popup = False
+                self.inlines = old_inlines
 
         # Bind the above function as a method of this class so that it gets self.
         return self.admin_site.admin_view(the_view.__get__(self, self.__class__))
