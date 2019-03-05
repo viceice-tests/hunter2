@@ -45,7 +45,7 @@ class Runtime(Enum):
         LUA          = (LuaRuntime, {}),
 
     def __call__(self):
-        _runtime = getattr(Enum.Types, self)
+        _runtime = getattr(Runtime.Types, self)
         return _runtime[0](**_runtime[1])
 
     def is_printable(self):
