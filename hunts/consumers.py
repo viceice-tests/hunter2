@@ -362,9 +362,12 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
         unlock = unlockanswer.unlock
         puzzle = unlock.puzzle
 
-        # TODO: performance check. This means that whenever an unlock is added or changed, every single guess on
-        # that puzzle is going to be tested against that guess immediately. *Should* be fine since it's one query
-        # and doing the validation is mostly simple. Could be costly with lua runtimes...
+        # Performance note:
+        # This means that whenever an unlock is added or changed, every single guess on
+        # that puzzle is going to be tested against that guess immediately.
+        # If there comes a point where we are using very complex lua runtimes and/or have
+        # huge numbers of teams, with >> 10,000 guesses in total on a puzzle, we could
+        # do this asynchronously.
         guesses = models.Guess.objects.filter(
             for_puzzle=puzzle
         ).select_related(
