@@ -19,6 +19,7 @@ from django.urls import path, reverse
 from django.db.models import Count, Sum
 from nested_admin import NestedModelAdmin, NestedModelAdminMixin, NestedStackedInline, NestedTabularInline
 from ordered_model.admin import OrderedModelAdmin
+from webpack_loader.utils import get_files
 
 from . import models
 from .forms import AnswerForm
@@ -40,14 +41,16 @@ class AnswerAdmin(NestedModelAdmin):
         return False
 
 
-class AnswerInline(NestedStackedInline):
+class AnswerInline(NestedTabularInline):
     model = models.Answer
-    fields = ('alter_progress', 'answer', 'runtime')
+    fields = ('alter_progress', 'answer', 'runtime', 'options')
     extra = 0
     form = AnswerForm
+    alter_progress = False
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('answer', db_field, kwargs)
+        make_textinput('options', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
 
 
@@ -68,6 +71,7 @@ class HintInline(NestedTabularInline):
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('text', db_field, kwargs)
+        make_textinput('options', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
 
 
@@ -77,6 +81,7 @@ class UnlockAnswerInline(NestedTabularInline):
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('guess', db_field, kwargs)
+        make_textinput('options', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
 
 
@@ -86,6 +91,7 @@ class NewUnlockAnswerInline(UnlockAnswerInline):
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('guess', db_field, kwargs)
+        make_textinput('options', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
 
     # Extract new_guess parameter and add it to the initial formset data
@@ -134,8 +140,27 @@ class GuessAdmin(admin.ModelAdmin):
     list_display_links = ('guess',)
 
 
+class PuzzleAdminForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['runtime'].widget.attrs['class'] = 'advanced_field'
+        self.fields['options'].widget.attrs['class'] = 'advanced_field'
+        self.fields['cb_content'].widget.attrs['class'] = 'advanced_field'
+        self.fields['cb_runtime'].widget.attrs['class'] = 'advanced_field'
+        self.fields['cb_options'].widget.attrs['class'] = 'advanced_field'
+        self.fields['soln_runtime'].widget.attrs['class'] = 'advanced_field'
+        self.fields['soln_options'].widget.attrs['class'] = 'advanced_field'
+
+
 @admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
+    class Media:
+        css = {
+            "all": [f['url'] for f in get_files('hunts_puzzle_admin', extension='css')]
+        }
+        js = [f['url'] for f in get_files('hunts_puzzle_admin', extension='js')]
+
+    form = PuzzleAdminForm
     change_form_template = 'hunts/admin/change_puzzle.html'
     inlines = [
         PuzzleFileInline,
@@ -173,6 +198,9 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.attname == 'headstart_granted':
             kwargs['widget'] = forms.TextInput(attrs={'size': '8'})
+        make_textinput('options', db_field, kwargs)
+        make_textinput('cb_options', db_field, kwargs)
+        make_textinput('soln_options', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
 
     def onlyinlines_view(self, inline):

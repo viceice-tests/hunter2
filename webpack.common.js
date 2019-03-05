@@ -6,12 +6,13 @@ module.exports = {
   context: '/usr/src/app',
 
   entry: {
-    hunter2:       './hunter2/js/index.js',
-    teams_manage:  './teams/js/manage.js',
-    hunts_event:   './hunts/js/event.js',
-    hunts_puzzle:  './hunts/js/puzzle.js',
-    hunts_stats:   './hunts/js/stats.js',
-    hunts_guesses: './hunts/js/guesses.js',
+    hunter2:            './hunter2/js/index.js',
+    teams_manage:       './teams/js/manage.js',
+    hunts_event:        './hunts/js/event.js',
+    hunts_puzzle_admin: './hunts/js/puzzle_admin.js',
+    hunts_puzzle:       './hunts/js/puzzle.js',
+    hunts_stats:        './hunts/js/stats.js',
+    hunts_guesses:      './hunts/js/guesses.js',
   },
 
   module: {

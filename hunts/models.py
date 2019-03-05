@@ -211,6 +211,11 @@ class Puzzle(OrderedModel):
         verbose_name='Puzzle page content',
         help_text='Main puzzle page content, generated using the puzzle renderer',
     )
+    options = JSONField(
+        default=dict, blank=True,
+        verbose_name='Puzzle page renderer configuration',
+        help_text='Options for configuring the puzzle page renderer',
+    )
 
     cb_runtime = EnumField(
         Runtime, max_length=1, default=Runtime.STATIC,
@@ -220,6 +225,11 @@ class Puzzle(OrderedModel):
     cb_content = models.TextField(
         blank=True, default='', verbose_name='AJAX callback script',
         help_text='Script for generating AJAX responses for callbacks made by puzzle',
+    )
+    cb_options = JSONField(
+        default=dict, blank=True,
+        verbose_name='AJAX callback processor configuration',
+        help_text='Options for configuring the AJAX callback processor',
     )
 
     soln_runtime = EnumField(
@@ -231,6 +241,11 @@ class Puzzle(OrderedModel):
         blank=True, default='',
         verbose_name='Solution content',
         help_text='Content to be displayed to all users on the puzzle page after the event has completed'
+    )
+    soln_options = JSONField(
+        default=dict, blank=True,
+        verbose_name='Solution renderer configuration',
+        help_text='Options for configuring the solution renderer',
     )
 
     start_date = models.DateTimeField(
@@ -248,8 +263,8 @@ class Puzzle(OrderedModel):
     def clean(self):
         super().clean()
         try:
-            self.runtime.create().check_script(self.content)
-            self.cb_runtime.create().check_script(self.cb_content)
+            self.runtime.create(self.options).check_script(self.content)
+            self.cb_runtime.create(self.cb_options).check_script(self.cb_content)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
@@ -429,6 +444,11 @@ class UnlockAnswer(models.Model):
         verbose_name='Validator',
         help_text='Processor to use to check whether guess unlocks this unlock',
     )
+    options = JSONField(
+        default=dict, blank=True,
+        verbose_name='Validator configuration',
+        help_text='Options for configuring the validator',
+    )
     guess = models.TextField()
 
     def __setattr__(self, name, value):
@@ -451,12 +471,12 @@ class UnlockAnswer(models.Model):
     def clean(self):
         super().clean()
         try:
-            self.runtime.create().check_script(self.guess)
+            self.runtime.create(self.options).check_script(self.guess)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
     def validate_guess(self, guess):
-        return self.runtime.create().validate_guess(
+        return self.runtime.create(self.options).validate_guess(
             self.guess,
             guess.guess,
         )
@@ -469,6 +489,11 @@ class Answer(models.Model):
         verbose_name='Validator',
         help_text='Processor to use to check whether guess is correct',
     )
+    options = JSONField(
+        default=dict, blank=True,
+        verbose_name='Validator configuration',
+        help_text='Options for configuring the validator',
+    )
     answer = models.TextField()
 
     def __str__(self):
@@ -480,7 +505,7 @@ class Answer(models.Model):
     def clean(self):
         super().clean()
         try:
-            self.runtime.create().check_script(self.answer)
+            self.runtime.create(self.options).check_script(self.answer)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
@@ -501,7 +526,7 @@ class Answer(models.Model):
         super().delete(*args, **kwargs)
 
     def validate_guess(self, guess):
-        return self.runtime.create().validate_guess(
+        return self.runtime.create(self.options).validate_guess(
             self.answer,
             guess.guess,
         )

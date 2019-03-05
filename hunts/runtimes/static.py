@@ -12,17 +12,24 @@
 
 
 from .abstract import AbstractRuntime
+from .options import Case
 
 
 class StaticRuntime(AbstractRuntime):
-    def __init__(self, case_sensitive):
-        self.case_sensitive = case_sensitive
+    def __init__(self, case_handling=Case.FOLD, strip=True):
+        self.case_handling = case_handling
+        self.strip = strip
 
     def evaluate(self, script, team_puzzle_data, user_puzzle_data, team_data, user_data):
         return script
 
     def validate_guess(self, validator, guess):
-        if self.case_sensitive:
-            return validator == guess
-        else:
+        if self.strip:
+            guess = ''.join(c for c in guess if c.isalnum())
+
+        if self.case_handling == Case.FOLD:
+            return validator.casefold() == guess.casefold()
+        elif self.case_handling == Case.LOWER:
             return validator.lower() == guess.lower()
+        else:
+            return validator == guess
