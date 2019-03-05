@@ -875,7 +875,7 @@ class AdminContentTests(EventTestCase):
         self.admin_user = TeamMemberFactory(team__at_event=self.tenant, team__is_admin=True)
         puzzle = PuzzleFactory()
         self.guesses = GuessFactory.create_batch(5, for_puzzle=puzzle)
-        self.guesses_url = reverse('guesses_content')
+        self.guesses_url = reverse('guesses_list')
 
     def test_can_view_guesses(self):
         self.client.force_login(self.admin_user.user)
