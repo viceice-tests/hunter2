@@ -27,7 +27,7 @@ from ordered_model.models import OrderedModel
 import accounts
 import events
 import teams
-from . import runtimes
+from .runtimes import Runtime
 
 
 class Episode(models.Model):
@@ -202,8 +202,8 @@ class Puzzle(OrderedModel):
         blank=True, verbose_name="Flavour text",
         help_text="Separate flavour text for the puzzle. Should not be required for solving the puzzle")
 
-    runtime = models.CharField(
-        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC,
+    runtime = EnumField(
+        Runtime, max_length=1, default=Runtime.STATIC,
         verbose_name='Puzzle page renderer',
         help_text='Renderer for generating the main puzzle page',
     )
@@ -212,8 +212,9 @@ class Puzzle(OrderedModel):
         help_text='Main puzzle page content, generated using the puzzle renderer',
     )
 
-    cb_runtime = models.CharField(
-        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC, verbose_name='AJAX callback processor',
+    cb_runtime = EnumField(
+        Runtime, max_length=1, default=Runtime.STATIC,
+        verbose_name='AJAX callback processor',
         help_text='Processor used to execute the callback script in response to AJAX requests'
     )
     cb_content = models.TextField(
@@ -221,8 +222,9 @@ class Puzzle(OrderedModel):
         help_text='Script for generating AJAX responses for callbacks made by puzzle',
     )
 
-    soln_runtime = models.CharField(
-        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC, verbose_name="Solution renderer",
+    soln_runtime = EnumField(
+        Runtime, max_length=1, default=Runtime.STATIC,
+        verbose_name="Solution renderer",
         help_text="Renderer for generating the question solution"
     )
     soln_content = models.TextField(
@@ -246,8 +248,8 @@ class Puzzle(OrderedModel):
     def clean(self):
         super().clean()
         try:
-            runtimes.runtimes[self.runtime].check_script(self.content)
-            runtimes.runtimes[self.cb_runtime].check_script(self.cb_content)
+            self.runtime().check_script(self.content)
+            self.cb_runtime().check_script(self.cb_content)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
@@ -422,8 +424,8 @@ class Unlock(Clue):
 
 class UnlockAnswer(models.Model):
     unlock = models.ForeignKey(Unlock, editable=False, on_delete=models.CASCADE)
-    runtime = models.CharField(
-        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC,
+    runtime = EnumField(
+        Runtime, max_length=1, default=Runtime.STATIC,
         verbose_name='Validator',
         help_text='Processor to use to check whether guess unlocks this unlock',
     )
@@ -441,20 +443,20 @@ class UnlockAnswer(models.Model):
         super().__setattr__(name, value)
 
     def __str__(self):
-        if self.runtime == runtimes.STATIC or self.runtime == runtimes.REGEX:
+        if self.runtime.is_printable():
             return self.guess
         else:
-            return '[Using %s]' % self.get_runtime_display()
+            return f'[Using {self.runtime}]'
 
     def clean(self):
         super().clean()
         try:
-            runtimes.runtimes[self.runtime].check_script(self.guess)
+            self.runtime().check_script(self.guess)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
     def validate_guess(self, guess):
-        return runtimes.runtimes[self.runtime].validate_guess(
+        return self.runtime().validate_guess(
             self.guess,
             guess.guess,
         )
@@ -462,23 +464,23 @@ class UnlockAnswer(models.Model):
 
 class Answer(models.Model):
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
-    runtime = models.CharField(
-        max_length=1, choices=runtimes.RUNTIME_CHOICES, default=runtimes.STATIC,
+    runtime = EnumField(
+        Runtime, max_length=1, default=Runtime.STATIC,
         verbose_name='Validator',
         help_text='Processor to use to check whether guess is correct',
     )
     answer = models.TextField()
 
     def __str__(self):
-        if self.runtime == runtimes.STATIC or self.runtime == runtimes.REGEX:
+        if self.runtime.is_printable():
             return self.answer
         else:
-            return '[Using %s]' % self.get_runtime_display()
+            return f'[Using {self.runtime}]'
 
     def clean(self):
         super().clean()
         try:
-            runtimes.runtimes[self.runtime].check_script(self.answer)
+            self.runtime().check_script(self.answer)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
@@ -499,7 +501,7 @@ class Answer(models.Model):
         super().delete(*args, **kwargs)
 
     def validate_guess(self, guess):
-        return runtimes.runtimes[self.runtime].validate_guess(
+        return self.runtime().validate_guess(
             self.answer,
             guess.guess,
         )

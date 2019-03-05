@@ -11,42 +11,42 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from hunts.runtimes.iframe import IFrameRuntime
-from hunts.runtimes.lua import LuaRuntime
-from hunts.runtimes.regex import RegexRuntime
-from hunts.runtimes.static import StaticRuntime
-
-CASED_REGEX  = 'r'
-CASED_STATIC = 's'
-IFRAME       = 'I'
-LUA          = 'L'
-REGEX        = 'R'
-STATIC       = 'S'
-
-RUNTIME_CHOICES = (
-    (STATIC,       'Static'),
-    (CASED_STATIC, 'Case Sensitive Static'),
-    (REGEX,        'Regex'),
-    (CASED_REGEX,  'Case Sensitive Regex'),
-    (IFRAME,       'IFrame'),
-    (LUA,          'Lua'),
-)
+from enumfields import Enum
 
 
-class Runtimes:
-    runtimes = {
-        CASED_REGEX:  (RegexRuntime, {'case_sensitive': True}),
-        CASED_STATIC: (StaticRuntime, {'case_sensitive': True}),
-        IFRAME:       (IFrameRuntime, {}),
-        LUA:          (LuaRuntime, {}),
-        REGEX:        (RegexRuntime, {'case_sensitive': False}),
-        STATIC:       (StaticRuntime, {'case_sensitive': False}),
-    }
-
-    def __getitem__(self, key):
-        # Return an instantiated copy of the requested runtime
-        entry = self.runtimes[key]
-        return entry[0](**entry[1])
+from .iframe import IFrameRuntime
+from .lua import LuaRuntime
+from .regex import RegexRuntime
+from .static import StaticRuntime
 
 
-runtimes = Runtimes()
+class Runtime(Enum):
+    CASED_REGEX  = 'r'
+    CASED_STATIC = 's'
+    IFRAME       = 'I'
+    LUA          = 'L'
+    REGEX        = 'R'
+    STATIC       = 'S'
+
+    class Labels:
+        STATIC       = 'Static'
+        CASED_STATIC = 'Case Sensitive Static'
+        REGEX        = 'Regex'
+        CASED_REGEX  = 'Case Sensitive Regex'
+        IFRAME       = 'IFrame'
+        LUA          = 'Lua'
+
+    class Types:
+        STATIC       = (StaticRuntime, {'case_sensitive': False}),
+        CASED_STATIC = (StaticRuntime, {'case_sensitive': True}),
+        REGEX        = (RegexRuntime, {'case_sensitive': False}),
+        CASED_REGEX  = (RegexRuntime, {'case_sensitive': True}),
+        IFRAME       = (IFrameRuntime, {}),
+        LUA          = (LuaRuntime, {}),
+
+    def __call__(self):
+        _runtime = getattr(Enum.Types, self)
+        return _runtime[0](**_runtime[1])
+
+    def is_printable(self):
+        return self in (Runtime.CASED_REGEX, Runtime.CASED_STATIC, Runtime.REGEX, Runtime.STATIC)
