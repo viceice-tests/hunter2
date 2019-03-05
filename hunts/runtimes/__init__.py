@@ -29,24 +29,34 @@ class Runtime(Enum):
     STATIC       = 'S'
 
     class Labels:
-        STATIC       = 'Static'
-        CASED_STATIC = 'Case Sensitive Static'
-        REGEX        = 'Regex'
         CASED_REGEX  = 'Case Sensitive Regex'
+        CASED_STATIC = 'Case Sensitive Static'
         IFRAME       = 'IFrame'
         LUA          = 'Lua'
+        REGEX        = 'Regex'
+        STATIC       = 'Static'
+
+    class Options:
+        CASED_REGEX = {'case_sensitive': True}
+        CASED_STATIC = {'case_sensitive': True}
+        REGEX = {'case_sensitive': False}
+        STATIC = {'case_sensitive': False}
 
     class Types:
-        STATIC       = (StaticRuntime, {'case_sensitive': False}),
-        CASED_STATIC = (StaticRuntime, {'case_sensitive': True}),
-        REGEX        = (RegexRuntime, {'case_sensitive': False}),
-        CASED_REGEX  = (RegexRuntime, {'case_sensitive': True}),
-        IFRAME       = (IFrameRuntime, {}),
-        LUA          = (LuaRuntime, {}),
+        STATIC       = StaticRuntime
+        CASED_STATIC = StaticRuntime
+        REGEX        = RegexRuntime
+        CASED_REGEX  = RegexRuntime
+        IFRAME       = IFrameRuntime
+        LUA          = LuaRuntime
 
     def __call__(self):
-        _runtime = getattr(Runtime.Types, self)
-        return _runtime[0](**_runtime[1])
+        Type = getattr(Runtime.Types, self.name)
+        try:
+            options = getattr(Runtime.Options, self.name)
+        except AttributeError:
+            options = {}
+        return Type(**options)
 
     def is_printable(self):
         return self in (Runtime.CASED_REGEX, Runtime.CASED_STATIC, Runtime.REGEX, Runtime.STATIC)
