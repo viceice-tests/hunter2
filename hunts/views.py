@@ -33,7 +33,7 @@ from django.views.generic.edit import FormView
 from sendfile import sendfile
 from teams.mixins import TeamMixin
 
-from . import models, rules, runtimes, utils
+from . import models, rules, utils
 from .forms import BulkUploadForm
 from .mixins import EpisodeUnlockedMixin, PuzzleAdminMixin, PuzzleUnlockedMixin
 from events.models import Attendance
