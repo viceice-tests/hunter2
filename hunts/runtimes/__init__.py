@@ -11,8 +11,9 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from enumfields import Enum
+import inspect
 
+from enumfields.enums import Enum, EnumMeta
 
 from .iframe import IFrameRuntime
 from .lua import LuaRuntime
@@ -20,7 +21,34 @@ from .regex import RegexRuntime
 from .static import StaticRuntime
 
 
-class Runtime(Enum):
+# Pattern copied from label handling in django-enumfields
+class RuntimeMeta(EnumMeta):
+    def __new__(mcs, name, bases, attrs):
+        Options = attrs.get('Options')
+        if Options is not None and inspect.isclass(Options):
+            del attrs['Options']
+            if hasattr(attrs, '_member_names'):
+                attrs._member_names.remove('Options')
+
+        Types = attrs.get('Types')
+        if Types is not None and inspect.isclass(Types):
+            del attrs['Types']
+            if hasattr(attrs, '_member_names'):
+                attrs._member_names.remove('Types')
+
+        obj = EnumMeta.__new__(mcs, name, bases, attrs)
+
+        for m in obj:
+            m.type = getattr(Types, m.name)
+            try:
+                m.options = getattr(Options, m.name)
+            except AttributeError:
+                m.options = {}
+
+        return obj
+
+
+class Runtime(Enum, metaclass=RuntimeMeta):
     CASED_REGEX  = 'r'
     CASED_STATIC = 's'
     IFRAME       = 'I'
@@ -51,12 +79,7 @@ class Runtime(Enum):
         LUA          = LuaRuntime
 
     def __call__(self):
-        Type = getattr(Runtime.Types, self.name)
-        try:
-            options = getattr(Runtime.Options, self.name)
-        except AttributeError:
-            options = {}
-        return Type(**options)
+        return self.type(**self.options)
 
     def is_printable(self):
         return self in (Runtime.CASED_REGEX, Runtime.CASED_STATIC, Runtime.REGEX, Runtime.STATIC)
