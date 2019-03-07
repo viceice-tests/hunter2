@@ -248,8 +248,8 @@ class Puzzle(OrderedModel):
     def clean(self):
         super().clean()
         try:
-            self.runtime().check_script(self.content)
-            self.cb_runtime().check_script(self.cb_content)
+            self.runtime.create().check_script(self.content)
+            self.cb_runtime.create().check_script(self.cb_content)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
@@ -451,12 +451,12 @@ class UnlockAnswer(models.Model):
     def clean(self):
         super().clean()
         try:
-            self.runtime().check_script(self.guess)
+            self.runtime.create().check_script(self.guess)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
     def validate_guess(self, guess):
-        return self.runtime().validate_guess(
+        return self.runtime.create().validate_guess(
             self.guess,
             guess.guess,
         )
@@ -480,7 +480,7 @@ class Answer(models.Model):
     def clean(self):
         super().clean()
         try:
-            self.runtime().check_script(self.answer)
+            self.runtime.create().check_script(self.answer)
         except SyntaxError as e:
             raise ValidationError(e) from e
 
@@ -501,7 +501,7 @@ class Answer(models.Model):
         super().delete(*args, **kwargs)
 
     def validate_guess(self, guess):
-        return self.runtime().validate_guess(
+        return self.runtime.create().validate_guess(
             self.answer,
             guess.guess,
         )

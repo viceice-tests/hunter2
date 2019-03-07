@@ -78,7 +78,7 @@ class Runtime(Enum, metaclass=RuntimeMeta):
         IFRAME       = IFrameRuntime
         LUA          = LuaRuntime
 
-    def __call__(self):
+    def create(self):
         return self.type(**self.options)
 
     def is_printable(self):
