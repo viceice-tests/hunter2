@@ -11,42 +11,77 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from hunts.runtimes.iframe import IFrameRuntime
-from hunts.runtimes.lua import LuaRuntime
-from hunts.runtimes.regex import RegexRuntime
-from hunts.runtimes.static import StaticRuntime
+import inspect
 
-CASED_REGEX  = 'r'
-CASED_STATIC = 's'
-IFRAME       = 'I'
-LUA          = 'L'
-REGEX        = 'R'
-STATIC       = 'S'
+from enumfields.enums import Enum, EnumMeta
 
-RUNTIME_CHOICES = (
-    (STATIC,       'Static'),
-    (CASED_STATIC, 'Case Sensitive Static'),
-    (REGEX,        'Regex'),
-    (CASED_REGEX,  'Case Sensitive Regex'),
-    (IFRAME,       'IFrame'),
-    (LUA,          'Lua'),
-)
+from .iframe import IFrameRuntime
+from .lua import LuaRuntime
+from .regex import RegexRuntime
+from .static import StaticRuntime
 
 
-class Runtimes:
-    runtimes = {
-        CASED_REGEX:  (RegexRuntime, {'case_sensitive': True}),
-        CASED_STATIC: (StaticRuntime, {'case_sensitive': True}),
-        IFRAME:       (IFrameRuntime, {}),
-        LUA:          (LuaRuntime, {}),
-        REGEX:        (RegexRuntime, {'case_sensitive': False}),
-        STATIC:       (StaticRuntime, {'case_sensitive': False}),
-    }
+# Pattern copied from label handling in django-enumfields
+class RuntimeMeta(EnumMeta):
+    def __new__(mcs, name, bases, attrs):
+        # Strip the classes containing additional values off the Enum class
+        Options = attrs.get('Options')
+        if Options is not None and inspect.isclass(Options):
+            del attrs['Options']
+            if hasattr(attrs, '_member_names'):
+                attrs._member_names.remove('Options')
 
-    def __getitem__(self, key):
-        # Return an instantiated copy of the requested runtime
-        entry = self.runtimes[key]
-        return entry[0](**entry[1])
+        Types = attrs.get('Types')
+        if Types is not None and inspect.isclass(Types):
+            del attrs['Types']
+            if hasattr(attrs, '_member_names'):
+                attrs._member_names.remove('Types')
+
+        obj = EnumMeta.__new__(mcs, name, bases, attrs)
+
+        # Add the additional values to each Enum instance
+        for m in obj:
+            m.type = getattr(Types, m.name)
+            try:
+                m.options = getattr(Options, m.name)
+            except AttributeError:
+                m.options = {}
+
+        return obj
 
 
-runtimes = Runtimes()
+class Runtime(Enum, metaclass=RuntimeMeta):
+    CASED_REGEX  = 'r'
+    CASED_STATIC = 's'
+    IFRAME       = 'I'
+    LUA          = 'L'
+    REGEX        = 'R'
+    STATIC       = 'S'
+
+    class Labels:
+        CASED_REGEX  = 'Case Sensitive Regex'
+        CASED_STATIC = 'Case Sensitive Static'
+        IFRAME       = 'IFrame'
+        LUA          = 'Lua'
+        REGEX        = 'Regex'
+        STATIC       = 'Static'
+
+    class Options:
+        CASED_REGEX = {'case_sensitive': True}
+        CASED_STATIC = {'case_sensitive': True}
+        REGEX = {'case_sensitive': False}
+        STATIC = {'case_sensitive': False}
+
+    class Types:
+        STATIC       = StaticRuntime
+        CASED_STATIC = StaticRuntime
+        REGEX        = RegexRuntime
+        CASED_REGEX  = RegexRuntime
+        IFRAME       = IFrameRuntime
+        LUA          = LuaRuntime
+
+    def create(self):
+        return self.type(**self.options)
+
+    def is_printable(self):
+        return self in (Runtime.CASED_REGEX, Runtime.CASED_STATIC, Runtime.REGEX, Runtime.STATIC)
