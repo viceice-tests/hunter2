@@ -24,6 +24,7 @@ from .static import StaticRuntime
 # Pattern copied from label handling in django-enumfields
 class RuntimeMeta(EnumMeta):
     def __new__(mcs, name, bases, attrs):
+        # Strip the classes containing additional values off the Enum class
         Options = attrs.get('Options')
         if Options is not None and inspect.isclass(Options):
             del attrs['Options']
@@ -38,6 +39,7 @@ class RuntimeMeta(EnumMeta):
 
         obj = EnumMeta.__new__(mcs, name, bases, attrs)
 
+        # Add the additional values to each Enum instance
         for m in obj:
             m.type = getattr(Types, m.name)
             try:
