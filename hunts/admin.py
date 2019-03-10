@@ -156,9 +156,9 @@ class PuzzleAdminForm(forms.ModelForm):
 class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
     class Media:
         css = {
-            "all": [f['url'] for f in get_files('hunts_puzzle_admin', extension='css')]
+            "all": [f['url'] for f in get_files('hunts_admin_puzzle', extension='css')]
         }
-        js = [f['url'] for f in get_files('hunts_puzzle_admin', extension='js')]
+        js = [f['url'] for f in get_files('hunts_admin_puzzle', extension='js')]
 
     form = PuzzleAdminForm
     change_form_template = 'hunts/admin/change_puzzle.html'
