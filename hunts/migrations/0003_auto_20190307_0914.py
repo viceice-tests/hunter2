@@ -23,27 +23,27 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='answer',
             name='options',
-            field=django.contrib.postgres.fields.jsonb.JSONField(default=dict, help_text='Options for configuring the validator', verbose_name='Validator configuration'),
+            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, help_text='Options for configuring the validator', verbose_name='Validator configuration'),
         ),
         migrations.AddField(
             model_name='puzzle',
             name='cb_options',
-            field=django.contrib.postgres.fields.jsonb.JSONField(default=dict, help_text='Options for configuring the AJAX callback processor', verbose_name='AJAX callback processor configuration'),
+            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, help_text='Options for configuring the AJAX callback processor', verbose_name='AJAX callback processor configuration'),
         ),
         migrations.AddField(
             model_name='puzzle',
             name='options',
-            field=django.contrib.postgres.fields.jsonb.JSONField(default=dict, help_text='Options for configuring the puzzle page renderer', verbose_name='Puzzle page renderer configuration'),
+            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, help_text='Options for configuring the puzzle page renderer', verbose_name='Puzzle page renderer configuration'),
         ),
         migrations.AddField(
             model_name='puzzle',
             name='soln_options',
-            field=django.contrib.postgres.fields.jsonb.JSONField(default=dict, help_text='Options for configuring the solution renderer', verbose_name='Solution renderer configuration'),
+            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, help_text='Options for configuring the solution renderer', verbose_name='Solution renderer configuration'),
         ),
         migrations.AddField(
             model_name='unlockanswer',
             name='options',
-            field=django.contrib.postgres.fields.jsonb.JSONField(default=dict, help_text='Options for configuring the validator', verbose_name='Validator configuration'),
+            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, help_text='Options for configuring the validator', verbose_name='Validator configuration'),
         ),
         migrations.RunSQL(
             sql=[
