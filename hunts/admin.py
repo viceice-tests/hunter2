@@ -32,6 +32,8 @@ def make_textinput(field, db_field, kwdict):
 
 @admin.register(models.Answer)
 class AnswerAdmin(NestedModelAdmin):
+    form = AnswerForm
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('answer', db_field, kwargs)
         return super().formfield_for_dbfield(db_field, **kwargs)
@@ -76,7 +78,15 @@ class HintInline(NestedTabularInline):
 
 
 class UnlockAnswerInline(NestedTabularInline):
+    class Form(forms.ModelForm):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields['runtime'].widget.attrs['class'] = 'advanced_field'
+            self.fields['options'].widget.attrs['class'] = 'advanced_field'
+
     model = models.UnlockAnswer
+    fields = ('guess', 'runtime', 'options')
+    form = Form
     extra = 0
 
     def formfield_for_dbfield(self, db_field, **kwargs):
@@ -140,27 +150,20 @@ class GuessAdmin(admin.ModelAdmin):
     list_display_links = ('guess',)
 
 
-class PuzzleAdminForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['runtime'].widget.attrs['class'] = 'advanced_field'
-        self.fields['options'].widget.attrs['class'] = 'advanced_field'
-        self.fields['cb_content'].widget.attrs['class'] = 'advanced_field'
-        self.fields['cb_runtime'].widget.attrs['class'] = 'advanced_field'
-        self.fields['cb_options'].widget.attrs['class'] = 'advanced_field'
-        self.fields['soln_runtime'].widget.attrs['class'] = 'advanced_field'
-        self.fields['soln_options'].widget.attrs['class'] = 'advanced_field'
-
-
 @admin.register(models.Puzzle)
 class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
-    class Media:
-        css = {
-            "all": [f['url'] for f in get_files('hunts_admin_puzzle', extension='css')]
-        }
-        js = [f['url'] for f in get_files('hunts_admin_puzzle', extension='js')]
+    class Form(forms.ModelForm):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields['runtime'].widget.attrs['class'] = 'advanced_field'
+            self.fields['options'].widget.attrs['class'] = 'advanced_field'
+            self.fields['cb_content'].widget.attrs['class'] = 'advanced_field'
+            self.fields['cb_runtime'].widget.attrs['class'] = 'advanced_field'
+            self.fields['cb_options'].widget.attrs['class'] = 'advanced_field'
+            self.fields['soln_runtime'].widget.attrs['class'] = 'advanced_field'
+            self.fields['soln_options'].widget.attrs['class'] = 'advanced_field'
 
-    form = PuzzleAdminForm
+    form = Form
     change_form_template = 'hunts/admin/change_puzzle.html'
     inlines = [
         PuzzleFileInline,
@@ -178,6 +181,15 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
     list_editable = ('episode', 'start_date', 'headstart_granted')
     list_display_links = ('title',)
     popup = False
+
+    @property
+    def media(self):
+        return forms.Media(
+            css={
+                "all": [f['url'] for f in get_files('hunts_admin_puzzle', extension='css')],
+            },
+            js=[f['url'] for f in get_files('hunts_admin_puzzle', extension='js')],
+        )
 
     def view_on_site(self, obj):
         try:
