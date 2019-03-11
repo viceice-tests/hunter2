@@ -1,5 +1,7 @@
 /* global $ */
 
+import '../scss/admin_puzzle.scss'
+
 var advanced_shown
 
 function toggleAdvanced(event, display, duration) {
