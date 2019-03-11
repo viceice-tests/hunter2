@@ -414,7 +414,8 @@ class Unlock(Clue):
         ).filter(
             for_puzzle=self.puzzle
         )
-        return [g for g in guesses if any([u.validate_guess(g) for u in self.unlockanswer_set.all()])]
+        unlockanswers = self.unlockanswer_set.all()
+        return [g for g in guesses if any([u.validate_guess(g) for u in unlockanswers])]
 
     def __str__(self):
         return f'Unlock for {self.puzzle}'
