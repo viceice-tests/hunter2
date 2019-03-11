@@ -436,10 +436,10 @@ class UnlockAnswer(models.Model):
         # Inspired by django-immutablemodel but this project is unmaintained and we don't need the general case
         if name == 'unlock':
             try:
-                current_value = getattr(self, name, None)
+                current_value = getattr(self, 'unlock_id', None)
             except UnlockAnswer.DoesNotExist:
                 current_value = None
-            if current_value is not None and current_value != value:
+            if current_value is not None and current_value != value.id:
                 raise ValueError('UnlockAnswer.unlock is immutable and cannot be changed')
         super().__setattr__(name, value)
 
