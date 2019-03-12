@@ -43,7 +43,7 @@ from .factories import (
     UserDataFactory,
     UserPuzzleDataFactory,
 )
-from .models import Guess, PuzzleData, TeamPuzzleData
+from .models import PuzzleData, TeamPuzzleData
 from .runtimes import Runtime
 
 
