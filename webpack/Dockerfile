@@ -7,4 +7,4 @@ WORKDIR /usr/src/app
 
 EXPOSE 4000
 ENTRYPOINT ["yarn"]
-CMD ["run", "start"]
+CMD ["start"]
