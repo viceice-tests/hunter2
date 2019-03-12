@@ -145,7 +145,11 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
         UnlockInline,
     ]
     # TODO: once episode is a ForeignKey make it editable
-    list_display = ('episode', 'title', 'start_date', 'check_flavour', 'headstart_granted', 'answers', 'hints', 'unlocks', 'move_up_down_links')
+    list_display = (
+        'episode', 'title', 'start_date', 'headstart_granted',
+        'check_flavour', 'check_solution', 'answers', 'hints', 'unlocks',
+        'move_up_down_links'
+    )
     list_editable = ('episode', 'start_date', 'headstart_granted')
     list_display_links = ('title',)
     popup = False
@@ -160,9 +164,9 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
         # Expose three extra views for editing answers, hints and unlocks without anything else
         urls = super().get_urls()
         urls = [
-            path('<int:puzzle_id>/answers/', self.onlyinlines_view(AnswerInline)),
-            path('<int:puzzle_id>/hints/', self.onlyinlines_view(HintInline)),
-            path('<int:puzzle_id>/unlocks/', self.onlyinlines_view(UnlockInline))
+            path('<str:puzzle_id>/answers/', self.onlyinlines_view(AnswerInline)),
+            path('<str:puzzle_id>/hints/', self.onlyinlines_view(HintInline)),
+            path('<str:puzzle_id>/unlocks/', self.onlyinlines_view(UnlockInline))
         ] + urls
         return urls
 
@@ -176,17 +180,18 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
         def the_view(self, request, puzzle_id):
             # We use this flag to see if we should hide other stuff
             self.popup = True
-            # Only display the given inline
-            old_inlines = self.inlines
-            self.inlines = (inline,)
 
-            response = self.change_view(request, puzzle_id)
+            try:
+                # Only display the given inline
+                old_inlines = self.inlines
+                self.inlines = (inline,)
 
-            # Reset
-            self.popup = False
-            self.inlines = old_inlines
+                return self.change_view(request, puzzle_id)
 
-            return response
+            finally:
+                # Reset
+                self.popup = False
+                self.inlines = old_inlines
 
         # Bind the above function as a method of this class so that it gets self.
         return self.admin_site.admin_view(the_view.__get__(self, self.__class__))
@@ -226,8 +231,14 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
     def check_flavour(self, obj):
         return bool(obj.flavour)
 
-    check_flavour.short_description = 'tasty?'
+    check_flavour.short_description = 'flavour?'
     check_flavour.boolean = True
+
+    def check_solution(self, obj):
+        return bool(obj.soln_content)
+
+    check_solution.short_description = 'solution?'
+    check_solution.boolean = True
 
     def answers(self, obj):
         return format_html('<a href="{}/answers/">{}</a>', obj.pk, obj.answer_count)
@@ -283,7 +294,7 @@ class EpisodeAdmin(NestedModelAdmin):
     def check_flavour(self, obj):
         return bool(obj.flavour)
 
-    check_flavour.short_description = 'tasty?'
+    check_flavour.short_description = 'flavour?'
     check_flavour.boolean = True
 
     def num_puzzles(self, obj):

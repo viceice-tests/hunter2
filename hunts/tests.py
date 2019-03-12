@@ -26,8 +26,9 @@ from channels.testing import WebsocketCommunicator
 from accounts.factories import UserProfileFactory
 from events.factories import EventFactory, EventFileFactory
 from events.test import EventTestCase, AsyncEventTestCase
+from hunter2.routing import application as websocket_app
 from teams.factories import TeamFactory, TeamMemberFactory
-from . import runtimes, utils
+from . import utils
 from .factories import (
     AnnouncementFactory,
     AnswerFactory,
@@ -47,15 +48,15 @@ from .factories import (
 )
 from .models import PuzzleData, TeamPuzzleData
 from .utils import encode_uuid
-from hunter2.routing import application as websocket_app
+from .runtimes import Runtime
 
 
 class FactoryTests(EventTestCase):
     # TODO: Consider reworking RUNTIME_CHOICES so this can be used.
     ANSWER_RUNTIMES = [
-        ("static", runtimes.STATIC),
-        ("regex", runtimes.REGEX),
-        ("lua",  runtimes.LUA)
+        ("static", Runtime.STATIC),
+        ("regex", Runtime.REGEX),
+        ("lua",  Runtime.LUA)
     ]
 
     @staticmethod
@@ -140,14 +141,14 @@ class HomePageTests(EventTestCase):
 class StaticValidationTests(EventTestCase):
     @staticmethod
     def test_static_save_answer():
-        AnswerFactory(runtime=runtimes.STATIC)
+        AnswerFactory(runtime=Runtime.STATIC)
 
     @staticmethod
     def test_static_save_unlock_answer():
-        UnlockAnswerFactory(runtime=runtimes.STATIC)
+        UnlockAnswerFactory(runtime=Runtime.STATIC)
 
     def test_static_answers(self):
-        answer = AnswerFactory(runtime=runtimes.STATIC)
+        answer = AnswerFactory(runtime=Runtime.STATIC)
         guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=True)
         self.assertTrue(answer.validate_guess(guess))
         guess = GuessFactory(for_puzzle=answer.for_puzzle, correct=False)
@@ -160,17 +161,17 @@ class StaticValidationTests(EventTestCase):
 
 class RegexValidationTests(EventTestCase):
     def test_regex_save_answer(self):
-        AnswerFactory(runtime=runtimes.REGEX, answer='[Rr]egex.*')
+        AnswerFactory(runtime=Runtime.REGEX, answer='[Rr]egex.*')
         with self.assertRaises(ValidationError):
-            AnswerFactory(runtime=runtimes.REGEX, answer='[NotARegex')
+            AnswerFactory(runtime=Runtime.REGEX, answer='[NotARegex')
 
     def test_regex_save_unlock_answer(self):
-        UnlockAnswerFactory(runtime=runtimes.REGEX, guess='[Rr]egex.*')
+        UnlockAnswerFactory(runtime=Runtime.REGEX, guess='[Rr]egex.*')
         with self.assertRaises(ValidationError):
-            UnlockAnswerFactory(runtime=runtimes.REGEX, guess='[NotARegex')
+            UnlockAnswerFactory(runtime=Runtime.REGEX, guess='[NotARegex')
 
     def test_regex_answers(self):
-        answer = AnswerFactory(runtime=runtimes.REGEX, answer='cor+ect')
+        answer = AnswerFactory(runtime=Runtime.REGEX, answer='cor+ect')
         guess = GuessFactory(guess='correct', for_puzzle=answer.for_puzzle)
         self.assertTrue(answer.validate_guess(guess))
         guess = GuessFactory(guess='correctnot', for_puzzle=answer.for_puzzle)
@@ -183,17 +184,17 @@ class RegexValidationTests(EventTestCase):
 
 class LuaValidationTests(EventTestCase):
     def test_lua_save_answer(self):
-        AnswerFactory(runtime=runtimes.LUA, answer='''return {} == nil''')
+        AnswerFactory(runtime=Runtime.LUA, answer='''return {} == nil''')
         with self.assertRaises(ValidationError):
-            AnswerFactory(runtime=runtimes.LUA, answer='''@''')
+            AnswerFactory(runtime=Runtime.LUA, answer='''@''')
 
     def test_lua_save_unlock_answer(self):
-        UnlockAnswerFactory(runtime=runtimes.LUA, guess='''return {} == nil''')
+        UnlockAnswerFactory(runtime=Runtime.LUA, guess='''return {} == nil''')
         with self.assertRaises(ValidationError):
-            UnlockAnswerFactory(runtime=runtimes.LUA, guess='''@''')
+            UnlockAnswerFactory(runtime=Runtime.LUA, guess='''@''')
 
     def test_lua_answers(self):
-        answer = AnswerFactory(runtime=runtimes.LUA, answer='''return guess == "correct"''')
+        answer = AnswerFactory(runtime=Runtime.LUA, answer='''return guess == "correct"''')
         guess = GuessFactory(guess='correct', for_puzzle=answer.for_puzzle)
         self.assertTrue(answer.validate_guess(guess))
         guess = GuessFactory(guess='correctnot', for_puzzle=answer.for_puzzle)
@@ -1148,7 +1149,7 @@ class CorrectnessCacheTests(EventTestCase):
         self.assertFalse(self.puzzle1.answered_by(self.team1))
 
         # Add an answer that matches guess 2 and check
-        AnswerFactory(for_puzzle=self.puzzle2, runtime=runtimes.STATIC, answer=guess2.guess).save()
+        AnswerFactory(for_puzzle=self.puzzle2, runtime=Runtime.STATIC, answer=guess2.guess).save()
         guess1.refresh_from_db()
         guess2.refresh_from_db()
         self.assertTrue(guess1.correct_current)

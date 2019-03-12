@@ -25,7 +25,7 @@ from accounts.factories import UserProfileFactory
 from events.factories import EventFactory
 from teams.factories import TeamFactory, TeamMemberFactory
 from .models import AnnouncementType
-from . import runtimes
+from .runtimes import Runtime
 
 
 class EpisodeFactory(factory.django.DjangoModelFactory):
@@ -81,15 +81,15 @@ class PuzzleFactory(factory.django.DjangoModelFactory):
     flavour = factory.Faker('text')
 
     # TODO: Consider extending to use other runtimes as well.
-    runtime = runtimes.STATIC
+    runtime = Runtime.STATIC
     content = factory.Faker('text')
 
     # TODO: Use other runtimes when we are testing callbacks.
-    cb_runtime = runtimes.STATIC
+    cb_runtime = Runtime.STATIC
     cb_content = ""
 
     # TODO: Use other runtimes when we are testing solutions.
-    soln_runtime = runtimes.STATIC
+    soln_runtime = Runtime.STATIC
     soln_content = factory.Faker('text')
 
     start_date = factory.Faker('date_time_this_month', tzinfo=pytz.utc)
@@ -160,7 +160,7 @@ class UnlockAnswerFactory(factory.django.DjangoModelFactory):
         model = 'hunts.UnlockAnswer'
 
     unlock = factory.SubFactory(UnlockFactory, answer=None)
-    runtime = runtimes.STATIC
+    runtime = Runtime.STATIC
     guess = factory.Faker('word')
 
 
@@ -186,16 +186,16 @@ class AnswerFactory(factory.django.DjangoModelFactory):
     def _generate_answer(obj):
         try:
             return {
-                runtimes.STATIC: lambda: AnswerFactory._generate_static_answer(),
-                runtimes.REGEX: lambda: AnswerFactory._generate_regex_answer(),
-                runtimes.LUA: lambda: AnswerFactory._generate_lua_answer()
+                Runtime.STATIC: lambda: AnswerFactory._generate_static_answer(),
+                Runtime.REGEX: lambda: AnswerFactory._generate_regex_answer(),
+                Runtime.LUA: lambda: AnswerFactory._generate_lua_answer()
             }[obj.runtime]()
         except KeyError as error:
             raise NotImplementedError("Unknown runtime") from error
 
     for_puzzle = factory.SubFactory(PuzzleFactory, answer_set=None)
     runtime = factory.Faker('random_element', elements=(
-        runtimes.STATIC, runtimes.STATIC, runtimes.STATIC, runtimes.REGEX, runtimes.LUA,
+        Runtime.STATIC, Runtime.STATIC, Runtime.STATIC, Runtime.REGEX, Runtime.LUA,
     ))
     answer = factory.LazyAttribute(lambda o: AnswerFactory._generate_answer(o))
 
@@ -235,9 +235,9 @@ class GuessFactory(factory.django.DjangoModelFactory):
     def _generate_correct_answer(answer):
         try:
             return {
-                runtimes.STATIC: lambda: GuessFactory._generate_correct_static_guess(answer.answer),
-                runtimes.REGEX: lambda: GuessFactory._generate_correct_regex_guess(answer.answer),
-                runtimes.LUA: lambda: GuessFactory._generate_correct_lua_guess(answer.answer)
+                Runtime.STATIC: lambda: GuessFactory._generate_correct_static_guess(answer.answer),
+                Runtime.REGEX: lambda: GuessFactory._generate_correct_regex_guess(answer.answer),
+                Runtime.LUA: lambda: GuessFactory._generate_correct_lua_guess(answer.answer)
             }[answer.runtime]()
         except KeyError as error:
             raise NotImplementedError("Unknown runtime") from error
