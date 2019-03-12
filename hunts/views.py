@@ -36,8 +36,9 @@ from teams.mixins import TeamMixin
 from . import models, rules, utils
 from .forms import BulkUploadForm
 from .mixins import EpisodeUnlockedMixin, PuzzleAdminMixin, PuzzleUnlockedMixin
+from accounts.models import UserInfo
 from events.models import Attendance
-from events.utils import annotate_userprofile_queryset_with_seat
+from events.utils import annotate_userinfo_queryset_with_seat
 
 import hunter2
 import teams
@@ -692,7 +693,8 @@ class AboutView(TemplateView):
         files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.filter(slug__isnull=False)}
         content = Template(self.request.tenant.about_text).safe_substitute(**files)
 
-        admin_members = annotate_userprofile_queryset_with_seat(admin_team.members, self.request.tenant)
+        admin_members = UserInfo.objects.filter(user__profile__in=admin_team.members.all())
+        admin_members = annotate_userinfo_queryset_with_seat(admin_members, self.request.tenant)
 
         context.update({
             'admins': admin_members,
