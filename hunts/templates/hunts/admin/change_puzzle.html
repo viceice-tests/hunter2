@@ -2,6 +2,7 @@
 
 {% block object-tools-items %}
 <li><a href="{% url 'bulk_upload' original.pk %}" class="bulkuploadlink">Bulk upload files</a></li>
+<li><a href="{% url 'puzzle_permalink' original.pk %}" class="puzzlepermalink">Copy permalink 🔗&#xFE0E;</a></li>
 {{ block.super }}
 {% endblock %}
 

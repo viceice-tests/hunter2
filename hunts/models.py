@@ -268,6 +268,7 @@ class Puzzle(OrderedModel):
         except SyntaxError as e:
             raise ValidationError(e) from e
 
+
     def get_absolute_url(self):
         params = {
             'episode_number': self.episode.get_relative_id(),

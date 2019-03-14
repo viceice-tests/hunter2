@@ -57,6 +57,20 @@ function toggleAdvanced(event, display, duration) {
   $('#advanced_button').html(`${button_verb} Advanced Options`)
 }
 
+function copyPermalinkClicked(e) {
+  e.preventDefault()
+
+  var tmp = $('<input>')
+  tmp.css('position', 'fixed')
+  tmp.css('top', 0)
+  tmp.css('left', -99999)
+  $('body').append(tmp)
+
+  tmp.val(e.target.href).select()
+  document.execCommand('copy')
+  tmp.remove()
+}
+
 $(function() {
   toggleAdvanced(undefined, false, 0)
   $(document).on('DOMNodeInserted', function(e) {
@@ -67,4 +81,5 @@ $(function() {
     }
   })
   $('#advanced_button').click(toggleAdvanced)
+  $('.puzzlepermalink').click(copyPermalinkClicked)
 })
