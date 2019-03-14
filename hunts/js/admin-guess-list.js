@@ -1,13 +1,18 @@
 import $ from 'jquery'
+import BPagination from 'bootstrap-vue/es/components/pagination/pagination'
 import URI from 'urijs'
 
 export default {
+  components: {
+    'b-pagination': BPagination,
+  },
   created: function() {
     this.updateData(true)
   },
   data: function() {
     return {
       autoUpdate: true,
+      currentPage: 1,
       guesses: [],
       pages: {
         current: 0,
@@ -15,19 +20,25 @@ export default {
         next: '',
         previous: '',
       },
+      perPage: 50,
+      rows: 0,
     }
   },
   methods: {
-    updateData: function(force) {
-      let v = this
+    changePage: function(page) {
+      this.autoUpdate = page === 1
+      this.updateData(true, page)
+    },
+    updateData: function(force, page) {
+      if (page === undefined) {
+        page = this.currentPage
+      }
       if (force || this.autoUpdate) {
-        $.get(this.href).done(function(data) {
+        let guesses_url = URI(this.href).query({'page': page})
+        let v = this
+        $.get(guesses_url).done(function(data) {
           v.guesses = data.guesses
-          v.pages.current = data.pages.current
-          v.pages.total = data.pages.total
-          let url = URI(window.location)
-          v.pages.next = data.pages.next ? url.addSearch({page: data.pages.next}) : ''
-          v.pages.previous = data.pages.previous ? url.addSearch({page: data.pages.previous}) : ''
+          v.rows = data.rows
         })
         setTimeout(this.updateData, 5000)
       }

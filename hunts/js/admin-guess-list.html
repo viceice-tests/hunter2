@@ -43,13 +43,5 @@
 		</tr>
 	</table>
 
-	<div class="pagination">
-		<span class="step-links">
-			<a v-if="pages.previous" v-bind:href="pages.previous">previous</a>
-			<span class="current">
-				Page {{ pages.current }} of {{ pages.total }}.
-			</span>
-			<a v-if="pages.next" v-bind:href="pages.next">next</a>
-		</span>
-	</div>
+	<b-pagination v-model="currentPage" v-bind:total-rows="rows" v-bind:per-page="perPage" v-on:change="changePage" size="sm" />
 </div>

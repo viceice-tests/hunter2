@@ -249,12 +249,7 @@ class GuessesList(LoginRequiredMixin, View):
 
         return JsonResponse({
             'guesses': guesses_list,
-            'pages': {
-                'current': guesses.number,
-                'next': guesses.next_page_number() if guesses.has_next() else 0,
-                'previous': guesses.previous_page_number() if guesses.has_previous() else 0,
-                'total': guesses.paginator.num_pages,
-            },
+            'rows': all_guesses.count(),
         })
 
 
