@@ -34,7 +34,7 @@ from django.views.generic.edit import FormView
 from sendfile import sendfile
 from teams.mixins import TeamMixin
 
-from . import models, rules, runtimes, utils
+from . import models, rules, utils
 from .forms import BulkUploadForm
 from .mixins import EpisodeUnlockedMixin, PuzzleAdminMixin, PuzzleUnlockedMixin
 from events.models import Attendance
@@ -472,7 +472,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         }
         files = {**event_files, **puzzle_files}  # Puzzle files with matching slugs override hunt counterparts
 
-        text = Template(runtimes.runtimes[puzzle.runtime].evaluate(
+        text = Template(puzzle.runtime.create().evaluate(
             puzzle.content,
             data.tp_data,
             data.up_data,
@@ -535,7 +535,7 @@ class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         }
         files = {**event_files, **puzzle_files, **solution_files}  # Solution files override puzzle files, which override event files.
 
-        text = Template(runtimes.runtimes[request.puzzle.soln_runtime].evaluate(
+        text = Template(request.puzzle.soln_runtime.create().evaluate(
             request.puzzle.soln_content,
             data.tp_data,
             data.up_data,
@@ -623,7 +623,14 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 response['text'] = f'back to {request.episode.name}'
                 response['url'] = request.episode.get_absolute_url()
         else:
-            all_unlocks = models.Unlock.objects.filter(puzzle=request.puzzle)
+            all_unlocks = models.Unlock.objects.filter(
+                puzzle=request.puzzle
+            ).select_related(
+                'puzzle'
+            ).prefetch_related(
+                'unlockanswer_set'
+            )
+
             unlocks = []
             for u in all_unlocks:
                 correct_guesses = u.unlocked_by(request.team)
@@ -661,7 +668,7 @@ class Callback(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         data = models.PuzzleData(request.puzzle, request.team, request.user.profile)
 
         response = HttpResponse(
-            runtimes.runtimes[request.puzzle.cb_runtime].evaluate(
+            request.puzzle.cb_runtime.create().evaluate(
                 request.puzzle.cb_content,
                 data.tp_data,
                 data.up_data,
