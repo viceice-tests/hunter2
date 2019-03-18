@@ -165,12 +165,13 @@ class GuessesList(LoginRequiredMixin, View):
         episode = request.GET.get('episode')
         puzzle = request.GET.get('puzzle')
         team = request.GET.get('team')
+        user = request.GET.get('user')
 
         puzzles = models.Puzzle.objects.all()
         if puzzle:
             puzzles = puzzles.filter(id=puzzle)
         if episode:
-            puzzles = puzzles.filter(episode=episode)
+            puzzles = puzzles.filter(episode_id=episode)
 
         # The following query is heavily optimised. We only retrieve the fields we will use here and
         # in the template, and we select and prefetch related objects so as not to perform any extra
@@ -199,8 +200,9 @@ class GuessesList(LoginRequiredMixin, View):
         )
 
         if team:
-            team = teams.models.Team.objects.get(id=team)
-            all_guesses = all_guesses.filter(by_team=team)
+            all_guesses = all_guesses.filter(by_team_id=team)
+        if user:
+            all_guesses = all_guesses.filter(by_id=user)
 
         guess_pages = Paginator(all_guesses, 50)
         page = request.GET.get('page')
