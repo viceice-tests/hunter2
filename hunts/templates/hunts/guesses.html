@@ -11,11 +11,15 @@
 {% render_bundle 'hunts_guesses' 'js' attrs='defer' %}
 {% endblock %}
 
-{% block page_header %}
-<h1>Guesses</h1>
+{% block header %}
+<header class="flex-shrink-0 pt-3">
+	<h1>Guesses</h1>
+</header>
 {% endblock %}
 
-{% block content %}
-<div id="admin-guess-list" data-href="{% url 'guesses_list' %}" />
+{% block main %}
+<main class="flex-shrink-0 container-fluid pt-3">
+	<div id="admin-guess-list" data-href="{% url 'guesses_list' %}" />
+</main>
 {% endblock %}
 

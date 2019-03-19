@@ -1,3 +1,16 @@
+#puzzle-flavour {
+	font-size: 90%;
+	font-style: italic;
+	color: #555;
+}
+
+#flavour-intro {
+	font-size: 100%;
+	font-style: normal;
+	font-weight: bold;
+	color: #333;
+}
+
 #answer-button {
 	width: 55px;
 	height: 55px;
@@ -29,4 +42,25 @@
 	border: 1px solid #ccc;
 	border-radius: 4px;
 	display: inline-block;
+}
+
+section {
+    margin-bottom: 1em;
+    padding-bottom: 1em;
+}
+
+section:not(:last-child):after {
+    content: "";
+    display: block;
+    height: 1px;
+    width: 6em;
+    margin: 1em calc(50% - 3em) 0 calc(50% - 3em);
+    background: #ccc;
+}
+
+iframe#runtime {
+    border: none;
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
 }
