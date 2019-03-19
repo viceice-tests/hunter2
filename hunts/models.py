@@ -431,7 +431,8 @@ class Unlock(Clue):
         ).filter(
             for_puzzle=self.puzzle
         )
-        return [g for g in guesses if any([u.validate_guess(g) for u in self.unlockanswer_set.all()])]
+        unlockanswers = self.unlockanswer_set.all()
+        return [g for g in guesses if any([u.validate_guess(g) for u in unlockanswers])]
 
     def __str__(self):
         return f'Unlock for {self.puzzle}'
@@ -455,10 +456,10 @@ class UnlockAnswer(models.Model):
         # Inspired by django-immutablemodel but this project is unmaintained and we don't need the general case
         if name == 'unlock':
             try:
-                current_value = getattr(self, name, None)
+                current_value = getattr(self, 'unlock_id', None)
             except UnlockAnswer.DoesNotExist:
                 current_value = None
-            if current_value is not None and current_value != value:
+            if current_value is not None and current_value != value.id:
                 raise ValueError('UnlockAnswer.unlock is immutable and cannot be changed')
         super().__setattr__(name, value)
 

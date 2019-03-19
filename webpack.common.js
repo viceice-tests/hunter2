@@ -12,6 +12,7 @@ module.exports = {
     hunts_event:        'hunts/js/event.js',
     hunts_admin_puzzle: 'imports-loader?$=jquery!hunts/js/admin_puzzle.js',
     hunts_puzzle:       'hunts/js/puzzle.js',
+    hunts_about:        'hunts/scss/about.scss',
     hunts_stats:        'hunts/js/stats.js',
     hunts_guesses:      'hunts/js/guesses.js',
   },

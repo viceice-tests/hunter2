@@ -36,8 +36,9 @@ from teams.mixins import TeamMixin
 from . import models, rules, utils
 from .forms import BulkUploadForm
 from .mixins import EpisodeUnlockedMixin, PuzzleAdminMixin, PuzzleUnlockedMixin
+from accounts.models import UserInfo
 from events.models import Attendance
-from events.utils import annotate_userprofile_queryset_with_seat
+from events.utils import annotate_userinfo_queryset_with_seat
 
 import hunter2
 import teams
@@ -593,7 +594,14 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 response['text'] = f'back to {request.episode.name}'
                 response['url'] = request.episode.get_absolute_url()
         else:
-            all_unlocks = models.Unlock.objects.filter(puzzle=request.puzzle)
+            all_unlocks = models.Unlock.objects.filter(
+                puzzle=request.puzzle
+            ).select_related(
+                'puzzle'
+            ).prefetch_related(
+                'unlockanswer_set'
+            )
+
             unlocks = []
             for u in all_unlocks:
                 correct_guesses = u.unlocked_by(request.team)
@@ -685,7 +693,8 @@ class AboutView(TemplateView):
         files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.filter(slug__isnull=False)}
         content = Template(self.request.tenant.about_text).safe_substitute(**files)
 
-        admin_members = annotate_userprofile_queryset_with_seat(admin_team.members, self.request.tenant)
+        admin_members = UserInfo.objects.filter(user__profile__in=admin_team.members.all())
+        admin_members = annotate_userinfo_queryset_with_seat(admin_members, self.request.tenant)
 
         context.update({
             'admins': admin_members,
