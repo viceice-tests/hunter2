@@ -25,8 +25,8 @@ class StaticRuntime(AbstractRuntime):
 
     def validate_guess(self, validator, guess):
         if self.strip:
-            guess = ''.join(c for c in guess if c.isalnum())
-            validator = ''.join(c for c in validator if c.isalnum())
+            guess = guess.strip()
+            validator = validator.strip()
 
         if self.case_handling == Case.FOLD:
             return validator.casefold() == guess.casefold()
