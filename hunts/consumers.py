@@ -300,7 +300,13 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
 
         # required info:
         # guess, correctness, new unlocks, timestamp, whodunnit
-        all_unlocks = models.Unlock.objects.filter(puzzle=guess.for_puzzle)
+        all_unlocks = models.Unlock.objects.filter(
+            puzzle=guess.for_puzzle
+        ).select_related(
+            'puzzle'
+        ).prefetch_related(
+            'unlockanswer_set'
+        )
         unlocks = []
         for u in all_unlocks:
             if any([a.validate_guess(guess) for a in u.unlockanswer_set.all()]):
