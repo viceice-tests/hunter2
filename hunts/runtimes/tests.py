@@ -102,6 +102,9 @@ class StaticRuntimeTestCase(SimpleTestCase):
         guess = 'Guess '
         result = static_runtime.validate_guess(static_script, guess)
         self.assertFalse(result)
+        guess = 'G uess'
+        result = static_runtime.validate_guess(static_script, guess)
+        self.assertFalse(result)
         guess = 'G,uess'
         result = static_runtime.validate_guess(static_script, guess)
         self.assertFalse(result)
@@ -118,9 +121,12 @@ class StaticRuntimeTestCase(SimpleTestCase):
         guess = 'Guess '
         result = static_runtime.validate_guess(static_script, guess)
         self.assertTrue(result)
+        guess = 'G uess'
+        result = static_runtime.validate_guess(static_script, guess)
+        self.assertFalse(result)
         guess = 'G,uess'
         result = static_runtime.validate_guess(static_script, guess)
-        self.assertTrue(result)
+        self.assertFalse(result)
         guess = "incorrect guess"
         result = static_runtime.validate_guess(static_script, guess)
         self.assertFalse(result)
