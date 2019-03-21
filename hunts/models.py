@@ -214,7 +214,7 @@ class Puzzle(OrderedModel):
     options = JSONField(
         default=dict, blank=True,
         verbose_name='Puzzle page renderer configuration',
-        help_text='Options for configuring the puzzle page renderer',
+        help_text='Options for configuring the puzzle page renderer in JSON format. Currently no options are supported.',
     )
 
     cb_runtime = EnumField(
@@ -229,7 +229,7 @@ class Puzzle(OrderedModel):
     cb_options = JSONField(
         default=dict, blank=True,
         verbose_name='AJAX callback processor configuration',
-        help_text='Options for configuring the AJAX callback processor',
+        help_text='Options for configuring the AJAX callback processor in JSON format. Currently no options are supported.',
     )
 
     soln_runtime = EnumField(
@@ -245,7 +245,7 @@ class Puzzle(OrderedModel):
     soln_options = JSONField(
         default=dict, blank=True,
         verbose_name='Solution renderer configuration',
-        help_text='Options for configuring the solution renderer',
+        help_text='Options for configuring the solution renderer in JSON format. Currently no options are supported.',
     )
 
     start_date = models.DateTimeField(
@@ -448,7 +448,17 @@ class UnlockAnswer(models.Model):
     options = JSONField(
         default=dict, blank=True,
         verbose_name='Validator configuration',
-        help_text='Options for configuring the validator',
+        help_text='''Options for configuring the validator in JSON format using the following keys:
+
+Static:
+    'case_handling':
+        'none' - do not adjust case
+        'lower' - compare lower case
+        'fold' - perform unicode case folding
+    'strip': true/false
+
+Regex:
+    'case_sensitive': true/false''',
     )
     guess = models.TextField()
 
@@ -493,7 +503,17 @@ class Answer(models.Model):
     options = JSONField(
         default=dict, blank=True,
         verbose_name='Validator configuration',
-        help_text='Options for configuring the validator',
+        help_text='''Options for configuring the validator in JSON format using the following keys:
+
+Static:
+    'case_handling':
+        'none' - do not adjust case
+        'lower' - compare lower case
+        'fold' - perform unicode case folding
+    'strip': true/false
+
+Regex:
+    'case_sensitive': true/false''',
     )
     answer = models.TextField()
 
