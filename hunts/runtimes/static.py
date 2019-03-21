@@ -16,7 +16,7 @@ from .options import Case
 
 
 class StaticRuntime(AbstractRuntime):
-    def __init__(self, case_handling=Case.FOLD, strip=True):
+    def __init__(self, case_handling=Case.LOWER, strip=True):
         self.case_handling = case_handling
         self.strip = strip
 

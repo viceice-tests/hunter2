@@ -47,7 +47,13 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL(
             sql=[
+                f"UPDATE hunts_{table} SET {options_field}='{{\"case_handling\": \"none\"}}' WHERE {runtime_field}='S'"
+                for table, runtime_field, options_field in migration_fields
+            ] + [
                 f"UPDATE hunts_{table} SET {runtime_field}='S', {options_field}='{{\"case_handling\": \"lower\"}}' WHERE {runtime_field}='s'"
+                for table, runtime_field, options_field in migration_fields
+            ] + [
+                f"UPDATE hunts_{table} SET {options_field}='{{\"case_sensitive\": false}}' WHERE {runtime_field}='R'"
                 for table, runtime_field, options_field in migration_fields
             ] + [
                 f"UPDATE hunts_{table} SET {runtime_field}='R', {options_field}='{{\"case_sensitive\": true}}' WHERE {runtime_field}='r'"
