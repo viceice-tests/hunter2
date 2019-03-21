@@ -443,7 +443,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         }
         files = {**event_files, **puzzle_files}  # Puzzle files with matching slugs override hunt counterparts
 
-        text = Template(puzzle.runtime.create().evaluate(
+        text = Template(puzzle.runtime.create(puzzle.options).evaluate(
             puzzle.content,
             data.tp_data,
             data.up_data,
@@ -506,7 +506,7 @@ class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         }
         files = {**event_files, **puzzle_files, **solution_files}  # Solution files override puzzle files, which override event files.
 
-        text = Template(request.puzzle.soln_runtime.create().evaluate(
+        text = Template(request.puzzle.soln_runtime.create(request.puzzle.soln_options).evaluate(
             request.puzzle.soln_content,
             data.tp_data,
             data.up_data,
@@ -639,7 +639,7 @@ class Callback(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         data = models.PuzzleData(request.puzzle, request.team, request.user.profile)
 
         response = HttpResponse(
-            request.puzzle.cb_runtime.create().evaluate(
+            request.puzzle.cb_runtime.create(request.puzzle.cb_options).evaluate(
                 request.puzzle.cb_content,
                 data.tp_data,
                 data.up_data,

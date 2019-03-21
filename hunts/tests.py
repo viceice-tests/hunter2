@@ -1127,7 +1127,9 @@ class CorrectnessCacheTests(EventTestCase):
         guess2.refresh_from_db()
         self.assertFalse(guess1.correct_current)
         self.assertTrue(guess2.correct_current)
-        self.assertFalse(guess1.get_correct_for())
+        correct = guess1.get_correct_for()
+        self.assertTrue(guess1.correct_current)
+        self.assertFalse(correct)
         self.assertFalse(self.puzzle1.answered_by(self.team1))
 
         # Update the first guess and check
@@ -1145,7 +1147,8 @@ class CorrectnessCacheTests(EventTestCase):
         self.assertFalse(self.puzzle1.answered_by(self.team1))
 
         # Add an answer that matches guess 2 and check
-        AnswerFactory(for_puzzle=self.puzzle2, runtime=Runtime.STATIC, answer=guess2.guess).save()
+        answer = AnswerFactory(for_puzzle=self.puzzle2, runtime=Runtime.STATIC, answer=guess2.guess)
+        answer.save()
         guess1.refresh_from_db()
         guess2.refresh_from_db()
         self.assertTrue(guess1.correct_current)
