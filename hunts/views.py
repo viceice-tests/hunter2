@@ -36,8 +36,9 @@ from teams.mixins import TeamMixin
 from . import models, rules, utils
 from .forms import BulkUploadForm
 from .mixins import EpisodeUnlockedMixin, PuzzleAdminMixin, PuzzleUnlockedMixin
+from accounts.models import UserInfo
 from events.models import Attendance
-from events.utils import annotate_userprofile_queryset_with_seat
+from events.utils import annotate_userinfo_queryset_with_seat
 
 import hunter2
 import teams
@@ -442,7 +443,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         }
         files = {**event_files, **puzzle_files}  # Puzzle files with matching slugs override hunt counterparts
 
-        text = Template(puzzle.runtime.create().evaluate(
+        text = Template(puzzle.runtime.create(puzzle.options).evaluate(
             puzzle.content,
             data.tp_data,
             data.up_data,
@@ -505,7 +506,7 @@ class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         }
         files = {**event_files, **puzzle_files, **solution_files}  # Solution files override puzzle files, which override event files.
 
-        text = Template(request.puzzle.soln_runtime.create().evaluate(
+        text = Template(request.puzzle.soln_runtime.create(request.puzzle.soln_options).evaluate(
             request.puzzle.soln_content,
             data.tp_data,
             data.up_data,
@@ -594,7 +595,7 @@ class Callback(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         data = models.PuzzleData(request.puzzle, request.team, request.user.profile)
 
         response = HttpResponse(
-            request.puzzle.cb_runtime.create().evaluate(
+            request.puzzle.cb_runtime.create(request.puzzle.cb_options).evaluate(
                 request.puzzle.cb_content,
                 data.tp_data,
                 data.up_data,
@@ -648,7 +649,8 @@ class AboutView(TemplateView):
         files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.filter(slug__isnull=False)}
         content = Template(self.request.tenant.about_text).safe_substitute(**files)
 
-        admin_members = annotate_userprofile_queryset_with_seat(admin_team.members, self.request.tenant)
+        admin_members = UserInfo.objects.filter(user__profile__in=admin_team.members.all())
+        admin_members = annotate_userinfo_queryset_with_seat(admin_members, self.request.tenant)
 
         context.update({
             'admins': admin_members,
