@@ -24,7 +24,7 @@ from parameterized import parameterized
 from channels.testing import WebsocketCommunicator
 
 from accounts.factories import UserProfileFactory
-from events.factories import EventFactory, EventFileFactory
+from events.factories import EventFileFactory
 from events.test import EventTestCase, AsyncEventTestCase
 from hunter2.routing import application as websocket_app
 from teams.factories import TeamFactory, TeamMemberFactory
@@ -130,8 +130,6 @@ class FactoryTests(EventTestCase):
 
 class HomePageTests(EventTestCase):
     def test_load_homepage(self):
-        # Need one default event.
-        EventFactory.create()
         url = reverse('index')
         response = self.client.get(url)
         response = self.client.get(url)
@@ -1019,51 +1017,50 @@ class EventWinningTests(EventTestCase):
     fixtures = ["teams_test"]
 
     def setUp(self):
-        self.event = EventFactory()
-        self.ep1 = EpisodeFactory(event=self.event, winning=True)
-        self.ep2 = EpisodeFactory(event=self.event, winning=False)
+        self.ep1 = EpisodeFactory(winning=True)
+        self.ep2 = EpisodeFactory(winning=False)
         self.user1 = UserProfileFactory()
         self.user2 = UserProfileFactory()
-        self.team1 = TeamFactory(at_event=self.event, members=self.user1)
-        self.team2 = TeamFactory(at_event=self.event, members=self.user2)
+        self.team1 = TeamFactory(members=self.user1)
+        self.team2 = TeamFactory(members=self.user2)
 
         PuzzleFactory.create_batch(2, episode=self.ep1)
         PuzzleFactory.create_batch(2, episode=self.ep2)
 
     def test_win_single_linear_episode(self):
         # No correct answers => noone has finished => no finishing positions!
-        self.assertEqual(utils.finishing_positions(self.event), [])
+        self.assertEqual(utils.finishing_positions(self.tenant), [])
 
         GuessFactory.create(for_puzzle=self.ep1.get_puzzle(1), by=self.user1, correct=True)
         GuessFactory.create(for_puzzle=self.ep1.get_puzzle(1), by=self.user2, correct=True)
         # First episode still not complete
-        self.assertEqual(utils.finishing_positions(self.event), [])
+        self.assertEqual(utils.finishing_positions(self.tenant), [])
 
         g = GuessFactory.create(for_puzzle=self.ep1.get_puzzle(2), by=self.user1, correct=True)
         GuessFactory.create(for_puzzle=self.ep1.get_puzzle(2), by=self.user2, correct=False)
         # Team 1 has finished the only winning episode, but Team 2 has not
-        self.assertEqual(utils.finishing_positions(self.event), [self.team1])
+        self.assertEqual(utils.finishing_positions(self.tenant), [self.team1])
 
         GuessFactory.create(for_puzzle=self.ep1.get_puzzle(2), by=self.user2, correct=True)
         # Team 2 should now be second place
-        self.assertEqual(utils.finishing_positions(self.event), [self.team1, self.team2])
+        self.assertEqual(utils.finishing_positions(self.tenant), [self.team1, self.team2])
 
         # Make sure the order changes correctly
         g.given = timezone.now()
         g.save()
-        self.assertEqual(utils.finishing_positions(self.event), [self.team2, self.team1])
+        self.assertEqual(utils.finishing_positions(self.tenant), [self.team2, self.team1])
 
     def test_win_two_linear_episodes(self):
         self.ep2.winning = True
         self.ep2.save()
 
-        self.assertEqual(utils.finishing_positions(self.event), [])
+        self.assertEqual(utils.finishing_positions(self.tenant), [])
 
         for pz in self.ep1.puzzle_set.all():
             for user in (self.user1, self.user2):
                 GuessFactory.create(for_puzzle=pz, by=user, correct=True)
         # We need to complete both episodes
-        self.assertEqual(utils.finishing_positions(self.event), [])
+        self.assertEqual(utils.finishing_positions(self.tenant), [])
 
         # both teams complete episode 2, but now their episode 1 guesses are wrong
         for pz in self.ep1.puzzle_set.all():
@@ -1077,7 +1074,7 @@ class EventWinningTests(EventTestCase):
             for user in (self.user1, self.user2):
                 GuessFactory.create(for_puzzle=pz, by=user, correct=True)
         # Should still have no-one finished
-        self.assertEqual(utils.finishing_positions(self.event), [])
+        self.assertEqual(utils.finishing_positions(self.tenant), [])
 
         # Make correct Episode 1 guesses again
         for pz in self.ep1.puzzle_set.all() | self.ep2.puzzle_set.all():
@@ -1086,7 +1083,7 @@ class EventWinningTests(EventTestCase):
             for user in (self.user1, self.user2):
                 GuessFactory.create(for_puzzle=pz, by=user, correct=True)
         # Now both teams should have finished, with team1 first
-        self.assertEqual(utils.finishing_positions(self.event), [self.team1, self.team2])
+        self.assertEqual(utils.finishing_positions(self.tenant), [self.team1, self.team2])
 
         # Swap order
         for pz in self.ep1.puzzle_set.all():
@@ -1094,7 +1091,7 @@ class EventWinningTests(EventTestCase):
                 g.given = timezone.now()
                 g.save()
         # team2 should be first
-        self.assertEqual(utils.finishing_positions(self.event), [self.team2, self.team1])
+        self.assertEqual(utils.finishing_positions(self.tenant), [self.team2, self.team1])
 
 
 class CorrectnessCacheTests(EventTestCase):

@@ -29,14 +29,15 @@ class FactoryTests(EventTestCase):
     def test_theme_factory_default_construction(self):
         ThemeFactory.create()
 
-    def test_event_factory_default_construction(self):
-        EventFactory.create()
-
     def test_event_file_factory_default_construction(self):
         EventFileFactory.create()
 
     def test_attendance_factory_default_construction(self):
         AttendanceFactory.create()
+
+    def test_event_factory_errors_in_testcase(self):
+        with self.assertRaises(AssertionError):
+            EventFactory.create()
 
 
 class EventRulesTests(EventAwareTestCase):

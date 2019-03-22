@@ -22,7 +22,7 @@ import pytz
 from faker import Faker
 
 from accounts.factories import UserProfileFactory
-from events.factories import EventFactory
+from events.models import Event
 from teams.factories import TeamFactory, TeamMemberFactory
 from .models import AnnouncementType
 from .runtimes import Runtime
@@ -40,7 +40,7 @@ class EpisodeFactory(factory.django.DjangoModelFactory):
     name = factory.Faker('sentence')
     flavour = factory.Faker('text')
     start_date = factory.Faker('date_time_this_month', tzinfo=pytz.utc)
-    event = factory.SubFactory(EventFactory)
+    event = factory.LazyFunction(Event.objects.get)
     parallel = factory.Faker('boolean')
 
     @factory.post_generation
@@ -276,7 +276,7 @@ class UserDataFactory(DataFactory):
         model = 'hunts.UserData'
         django_get_or_create = ('event', 'user')
 
-    event = factory.SubFactory(EventFactory)
+    event = factory.LazyFunction(Event.objects.get)
     user = factory.SubFactory(UserProfileFactory)
 
 
@@ -313,7 +313,7 @@ class AnnouncementFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'hunts.Announcement'
 
-    event = factory.SubFactory(EventFactory)
+    event = factory.LazyFunction(Event.objects.get)
     puzzle = factory.SubFactory(PuzzleFactory)  # TODO: Generate without puzzle as well.
     title = factory.Faker('sentence')
     posted = factory.Faker('date_time_this_month', tzinfo=pytz.utc)

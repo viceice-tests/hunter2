@@ -14,7 +14,7 @@
 import factory
 import pytz
 
-from django.db import connection
+from django.db import connection, transaction
 from faker import Faker
 from faker.providers import BaseProvider
 
@@ -62,6 +62,7 @@ class DomainFactory(factory.django.DjangoModelFactory):
     subdomain = factory.Faker('schema_name')
 
     domain = factory.LazyAttribute(lambda o: f'{o.subdomain}.{o.site.domain}')
+    tenant = None
 
 
 class EventFactory(factory.django.DjangoModelFactory):
@@ -79,19 +80,14 @@ class EventFactory(factory.django.DjangoModelFactory):
     max_team_size = factory.Faker('random_int', min=0, max=10)
     end_date = factory.Faker('date_time_between', start_date='+1h', end_date='+3y', tzinfo=pytz.utc)
 
-    domain = factory.RelatedFactory(DomainFactory, 'tenant', subdomain=schema_name)
+    domain = factory.RelatedFactory(DomainFactory, factory_related_name='tenant', subdomain=schema_name)
 
     @classmethod
     def _create(cls, *args, **kwargs):
+        assert not transaction.get_connection().in_atomic_block, 'Cannot create Events inside transactions. You probably need an EventAwareTestCase!'
         if connection.schema_name != 'public':
-            event = Event.objects.get()  # In some badly written tests this would throw MultipleObjectsReturned.
-            for k, v in kwargs.items():
-                if k in ('about_text', 'rules_text', 'help_text', 'examples_text', 'max_team_size', 'end_date'):
-                    setattr(event, k, v)
-            event.save()
-            return event
-        else:
-            return super()._create(*args, **kwargs)
+            Event.deactivate()
+        return super()._create(*args, **kwargs)
 
 
 class EventFileFactory(factory.django.DjangoModelFactory):
@@ -99,7 +95,7 @@ class EventFileFactory(factory.django.DjangoModelFactory):
         model = 'events.EventFile'
         django_get_or_create = ('event', 'slug')
 
-    event = factory.SubFactory(EventFactory)
+    event = factory.LazyFunction(Event.objects.get)
     slug = factory.Faker('word')
     file = factory.django.FileField(
         filename=factory.Faker('file_name'),
@@ -113,5 +109,5 @@ class AttendanceFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ('event', 'user_info')
 
     user_info = factory.SubFactory(UserInfoFactory)
-    event = factory.SubFactory(EventFactory)
+    event = factory.LazyFunction(Event.objects.get)
     seat = factory.Faker('bothify', text='??##', letters='ABCDEFGHJKLMNPQRSTUVWXYZ')

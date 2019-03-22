@@ -36,6 +36,7 @@ class EventAwareTestCase(TransactionTestCase):
 class EventTestCase(FastTenantTestCase):
     def _pre_setup(self):
         super()._pre_setup()
+
         self.client = TenantClient(self.tenant)
 
     @classmethod
