@@ -537,6 +537,9 @@ class SolutionFile(View):
 
 class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
     def post(self, request, episode_number, puzzle_number):
+        if not request.admin and request.puzzle.answered_by(request.team):
+            return JsonResponse({'error': 'already answered'}, status=403)
+
         now = timezone.now()
 
         minimum_time = timedelta(seconds=5)
