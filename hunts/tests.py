@@ -363,16 +363,50 @@ class PuzzleAccessTests(EventTestCase):
 
         # This test submits two answers on the same puzzle so we have to jump forward 5 seconds
         with freezegun.freeze_time() as frozen_datetime:
-            # Create an initial correct guess and wait 5 seconds before attempting other answers.
+            # Can load, callback and answer the first puzzle
+            _check_load_callback_answer(self.puzzles[0], 200)
+
+            # Answer the puzzle correctly, wait, then try again. This should fail because it's already done.
             GuessFactory(
                 by=self.user,
                 for_puzzle=self.puzzles[0],
                 correct=True
             )
             frozen_datetime.tick(delta=datetime.timedelta(seconds=5))
+            # We should be able to load the puzzle but not answer it
 
-            # Can load, callback and answer the first two puzzles
-            _check_load_callback_answer(self.puzzles[0], 200)
+            # Load
+            kwargs = {
+                'episode_number': self.episode.get_relative_id(),
+                'puzzle_number': self.puzzles[0].get_relative_id(),
+            }
+            resp = self.client.get(reverse('puzzle', kwargs=kwargs))
+            self.assertEqual(resp.status_code, 200)
+
+            # Callback
+            resp = self.client.post(
+                reverse('callback', kwargs=kwargs),
+                content_type='application/json',
+                HTTP_ACCEPT='application/json',
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
+            self.assertEqual(resp.status_code, 200)
+
+            # Answer
+            resp = self.client.post(
+                reverse('answer', kwargs=kwargs),
+                {'answer': 'NOT_CORRECT'},  # Deliberately incorrect answer
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+            self.assertEqual(resp.status_code, 403)
+
+            # Solution
+            resp = self.client.get(
+                reverse('solution_content', kwargs=kwargs),
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+            )
+            self.assertEqual(resp.status_code, 403)
+
             _check_load_callback_answer(self.puzzles[1], 200)
             # Can't load, callback or answer the third puzzle
             _check_load_callback_answer(self.puzzles[2], 403)
