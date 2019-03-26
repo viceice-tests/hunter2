@@ -398,7 +398,7 @@ class PuzzleAccessTests(EventTestCase):
                 {'answer': 'NOT_CORRECT'},  # Deliberately incorrect answer
                 HTTP_X_REQUESTED_WITH='XMLHttpRequest'
             )
-            self.assertEqual(resp.status_code, 403)
+            self.assertEqual(resp.status_code, 422)
 
             # Solution
             resp = self.client.get(
