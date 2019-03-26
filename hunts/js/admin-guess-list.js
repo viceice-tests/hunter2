@@ -2,6 +2,7 @@ import $ from 'jquery'
 import BPagination from 'bootstrap-vue/es/components/pagination/pagination'
 import BTable from 'bootstrap-vue/es/components/table/table'
 import URI from 'urijs'
+import moment from 'moment'
 
 export default {
   components: {
@@ -28,6 +29,11 @@ export default {
       guesses: [],
       rows: 0,
     }
+  },
+  filters: {
+    moment: function(time) {
+      return moment(time).format('lll')
+    },
   },
   methods: {
     changePage: function(page) {

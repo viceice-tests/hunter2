@@ -32,6 +32,9 @@
 				<a v-bind:href="row.item.add_unlock_url">U</a>
 			)</span>
 		</template>
+		<template v-slot:given="row">
+			{{ row.value | moment }}
+		</template>
 	</b-table>
 
 	<b-pagination v-model="currentPage" v-bind:total-rows="rows" v-bind:per-page="perPage" v-on:change="changePage" size="sm" />
