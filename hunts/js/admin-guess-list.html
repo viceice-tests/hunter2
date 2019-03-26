@@ -5,7 +5,7 @@
 		<label for="auto-update">Update automatically</label>
 	</p>
 
-	<b-table v-bind:fields="fields" v-bind:items="guesses">
+	<b-table v-bind:fields="fields" v-bind:items="guesses" small="true" striped="true">
 		<template v-slot:episode="row">
 			<a v-bind:href="`?episode=${row.value.id}`" v-on:click.prevent="addFilter('episode', row.value.id)">{{ row.value.name }}</a>
 		</template>
