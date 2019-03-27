@@ -5,7 +5,7 @@
 		<label for="auto-update">Update automatically</label>
 	</p>
 
-	<b-table v-bind:fields="fields" v-bind:items="guesses" small="true" striped="true">
+	<b-table v-bind:fields="fields" v-bind:items="guesses" small striped>
 		<template v-slot:episode="row">
 			<a v-bind:href="`?episode=${row.value.id}`" v-on:click.prevent="addFilter('episode', row.value.id)">{{ row.value.name }}</a>
 		</template>
@@ -18,7 +18,7 @@
 		</template>
 		<template v-slot:user="row">
 			<a v-bind:href="`?user=${row.value.id}`" v-on:click.prevent="addFilter('user', row.value.id)">{{ row.value.name }}</a>
-			<span v-if="row.item.team.name">
+			<span v-if="row.item.team.name" class="team">
 				(<a v-bind:href="`?team=${row.item.team.id}`" v-on:click.prevent="addFilter('team', row.item.team.id)">{{ row.item.team.name }}</a>)
 			</span>
 		</template>

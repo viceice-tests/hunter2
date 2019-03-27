@@ -16,15 +16,17 @@ export default {
     return {
       autoUpdate: true,
       currentPage: 1,
-      fields: [
-        'episode',
-        'puzzle',
-        'user',
-        'seat',
-        'guess',
-        'given',
-        'time_on_puzzle',
-      ],
+      fields: {
+        'episode': {},
+        'puzzle': {},
+        'user': {},
+        'seat': {},
+        'guess': {},
+        'given': {
+          'class': 'timestamp',
+        },
+        'time_on_puzzle': {},
+      },
       filter: URI(window.location).search(true),
       guesses: [],
       rows: 0,

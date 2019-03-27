@@ -1,7 +1,20 @@
 span.shortcuts {
+    @extend %nowrap;
     font-size: 75%;
+
+    > a {
+        font-weight: bold;
+    }
 }
 
-span.shortcuts > a {
-    font-weight: bold;
+span.team {
+    @extend %nowrap;
+}
+
+td.timestamp {
+    @extend %nowrap;
+}
+
+%nowrap {
+    white-space: nowrap;
 }
