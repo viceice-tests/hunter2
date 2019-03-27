@@ -45,7 +45,8 @@
 </div>
 {% elif ended %}
 <h2>Event is over</h2>
-{% else %}
+{% endif %}
+{% if admin or not answered and not ended %}
 <form class="form-inline" action="an" method="POST">
 	{% csrf_token %}
 	<span id="answer-border">
