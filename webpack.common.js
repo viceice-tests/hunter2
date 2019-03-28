@@ -1,6 +1,7 @@
 const path = require('path')
 const BundleTracker = require('webpack-bundle-tracker')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const VueLoaderPlugin = require('vue-loader/lib/plugin')
 
 module.exports = {
   context: '/usr/src/app',
@@ -20,7 +21,13 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(scss)$/,
+        test: /\.vue$/,
+        use: [
+          'vue-loader?sourceMap',
+        ],
+      },
+      {
+        test: /\.scss$/,
         use: [
           MiniCssExtractPlugin.loader,
           'css-loader?sourceMap',
@@ -43,6 +50,7 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: '[name]/[hash].css',
     }),
+    new VueLoaderPlugin(),
   ],
 
   resolve: {
