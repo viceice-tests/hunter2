@@ -245,7 +245,8 @@ class GuessesList(LoginRequiredMixin, View):
             } for g in guesses
         ]
 
-        if strtobool(request.GET.get('highlight_unlocks')):
+        highlight_unlocks = request.GET.get('highlight_unlocks')
+        if highlight_unlocks is not None and strtobool(highlight_unlocks):
             for g, gl in zip(guesses, guesses_list):
                 unlockanswers = models.UnlockAnswer.objects.filter(unlock__puzzle=g.for_puzzle)
                 gl['unlocked'] = any([a.validate_guess(g) for a in unlockanswers])
