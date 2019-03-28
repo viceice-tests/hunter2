@@ -13,9 +13,12 @@ export default {
     this.updateData(true)
   },
   data: function() {
+    let search = URI(window.location).search(true)
+    let page = 'page' in search ? search.page : 1
+    delete search.page
     return {
       autoUpdate: true,
-      currentPage: 1,
+      currentPage: page,
       fields: [
         'episode',
         'puzzle',
@@ -25,7 +28,7 @@ export default {
         'given',
         'time_on_puzzle',
       ],
-      filter: URI(window.location).search(true),
+      filter: search,
       guesses: [],
       highlightUnlocks: false,
       rows: 0,
@@ -84,7 +87,9 @@ export default {
           v.guesses = data.guesses
           v.rows = data.rows
         })
-        this.timer = setTimeout(this.updateData, 5000)
+        if (this.autoUpdate) {
+          this.timer = setTimeout(this.updateData, 5000)
+        }
       }
     },
   },
@@ -104,7 +109,7 @@ export default {
       }
     },
     highlightUnlocks: function() {
-      this.updateData()
+      this.updateData(true)
     },
   },
 }
