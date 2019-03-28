@@ -10,6 +10,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+from distutils.util import strtobool
 from os import path
 from string import Template
 from urllib.parse import quote_plus
@@ -244,10 +245,10 @@ class GuessesList(LoginRequiredMixin, View):
             } for g in guesses
         ]
 
-        if request.GET.get('highlight_unlocks'):
+        if strtobool(request.GET.get('highlight_unlocks')):
             for g, gl in zip(guesses, guesses_list):
                 unlockanswers = models.UnlockAnswer.objects.filter(unlock__puzzle=g.for_puzzle)
-                gl.unlocked = any([a.validate_guess(g) for a in unlockanswers])
+                gl['unlocked'] = any([a.validate_guess(g) for a in unlockanswers])
 
         return JsonResponse({
             'guesses': guesses_list,

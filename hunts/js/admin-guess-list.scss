@@ -1,3 +1,9 @@
+div#controls {
+    > p {
+        flex-grow: 1;
+    }
+}
+
 span.shortcuts {
     @extend %nowrap;
     font-size: 75%;

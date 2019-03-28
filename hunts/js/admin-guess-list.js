@@ -27,6 +27,7 @@ export default {
       ],
       filter: URI(window.location).search(true),
       guesses: [],
+      highlightUnlocks: false,
       rows: 0,
     }
   },
@@ -67,7 +68,7 @@ export default {
       clearTimeout(this.timer)
       let page = this.currentPage
       if (force || this.autoUpdate) {
-        let guesses_url = URI(this.href).search({...this.filter, 'page': page})
+        let guesses_url = URI(this.href).search({...this.filter, 'highlight_unlocks': this.highlightUnlocks, 'page': page})
         let v = this
         $.get(guesses_url).done(function(data) {
           for (let guess of data.guesses) {
@@ -101,6 +102,9 @@ export default {
       if (on) {
         this.updateData()
       }
+    },
+    highlightUnlocks: function() {
+      this.updateData()
     },
   },
 }
