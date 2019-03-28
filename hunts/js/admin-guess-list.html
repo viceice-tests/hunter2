@@ -33,7 +33,8 @@
 			)</span>
 		</template>
 		<template v-slot:given="row">
-			{{ row.value | moment }}
+			<span class="date">{{ row.value | moment("ll") }}</span>
+			<span class="time">{{ row.value | moment("LTS") }}</span>
 		</template>
 	</b-table>
 

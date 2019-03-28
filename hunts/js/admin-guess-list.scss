@@ -11,7 +11,11 @@ span.team {
     @extend %nowrap;
 }
 
-td.timestamp {
+span.date {
+    @extend %nowrap;
+}
+
+span.time {
     @extend %nowrap;
 }
 
