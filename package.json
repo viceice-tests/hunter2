@@ -14,7 +14,7 @@
     "url": "https://gitlab.com/hunter2.app/hunter2/issues"
   },
   "scripts": {
-    "start": "nodemon --watch package.json --exec /bin/sh -- -c 'yarn install && nodemon --watch webpack.common.js --watch webpack.dev.js --exec webpack-dev-server -- --config webpack.dev.js --watch'"
+    "start": "/node_modules/.bin/nodemon --watch package.json --exec /bin/sh -- -c 'yarn install && nodemon --watch webpack.common.js --watch webpack.dev.js --exec webpack-dev-server -- --config webpack.dev.js --watch'"
   },
   "devDependencies": {
     "autoprefixer": "^9.4.7",
