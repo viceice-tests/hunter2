@@ -158,6 +158,11 @@ hr {
 	color: #333;
 }
 
+.form-control::placeholder
+{
+	color: #aaa;
+}
+
 *[id$='-error'] {
 	color: red;
 }
