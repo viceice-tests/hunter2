@@ -83,7 +83,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
-ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.UserProfileForm'
+ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.UserInfoForm'
 
 ACCOUNT_USERNAME_VALIDATORS = 'hunter2.validators.username_validators'
 

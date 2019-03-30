@@ -14,13 +14,14 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.forms.models import inlineformset_factory, modelform_factory
+from django.forms.widgets import CheckboxInput
 
 from events.models import Attendance
 from . import models
 
 UserForm = modelform_factory(User, fields=('email', ))
 
-UserInfoFormset = inlineformset_factory(User, models.UserInfo, fields=('picture', ), can_delete=False)
+UserInfoFormset = inlineformset_factory(User, models.UserInfo, fields=('picture', 'contact'), can_delete=False, widgets={'contact': CheckboxInput()})
 
 
 def attendance_formset_factory(seat_assignments):
@@ -28,14 +29,17 @@ def attendance_formset_factory(seat_assignments):
     return inlineformset_factory(models.UserInfo, Attendance, fields=fields, extra=0, can_delete=False)
 
 
-class UserProfileForm(forms.ModelForm):
+class UserInfoForm(forms.ModelForm):
     class Meta:
-        model = models.UserProfile
-        fields = []
+        model = models.UserInfo
+        fields = ['contact']
+        widgets = {
+            'contact': CheckboxInput(),
+        }
 
-    field_order = ['username', 'email', 'password1', 'password2']
+    field_order = ['username', 'email', 'password1', 'password2', 'contact']
 
     def signup(self, request, user):
-        user.profile = models.UserProfile(user=user)
-        user.profile.save()
+        user.info = models.UserInfo(user=user)
+        user.info.save()
         user.save()

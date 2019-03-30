@@ -12,6 +12,7 @@
 
 
 from django.db.models import Q
+from django.urls import reverse
 
 from hunts import models
 
@@ -33,16 +34,28 @@ def announcements(request):
             (Q(event__isnull=True) | Q(event=request.tenant)) &
             (Q(puzzle__isnull=True)))
 
-    if request.user.is_authenticated and request.tenant.seat_assignments and request.user.info.attendance_at(request.tenant).seat == '':
-        no_seat = models.Announcement(
-            id='no-seat-announcement',
-            event=request.tenant,
-            title='No Seat Set',
-            message="You don't have a seat set at this event. Set your seat on the account page.",
-            type=models.AnnouncementType.WARNING,
-        )
-        no_seat.special = True
-        current_announcements = list(current_announcements) + [no_seat]
+    if request.user.is_authenticated:
+        account_href = reverse('edit_profile')
+        if request.tenant.seat_assignments and request.user.info.attendance_at(request.tenant).seat == '':
+            no_seat = models.Announcement(
+                id='no-seat-announcement',
+                event=request.tenant,
+                title='No Seat Set',
+                message="You don't have a seat set at this event. Set your seat on the account page.",
+                type=models.AnnouncementType.WARNING,
+            )
+            no_seat.special = True
+            current_announcements = list(current_announcements) + [no_seat]
+        if request.user.info.contact is None:
+            no_contact = models.Announcement(
+                event=request.tenant,
+                title='Can we contact you?',
+                message="We'd like to contact you occasionally about this and future events. "
+                        f"Please let us know whether we can on the <a href={account_href}>account page</a>",
+                type=models.AnnouncementType.WARNING,
+            )
+            no_contact.special = True
+            current_announcements = list(current_announcements) + [no_contact]
 
     return {
         'announcements': current_announcements

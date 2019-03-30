@@ -28,6 +28,7 @@ class UserInfoFactory(DjangoModelFactory):
     # (this disables the RelatedFactory)
     user = factory.SubFactory('accounts.factories.UserFactory', info=None)
     picture = factory.Faker('url')
+    contact = factory.Faker('boolean')
 
 
 class UserProfileFactory(DjangoModelFactory):
