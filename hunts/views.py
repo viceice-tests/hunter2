@@ -729,8 +729,11 @@ class AboutView(TemplateView):
         admin_members = UserInfo.objects.filter(user__profile__in=admin_team.members.all())
         admin_members = annotate_userinfo_queryset_with_seat(admin_members, self.request.tenant)
 
+        admin_verb = 'was' if self.request.tenant.end_date < timezone.now() else 'is'
+
         context.update({
             'admins': admin_members,
+            'admin_verb': admin_verb,
             'content': content,
             'event_name': self.request.tenant.name,
         })
