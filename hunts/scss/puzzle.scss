@@ -49,6 +49,10 @@ section {
     padding-bottom: 1em;
 }
 
+section.puzzle-grow {
+    height: 75vh;
+}
+
 section:not(:last-child):after {
     content: "";
     display: block;

@@ -23,7 +23,7 @@
 	{{ flavour | safe }}
 </section>
 {% endif %}
-<section id="puzzle-content" class="flex-grow-1">
+<section id="puzzle-content"{% if grow_section %} class="puzzle-grow"{% endif %}>
 <!-- CLUE STARTS HERE -->
 {{ text | safe }}
 <!-- CLUE ENDS HERE -->
