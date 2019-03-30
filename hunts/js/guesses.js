@@ -8,12 +8,12 @@ import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js'
 $(function () {
   setupJQueryAjaxCsrf()
 
-  Vue.component('admin-guess-list', AdminGuessList)
-
-  new Vue({
-    components: {
-      'admin-guess-list': AdminGuessList,
+  const href = $('#admin-guess-list').data('href')
+  const adminguesslist = new Vue({
+    ...AdminGuessList,
+    propsData: {
+      href: href,
     },
-    el: '#content',
   })
+  adminguesslist.$mount('#admin-guess-list')
 })

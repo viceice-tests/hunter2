@@ -96,6 +96,7 @@ export default {
   props: {
     href: {
       type: String,
+      required: true,
     },
     perPage: {
       default: 50,
