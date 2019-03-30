@@ -62,3 +62,7 @@ class Runtime(Enum, metaclass=RuntimeMeta):
 
     def is_printable(self):
         return self in (Runtime.REGEX, Runtime.STATIC)
+
+    @property
+    def grow_section(self):
+        return self == Runtime.IFRAME

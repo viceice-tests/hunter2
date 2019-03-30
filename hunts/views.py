@@ -494,6 +494,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 'episode_number': episode_number,
                 'hints': hints,
                 'puzzle_number': puzzle_number,
+                'grow_section': puzzle.runtime.grow_section,
                 'title': puzzle.title,
                 'flavour': flavour,
                 'text': text,
