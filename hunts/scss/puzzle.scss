@@ -23,7 +23,8 @@
 #answer-button[disabled] {
 	opacity: 1;
 	filter: alpha(opacity=1);
-/*	background-image: initial;*/
+	background: #ccc;
+	border-color: #bbb;
 }
 
 #answer-button svg {
