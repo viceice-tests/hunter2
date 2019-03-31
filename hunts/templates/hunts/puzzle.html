@@ -31,15 +31,23 @@
 <section id="puzzle-clues">
 <h3>Hints</h3>
 <ul id="hints">
-{% for hint in hints %}
-<li>{{hint.time}}: {{hint.text}}</li>
-{% endfor %}
+{% if not hints %}
+  <li><i>You don't have any hints yet</i></li>
+{% else %}
+  {% for hint in hints %}
+  <li>{{hint.time}}: {{hint.text}}</li>
+  {% endfor %}
+{% endif %}
 </ul>
 <h3>Unlocks</h3>
 <ul id="unlocks">
-{% for unlock in unlocks %}
-<li>{% for guess in unlock.guesses %}{{guess}}{% if not forloop.last %}, {% endif %}{% endfor %}: {{unlock.text}}</li>
-{% endfor %}
+{% if not unlocks %}
+  <li><i>You don't have any unlocks yet</i></li>
+{% else %}
+  {% for unlock in unlocks %}
+  <li>{% for guess in unlock.guesses %}{{guess}}{% if not forloop.last %}, {% endif %}{% endfor %}: {{unlock.text}}</li>
+  {% endfor %}
+{% endif %}
 </ul>
 </section>
 <section id="puzzle-answer">

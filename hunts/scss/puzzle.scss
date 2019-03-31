@@ -64,7 +64,6 @@
 
 section {
     margin-bottom: 1em;
-    padding-bottom: 1em;
 }
 
 section.puzzle-grow {
@@ -75,8 +74,8 @@ section:not(:last-child):after {
     content: "";
     display: block;
     height: 1px;
-    width: 6em;
-    margin: 1em calc(50% - 3em) 0 calc(50% - 3em);
+    width: 100%;
+    margin: 1em 0 0 0;
     background: #ccc;
 }
 
