@@ -45,6 +45,15 @@
 	display: inline-block;
 }
 
+.submission-error-container {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.submission-error {
+    margin: 0 0 0 1em;
+}
+
 section {
     margin-bottom: 1em;
     padding-bottom: 1em;

@@ -32,8 +32,8 @@ function correct_answer() {
 }
 
 function message(message, error) {
-  var error_msg = $('<p class="submission-error" title="' + error + '">' + message + '</p>')
-  error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(5000, function(){$(this).remove()})
+  var error_msg = $('<div class="submission-error-container"><p class="submission-error" title="' + error + '">' + message + '</p></div>')
+  error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(2000, function(){$(this).remove()})
 }
 
 function evaluateButtonDisabledState(button) {
