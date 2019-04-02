@@ -13,6 +13,7 @@
 
 import datetime
 import random
+import time
 
 import freezegun
 from django.core.exceptions import ValidationError
@@ -20,10 +21,12 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 from parameterized import parameterized
+from channels.testing import WebsocketCommunicator
 
 from accounts.factories import UserProfileFactory
-from events.factories import EventFactory, EventFileFactory
-from events.test import EventTestCase
+from events.factories import EventFileFactory
+from events.test import EventTestCase, AsyncEventTestCase
+from hunter2.routing import application as websocket_app
 from teams.factories import TeamFactory, TeamMemberFactory
 from . import utils
 from .factories import (
@@ -44,6 +47,7 @@ from .factories import (
     UserPuzzleDataFactory,
 )
 from .models import PuzzleData, TeamPuzzleData
+from .utils import encode_uuid
 from .runtimes import Runtime
 
 
@@ -126,8 +130,6 @@ class FactoryTests(EventTestCase):
 
 class HomePageTests(EventTestCase):
     def test_load_homepage(self):
-        # Need one default event.
-        EventFactory.create()
         url = reverse('index')
         response = self.client.get(url)
         response = self.client.get(url)
@@ -1049,51 +1051,50 @@ class EventWinningTests(EventTestCase):
     fixtures = ["teams_test"]
 
     def setUp(self):
-        self.event = EventFactory()
-        self.ep1 = EpisodeFactory(event=self.event, winning=True)
-        self.ep2 = EpisodeFactory(event=self.event, winning=False)
+        self.ep1 = EpisodeFactory(winning=True)
+        self.ep2 = EpisodeFactory(winning=False)
         self.user1 = UserProfileFactory()
         self.user2 = UserProfileFactory()
-        self.team1 = TeamFactory(at_event=self.event, members=self.user1)
-        self.team2 = TeamFactory(at_event=self.event, members=self.user2)
+        self.team1 = TeamFactory(members=self.user1)
+        self.team2 = TeamFactory(members=self.user2)
 
         PuzzleFactory.create_batch(2, episode=self.ep1)
         PuzzleFactory.create_batch(2, episode=self.ep2)
 
     def test_win_single_linear_episode(self):
         # No correct answers => noone has finished => no finishing positions!
-        self.assertEqual(utils.finishing_positions(self.event), [])
+        self.assertEqual(utils.finishing_positions(self.tenant), [])
 
         GuessFactory.create(for_puzzle=self.ep1.get_puzzle(1), by=self.user1, correct=True)
         GuessFactory.create(for_puzzle=self.ep1.get_puzzle(1), by=self.user2, correct=True)
         # First episode still not complete
-        self.assertEqual(utils.finishing_positions(self.event), [])
+        self.assertEqual(utils.finishing_positions(self.tenant), [])
 
         g = GuessFactory.create(for_puzzle=self.ep1.get_puzzle(2), by=self.user1, correct=True)
         GuessFactory.create(for_puzzle=self.ep1.get_puzzle(2), by=self.user2, correct=False)
         # Team 1 has finished the only winning episode, but Team 2 has not
-        self.assertEqual(utils.finishing_positions(self.event), [self.team1])
+        self.assertEqual(utils.finishing_positions(self.tenant), [self.team1])
 
         GuessFactory.create(for_puzzle=self.ep1.get_puzzle(2), by=self.user2, correct=True)
         # Team 2 should now be second place
-        self.assertEqual(utils.finishing_positions(self.event), [self.team1, self.team2])
+        self.assertEqual(utils.finishing_positions(self.tenant), [self.team1, self.team2])
 
         # Make sure the order changes correctly
         g.given = timezone.now()
         g.save()
-        self.assertEqual(utils.finishing_positions(self.event), [self.team2, self.team1])
+        self.assertEqual(utils.finishing_positions(self.tenant), [self.team2, self.team1])
 
     def test_win_two_linear_episodes(self):
         self.ep2.winning = True
         self.ep2.save()
 
-        self.assertEqual(utils.finishing_positions(self.event), [])
+        self.assertEqual(utils.finishing_positions(self.tenant), [])
 
         for pz in self.ep1.puzzle_set.all():
             for user in (self.user1, self.user2):
                 GuessFactory.create(for_puzzle=pz, by=user, correct=True)
         # We need to complete both episodes
-        self.assertEqual(utils.finishing_positions(self.event), [])
+        self.assertEqual(utils.finishing_positions(self.tenant), [])
 
         # both teams complete episode 2, but now their episode 1 guesses are wrong
         for pz in self.ep1.puzzle_set.all():
@@ -1107,7 +1108,7 @@ class EventWinningTests(EventTestCase):
             for user in (self.user1, self.user2):
                 GuessFactory.create(for_puzzle=pz, by=user, correct=True)
         # Should still have no-one finished
-        self.assertEqual(utils.finishing_positions(self.event), [])
+        self.assertEqual(utils.finishing_positions(self.tenant), [])
 
         # Make correct Episode 1 guesses again
         for pz in self.ep1.puzzle_set.all() | self.ep2.puzzle_set.all():
@@ -1116,7 +1117,7 @@ class EventWinningTests(EventTestCase):
             for user in (self.user1, self.user2):
                 GuessFactory.create(for_puzzle=pz, by=user, correct=True)
         # Now both teams should have finished, with team1 first
-        self.assertEqual(utils.finishing_positions(self.event), [self.team1, self.team2])
+        self.assertEqual(utils.finishing_positions(self.tenant), [self.team1, self.team2])
 
         # Swap order
         for pz in self.ep1.puzzle_set.all():
@@ -1124,7 +1125,7 @@ class EventWinningTests(EventTestCase):
                 g.given = timezone.now()
                 g.save()
         # team2 should be first
-        self.assertEqual(utils.finishing_positions(self.event), [self.team2, self.team1])
+        self.assertEqual(utils.finishing_positions(self.tenant), [self.team2, self.team1])
 
 
 class CorrectnessCacheTests(EventTestCase):
@@ -1236,3 +1237,390 @@ class UnlockAnswerTests(EventTestCase):
         with self.assertRaises(ValueError):
             unlockanswer.unlock = new_unlock
             unlockanswer.save()
+
+
+class TestPuzzleWebsocket(AsyncEventTestCase):
+    # Missing:
+    # disconnect with hints scheduled
+    # moving unlock to a different puzzle
+    # moving hint to a different puzzle (also not implemented)
+    def setUp(self):
+        super().setUp()
+        self.pz = PuzzleFactory()
+        self.ep = self.pz.episode
+        self.url = 'ws/hunt/ep/%d/pz/%d/' % (self.ep.get_relative_id(), self.pz.get_relative_id())
+
+    def test_anonymous_access_fails(self):
+        comm = WebsocketCommunicator(websocket_app, self.url, headers=self.headers)
+        connected, subprotocol = self.run_async(comm.connect)()
+
+        self.assertFalse(connected)
+
+    def test_bad_requests(self):
+        user = TeamMemberFactory()
+        comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
+        connected, subprotocol = self.run_async(comm.connect)()
+        self.assertTrue(connected)
+
+        self.run_async(comm.send_json_to)({'naughty__request!': True})
+        output = self.receive_json(comm, 'Websocket did not respond to a bad request')
+        self.assertEqual(output['type'], 'error')
+
+        self.run_async(comm.send_json_to)({'type': 'still__bad'})
+        output = self.receive_json(comm, 'Websocket did not respond to a bad request')
+        self.assertEqual(output['type'], 'error')
+
+        self.run_async(comm.send_json_to)({'type': 'guesses-plz'})
+        output = self.receive_json(comm, 'Websocket did not respond to a bad request')
+        self.assertEqual(output['type'], 'error')
+
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+        self.run_async(comm.disconnect)()
+
+    def test_initial_connection(self):
+        ua1 = UnlockAnswerFactory(unlock__puzzle=self.pz)
+        ua2 = UnlockAnswerFactory(unlock__puzzle=self.pz, guess=ua1.guess + '_different')  # noqa: F841
+        profile = TeamMemberFactory()
+        g1 = GuessFactory(for_puzzle=self.pz, by=profile)
+        g1.given = timezone.now() - datetime.timedelta(days=1)
+        g1.save()
+        g2 = GuessFactory(for_puzzle=self.pz, guess=ua1.guess, by=profile)
+        g2.given = timezone.now()
+        g2.save()
+
+        comm = self.get_communicator(websocket_app, self.url, {'user': profile.user})
+        connected, subprotocol = self.run_async(comm.connect)()
+        self.assertTrue(connected)
+        self.run_async(comm.send_json_to)({'type': 'guesses-plz', 'from': 'all'})
+        output = self.receive_json(comm, 'Websocket did nothing in response to request for old guesses')
+
+        self.assertEqual(output['type'], 'old_guess')
+        self.assertEqual(output['content']['guess'], g1.guess)
+        self.assertEqual(output['content']['by'], profile.user.username)
+
+        output = self.receive_json(comm, 'Websocket did not send all old guesses')
+        self.assertEqual(output['type'], 'old_guess')
+        self.assertEqual(output['content']['guess'], g2.guess)
+        self.assertEqual(output['content']['by'], profile.user.username)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        # Use utcnow() because the JS uses Date.now() which uses UTC - hence the consumer code also uses UTC.
+        dt = (datetime.datetime.utcnow() - datetime.timedelta(hours=1))
+        # Multiply by 1000 because Date.now() uses ms not seconds
+        self.run_async(comm.send_json_to)({'type': 'guesses-plz', 'from': dt.timestamp() * 1000})
+        output = self.receive_json(comm, 'Websocket did nothing in response to request for old guesses')
+        self.assertTrue(self.run_async(comm.receive_nothing)(), 'Websocket sent guess from before requested cutoff')
+
+        self.assertEqual(output['type'], 'new_guess')
+        self.assertEqual(output['content']['guess'], g2.guess)
+        self.assertEqual(output['content']['by'], profile.user.username)
+
+        self.run_async(comm.send_json_to)({'type': 'unlocks-plz'})
+        output = self.receive_json(comm, 'Websocket did nothing in response to request for unlocks')
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        self.assertEqual(output['type'], 'old_unlock')
+        self.assertEqual(output['content']['unlock'], ua1.unlock.text)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        self.run_async(comm.disconnect)()
+
+    def test_same_team_sees_guesses(self):
+        team = TeamFactory()
+        u1 = UserProfileFactory()
+        u2 = UserProfileFactory()
+        team.members.add(u1)
+        team.members.add(u2)
+        team.save()
+
+        comm1 = self.get_communicator(websocket_app, self.url, {'user': u1.user})
+        comm2 = self.get_communicator(websocket_app, self.url, {'user': u2.user})
+
+        connected, _ = self.run_async(comm1.connect)()
+        self.assertTrue(connected)
+        connected, _ = self.run_async(comm2.connect)()
+        self.assertTrue(connected)
+
+        g = GuessFactory(for_puzzle=self.pz, correct=False, by=u1)
+        g.save()
+
+        output = self.receive_json(comm1, 'Websocket did nothing in response to a submitted guess')
+        self.assertTrue(self.run_async(comm1.receive_nothing)())
+
+        self.assertEqual(output['type'], 'new_guess')
+        self.assertEqual(output['content']['guess'], g.guess)
+        self.assertEqual(output['content']['correct'], False)
+        self.assertEqual(output['content']['by'], u1.user.username)
+
+        output = self.receive_json(comm2, 'Websocket did nothing in response to a submitted guess')
+        self.assertTrue(self.run_async(comm2.receive_nothing)())
+
+        self.assertEqual(output['type'], 'new_guess')
+        self.assertEqual(output['content']['guess'], g.guess)
+        self.assertEqual(output['content']['correct'], False)
+        self.assertEqual(output['content']['by'], u1.user.username)
+
+        self.run_async(comm1.disconnect)()
+        self.run_async(comm2.disconnect)()
+
+    def test_other_team_sees_no_guesses(self):
+        u1 = TeamMemberFactory()
+        u2 = TeamMemberFactory()
+
+        comm1 = self.get_communicator(websocket_app, self.url, {'user': u1.user})
+        comm2 = self.get_communicator(websocket_app, self.url, {'user': u2.user})
+
+        connected, _ = self.run_async(comm1.connect)()
+        self.assertTrue(connected)
+        connected, _ = self.run_async(comm2.connect)()
+        self.assertTrue(connected)
+
+        g = GuessFactory(for_puzzle=self.pz, correct=False, by=u1)
+        g.save()
+
+        self.assertTrue(self.run_async(comm2.receive_nothing)())
+        self.run_async(comm1.disconnect)()
+        self.run_async(comm2.disconnect)()
+
+    def test_correct_answer_forwards(self):
+        user = TeamMemberFactory()
+        g = GuessFactory(for_puzzle=self.pz, correct=False, by=user)
+        comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
+        connected, subprotocol = self.run_async(comm.connect)()
+        self.assertTrue(connected)
+
+        g = GuessFactory(for_puzzle=self.pz, correct=True, by=user)
+
+        self.assertTrue(self.pz.answered_by(user.team_at(self.tenant)))
+
+        output = self.receive_json(comm, 'Websocket did nothing in response to a submitted guess')
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        # We should be notified of the correct guess. Since the episode had just one puzzle,
+        # we are now done with that episode and should be redirected back to the episode.
+        self.assertEqual(output['type'], 'new_guess')
+        self.assertEqual(output['content']['guess'], g.guess)
+        self.assertEqual(output['content']['correct'], True)
+        self.assertEqual(output['content']['by'], user.user.username)
+        self.assertEqual(output['content']['redirect'], self.ep.get_absolute_url(), 'Websocket did not redirect to the episode after completing that episode')
+
+        # Now add another puzzle. We should be redirected to that puzzle, since it is the
+        # unique unfinished puzzle on the episode.
+        pz2 = PuzzleFactory(episode=self.ep)
+        g.delete()
+        g.save()
+
+        output = self.receive_json(comm, 'Websocket did nothing in response to a submitted guess')
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        self.assertEqual(output['type'], 'new_guess')
+        self.assertEqual(output['content']['guess'], g.guess)
+        self.assertEqual(output['content']['correct'], True)
+        self.assertEqual(output['content']['by'], user.user.username)
+        self.assertEqual(output['content']['redirect'], pz2.get_absolute_url(),
+                         'Websocket did not redirect to the next available puzzle when completing'
+                         'one of two puzzles on an episode')
+
+        self.run_async(comm.disconnect)()
+
+    def test_websocket_receives_guess_updates(self):
+        user = TeamMemberFactory()
+        eve = TeamMemberFactory()
+        ua = UnlockAnswerFactory(unlock__puzzle=self.pz, unlock__text='unlock_text', guess='unlock_guess')
+        comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
+        comm_eve = self.get_communicator(websocket_app, self.url, {'user': eve.user})
+
+        connected, subprotocol = self.run_async(comm.connect)()
+        self.assertTrue(connected)
+        connected, subprotocol = self.run_async(comm_eve.connect)()
+        self.assertTrue(connected)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+        self.assertTrue(self.run_async(comm_eve.receive_nothing)())
+
+        g1 = GuessFactory(for_puzzle=self.pz, by=user, guess=ua.guess)
+        output1 = self.receive_json(comm, 'Websocket did nothing in response to a submitted guess')
+        output2 = self.receive_json(comm, 'Websocket didn\'t do enough in response to a submitted guess')
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        try:
+            if output1['type'] == 'new_unlock' and output2['type'] == 'new_guess':
+                new_unlock = output1
+            elif output2['type'] == 'new_unlock' and output1['type'] == 'new_guess':
+                new_unlock = output2
+            else:
+                self.fail('Websocket did not receive exactly one each of new_guess and new_unlock')
+        except KeyError:
+            self.fail('Websocket did not receive exactly one each of new_guess and new_unlock')
+
+        self.assertEqual(new_unlock['content']['unlock'], ua.unlock.text)
+        self.assertEqual(new_unlock['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(new_unlock['content']['guess'], g1.guess)
+
+        g2 = GuessFactory(for_puzzle=self.pz, by=user, guess='different_unlock_guess')
+        # discard new_guess notification
+        self.run_async(comm.receive_json_from)()
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        # Change the unlockanswer so the other guess validates it, check they are switched over
+        ua.guess = g2.guess
+        ua.save()
+        output1 = self.receive_json(comm, 'Websocket did nothing in response to a changed, unlocked unlockanswer')
+        output2 = self.receive_json(comm, 'Websocket did not send the expected two replies in response to unlock guess validation changing')
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        try:
+            if output1['type'] == 'new_unlock' and output2['type'] == 'delete_unlockguess':
+                new_unlock = output1
+                delete_unlockguess = output2
+            elif output2['type'] == 'new_unlock' and output1['type'] == 'delete_unlockguess':
+                new_unlock = output2
+                delete_unlockguess = output1
+            else:
+                self.fail('Websocket did not receive exactly one each of new_guess and delete_unlockguess')
+        except KeyError:
+            self.fail('Websocket did not receive exactly one each of new_guess and delete_unlockguess')
+
+        self.assertEqual(delete_unlockguess['content']['guess'], g1.guess)
+        self.assertEqual(delete_unlockguess['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(new_unlock['content']['unlock'], ua.unlock.text)
+        self.assertEqual(new_unlock['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(new_unlock['content']['guess'], g2.guess)
+
+        # Change the unlock and check we're told about it
+        ua.unlock.text = 'different_unlock_text'
+        ua.unlock.save()
+        output = self.receive_json(comm, 'Websocket did nothing in response to a changed, unlocked unlock')
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        self.assertEqual(output['type'], 'change_unlock')
+        self.assertEqual(output['content']['unlock'], ua.unlock.text)
+        self.assertEqual(output['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+
+        # Delete unlockanswer, check we are told
+        ua.delete()
+        output = self.receive_json(comm, 'Websocket did nothing in response to a deleted, unlocked unlockanswer')
+        self.assertEqual(output['type'], 'delete_unlockguess')
+        self.assertEqual(output['content']['guess'], g2.guess)
+        self.assertEqual(output['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+
+        # Re-add, check we are told
+        ua.save()
+        output = self.receive_json(comm, 'Websocket did nothing in response to a new, unlocked unlockanswer')
+        self.assertEqual(output['type'], 'new_unlock')
+        self.assertEqual(output['content']['guess'], g2.guess)
+        self.assertEqual(output['content']['unlock'], ua.unlock.text)
+        self.assertEqual(output['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+
+        # Delete the entire unlock, check we are told
+        old_id = ua.unlock.id
+        ua.unlock.delete()
+        output1 = self.receive_json(comm, 'Websocket did nothing in response to a deleted, unlocked unlock')
+        output2 = self.receive_json(comm, 'Websocket did nothing in response to a deleted, unlocked unlock')
+
+        # Right now deleting an unlock cascades to the unlockanswers so we get events for both of them.
+        # We only actually care about the deleted unlock in this case, but we still check for precise behaviour
+        # here since this test ought to be changed if the event no longer cascades.
+        try:
+            if output1['type'] == 'delete_unlock' and output2['type'] == 'delete_unlockguess':
+                delete_unlock = output1
+                delete_unlockguess = output2
+            elif output2['type'] == 'delete_unlock' and output1['type'] == 'delete_unlockguess':
+                delete_unlock = output2
+                delete_unlockguess = output1
+            else:
+                self.fail('Websocket did not receive exactly one each of delete_unlock and delete_unlockguess')
+        except KeyError:
+            self.fail('Websocket did not receive exactly one each of delete_unlock and delete_unlockguess')
+
+        self.assertEqual(delete_unlock['content']['unlock_uid'], encode_uuid(old_id))
+
+        # Everything is done, check member of another team didn't overhear anything
+        self.assertTrue(self.run_async(comm_eve.receive_nothing)(), 'Websocket sent user updates they should not have received')
+
+        self.run_async(comm.disconnect)()
+        self.run_async(comm_eve.disconnect)()
+
+    def test_websocket_receives_hints(self):
+        # It would be better to mock the asyncio event loop in order to fake advancing time
+        # but that's too much effort (and freezegun doesn't support it yet) so just use
+        # short delays and hope.
+        delay = 0.1
+
+        user = TeamMemberFactory()
+        team = user.team_at(self.tenant)
+        data = PuzzleData(self.pz, team, user)
+        data.tp_data.start_time = timezone.now()
+        data.save()
+        hint = HintFactory(puzzle=self.pz, time=datetime.timedelta(seconds=delay))
+
+        comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
+        connected, subprotocol = self.run_async(comm.connect)()
+        self.assertTrue(connected)
+
+        # account for delays getting started
+        remaining = hint.delay_for_team(team).total_seconds()
+        if remaining < 0:
+            raise Exception('Websocket hint scheduling test took too long to start up')
+
+        # wait for half the remaining time for output
+        self.assertTrue(self.run_async(comm.receive_nothing)(remaining / 2))
+
+        # advance time by all the remaining time
+        time.sleep(remaining / 2)
+        self.assertTrue(hint.unlocked_by(team, data))
+
+        output = self.receive_json(comm, 'Websocket did not send unlocked hint')
+
+        self.assertEqual(output['type'], 'new_hint')
+        self.assertEqual(output['content']['hint'], hint.text)
+
+        self.run_async(comm.disconnect)()
+
+    def test_websocket_receives_hint_updates(self):
+        with freezegun.freeze_time() as frozen_datetime:
+            user = TeamMemberFactory()
+            team = user.team_at(self.tenant)
+            data = PuzzleData(self.pz, team, user)
+            data.tp_data.start_time = timezone.now()
+            data.save()
+
+            hint = HintFactory(text='hint_text', puzzle=self.pz, time=datetime.timedelta(seconds=1))
+            frozen_datetime.tick(delta=datetime.timedelta(seconds=2))
+            self.assertTrue(hint.unlocked_by(team, data))
+
+            comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
+            connected, subprotocol = self.run_async(comm.connect)()
+            self.assertTrue(connected)
+            self.assertTrue(self.run_async(comm.receive_nothing)())
+
+            hint.text = 'different_hint_text'
+            hint.save()
+
+            output = self.receive_json(comm, 'Websocket did not update changed hint text')
+            self.assertEqual(output['type'], 'new_hint')
+            self.assertEqual(output['content']['hint'], hint.text)
+            old_id = output['content']['hint_uid']
+            self.assertTrue(self.run_async(comm.receive_nothing)())
+
+            hint.time = datetime.timedelta(seconds=3)
+            hint.save()
+            output = self.receive_json(comm, 'Websocket did not remove hint which went into the future')
+            self.assertEqual(output['type'], 'delete_hint')
+            self.assertEqual(output['content']['hint_uid'], old_id)
+            self.assertTrue(self.run_async(comm.receive_nothing)())
+
+            hint.time = datetime.timedelta(seconds=1)
+            hint.save()
+            output = self.receive_json(comm, 'Websocket did not announce hint which moved into the past')
+            self.assertEqual(output['type'], 'new_hint')
+            self.assertEqual(output['content']['hint'], hint.text)
+            old_id = output['content']['hint_uid']
+            self.assertTrue(self.run_async(comm.receive_nothing)())
+
+            hint.delete()
+            output = self.receive_json(comm, 'Websocket did not remove hint which was deleted')
+            self.assertEqual(output['type'], 'delete_hint')
+            self.assertEqual(output['content']['hint_uid'], old_id)
+            self.assertTrue(self.run_async(comm.receive_nothing)())
+
+            self.run_async(comm.disconnect)()

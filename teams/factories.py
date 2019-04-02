@@ -17,7 +17,7 @@ import factory
 from faker import Faker
 
 from accounts.factories import UserProfileFactory
-from events import factories
+from events.models import Event
 
 
 class TeamFactory(factory.django.DjangoModelFactory):
@@ -25,7 +25,7 @@ class TeamFactory(factory.django.DjangoModelFactory):
         model = 'teams.Team'
 
     name = factory.Sequence(lambda n: f'{n}{Faker().color_name()}')
-    at_event = factory.SubFactory(factories.EventFactory)
+    at_event = factory.LazyFunction(Event.objects.get)
     is_admin = False
 
     @factory.post_generation

@@ -17,7 +17,7 @@ from urllib.parse import quote_plus
 import tarfile
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files import File
@@ -593,19 +593,6 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         if request.tenant.end_date < now:
             return JsonResponse({'error': 'event is over'}, status=400)
 
-        data = models.PuzzleData(request.puzzle, request.team)
-
-        last_updated = request.POST.get('last_updated')
-        if last_updated and data.tp_data.start_time:
-            last_updated = datetime.fromtimestamp(int(last_updated) // 1000, timezone.utc)
-            new_hints = request.puzzle.hint_set.filter(
-                time__gt=(last_updated - data.tp_data.start_time),
-                time__lt=(now - data.tp_data.start_time),
-            )
-            new_hints = [{'time': str(hint.time), 'text': hint.text} for hint in new_hints]
-        else:
-            new_hints = []
-
         # Put answer in DB
         guess = models.Guess(
             guess=given_answer,
@@ -618,43 +605,12 @@ class Answer(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         # Build the response JSON depending on whether the answer was correct
         response = {}
-        if correct:
-            next = request.episode.next_puzzle(request.team)
-            if next:
-                response['text'] = f'to the next puzzle'
-                response['url'] = reverse('puzzle', kwargs={'episode_number': episode_number, 'puzzle_number': next})
-            else:
-                response['text'] = f'back to {request.episode.name}'
-                response['url'] = request.episode.get_absolute_url()
-        else:
-            all_unlocks = models.Unlock.objects.filter(
-                puzzle=request.puzzle
-            ).select_related(
-                'puzzle'
-            ).prefetch_related(
-                'unlockanswer_set'
-            )
-
-            unlocks = []
-            for u in all_unlocks:
-                correct_guesses = u.unlocked_by(request.team)
-                if not correct_guesses:
-                    continue
-
-                guesses = [g.guess for g in correct_guesses]
-                # Get rid of duplicates but preserve order
-                duplicates = set()
-                guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
-                unlocks.append({'guesses': guesses,
-                                'text': u.text,
-                                'new': guess in correct_guesses})
-
+        if not correct:
             response['guess'] = given_answer
             response['timeout_length'] = minimum_time.total_seconds() * 1000
             response['timeout_end'] = str(now + minimum_time)
-            response['new_hints'] = new_hints
-            response['unlocks'] = unlocks
         response['correct'] = str(correct).lower()
+        response['by'] = request.user.username
 
         return JsonResponse(response)
 

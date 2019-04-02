@@ -5,33 +5,9 @@ import { easeLinear, format, select } from 'd3'
 import '../scss/puzzle.scss'
 
 import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js'
+import RobustWebSocket from 'robust-websocket'
 
-function escapeHtml(text) {
-  return text.replace(/["&<>]/g, function (a) {
-    return { '"': '&quot;', '&': '&amp;', '<': '&lt;', '>': '&gt;' }[a]
-  })
-}
-
-function incorrect_answer(guess, timeout_length, timeout, new_hints, unlocks) {
-  var hints_div = $('#hints')
-  var n_hints = new_hints.length
-  for (let i = 0; i < n_hints; i++) {
-    hints_div.append('<p>' + new_hints[i].time + ': ' + new_hints[i].text + '</p>')
-  }
-
-  var unlocks_div = $('#unlocks')
-  unlocks_div.empty()
-
-  var n_unlocks = unlocks.length
-  for (let i = 0; i < n_unlocks; i++) {
-    var guesses = unlocks[i].guesses.join(', ')
-    if (unlocks[i].new) {
-      unlocks_div.append('<p class="new-unlock">' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>')
-    } else {
-      unlocks_div.append('<p>' + escapeHtml(guesses) + ': ' + unlocks[i].text + '</p>')
-    }
-  }
-
+function incorrect_answer(guess, timeout_length, timeout) {
   var milliseconds = Date.parse(timeout) - Date.now()
   var difference = timeout_length - milliseconds
 
@@ -49,11 +25,14 @@ function incorrect_answer(guess, timeout_length, timeout, new_hints, unlocks) {
   }, milliseconds)
 }
 
-function correct_answer(url, text) {
+function correct_answer() {
   var form = $('.form-inline')
-  form.after(`<div id="correct-answer-message">Correct! Taking you ${text}. <a class="puzzle-complete-redirect" href="${url}">go right now</a></div>`)
-  form.remove()
-  setTimeout(function () {window.location.href = url}, 3000)
+  if (form.length) {
+    // We got a direct response before the WebSocket notified us (possibly because the WebSocket is broken
+    // in this case, we still want to tell the user that they got the right answer. If the WebSocket is
+    // working, this will be updated when it replies.
+    form.after('<div id="correct-answer-message">Correct!</div>')
+  }
 }
 
 function message(message, error) {
@@ -171,10 +150,10 @@ function addSVG() {
   var defs = svg.append('defs')
 
   /*var filter = defs.append("filter")
-    .attr("id", "drop-shadow")
-    .attr("x", "0")
-    .attr("y", "0")
-    .attr(*/
+		.attr("id", "drop-shadow")
+		.attr("x", "0")
+		.attr("y", "0")
+		.attr(*/
   var filter = defs.append('filter')
     .attr('id', 'drop-shadow')
     .attr('width', '200%')
@@ -195,7 +174,184 @@ function addSVG() {
     .attr('in', 'SourceGraphic')
 }
 
-var last_updated = Date.now()
+var guesses = []
+
+function addAnswer(user, guess, correct, guess_uid) {
+  var guesses_table = $('#guesses .guess-viewer-header')
+  guesses_table.after('<tr><td>' + user + '</td><td>' + guess + '</td></tr>')
+  guesses.push(guess_uid)
+}
+
+function receivedNewAnswer(content) {
+  if (!guesses.includes(content.guess_uid)) {
+    addAnswer(content.by, content.guess, content.correct, content.guess_uid)
+    if (content.correct) {
+      var message = $('#correct-answer-message')
+      var html = `"${content.guess} was correct! Taking you ${content.text}. <a class="puzzle-complete-redirect" href="${content.redirect}">go right now</a>`
+      if (message.length) {
+        // The server already replied so we already put up a temporary message; just update it
+        message.html(html)
+      } else {
+        // That did not happen, so add the message
+        var form = $('.form-inline')
+        form.after(`<div id="correct-answer-message">${html}</div>`)
+        form.remove()
+      }
+      setTimeout(function () {window.location.href = content.redirect}, 3000)
+    }
+  }
+}
+
+function receivedOldAnswer(content) {
+  addAnswer(content.by, content.guess, content.correct, content.guess_uid)
+}
+
+var unlocks = {}
+
+function updateUnlocks() {
+  var entries = Object.entries(unlocks)
+  entries.sort(function (a, b) {
+    if (a[1].unlock < b[1].unlock) return -1
+    else if(a[1].unlock > b[1].unlock) return 1
+    return 0
+  })
+  var list = select('#unlocks')
+    .selectAll('p')
+    .data(entries)
+  list.enter()
+    .append('p')
+    .merge(list)
+    .text(function (d) {
+      return d[1].guesses.join(', ') + ': ' + d[1].unlock
+    })
+  list.exit()
+    .remove()
+}
+
+function receivedNewUnlock(content) {
+  if (!(content.unlock_uid in unlocks)) {
+    unlocks[content.unlock_uid] = {'unlock': content.unlock, 'guesses': []}
+  }
+  if (!unlocks[content.unlock_uid].guesses.includes(content.guess)) {
+    unlocks[content.unlock_uid].guesses.push(content.guess)
+  }
+  updateUnlocks()
+}
+
+function receivedChangeUnlock(content) {
+  if (!(content.unlock_uid in unlocks)) {
+    throw `WebSocket ohanged invalid unlock: ${content.unlock_uid}`
+  }
+  unlocks[content.unlock_uid].unlock = content.unlock
+  updateUnlocks()
+}
+
+function receivedDeleteUnlock(content) {
+  if (!(content.unlock_uid in unlocks)) {
+    throw `WebSocket deleted invalid unlock: ${content.unlock_uid}`
+  }
+  delete unlocks[content.unlock_uid]
+  updateUnlocks()
+}
+
+function receivedDeleteUnlockGuess(content) {
+  if (!(content.unlock_uid in unlocks)) {
+    throw `WebSocket deleted guess for invalid unlock: ${content.unlock_uid}`
+  }
+  if (!(unlocks[content.unlock_uid].guesses.includes(content.guess))) {
+    throw `WebSocket deleted invalid guess (can happen if team made identical guesses): ${content.guess}`
+  }
+  var unlockguesses = unlocks[content.unlock_uid].guesses
+  var i = unlockguesses.indexOf(content.guess)
+  unlockguesses.splice(i, 1)
+  if (unlocks[content.unlock_uid].guesses.length == 0) {
+    delete unlocks[content.unlock_uid]
+  }
+  updateUnlocks()
+}
+
+var hints = {}
+
+function updateHints() {
+  var entries = Object.entries(hints)
+  entries.sort(function (a, b) {
+    if (a[1].time < b[1].time) return -1
+    else if(a[1].time > b[1].time) return 1
+    return 0
+  })
+  var list = select('#hints')
+    .selectAll('p')
+    .data(entries)
+  list.enter()
+    .append('p')
+    .merge(list)
+    .text(function (d) {
+      return d[1].time + ': ' + d[1].hint
+    })
+  list.exit()
+    .remove()
+}
+
+
+function receivedNewHint(content) {
+  hints[content.hint_uid] = {'time': content.time, 'hint': content.hint}
+  updateHints()
+}
+
+function receivedDeleteHint(content) {
+  if (!(content.hint_uid in hints)) {
+    throw `WebSocket deleted invalid hint: ${content.hint_uid}`
+  }
+  delete hints[content.hint_uid]
+  updateHints()
+}
+
+function receivedError(content) {
+  throw content.error
+}
+
+var socketHandlers = {
+  'new_guess': receivedNewAnswer,
+  'old_guess': receivedOldAnswer,
+  'new_unlock': receivedNewUnlock,
+  'old_unlock': receivedNewUnlock,
+  'change_unlock': receivedChangeUnlock,
+  'delete_unlock': receivedDeleteUnlock,
+  'delete_unlockguess': receivedDeleteUnlockGuess,
+  'new_hint': receivedNewHint,
+  'delete_hint': receivedDeleteHint,
+  'error': receivedError,
+}
+
+var lastUpdated
+
+function openEventSocket() {
+  var ws_scheme = (window.location.protocol == 'https:' ? 'wss' : 'ws') + '://'
+  var sock = new RobustWebSocket(ws_scheme + window.location.host + '/ws' + window.location.pathname)
+  sock.onmessage = function(e) {
+    var data = JSON.parse(e.data)
+    lastUpdated = Date.now()
+
+    if (!(data.type in socketHandlers)) {
+      throw `Invalid message type: ${data.type}, content: ${data.content}`
+    } else {
+      var handler = socketHandlers[data.type]
+      handler(data.content)
+    }
+  }
+  sock.onerror = function() {
+    //TODO this message is ugly and disappears after a while
+    message('Websocket is broken. You will not receive new information without refreshing the page.')
+  }
+  sock.onopen = function() {
+    if (lastUpdated != undefined) {
+      sock.send(JSON.stringify({'type': 'guesses-plz', 'from': lastUpdated}))
+      sock.send(JSON.stringify({'type': 'unlocks-plz'}))
+    } else {
+      sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}))
+    }
+  }
+}
 
 $(function() {
   setupJQueryAjaxCsrf()
@@ -213,6 +369,7 @@ $(function() {
     }
   }
   field.keyup(fieldKeyup)
+  openEventSocket()
 
   $('.form-inline').submit(function(e) {
     e.preventDefault()
@@ -223,7 +380,6 @@ $(function() {
     }
     button.attr('disabled', true)
     var data = {
-      last_updated: last_updated,
       answer: field.val(),
     }
     $.ajax({
@@ -234,12 +390,11 @@ $(function() {
       success: function(data) {
         field.val('')
         fieldKeyup()
-        last_updated = Date.now()
         if (data.correct == 'true') {
           button.removeAttr('disabled')
-          correct_answer(data.url, data.text)
+          correct_answer()
         } else {
-          incorrect_answer(data.guess, data.timeout_length, data.timeout_end, data.new_hints, data.unlocks)
+          incorrect_answer(data.guess, data.timeout_length, data.timeout_end, data.unlocks)
         }
       },
       error: function(xhr, status, error) {

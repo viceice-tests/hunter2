@@ -423,6 +423,19 @@ class Hint(Clue):
         else:
             return False
 
+    def delay_for_team(self, team):
+        data = TeamPuzzleData.objects.get(puzzle=self.puzzle, team=team)
+        if data.start_time is None:
+            return None
+        elapsed = timezone.now() - data.start_time
+        return self.time - elapsed
+
+    def unlocks_at(self, team):
+        data = TeamPuzzleData.objects.get(puzzle=self.puzzle, team=team)
+        if data.start_time is None:
+            return None
+        return data.start_time + self.time
+
 
 class Unlock(Clue):
     def unlocked_by(self, team):

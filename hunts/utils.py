@@ -11,7 +11,9 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from base64 import urlsafe_b64encode
 from collections import defaultdict
+
 from django.http import Http404
 
 
@@ -56,3 +58,7 @@ def finishing_positions(event):
             team_times[team] = max(times)
 
     return sorted(team_times.keys(), key=lambda t: team_times[t])
+
+
+def encode_uuid(uuid):
+    return urlsafe_b64encode(uuid.bytes).strip(b'=').decode('ascii')
