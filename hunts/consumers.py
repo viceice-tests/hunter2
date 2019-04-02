@@ -319,6 +319,8 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
         guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team).order_by('given')
         if start != 'all':
             start = datetime.fromtimestamp(int(start) // 1000, timezone.utc)
+            # TODO: `start` is given by the client and is the timestamp of the most recently received guess.
+            # the following could miss guesses if guesses get the same timestamp, though this is very unlikely.
             guesses = guesses.filter(given__gt=start)
             # The client requested guesses from a certain point in time, i.e. it already has some.
             # Even though these are "old" they're "new" in the sense that the user will never have
