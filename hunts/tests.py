@@ -524,8 +524,8 @@ class EpisodeBehaviourTest(EventTestCase):
             self.assertEqual(len(team_puzzles), num_puzzles, msg='After the event ends, all of the puzzles are unlocked')
 
     def test_puzzle_start_dates(self):
-        with freezegun.freeze_time() as frozen_datetime:
-            tz_time = timezone.make_aware(frozen_datetime())
+        with freezegun.freeze_time():
+            tz_time = timezone.now()
             user = TeamMemberFactory()
             self.client.force_login(user.user)
 
