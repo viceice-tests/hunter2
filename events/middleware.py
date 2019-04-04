@@ -60,8 +60,13 @@ class TenantWebsocketMiddleware(BaseMiddleware):
 
         headers = dict(scope['headers'])
 
+        if settings.USE_X_FORWARDED_HOST and b'x-forwarded-host' in headers:
+            host_header = headers[b'x-forwarded-host']
+        else:
+            host_header = headers[b'host']
+
         try:
-            host = headers[b'host'].decode('idna')
+            host = host_header.decode('idna')
         except UnicodeDecodeError:
             raise ValueError('TenantWebsocketMiddleware got malformed origin %s' % headers[b'host'])
 
