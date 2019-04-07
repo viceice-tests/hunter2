@@ -18,11 +18,7 @@ function incorrect_answer(guess, timeout_length, timeout) {
     message('Possible clock mismatch. Cooldown may be inaccurate.')
     milliseconds = timeout_length
   }
-  var answer_button = $('#answer-button')
   doCooldown(milliseconds)
-  setTimeout(function () {
-    answer_button.removeAttr('disabled')
-  }, milliseconds)
 }
 
 function correct_answer() {
@@ -36,11 +32,25 @@ function correct_answer() {
 }
 
 function message(message, error) {
-  var error_msg = $('<p class="submission-error" title="' + error + '">' + message + '</p>')
-  error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(5000, function(){$(this).remove()})
+  var error_msg = $('<div class="submission-error-container"><p class="submission-error" title="' + error + '">' + message + '</p></div>')
+  error_msg.appendTo($('.form-inline')).delay(5000).fadeOut(2000, function(){$(this).remove()})
+}
+
+function evaluateButtonDisabledState(button) {
+  var onCooldown = button.data('cooldown')
+  var emptyAnswer = button.data('empty-answer')
+  if (onCooldown || emptyAnswer) {
+    button.attr('disabled', true)
+  } else {
+    button.removeAttr('disabled')
+  }
 }
 
 function doCooldown(milliseconds) {
+  var btn = $('#answer-button')
+  btn.data('cooldown', true)
+  evaluateButtonDisabledState(btn)
+
   var button = select('#answer-button')
   var size = button.node().getBoundingClientRect().width
   var g = button.select('svg')
@@ -96,6 +106,8 @@ function doCooldown(milliseconds) {
 
   setTimeout(function () {
     g.remove()
+    btn.removeData('cooldown')
+    evaluateButtonDisabledState(btn)
   }, milliseconds)
 }
 
@@ -363,22 +375,22 @@ $(function() {
 
   function fieldKeyup() {
     if (!field.val()) {
-      button.attr('disabled', true)
+      button.data('empty-answer', true)
     } else {
-      button.removeAttr('disabled')
+      button.removeData('empty-answer')
     }
+    evaluateButtonDisabledState(button)
   }
   field.keyup(fieldKeyup)
   openEventSocket()
 
   $('.form-inline').submit(function(e) {
     e.preventDefault()
-    var form = $(e.target)
-    var button = form.children('button')
-    if (button.attr('disabled') == true) {
+    if (!field.val()) {
+      field.focus()
       return
     }
-    button.attr('disabled', true)
+
     var data = {
       answer: field.val(),
     }
@@ -391,14 +403,13 @@ $(function() {
         field.val('')
         fieldKeyup()
         if (data.correct == 'true') {
-          button.removeAttr('disabled')
           correct_answer()
         } else {
           incorrect_answer(data.guess, data.timeout_length, data.timeout_end, data.unlocks)
         }
       },
       error: function(xhr, status, error) {
-        button.removeAttr('disabled')
+        button.removeData('cooldown')
         if (xhr.responseJSON && xhr.responseJSON.error == 'too fast') {
           message('Slow down there, sparky! You\'re supposed to wait 5s between submissions.', '')
         } else if (xhr.responseJSON && xhr.responseJSON.error == 'already answered') {
