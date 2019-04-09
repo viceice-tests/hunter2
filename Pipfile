@@ -25,11 +25,9 @@ django-prometheus = "*"
 django-sendfile = "*"
 django-solo = "*"
 django-sortedm2m = "*"
-django-tenants = { git = "https://github.com/tomturner/django-tenants.git", ref = "0a5ff14478e44f55ea566d020e0252bb6ca5ac24" }
+django-tenants = { git = "https://github.com/tomturner/django-tenants.git", ref = "356386545de68094ce917c34b5c79ba184762f5f" }
 django-webpack-loader = "*"
 factory_boy = "*"
-# This is actually a transitive dependancy via factory_boy but we need to specify the version
-faker = { git = "https://github.com/joke2k/faker.git", ref = "3e9ab81a55361de0f218f21755ba2f6511b18596" }
 freezegun = "*"
 lupa = "*"
 parameterized = "*"
