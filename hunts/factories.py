@@ -11,9 +11,9 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import collections
 import json
 import re
+from collections import abc
 from datetime import timedelta
 from random import choice
 
@@ -51,7 +51,7 @@ class EpisodeFactory(factory.django.DjangoModelFactory):
 
         if extracted:
             # A list of prequels were passed in, use them
-            for prequel in (extracted if isinstance(extracted, collections.Iterable) else (extracted,)):
+            for prequel in (extracted if isinstance(extracted, abc.Iterable) else (extracted,)):
                 self.prequels.add(prequel)
 
     @factory.post_generation
@@ -62,7 +62,7 @@ class EpisodeFactory(factory.django.DjangoModelFactory):
 
         if extracted:
             # A list of  puzzles were passed in, use them
-            for puzzle in (extracted if isinstance(extracted, collections.Iterable) else (extracted,)):
+            for puzzle in (extracted if isinstance(extracted, abc.Iterable) else (extracted,)):
                 self.headstart_from.add(puzzle)
 
 
@@ -104,7 +104,7 @@ class PuzzleFactory(factory.django.DjangoModelFactory):
             return
 
         if extracted:
-            for answer in (extracted if isinstance(extracted, collections.Iterable) else (extracted,)):
+            for answer in (extracted if isinstance(extracted, abc.Iterable) else (extracted,)):
                 self.answer_set.add(answer)
 
 
