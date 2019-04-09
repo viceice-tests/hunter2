@@ -11,6 +11,7 @@ services:
       - H2_DOMAIN
       - H2_EMAIL_DOMAIN
       - H2_EMAIL_URL
+      - H2_IMAGE_VERSION
       - H2_PIWIK_HOST
       - H2_PIWIK_SITE
       - H2_SCHEME
@@ -34,6 +35,8 @@ services:
       - DATA_SOURCE_NAME=postgresql://postgres@db:5432/?sslmode=disable
     image: wrouesnel/postgres_exporter:v0.4.7
   metrics:
+    environment:
+      - H2_IMAGE_VERSION
     image: registry.gitlab.com/hunter2.app/hunter2/metrics:${H2_IMAGE_VERSION:-latest}
     ports:
       - 127.0.0.1:9090:9090
@@ -52,6 +55,8 @@ services:
   web:
     depends_on:
       - app
+    environment:
+      - H2_IMAGE_VERSION
     image: registry.gitlab.com/hunter2.app/hunter2/web:${H2_IMAGE_VERSION:-latest}
     ports:
       - "${H2_LISTEN:-8080}:80"
