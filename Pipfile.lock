@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "e3662442138a7deb7dd7d3593ce69ec1df0a83a5e8e4e6a9189d5821f71ff6e7"
+            "sha256": "e4f1eaaece8bae98516b66c5d55d1ba2fbbfc68c6182361dab4fcc7ca7fbc526"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -292,8 +292,11 @@
             "version": "==2.11.1"
         },
         "faker": {
-            "git": "https://github.com/joke2k/faker.git",
-            "ref": "3e9ab81a55361de0f218f21755ba2f6511b18596"
+            "hashes": [
+                "sha256:00b7011757c4907546f17d0e47df098b542ea2b04c966ee0e80a493aae2c13c8",
+                "sha256:745ac8b9c9526e338696e07b7f2e206e5e317e5744e22fdd7c2894bf19af41f1"
+            ],
+            "version": "==1.0.4"
         },
         "freezegun": {
             "hashes": [
