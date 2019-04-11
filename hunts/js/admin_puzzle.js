@@ -60,6 +60,9 @@ function toggleAdvanced(event, display, duration) {
 function copyPermalinkClicked(e) {
   e.preventDefault()
 
+  // Browsers don't let you just manipulate the clipboard (yet) so we create an
+  // invisible element to hold the text, select it, then call the browser's
+  // 'copy' command.
   var tmp = $('<input>')
   tmp.css('position', 'fixed')
   tmp.css('top', 0)
