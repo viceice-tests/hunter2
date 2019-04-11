@@ -10,6 +10,7 @@ channels = "*"
 channels_redis = "*"
 colour-runner = "*"
 coverage = "*"
+daphne = "<2.3"
 django-allauth = { git = "https://github.com/riconnon/django-allauth.git", ref = "0.36.0+stateless" }
 django-analytical = "*"
 django-autocomplete-light = "*"
@@ -20,7 +21,7 @@ django-environ = "*"
 django-extensions = "*"
 django-fullclean = { git = "https://github.com/riconnon/django-fullclean.git", ref = "0.0.4+whitelist" }
 django-nested-admin = "*"
-django-ordered-model = { git = "https://github.com/fish-face/django-ordered-model.git", ref = "241510a0343a3d8430cfef81a7f69c534c1732ba" }
+django-ordered-model = { git = "https://github.com/fish-face/django-ordered-model.git", ref = "8a2908472b7bfbedb530a845f6c18fc86da7b750" }
 django-prometheus = "*"
 django-sendfile = "*"
 django-solo = "*"

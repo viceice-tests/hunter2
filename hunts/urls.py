@@ -48,8 +48,8 @@ eventpatterns = [
     path('help', views.HelpView.as_view(), name='help'),
     path('examples', views.ExamplesView.as_view(), name='examples'),
     path('ep/<int:episode_number>/', include(episodepatterns)),
-    path('puzzle/<int:puzzle_id>/', views.AbsolutePuzzleView.as_view(), name='puzzle_permalink'),
-    path('puzzle/<int:puzzle_id>/<path:path>', views.AbsolutePuzzleView.as_view()),
+    path('puzzle/<puzzle_url_id>/', views.AbsolutePuzzleView.as_view(), name='puzzle_permalink'),
+    path('puzzle/<puzzle_url_id>/<path:path>', views.AbsolutePuzzleView.as_view()),
 ]
 
 urlpatterns = [

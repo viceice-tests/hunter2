@@ -508,9 +508,9 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
 
 class AbsolutePuzzleView(RedirectView):
-    def get_redirect_url(self, puzzle_id, path=None):
+    def get_redirect_url(self, puzzle_url_id, path=None):
         try:
-            puzzle = models.Puzzle.objects.get(id=puzzle_id)
+            puzzle = models.Puzzle.objects.get(url_id=puzzle_url_id)
         except models.Puzzle.DoesNotExist as e:
             raise Http404 from e
 
