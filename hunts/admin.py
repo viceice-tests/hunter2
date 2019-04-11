@@ -86,6 +86,7 @@ class UnlockAnswerInline(NestedTabularInline):
 
     model = models.UnlockAnswer
     fields = ('guess', 'runtime', 'options')
+    readonly_fields = ('unlock',)
     form = Form
     extra = 0
 
