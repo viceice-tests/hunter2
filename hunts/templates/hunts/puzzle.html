@@ -30,13 +30,17 @@
 </section>
 <section id="puzzle-clues">
 <h3>Hints</h3>
+<ul id="hints">
 {% for hint in hints %}
-<p>{{hint.time}}: {{hint.text}}</p>
+<li>{{hint.time}}: {{hint.text}}</li>
 {% endfor %}
+</ul>
 <h3>Unlocks</h3>
+<ul id="unlocks">
 {% for unlock in unlocks %}
-<p>{% for guess in unlock.guesses %}{{guess}}{% if not forloop.last %}, {% endif %}{% endfor %}: {{unlock.text}}</p>
+<li>{% for guess in unlock.guesses %}{{guess}}{% if not forloop.last %}, {% endif %}{% endfor %}: {{unlock.text}}</li>
 {% endfor %}
+</ul>
 </section>
 <section id="puzzle-answer">
 {% if answered %}
