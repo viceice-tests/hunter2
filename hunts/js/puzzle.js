@@ -331,6 +331,7 @@ var socketHandlers = {
   'delete_unlock': receivedDeleteUnlock,
   'delete_unlockguess': receivedDeleteUnlockGuess,
   'new_hint': receivedNewHint,
+  'old_hint': receivedNewHint,
   'delete_hint': receivedDeleteHint,
   'error': receivedError,
 }
@@ -358,10 +359,12 @@ function openEventSocket() {
   sock.onopen = function() {
     if (lastUpdated != undefined) {
       sock.send(JSON.stringify({'type': 'guesses-plz', 'from': lastUpdated}))
-      sock.send(JSON.stringify({'type': 'unlocks-plz'}))
+      sock.send(JSON.stringify({'type': 'hints-plz', 'from': lastUpdated}))
     } else {
       sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}))
+      sock.send(JSON.stringify({'type': 'hints-plz', 'from': 'all'}))
     }
+    sock.send(JSON.stringify({'type': 'unlocks-plz'}))
   }
 }
 

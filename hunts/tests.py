@@ -1280,7 +1280,11 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
     def test_initial_connection(self):
         ua1 = UnlockAnswerFactory(unlock__puzzle=self.pz)
         ua2 = UnlockAnswerFactory(unlock__puzzle=self.pz, guess=ua1.guess + '_different')  # noqa: F841
+        h = HintFactory(puzzle=self.pz, time=datetime.timedelta(0)) #noqa: F841
         profile = TeamMemberFactory()
+        data = PuzzleData(self.pz, profile.team_at(self.tenant), profile)
+        data.tp_data.start_time = timezone.now()
+        data.save()
         g1 = GuessFactory(for_puzzle=self.pz, by=profile)
         g1.given = timezone.now() - datetime.timedelta(days=1)
         g1.save()
@@ -1321,6 +1325,10 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
 
         self.assertEqual(output['type'], 'old_unlock')
         self.assertEqual(output['content']['unlock'], ua1.unlock.text)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        self.run_async(comm.send_json_to)({'type': 'hints-plz'})
+        output = self.receive_json(comm, 'Websocket did nothing in response to request for hints')
         self.assertTrue(self.run_async(comm.receive_nothing)())
 
         self.run_async(comm.disconnect)()
@@ -1558,7 +1566,7 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         self.assertTrue(connected)
 
         # account for delays getting started
-        remaining = hint.delay_for_team(team).total_seconds()
+        remaining = hint.delay_for_team(team, data.tp_data).total_seconds()
         if remaining < 0:
             raise Exception('Websocket hint scheduling test took too long to start up')
 
