@@ -264,6 +264,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.template.context_processors.static',
                 'django.contrib.messages.context_processors.messages',
+                'events.context_processors.event_theme',
                 'teams.context_processors.event_team',
                 'hunts.context_processors.announcements',
                 'hunter2.context_processors.login_url',

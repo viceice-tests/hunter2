@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
 {% block style %}{% spaceless %}
-{% if event.theme.style %}
-<style>{{ event.theme.style | safe }}</style>
+{% if event_style %}
+<style>{{ event_style | safe }}</style>
 {% else %}
 {{ block.super }}
 {% endif %}
 {% endspaceless %}{% endblock %}
 
 {% block script %}{% spaceless %}
-{% if event.theme.script %}
-<script defer>{{ event.theme.script | safe }}</script>
+{% if event_script %}
+<script defer>{{ event_script | safe }}</script>
 {% else %}
 {{ block.super }}
 {% endif %}
