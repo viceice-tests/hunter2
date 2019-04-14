@@ -11,6 +11,15 @@
 	color: #333;
 }
 
+#puzzle-clues ul {
+    list-style: none;
+    padding-left: 1em;
+}
+
+#puzzle-clues li {
+    margin-top: 3pt;
+}
+
 #answer-button {
 	width: 55px;
 	height: 55px;

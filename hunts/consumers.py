@@ -123,6 +123,11 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
             self.send_old_guesses(content['from'])
         elif content['type'] == 'unlocks-plz':
             self.send_old_unlocks()
+        elif content['type'] == 'hints-plz':
+            if 'from' not in content:
+                self._error('required field "from" is missing')
+                return
+            self.send_old_hints(content['from'])
         else:
             self._error('invalid request type')
 
@@ -153,7 +158,8 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
         except KeyError:
             pass
 
-        delay = hint.delay_for_team(self.team).total_seconds()
+        data = models.PuzzleData(self.puzzle, self.team)
+        delay = hint.delay_for_team(self.team, data).total_seconds()
         if time is None or delay < 0:
             return
         loop = sync_to_async.threadlocal.main_event_loop
@@ -336,10 +342,28 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
                 'content': content
             })
 
+    def send_old_hints(self, start='all'):
+        hints = models.Hint.objects.filter(puzzle=self.puzzle).order_by('time')
+        data = models.PuzzleData(self.puzzle, self.team)
+        hints = [h for h in hints if h.unlocked_by(self.team, data)]
+        if start != 'all':
+            start = datetime.fromtimestamp(int(start) // 1000, timezone.utc)
+            # The following finds the hints which were *not* unlocked at the start time given.
+            # combined with the existing filter this gives the ones the client might have missed.
+            hints = [h for h in hints if data.tp_data.start_time + h.time > start]
+            msg_type = 'new_hint'
+        else:
+            msg_type = 'old_hint'
+
+        for h in hints:
+            content = self._new_hint_json(h)
+            content['type'] = msg_type
+            self.send_json(content)
+
     def send_old_unlocks(self):
         guesses = Guess.objects.filter(for_puzzle=self.puzzle, by_team=self.team)
 
-        all_unlocks = models.Unlock.objects.filter(puzzle=self.puzzle)
+        all_unlocks = models.Unlock.objects.filter(puzzle=self.puzzle).order_by('text')
         unlocks = defaultdict(list)
         for u in all_unlocks:
             # Performance note: 1 query per unlock

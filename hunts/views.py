@@ -449,7 +449,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             h for h in puzzle.hint_set.all().order_by('time') if h.unlocked_by(request.team, data)
         ]
         unlocks = []
-        for u in puzzle.unlock_set.all():
+        for u in puzzle.unlock_set.order_by('text'):
             guesses = u.unlocked_by(request.team)
             if not guesses:
                 continue

@@ -228,10 +228,10 @@ function updateUnlocks() {
     return 0
   })
   var list = select('#unlocks')
-    .selectAll('p')
+    .selectAll('li')
     .data(entries)
   list.enter()
-    .append('p')
+    .append('li')
     .merge(list)
     .text(function (d) {
       return d[1].guesses.join(', ') + ': ' + d[1].unlock
@@ -252,7 +252,7 @@ function receivedNewUnlock(content) {
 
 function receivedChangeUnlock(content) {
   if (!(content.unlock_uid in unlocks)) {
-    throw `WebSocket ohanged invalid unlock: ${content.unlock_uid}`
+    throw `WebSocket changed invalid unlock: ${content.unlock_uid}`
   }
   unlocks[content.unlock_uid].unlock = content.unlock
   updateUnlocks()
@@ -292,10 +292,10 @@ function updateHints() {
     return 0
   })
   var list = select('#hints')
-    .selectAll('p')
+    .selectAll('li')
     .data(entries)
   list.enter()
-    .append('p')
+    .append('li')
     .merge(list)
     .text(function (d) {
       return d[1].time + ': ' + d[1].hint
@@ -331,6 +331,7 @@ var socketHandlers = {
   'delete_unlock': receivedDeleteUnlock,
   'delete_unlockguess': receivedDeleteUnlockGuess,
   'new_hint': receivedNewHint,
+  'old_hint': receivedNewHint,
   'delete_hint': receivedDeleteHint,
   'error': receivedError,
 }
@@ -358,10 +359,12 @@ function openEventSocket() {
   sock.onopen = function() {
     if (lastUpdated != undefined) {
       sock.send(JSON.stringify({'type': 'guesses-plz', 'from': lastUpdated}))
-      sock.send(JSON.stringify({'type': 'unlocks-plz'}))
+      sock.send(JSON.stringify({'type': 'hints-plz', 'from': lastUpdated}))
     } else {
       sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}))
+      sock.send(JSON.stringify({'type': 'hints-plz', 'from': 'all'}))
     }
+    sock.send(JSON.stringify({'type': 'unlocks-plz'}))
   }
 }
 
