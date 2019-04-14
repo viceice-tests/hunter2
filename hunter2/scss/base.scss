@@ -146,6 +146,10 @@ h6 {
 
 main {
     height: auto;
+
+    > img {
+        align-self: flex-start;
+    }
 }
 
 .form-control::placeholder
