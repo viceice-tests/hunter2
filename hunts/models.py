@@ -13,7 +13,7 @@
 
 import uuid
 from datetime import timedelta
-import random
+import secrets
 
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
@@ -195,7 +195,7 @@ URL_ID_CHARS = 'abcdefghijklmnopqrstuvwxyz01234356789'
 
 
 def generate_url_id():
-    id = ''.join(random.choice(URL_ID_CHARS) for _ in range(8))
+    id = ''.join(secrets.choice(URL_ID_CHARS) for _ in range(8))
     return id
 
 
