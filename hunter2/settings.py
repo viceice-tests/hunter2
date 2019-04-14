@@ -90,6 +90,11 @@ DATABASE_ROUTERS = (
     'django_tenants.routers.TenantSyncRouter',
 )
 
+# Channels doesn't handle file size checks correctly
+# https://github.com/django/channels/issues/1240
+# Work around this by setting a large data upload size
+DATA_UPLOAD_MAX_MEMORY_SIZE = 268435456
+
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
 FULLCLEAN_WHITELIST = [
