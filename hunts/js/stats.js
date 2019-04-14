@@ -3,7 +3,7 @@ import * as d3 from 'd3'
 
 import '../scss/stats.scss'
 
-import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js'
+import 'hunter2/js/base'
 
 // Keep the number of entries in here such that it has a large least common multiple with the number of colours.
 var symbolsPathList = [
@@ -598,8 +598,6 @@ function restoreView(invisteams) {
 var drawFunction = drawCompletion
 
 $(function () {
-  setupJQueryAjaxCsrf()
-
   $.get('episode_list', {}, function (episodes) {
     var select = $('#episode')
     select.children(':not([value="all"])').remove()

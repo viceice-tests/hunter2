@@ -2,12 +2,10 @@ import $ from 'jquery'
 import 'bootstrap'
 import Vue from 'vue'
 
+import 'hunter2/js/base'
 import AdminGuessList from './admin-guess-list.vue'
-import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js'
 
 $(function () {
-  setupJQueryAjaxCsrf()
-
   const href = $('#admin-guess-list').data('href')
   const adminguesslist = new Vue({
     ...AdminGuessList,

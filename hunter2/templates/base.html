@@ -48,7 +48,7 @@
 				{% block topbar_right %}
 					{% if user.is_authenticated %}
 						<li class="nav-item"><a class="nav-link" href="{% url 'edit_profile' %}" id="navUser">Account</a></li>
-						<li class="nav-item"><a class="nav-link" href="#" onclick="$('#logoutForm').submit()">Logout</a></li>
+						<li class="nav-item"><a id="logoutLink" class="nav-link" href="#">Logout</a></li>
 						<li class="nav-item"><form id="logoutForm" action="{% url 'account_logout' %}?next={{ request.get_full_path | urlencode }}" method="post">{% csrf_token %}</form></li>
 					{% else %}
 						<li class="nav-item"><a class="nav-link" href="{{ login_url }}" id="navLogin">Login</a></li>
