@@ -189,7 +189,6 @@ function addSVG() {
 var announcements = {}
 
 function updateAnnouncements() {
-  console.log(announcements)
   var list = select('#announcements')
     .selectAll('.alert:not(.special)')
     .data(Object.entries(announcements))
@@ -208,6 +207,14 @@ function updateAnnouncements() {
 
 function receivedAnnouncement(content) {
   announcements[content.announcement_id] = {'title': content.title, 'message': content.message, 'css_class': content.css_class}
+  updateAnnouncements()
+}
+
+function receivedDeleteAnnouncement(content) {
+  if (!(content.announcement_id in announcements)) {
+    throw `WebSocket deleted invalid announcement: ${content.announcement_id}`
+  }
+  delete announcements[content.announcement_id]
   updateAnnouncements()
 }
 
@@ -349,6 +356,7 @@ function receivedError(content) {
 
 var socketHandlers = {
   'announcement': receivedAnnouncement,
+  'delete_announcement': receivedDeleteAnnouncement,
   'new_guess': receivedNewAnswer,
   'old_guess': receivedOldAnswer,
   'new_unlock': receivedNewUnlock,
@@ -412,7 +420,6 @@ $(function() {
   $('#announcements > .alert:not(.special)').each(function() {
     announcements[$(this).attr('data-announcement-id')] = {}
   })
-  console.log(announcements)
   openEventSocket()
 
   $('.form-inline').submit(function(e) {

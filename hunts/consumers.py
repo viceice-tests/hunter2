@@ -114,18 +114,30 @@ class HuntWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
             }
         })
 
+    @classmethod
+    def send_delete_announcement_msg(cls, event, puzzle, announcement):
+        cls._send_message(cls._announcement_groupname(event, puzzle), {
+            'type': 'delete_announcement',
+            'content': {
+                'announcement_id': announcement.id
+            }
+        })
+
     @pre_save_handler
     def _new_announcement(cls, old, sender, announcement, raw, *args, **kwargs):
-        if raw: #nocover
+        if raw:  # nocover
             return
-        if old:
-            # TODO
-            pass
 
         cls.send_announcement_msg(announcement.event, announcement.puzzle, announcement)
 
+    @classmethod
+    def _deleted_announcement(cls, sender, instance, *args, **kwargs):
+        cls.send_delete_announcement_msg(instance.event, instance.puzzle, instance)
+
 
 pre_save.connect(HuntWebsocket._new_announcement, sender=models.Announcement)
+pre_delete.connect(HuntWebsocket._deleted_announcement, sender=models.Announcement)
+
 
 class PuzzleEventWebsocket(HuntWebsocket):
     def __init__(self, *args, **kwargs):
@@ -139,7 +151,6 @@ class PuzzleEventWebsocket(HuntWebsocket):
             return f'event-{event.id}.puzzle-{puzzle.id}.events.team-{team.id}'
         else:
             return f'event-{event.id}.puzzle-{puzzle.id}.events'
-
 
     def connect(self):
         keywords = self.scope['url_route']['kwargs']
@@ -233,7 +244,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
 
     @classmethod
     def send_new_unlock(cls, guess, unlock):
-        cls._send_message(self._puzzle_groupname(guess.for_puzzle, guess.by_team), {
+        cls._send_message(cls._puzzle_groupname(guess.for_puzzle, guess.by_team), {
             'type': 'new_unlock',
             'content': cls._new_unlock_json(guess, unlock)
         })
