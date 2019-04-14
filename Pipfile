@@ -10,7 +10,7 @@ channels = "*"
 channels_redis = "*"
 colour-runner = "*"
 coverage = "*"
-daphne = "<2.3"
+daphne = "*"
 django-allauth = { git = "https://github.com/riconnon/django-allauth.git", ref = "0.36.0+stateless" }
 django-analytical = "*"
 django-autocomplete-light = "*"
