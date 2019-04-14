@@ -350,8 +350,6 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
             start = datetime.fromtimestamp(int(start) // 1000, timezone.utc)
             # The following finds the hints which were *not* unlocked at the start time given.
             # combined with the existing filter this gives the ones the client might have missed.
-            print(start)
-            print(data.tp_data.start_time + hints[0].time)
             hints = [h for h in hints if data.tp_data.start_time + h.time > start]
             msg_type = 'new_hint'
         else:

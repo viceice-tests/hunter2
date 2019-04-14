@@ -1279,8 +1279,8 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
 
     def test_initial_connection(self):
         ua1 = UnlockAnswerFactory(unlock__puzzle=self.pz)
-        ua2 = UnlockAnswerFactory(unlock__puzzle=self.pz, guess=ua1.guess + '_different')  # noqa: F841
-        h = HintFactory(puzzle=self.pz, time=datetime.timedelta(0)) #noqa: F841
+        UnlockAnswerFactory(unlock__puzzle=self.pz, guess=ua1.guess + '_different')
+        HintFactory(puzzle=self.pz, time=datetime.timedelta(0))
         profile = TeamMemberFactory()
         data = PuzzleData(self.pz, profile.team_at(self.tenant), profile)
         data.tp_data.start_time = timezone.now()
@@ -1566,7 +1566,7 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
         self.assertTrue(connected)
 
         # account for delays getting started
-        remaining = hint.delay_for_team(team, data.tp_data).total_seconds()
+        remaining = hint.delay_for_team(team, data).total_seconds()
         if remaining < 0:
             raise Exception('Websocket hint scheduling test took too long to start up')
 
