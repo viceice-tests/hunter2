@@ -77,7 +77,7 @@ class HuntWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
         self.connected = True
         self.accept()
 
-    def disconnect(self):
+    def disconnect(self, close_code):
         if not self.connected:
             return
         async_to_sync(self.channel_layer.group_discard)(

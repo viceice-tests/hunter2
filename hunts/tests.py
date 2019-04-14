@@ -1239,7 +1239,77 @@ class UnlockAnswerTests(EventTestCase):
             unlockanswer.save()
 
 
-class TestPuzzleWebsocket(AsyncEventTestCase):
+class AnnouncementWebsocketTests(AsyncEventTestCase):
+    def setUp(self):
+        super().setUp()
+        self.pz = PuzzleFactory()
+        self.ep = self.pz.episode
+        self.url = 'ws/hunt/'
+
+    def test_receive_announcement(self):
+        profile = TeamMemberFactory()
+        comm = self.get_communicator(websocket_app, self.url, {'user': profile.user})
+        connected, _ = self.run_async(comm.connect)()
+
+        self.assertTrue(connected)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        announcement = AnnouncementFactory(puzzle=None)
+
+        output = self.receive_json(comm, 'Websocket did not send new announcement')
+        self.assertEqual(output['type'], 'announcement')
+        self.assertEqual(output['content']['announcement_id'], announcement.id)
+        self.assertEqual(output['content']['title'], announcement.title)
+        self.assertEqual(output['content']['message'], announcement.message)
+        self.assertEqual(output['content']['css_class'], announcement.type.css_class)
+
+        announcement.message = 'different'
+        announcement.save()
+
+        output = self.receive_json(comm, 'Websocket did not send changed announcement')
+        self.assertEqual(output['type'], 'announcement')
+        self.assertEqual(output['content']['announcement_id'], announcement.id)
+        self.assertEqual(output['content']['title'], announcement.title)
+        self.assertEqual(output['content']['message'], 'different')
+        self.assertEqual(output['content']['css_class'], announcement.type.css_class)
+
+        self.run_async(comm.disconnect)()
+
+    def test_receive_delete_announcement(self):
+        profile = TeamMemberFactory()
+        announcement = AnnouncementFactory(puzzle=None)
+
+        comm = self.get_communicator(websocket_app, self.url, {'user': profile.user})
+        connected, _ = self.run_async(comm.connect)()
+
+        self.assertTrue(connected)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        id = announcement.id
+        announcement.delete()
+
+        output = self.receive_json(comm, 'Websocket did not send deleted announcement')
+        self.assertEqual(output['type'], 'delete_announcement')
+        self.assertEqual(output['content']['announcement_id'], id)
+
+        self.run_async(comm.disconnect)()
+
+    def test_dont_receive_puzzle_specific_announcements(self):
+        profile = TeamMemberFactory()
+        comm = self.get_communicator(websocket_app, self.url, {'user': profile.user})
+        connected, _ = self.run_async(comm.connect)()
+
+        self.assertTrue(connected)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        ann = AnnouncementFactory(puzzle=self.pz)  # noqa: F841
+
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        self.run_async(comm.disconnect)()
+
+
+class PuzzleWebsocketTests(AsyncEventTestCase):
     # Missing:
     # disconnect with hints scheduled
     # moving unlock to a different puzzle
@@ -1624,3 +1694,88 @@ class TestPuzzleWebsocket(AsyncEventTestCase):
             self.assertTrue(self.run_async(comm.receive_nothing)())
 
             self.run_async(comm.disconnect)()
+
+    def test_receive_global_announcement(self):
+        profile = TeamMemberFactory()
+        comm = self.get_communicator(websocket_app, self.url, {'user': profile.user})
+        connected, _ = self.run_async(comm.connect)()
+
+        self.assertTrue(connected)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        announcement = AnnouncementFactory(puzzle=None)
+
+        output = self.receive_json(comm, 'Websocket did not send new announcement')
+        self.assertEqual(output['type'], 'announcement')
+        self.assertEqual(output['content']['announcement_id'], announcement.id)
+        self.assertEqual(output['content']['title'], announcement.title)
+        self.assertEqual(output['content']['message'], announcement.message)
+        self.assertEqual(output['content']['css_class'], announcement.type.css_class)
+
+        announcement.message = 'different'
+        announcement.save()
+
+        output = self.receive_json(comm, 'Websocket did not send changed announcement')
+        self.assertEqual(output['type'], 'announcement')
+        self.assertEqual(output['content']['announcement_id'], announcement.id)
+        self.assertEqual(output['content']['title'], announcement.title)
+        self.assertEqual(output['content']['message'], 'different')
+        self.assertEqual(output['content']['css_class'], announcement.type.css_class)
+
+        self.run_async(comm.disconnect)()
+
+    def test_receives_puzzle_announcements(self):
+        user = TeamMemberFactory()
+
+        comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
+        connected, subprotocol = self.run_async(comm.connect)()
+        self.assertTrue(connected)
+
+        # Create an announcement for this puzzle and check we receive updates for it
+        ann = AnnouncementFactory(puzzle=self.pz)
+        output = self.receive_json(comm, 'Websocket did not send new puzzle announcement')
+        self.assertEqual(output['type'], 'announcement')
+        self.assertEqual(output['content']['announcement_id'], ann.id)
+        self.assertEqual(output['content']['title'], ann.title)
+        self.assertEqual(output['content']['message'], ann.message)
+        self.assertEqual(output['content']['css_class'], ann.type.css_class)
+
+        ann.message = 'different'
+        ann.save()
+
+        output = self.receive_json(comm, 'Websocket did not send changed announcement')
+        self.assertEqual(output['type'], 'announcement')
+        self.assertEqual(output['content']['announcement_id'], ann.id)
+        self.assertEqual(output['content']['title'], ann.title)
+        self.assertEqual(output['content']['message'], 'different')
+        self.assertEqual(output['content']['css_class'], ann.type.css_class)
+
+        # Create an announcement for another puzzle and check we don't hear about it
+        pz2 = PuzzleFactory()
+        ann2 = AnnouncementFactory(puzzle=pz2)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+        ann2.message = 'different'
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+        ann2.delete()
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        self.run_async(comm.disconnect)()
+
+    def test_receives_delete_announcement(self):
+        profile = TeamMemberFactory()
+        announcement = AnnouncementFactory(puzzle=self.pz)
+
+        comm = self.get_communicator(websocket_app, self.url, {'user': profile.user})
+        connected, _ = self.run_async(comm.connect)()
+
+        self.assertTrue(connected)
+        self.assertTrue(self.run_async(comm.receive_nothing)())
+
+        id = announcement.id
+        announcement.delete()
+
+        output = self.receive_json(comm, 'Websocket did not send deleted announcement')
+        self.assertEqual(output['type'], 'delete_announcement')
+        self.assertEqual(output['content']['announcement_id'], id)
+
+        self.run_async(comm.disconnect)()
