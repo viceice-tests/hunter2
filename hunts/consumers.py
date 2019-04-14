@@ -81,7 +81,7 @@ class HuntWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
         if not self.connected:
             return
         async_to_sync(self.channel_layer.group_discard)(
-            self._announcement_groupname(self.puzzle, self.team), self.channel_name
+            self._announcement_groupname(self.scope['tenant']), self.channel_name
         )
 
     @classmethod

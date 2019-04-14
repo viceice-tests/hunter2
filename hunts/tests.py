@@ -1302,7 +1302,7 @@ class AnnouncementWebsocketTests(AsyncEventTestCase):
         self.assertTrue(connected)
         self.assertTrue(self.run_async(comm.receive_nothing)())
 
-        ann = AnnouncementFactory(puzzle=self.pz)  # noqa: F841
+        AnnouncementFactory(puzzle=self.pz)
 
         self.assertTrue(self.run_async(comm.receive_nothing)())
 
