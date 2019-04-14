@@ -87,7 +87,7 @@ class HuntWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
     @classmethod
     def _announcement_groupname(cls, event, puzzle=None):
         if puzzle:
-            pass
+            return f'event-{event.id}.puzzle-{puzzle.id}.announcements'
         else:
             return f'event-{event.id}.announcements'
 
@@ -161,7 +161,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
             self._puzzle_groupname(self.puzzle, self.team), self.channel_name
         )
         async_to_sync(self.channel_layer.group_add)(
-            self._puzzle_groupname(self.puzzle), self.channel_name
+            self._announcement_groupname(self.episode.event, self.puzzle), self.channel_name
         )
         self.setup_hint_timers()
 
