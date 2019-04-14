@@ -15,5 +15,6 @@ from django.conf.urls import url
 from . import consumers
 
 websocket_urlpatterns = [
+    url(r'^ws/hunt/?$', consumers.HuntWebsocket, name='hunt_websocket'),
     url(r'^ws/hunt/ep/(?P<episode_number>\d+)/pz/(?P<puzzle_number>\d+)/?$', consumers.PuzzleEventWebsocket, name='puzzle_websocket'),
 ]

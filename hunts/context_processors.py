@@ -14,7 +14,6 @@
 from django.db.models import Q
 
 from hunts import models
-from hunts.models import AnnouncementType
 
 
 def announcements(request):
@@ -24,13 +23,6 @@ def announcements(request):
 
     # Get all announcements, including puzzle specific announcements if present
     has_puzzle = hasattr(request, 'puzzle') and request.puzzle is not None
-
-    css_class = {
-        AnnouncementType.INFO: 'alert-info',
-        AnnouncementType.SUCCESS: 'alert-success',
-        AnnouncementType.WARNING: 'alert-warning',
-        AnnouncementType.ERROR: 'alert-danger',
-    }
 
     if has_puzzle:
         current_announcements = models.Announcement.objects.filter(
@@ -42,16 +34,15 @@ def announcements(request):
             (Q(puzzle__isnull=True)))
 
     if request.user.is_authenticated and request.user.info.attendance_at(request.tenant).seat == '':
-        current_announcements = list(current_announcements) + [models.Announcement(
+        no_seat = models.Announcement(
+            id='no-seat-announcement',
             event=request.tenant,
             title='No Seat Set',
             message="You don't have a seat set at this event. Set your seat on the account page.",
-            type=AnnouncementType.WARNING,
-        )]
-
-    # TODO: This is relatively closely linked to the CSS so perhaps should be further moved to the view / template
-    for announcement in current_announcements:
-        announcement.css_type = css_class[announcement.type]
+            type=models.AnnouncementType.WARNING,
+        )
+        no_seat.special = True
+        current_announcements = list(current_announcements) + [no_seat]
 
     return {
         'announcements': current_announcements
