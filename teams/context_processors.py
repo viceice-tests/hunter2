@@ -12,7 +12,11 @@
 
 
 def event_team(request):
-    return {
+    context = {
         'event': request.tenant,
-        'team': request.team,
     }
+
+    if hasattr(request, 'team'):
+        context['team'] = request.team
+
+    return context

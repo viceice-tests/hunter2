@@ -128,10 +128,16 @@ class FactoryTests(EventTestCase):
         AnnouncementFactory.create()
 
 
+class ErrorTests(EventTestCase):
+    def test_unauthenticated_404(self):
+        url = '/does/not/exist'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
 class HomePageTests(EventTestCase):
     def test_load_homepage(self):
         url = reverse('index')
-        response = self.client.get(url)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
