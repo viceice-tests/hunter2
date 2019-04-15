@@ -124,7 +124,7 @@ class HuntWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
         })
 
     @pre_save_handler
-    def _new_announcement(cls, old, sender, announcement, raw, *args, **kwargs):
+    def _saved_announcement(cls, old, sender, announcement, raw, *args, **kwargs):
         if raw:  # nocover
             return
 
@@ -135,7 +135,7 @@ class HuntWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
         cls.send_delete_announcement_msg(instance.event, instance.puzzle, instance)
 
 
-pre_save.connect(HuntWebsocket._new_announcement, sender=models.Announcement)
+pre_save.connect(HuntWebsocket._saved_announcement, sender=models.Announcement)
 pre_delete.connect(HuntWebsocket._deleted_announcement, sender=models.Announcement)
 
 
@@ -350,7 +350,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
 
     # handler: Guess.pre_save
     @pre_save_handler
-    def _new_guess(cls, old, sender, guess, raw, *args, **kwargs):
+    def _saved_guess(cls, old, sender, guess, raw, *args, **kwargs):
         # Do not trigger unless this was a newly created guess.
         # Note this means an admin modifying a guess will not trigger anything.
         if raw:  # nocover
@@ -422,7 +422,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
 
     # handler: Unlockanswer.pre_save
     @pre_save_handler
-    def _new_unlockanswer(cls, old_unlockanswer, sender, instance, raw, *args, **kwargs):
+    def _saved_unlockanswer(cls, old_unlockanswer, sender, instance, raw, *args, **kwargs):
         if raw:  # nocover
             return
 
@@ -458,7 +458,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
 
     # handler: Unlock.pre_save
     @pre_save_handler
-    def _changed_unlock(cls, old, sender, instance, raw, *args, **kwargs):
+    def _saved_unlock(cls, old, sender, instance, raw, *args, **kwargs):
         if raw:  # nocover
             return
         if not old:
@@ -495,7 +495,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
 
     # handler: Hint.pre_save
     @pre_save_handler
-    def _new_hint(cls, old, sender, instance, raw, *args, **kwargs):
+    def _saved_hint(cls, old, sender, instance, raw, *args, **kwargs):
         if raw:  # nocover
             return
         hint = instance
@@ -571,10 +571,10 @@ class PuzzleEventWebsocket(HuntWebsocket):
                 cls.send_delete_hint(team, hint)
 
 
-pre_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
-pre_save.connect(PuzzleEventWebsocket._new_unlockanswer, sender=models.UnlockAnswer)
-pre_save.connect(PuzzleEventWebsocket._changed_unlock, sender=models.Unlock)
-pre_save.connect(PuzzleEventWebsocket._new_hint, sender=models.Hint)
+pre_save.connect(PuzzleEventWebsocket._saved_guess, sender=models.Guess)
+pre_save.connect(PuzzleEventWebsocket._saved_unlockanswer, sender=models.UnlockAnswer)
+pre_save.connect(PuzzleEventWebsocket._saved_unlock, sender=models.Unlock)
+pre_save.connect(PuzzleEventWebsocket._saved_hint, sender=models.Hint)
 
 pre_delete.connect(PuzzleEventWebsocket._deleted_unlockanswer, sender=models.UnlockAnswer)
 pre_delete.connect(PuzzleEventWebsocket._deleted_unlock, sender=models.Unlock)
