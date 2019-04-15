@@ -30,7 +30,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 from django.views.generic.edit import FormView
 from sendfile import sendfile
 from teams.mixins import TeamMixin
@@ -505,6 +505,22 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
         data.save()
 
         return response
+
+
+class AbsolutePuzzleView(RedirectView):
+    def get_redirect_url(self, puzzle_url_id, path=None):
+        try:
+            puzzle = models.Puzzle.objects.get(url_id=puzzle_url_id)
+        except models.Puzzle.DoesNotExist as e:
+            raise Http404 from e
+
+        if puzzle.episode is None:
+            raise Http404
+
+        if path is None:
+            return puzzle.get_absolute_url()
+        else:
+            return puzzle.get_absolute_url() + path
 
 
 class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):

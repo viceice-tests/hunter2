@@ -13,6 +13,7 @@
 
 import uuid
 from datetime import timedelta
+import secrets
 
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
@@ -190,12 +191,21 @@ class Episode(models.Model):
             return result
 
 
+URL_ID_CHARS = 'abcdefghijklmnopqrstuvwxyz01234356789'
+
+
+def generate_url_id():
+    id = ''.join(secrets.choice(URL_ID_CHARS) for _ in range(8))
+    return id
+
+
 class Puzzle(OrderedModel):
     order_with_respect_to = 'episode'
 
     class Meta:
         ordering = ('episode', 'order')
 
+    url_id = models.CharField(default=generate_url_id, max_length=8, editable=False, unique=True)
     episode = models.ForeignKey(Episode, blank=True, null=True, on_delete=models.SET_NULL)
     title = models.CharField(max_length=255, unique=True)
     flavour = models.TextField(
