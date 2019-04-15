@@ -1,14 +1,10 @@
 import $ from 'jquery'
 
-import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js'
+import 'hunter2/js/base.js'
 import * as invite from './invite.js'
 import * as request from './request.js'
 
 $(function(){
-  setupJQueryAjaxCsrf()
-
-  setupJQueryAjaxCsrf()
-
   $('#inv-create').on('submit', invite.create)
   $('.inv-accept').on('click', invite.accept)
   $('.inv-deny').on('click', invite.decline)

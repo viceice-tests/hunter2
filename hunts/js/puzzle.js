@@ -1,11 +1,11 @@
 import $ from 'jquery'
 import 'bootstrap/js/dist/collapse'
 import { easeLinear, format, select } from 'd3'
+import RobustWebSocket from 'robust-websocket'
 
 import '../scss/puzzle.scss'
 
-import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js'
-import RobustWebSocket from 'robust-websocket'
+import 'hunter2/js/base'
 
 function incorrect_answer(guess, timeout_length, timeout) {
   var milliseconds = Date.parse(timeout) - Date.now()
@@ -369,8 +369,6 @@ function openEventSocket() {
 }
 
 $(function() {
-  setupJQueryAjaxCsrf()
-
   addSVG()
 
   let field = $('#answer-entry')

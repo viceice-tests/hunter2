@@ -1,11 +1,9 @@
 import $ from 'jquery'
 import 'bootstrap'
 
-import setupJQueryAjaxCsrf from 'hunter2/js/csrf.js'
+import 'hunter2/js/base'
 
 $(function () {
-  setupJQueryAjaxCsrf()
-
   $('a[data-toggle="tab"]').on('show.bs.tab', function () {
     var url = $(this).data('url')
     var target = $(this).attr('href')
