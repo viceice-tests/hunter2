@@ -193,10 +193,10 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
         )
 
     def view_on_site(self, obj):
-        try:
+        if obj.episode:
             return obj.get_absolute_url()
-        except models.Episode.DoesNotExist:
-            return None
+
+        return None
 
     def get_urls(self):
         # Expose three extra views for editing answers, hints and unlocks without anything else
