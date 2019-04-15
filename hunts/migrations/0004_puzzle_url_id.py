@@ -4,7 +4,8 @@ from django.db import migrations, models
 import hunts.models
 
 def gen_url_ids(apps, schema_editor):
-    for pz in hunts.models.Puzzle.objects.all():
+    Puzzle = apps.get_model('hunts', 'Puzzle')
+    for pz in Puzzle.objects.all():
         pz.url_id = hunts.models.generate_url_id()
         pz.save(update_fields=['url_id'])
 
