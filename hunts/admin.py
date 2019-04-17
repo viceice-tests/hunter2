@@ -185,7 +185,8 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
 
     @property
     def media(self):
-        return forms.Media(
+        parent_media = super().media
+        return parent_media + forms.Media(
             css={
                 "all": [f['url'] for f in get_files('hunts_admin_puzzle', extension='css')],
             },
