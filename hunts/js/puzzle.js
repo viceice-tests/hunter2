@@ -186,6 +186,38 @@ function addSVG() {
     .attr('in', 'SourceGraphic')
 }
 
+var announcements = {}
+
+function updateAnnouncements() {
+  var list = select('#announcements')
+    .selectAll('.alert:not(.special)')
+    .data(Object.entries(announcements))
+  list.enter()
+    .append('div')
+    .merge(list)
+    .attr('class', function (d) {
+      return 'alert ' + d[1].css_class
+    })
+    .html(function (d) {
+      return '<strong>' + d[1].title + '</strong> ' + d[1].message
+    })
+  list.exit()
+    .remove()
+}
+
+function receivedAnnouncement(content) {
+  announcements[content.announcement_id] = {'title': content.title, 'message': content.message, 'css_class': content.css_class}
+  updateAnnouncements()
+}
+
+function receivedDeleteAnnouncement(content) {
+  if (!(content.announcement_id in announcements)) {
+    throw `WebSocket deleted invalid announcement: ${content.announcement_id}`
+  }
+  delete announcements[content.announcement_id]
+  updateAnnouncements()
+}
+
 var guesses = []
 
 function addAnswer(user, guess, correct, guess_uid) {
@@ -320,6 +352,8 @@ function receivedError(content) {
 }
 
 var socketHandlers = {
+  'announcement': receivedAnnouncement,
+  'delete_announcement': receivedDeleteAnnouncement,
   'new_guess': receivedNewAnswer,
   'old_guess': receivedOldAnswer,
   'new_unlock': receivedNewUnlock,
@@ -380,6 +414,10 @@ $(function() {
     evaluateButtonDisabledState(button)
   }
   field.keyup(fieldKeyup)
+
+  $('#announcements > .alert:not(.special)').each(function() {
+    announcements[$(this).attr('data-announcement-id')] = {}
+  })
   openEventSocket()
 
   $('.form-inline').submit(function(e) {

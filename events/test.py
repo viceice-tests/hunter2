@@ -91,7 +91,6 @@ class AsyncEventTestCase(EventAwareTestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        cls.loop.close()
 
     def get_communicator(self, app, url, scope=None):
         return ScopeOverrideCommunicator(app, url, scope, headers=self.headers)

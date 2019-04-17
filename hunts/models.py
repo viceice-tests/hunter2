@@ -747,6 +747,16 @@ class AnnouncementType(Enum):
     WARNING = 'W'
     ERROR = 'E'
 
+    def __init__(self, value):
+        # TODO: This is relatively closely linked to the CSS so perhaps should be further moved to the view / template
+        # also repeating the values here is Not Good, but EnumField does not support using tuples as Enum values.
+        self.css_class = {
+            'I': 'alert-info',
+            'S': 'alert-success',
+            'W': 'alert-warning',
+            'E': 'alert-danger',
+        }[value]
+
 
 class Announcement(models.Model):
     event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING, related_name='announcements')

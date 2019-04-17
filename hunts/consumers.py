@@ -69,23 +69,88 @@ def hybrid_save_signal_dispatcher(sender, instance, **kwargs):
         hybrid_cb()
 
 
-class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
+class HuntWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
+    def connect(self):
+        async_to_sync(self.channel_layer.group_add)(
+           self._announcement_groupname(self.scope['tenant']), self.channel_name
+        )
+        self.connected = True
+        self.accept()
+
+    def disconnect(self, close_code):
+        if not self.connected:
+            return
+        async_to_sync(self.channel_layer.group_discard)(
+            self._announcement_groupname(self.scope['tenant']), self.channel_name
+        )
+
+    @classmethod
+    def _announcement_groupname(cls, event, puzzle=None):
+        if puzzle:
+            return f'event-{event.id}.puzzle-{puzzle.id}.announcements'
+        else:
+            return f'event-{event.id}.announcements'
+
+    @classmethod
+    def _send_message(cls, group, message):
+        layer = get_channel_layer()
+        async_to_sync(layer.group_send)(group, {'type': 'send_json_msg', 'content': message})
+
+    def send_json_msg(self, content, close=False):
+        # For some reason consumer dispatch doesn't strip off the outer dictionary with 'type': 'send_json'
+        # (or whatever method name) so we override and do it here. This saves us having to define a separate
+        # method which just calls send_json for each type of message.
+        super().send_json(content['content'])
+
+    @classmethod
+    def send_announcement_msg(cls, event, puzzle, announcement):
+        cls._send_message(cls._announcement_groupname(event, puzzle), {
+            'type': 'announcement',
+            'content': {
+                'announcement_id': announcement.id,
+                'title': announcement.title,
+                'message': announcement.message,
+                'css_class': announcement.type.css_class
+            }
+        })
+
+    @classmethod
+    def send_delete_announcement_msg(cls, event, puzzle, announcement):
+        cls._send_message(cls._announcement_groupname(event, puzzle), {
+            'type': 'delete_announcement',
+            'content': {
+                'announcement_id': announcement.id
+            }
+        })
+
+    @pre_save_handler
+    def _saved_announcement(cls, old, sender, announcement, raw, *args, **kwargs):
+        if raw:  # nocover
+            return
+
+        cls.send_announcement_msg(announcement.event, announcement.puzzle, announcement)
+
+    @classmethod
+    def _deleted_announcement(cls, sender, instance, *args, **kwargs):
+        cls.send_delete_announcement_msg(instance.event, instance.puzzle, instance)
+
+
+pre_save.connect(HuntWebsocket._saved_announcement, sender=models.Announcement)
+pre_delete.connect(HuntWebsocket._deleted_announcement, sender=models.Announcement)
+
+
+class PuzzleEventWebsocket(HuntWebsocket):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.connected = False
 
     @classmethod
-    def _group_name(cls, puzzle, team=None):
+    def _puzzle_groupname(cls, puzzle, team=None):
         event = puzzle.episode.event
         if team:
             return f'event-{event.id}.puzzle-{puzzle.id}.events.team-{team.id}'
         else:
             return f'event-{event.id}.puzzle-{puzzle.id}.events'
-
-    @classmethod
-    def _send_message(cls, puzzle, team, message):
-        layer = get_channel_layer()
-        async_to_sync(layer.group_send)(cls._group_name(puzzle, team), {'type': 'send_json_msg', 'content': message})
 
     def connect(self):
         keywords = self.scope['url_route']['kwargs']
@@ -93,22 +158,23 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
         puzzle_number = keywords['puzzle_number']
         self.episode, self.puzzle = utils.event_episode_puzzle(self.scope['tenant'], episode_number, puzzle_number)
         async_to_sync(self.channel_layer.group_add)(
-            self._group_name(self.puzzle, self.team), self.channel_name
+            self._puzzle_groupname(self.puzzle, self.team), self.channel_name
         )
         async_to_sync(self.channel_layer.group_add)(
-            self._group_name(self.puzzle), self.channel_name
+            self._announcement_groupname(self.episode.event, self.puzzle), self.channel_name
         )
         self.setup_hint_timers()
-        self.connected = True
-        self.accept()
+
+        super().connect()
 
     def disconnect(self, close_code):
+        super().disconnect(close_code)
         if not self.connected:
             return
         for e in self.hint_events.values():
             e.cancel()
         async_to_sync(self.channel_layer.group_discard)(
-            self._group_name(self.puzzle, self.team), self.channel_name
+            self._puzzle_groupname(self.puzzle, self.team), self.channel_name
         )
 
     def receive_json(self, content):
@@ -130,12 +196,6 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
             self.send_old_hints(content['from'])
         else:
             self._error('invalid request type')
-
-    def send_json_msg(self, content, close=False):
-        # For some reason consumer dispatch doesn't strip off the outer dictionary with 'type': 'send_json'
-        # (or whatever method name) so we override and do it here. This saves us having to define a separate
-        # method which just calls send_json for each type of message.
-        super().send_json(content['content'])
 
     def _error(self, message):
         self.send_json({'type': 'error', 'content': {'error': message}})
@@ -190,7 +250,7 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
 
     @classmethod
     def send_new_unlock(cls, guess, unlock):
-        cls._send_message(guess.for_puzzle, guess.by_team, {
+        cls._send_message(cls._puzzle_groupname(guess.for_puzzle, guess.by_team), {
             'type': 'new_unlock',
             'content': cls._new_unlock_json(guess, unlock)
         })
@@ -222,14 +282,14 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
     def send_new_guess(cls, guess):
         content = cls._new_guess_json(guess)
 
-        cls._send_message(guess.for_puzzle, guess.by_team, {
+        cls._send_message(cls._puzzle_groupname(guess.for_puzzle, guess.by_team), {
             'type': 'new_guess',
             'content': content
         })
 
     @classmethod
     def send_change_unlock(cls, old_unlock, new_unlock, guess):
-        cls._send_message(old_unlock.puzzle, guess.by_team, {
+        cls._send_message(cls._puzzle_groupname(old_unlock.puzzle, guess.by_team), {
             'type': 'change_unlock',
             'content': {
                 'unlock': new_unlock.text,
@@ -239,7 +299,7 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
 
     @classmethod
     def send_delete_unlock(cls, unlock, guess):
-        cls._send_message(unlock.puzzle, guess.by_team, {
+        cls._send_message(cls._puzzle_groupname(unlock.puzzle, guess.by_team), {
             'type': 'delete_unlock',
             'content': {
                 'unlock_uid': encode_uuid(unlock.id),
@@ -248,7 +308,7 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
 
     @classmethod
     def send_delete_unlockguess(cls, old_unlock, guess):
-        cls._send_message(old_unlock.puzzle, guess.by_team, {
+        cls._send_message(cls._puzzle_groupname(old_unlock.puzzle, guess.by_team), {
             'type': 'delete_unlockguess',
             'content': {
                 'guess': guess.guess,
@@ -269,7 +329,7 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
 
     @classmethod
     def send_new_hint_to_team(cls, team, hint):
-        cls._send_message(hint.puzzle, team, cls._new_hint_json(hint))
+        cls._send_message(cls._puzzle_groupname(hint.puzzle, team), cls._new_hint_json(hint))
 
     async def send_new_hint(self, team, hint, delay, **kwargs):
         # We can't have a sync function (added to the event loop via call_later) because it would have to call back
@@ -287,7 +347,7 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
 
     @classmethod
     def send_delete_hint(cls, team, hint):
-        cls._send_message(hint.puzzle, team, {
+        cls._send_message(cls._puzzle_groupname(hint.puzzle, team), {
             'type': 'delete_hint',
             'content': {
                 'hint_uid': encode_uuid(hint.id)
@@ -296,7 +356,7 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
 
     # handler: Guess.pre_save
     @pre_save_handler
-    def _new_guess(cls, old, sender, guess, raw, *args, **kwargs):
+    def _saved_guess(cls, old, sender, guess, raw, *args, **kwargs):
         # Do not trigger unless this was a newly created guess.
         # Note this means an admin modifying a guess will not trigger anything.
         if raw:  # nocover
@@ -386,7 +446,7 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
 
     # handler: Unlockanswer.pre_save
     @pre_save_handler
-    def _new_unlockanswer(cls, old_unlockanswer, sender, instance, raw, *args, **kwargs):
+    def _saved_unlockanswer(cls, old_unlockanswer, sender, instance, raw, *args, **kwargs):
         if raw:  # nocover
             return
 
@@ -422,7 +482,7 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
 
     # handler: Unlock.pre_save
     @pre_save_handler
-    def _changed_unlock(cls, old, sender, instance, raw, *args, **kwargs):
+    def _saved_unlock(cls, old, sender, instance, raw, *args, **kwargs):
         if raw:  # nocover
             return
         if not old:
@@ -459,7 +519,7 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
 
     # handler: Hint.pre_save
     @pre_save_handler
-    def _new_hint(cls, old, sender, instance, raw, *args, **kwargs):
+    def _saved_hint(cls, old, sender, instance, raw, *args, **kwargs):
         if raw:  # nocover
             return
         hint = instance
@@ -470,12 +530,12 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
             data = models.PuzzleData(hint.puzzle, team)
             layer = get_channel_layer()
             if hint.unlocked_by(team, data):
-                async_to_sync(layer.group_send)(cls._group_name(hint.puzzle, team), {'type': 'cancel_scheduled_hint', 'hint_uid': str(hint.id)})
+                async_to_sync(layer.group_send)(cls._puzzle_groupname(hint.puzzle, team), {'type': 'cancel_scheduled_hint', 'hint_uid': str(hint.id)})
                 cls.send_new_hint_to_team(team, hint)
             else:
                 if old and old.unlocked_by(team, data):
                     cls.send_delete_hint(team, hint)
-                async_to_sync(layer.group_send)(cls._group_name(hint.puzzle, team), {'type': 'schedule_hint_msg', 'hint_uid': str(hint.id)})
+                async_to_sync(layer.group_send)(cls._puzzle_groupname(hint.puzzle, team), {'type': 'schedule_hint_msg', 'hint_uid': str(hint.id)})
 
     # handler: UnlockAnswer.pre_delete
     @classmethod
@@ -539,10 +599,10 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
                 cls.send_delete_hint(team, hint)
 
 
-pre_save.connect(PuzzleEventWebsocket._new_guess, sender=models.Guess)
-pre_save.connect(PuzzleEventWebsocket._new_unlockanswer, sender=models.UnlockAnswer)
-pre_save.connect(PuzzleEventWebsocket._changed_unlock, sender=models.Unlock)
-pre_save.connect(PuzzleEventWebsocket._new_hint, sender=models.Hint)
+pre_save.connect(PuzzleEventWebsocket._saved_guess, sender=models.Guess)
+pre_save.connect(PuzzleEventWebsocket._saved_unlockanswer, sender=models.UnlockAnswer)
+pre_save.connect(PuzzleEventWebsocket._saved_unlock, sender=models.Unlock)
+pre_save.connect(PuzzleEventWebsocket._saved_hint, sender=models.Hint)
 
 pre_delete.connect(PuzzleEventWebsocket._deleted_unlockanswer, sender=models.UnlockAnswer)
 pre_delete.connect(PuzzleEventWebsocket._deleted_unlock, sender=models.Unlock)
