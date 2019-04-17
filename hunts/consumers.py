@@ -483,7 +483,11 @@ class PuzzleEventWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
         # TODO if the Unlock is being deleted it will cascade to the answers. In that case
         # we don't actually need to send events for them.
         unlockanswer = instance
-        unlock = unlockanswer.unlock
+        try:
+            unlock = unlockanswer.unlock
+        except models.Unlock.DoesNotExist:
+            return
+
         puzzle = unlock.puzzle
 
         guesses = models.Guess.objects.filter(

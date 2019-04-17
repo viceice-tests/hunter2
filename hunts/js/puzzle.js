@@ -276,9 +276,6 @@ function receivedDeleteUnlockGuess(content) {
   var unlockguesses = unlocks[content.unlock_uid].guesses
   var i = unlockguesses.indexOf(content.guess)
   unlockguesses.splice(i, 1)
-  if (unlocks[content.unlock_uid].guesses.length == 0) {
-    delete unlocks[content.unlock_uid]
-  }
   updateUnlocks()
 }
 
