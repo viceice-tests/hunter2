@@ -4,7 +4,7 @@ FROM registry.gitlab.com/hunter2.app/hunter2/app:${BUILD_TAG} AS app
 USER root
 RUN python manage.py collectstatic
 
-FROM alpine:3.8
+FROM alpine:3.9
 
 RUN apk add --no-cache \
     nginx \
