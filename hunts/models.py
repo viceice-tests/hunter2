@@ -419,6 +419,16 @@ class Clue(models.Model):
 
 
 class Hint(Clue):
+    # This is PROTECTed because it is not clear whether hints should be preserved when dependent unlocks
+    # are deleted.
+    start_after = models.ForeignKey(
+        'Unlock',
+        verbose_name='Start after Unlock',
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        help_text='If you select an unlock here, the time will start counting from when that is unlocked.'
+    )
     time = models.DurationField(
         verbose_name='Delay',
         help_text='Time after anyone on the team first loads the puzzle to display this hint'
@@ -428,7 +438,13 @@ class Hint(Clue):
         return f'Hint unlocked after {self.time}'
 
     def unlocked_by(self, team, data):
-        if data.tp_data.start_time:
+        if self.start_after:
+            guesses = self.start_after.unlocked_by(team)
+            if guesses and guesses[0].given + self.time < timezone.now():
+                return True
+            else:
+                return False
+        elif data.tp_data.start_time:
             return data.tp_data.start_time + self.time < timezone.now()
         else:
             return False
@@ -452,7 +468,8 @@ class Unlock(Clue):
             by__in=team.members.all()
         ).filter(
             for_puzzle=self.puzzle
-        )
+        ).order_by('given')
+
         unlockanswers = self.unlockanswer_set.all()
         return [g for g in guesses if any([u.validate_guess(g) for u in unlockanswers])]
 

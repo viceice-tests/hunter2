@@ -774,6 +774,30 @@ class ClueDisplayTests(EventTestCase):
             frozen_datetime.tick(hint.time)
             self.assertTrue(hint.unlocked_by(self.team, self.data), "Hint unlocked by team after required time elapsed.")
 
+    def test_dependent_hints(self):
+        unlock = UnlockFactory(puzzle=self.puzzle)
+        hint = HintFactory(puzzle=self.puzzle, start_after=unlock)
+
+        with freezegun.freeze_time() as frozen_datetime:
+            self.data.tp_data.start_time = timezone.now()
+            self.assertFalse(hint.unlocked_by(self.team, self.data), "Hint unlocked by team at start")
+
+            frozen_datetime.tick(hint.time)
+            self.assertFalse(hint.unlocked_by(self.team, self.data),
+                             "Hint unlocked by team when dependent unlock not unlocked.")
+
+            GuessFactory(for_puzzle=self.puzzle, by=self.user, guess=unlock.unlockanswer_set.get().guess)
+            self.assertFalse(hint.unlocked_by(self.team, self.data),
+                             "Hint unlocked by team as soon as dependent unlock unlocked")
+
+            frozen_datetime.tick(hint.time / 2)
+            self.assertFalse(hint.unlocked_by(self.team, self.data),
+                             "Hint unlocked by team before time after dependent unlock was unlocked elapsed")
+
+            frozen_datetime.tick(hint.time)
+            self.assertTrue(hint.unlocked_by(self.team, self.data),
+                            "Hint not unlocked by team after time after dependent unlock was unlocked elapsed")
+
     def test_unlock_display(self):
         other_team = TeamFactory(at_event=self.episode.event)
 
