@@ -202,6 +202,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
 
     def setup_hint_timers(self):
         self.hint_events = {}
+        hints = self.puzzle.hint_set.all().select_related('start_after')
         for hint in self.puzzle.hint_set.all():
             self.schedule_hint(hint)
 
@@ -219,8 +220,11 @@ class PuzzleEventWebsocket(HuntWebsocket):
             pass
 
         data = models.PuzzleData(self.puzzle, self.team)
-        delay = hint.delay_for_team(self.team, data).total_seconds()
-        if time is None or delay < 0:
+        delay = hint.delay_for_team(self.team, data)
+        if delay is None:
+            return
+        delay = delay.total_seconds()
+        if delay < 0:
             return
         loop = sync_to_async.threadlocal.main_event_loop
         # run the hint sender function on the asyncio event loop so we don't have to bother writing scheduler stuff
@@ -371,13 +375,20 @@ class PuzzleEventWebsocket(HuntWebsocket):
         ).select_related(
             'puzzle'
         ).prefetch_related(
-            'unlockanswer_set'
+            'unlockanswer_set',
+            'hint_set'
         )
-        unlocks = []
         for u in all_unlocks:
             if any([a.validate_guess(guess) for a in u.unlockanswer_set.all()]):
-                unlocks.append(u.text)
                 cls.send_new_unlock(guess, u)
+            for hint in u.hint_set.all():
+                layer = get_channel_layer()
+                async_to_sync(layer.group_send)(cls._puzzle_groupname(guess.for_puzzle, guess.by_team), {
+                    'type': 'schedule_hint_msg',
+                    'hint_uid': str(hint.id)
+                })
+                #self.schedule_hint(hint)
+
 
         cls.send_new_guess(guess)
 

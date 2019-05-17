@@ -438,28 +438,26 @@ class Hint(Clue):
         return f'Hint unlocked after {self.time}'
 
     def unlocked_by(self, team, data):
-        if self.start_after:
-            guesses = self.start_after.unlocked_by(team)
-            if guesses and guesses[0].given + self.time < timezone.now():
-                return True
-            else:
-                return False
-        elif data.tp_data.start_time:
-            return data.tp_data.start_time + self.time < timezone.now()
-        else:
-            return False
+        unlocks_at = self.unlocks_at(team, data)
+        return unlocks_at is not None and unlocks_at < timezone.now()
 
     def delay_for_team(self, team, data):
-        if data.tp_data.start_time is None:
-            return None
-        elapsed = timezone.now() - data.tp_data.start_time
-        return self.time - elapsed
+        unlocks_at = self.unlocks_at(team, data)
+        return None if unlocks_at is None else unlocks_at - timezone.now()
 
-    def unlocks_at(self, team):
-        data = TeamPuzzleData.objects.get(puzzle=self.puzzle, team=team)
-        if data.start_time is None:
+    def unlocks_at(self, team, data):
+        if self.start_after:
+            guesses = self.start_after.unlocked_by(team)
+            if guesses:
+                start_time = guesses[0].given
+            else:
+                return None
+        elif data.tp_data.start_time:
+            start_time = data.tp_data.start_time
+        else:
             return None
-        return data.start_time + self.time
+
+        return start_time + self.time
 
 
 class Unlock(Clue):
