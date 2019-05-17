@@ -427,7 +427,7 @@ class Hint(Clue):
         null=True,
         blank=True,
         on_delete=models.PROTECT,
-        help_text='If you select an unlock here, the time will start counting from when that is unlocked.'
+        help_text='If you select an unlock here, the time will start counting from when that is unlocked.',
     )
     time = models.DurationField(
         verbose_name='Delay',
@@ -474,7 +474,7 @@ class Unlock(Clue):
         return [g for g in guesses if any([u.validate_guess(g) for u in unlockanswers])]
 
     def __str__(self):
-        return f'Unlock for {self.puzzle}'
+        return f'"{self.text}"'
 
 
 class UnlockAnswer(models.Model):
