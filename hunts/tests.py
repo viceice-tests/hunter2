@@ -1692,7 +1692,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
 
         self.run_async(comm.disconnect)()
 
-    def test_websocket_receives_dependent_hints(self):
+    def test_websocket_dependent_hints(self):
         delay = 0.2
 
         user = TeamMemberFactory()
@@ -1701,6 +1701,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         data.tp_data.start_time = timezone.now()
         data.save()
         unlock = UnlockFactory(puzzle=self.pz)
+        unlockanswer = unlock.unlockanswer_set.get()
         hint = HintFactory(puzzle=self.pz, time=datetime.timedelta(seconds=delay), start_after=unlock)
 
         comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
@@ -1710,9 +1711,9 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         # wait for the remaining time for output
         self.assertTrue(self.run_async(comm.receive_nothing)(delay))
 
-        guess = GuessFactory(for_puzzle=self.pz, by=user, guess=unlock.unlockanswer_set.get().guess)
+        guess = GuessFactory(for_puzzle=self.pz, by=user, guess=unlockanswer.guess)
         _ = self.receive_json(comm, 'Websocket did not send unlock')
-        _ = self.receive_json(comm, 'Websocket did not send unlock')
+        _ = self.receive_json(comm, 'Websocket did not send guess')
         remaining = hint.delay_for_team(team, data).total_seconds()
         self.assertFalse(hint.unlocked_by(team, data))
         self.assertTrue(self.run_async(comm.receive_nothing)(remaining / 2))
@@ -1725,6 +1726,19 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
 
         self.assertEqual(output['type'], 'new_hint')
         self.assertEqual(output['content']['hint'], hint.text)
+        self.assertEqual(output['content']['depends_on_unlock_uid'], encode_uuid(unlock.id))
+
+        # alter the unlockanswer again, check hint re-appears
+        guess.guess = '__DIFFERENT_2__'
+        guess.save()
+        unlockanswer.guess = guess.guess
+        unlockanswer.save()
+        _ = self.receive_json(comm, 'Websocket did not resend unlock')
+        output = self.receive_json(comm, 'Websocket did not resend hint')
+        self.assertEqual(output['type'], 'new_hint')
+        self.assertEqual(output['content']['hint_uid'], encode_uuid(hint.id))
+
+        # TODO: test that scheduling the hint through altering an unlockanswer works
 
         self.run_async(comm.disconnect)()
 

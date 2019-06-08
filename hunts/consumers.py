@@ -12,7 +12,6 @@
 
 import asyncio
 from collections import defaultdict
-import time
 from datetime import datetime
 
 from asgiref.sync import async_to_sync, sync_to_async
@@ -203,7 +202,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
     def setup_hint_timers(self):
         self.hint_events = {}
         hints = self.puzzle.hint_set.all().select_related('start_after')
-        for hint in self.puzzle.hint_set.all():
+        for hint in hints:
             self.schedule_hint(hint)
 
     def schedule_hint_msg(self, message):
@@ -311,12 +310,20 @@ class PuzzleEventWebsocket(HuntWebsocket):
         })
 
     @classmethod
-    def send_delete_unlockguess(cls, old_unlock, guess):
-        cls._send_message(cls._puzzle_groupname(old_unlock.puzzle, guess.by_team), {
+    def send_delete_unlockguess(cls, unlock, guess):
+        # First get any hints dependent on the unlock and "schedule" them - which will cancel them
+        layer = get_channel_layer()
+        groupname = cls._puzzle_groupname(guess.for_puzzle, guess.by_team)
+        for hint in unlock.hint_set.all():
+            async_to_sync(layer.group_send)(groupname, {
+                'type': 'schedule_hint_msg',
+                'hint_uid': str(hint.id)
+            })
+        cls._send_message(cls._puzzle_groupname(unlock.puzzle, guess.by_team), {
             'type': 'delete_unlockguess',
             'content': {
                 'guess': guess.guess,
-                'unlock_uid': encode_uuid(old_unlock.id),
+                'unlock_uid': encode_uuid(unlock.id),
             }
         })
 
@@ -327,7 +334,8 @@ class PuzzleEventWebsocket(HuntWebsocket):
             'content': {
                 'hint': hint.text,
                 'hint_uid': encode_uuid(hint.id),
-                'time': str(hint.time)
+                'time': str(hint.time),
+                'depends_on_unlock_uid': encode_uuid(hint.start_after.id) if hint.start_after else None
             }
         }
 
@@ -387,8 +395,6 @@ class PuzzleEventWebsocket(HuntWebsocket):
                     'type': 'schedule_hint_msg',
                     'hint_uid': str(hint.id)
                 })
-                #self.schedule_hint(hint)
-
 
         cls.send_new_guess(guess)
 
@@ -477,19 +483,27 @@ class PuzzleEventWebsocket(HuntWebsocket):
             'by_team'
         )
         if old_unlockanswer:
-            old_unlock = old_unlockanswer.unlock
-            if old_unlock != unlock:
-                # TODO: do we need to handle when some muppet moved an unlockanswer manually to another unlock?
-                pass
             others = unlock.unlockanswer_set.exclude(id=unlockanswer.id)
             for g in guesses:
                 if old_unlockanswer.validate_guess(g) and not any(a.validate_guess(g) for a in others):
                     # The unlockanswer was the only one giving us this and it no longer does
-                    cls.send_delete_unlockguess(old_unlock, g)
+                    cls.send_delete_unlockguess(unlock, g)
+                    # No need to do anything for hints, as the client will delete them if the unlock disappears
+
+        layer = get_channel_layer()
         for g in guesses:
             if unlockanswer.validate_guess(g):
                 # Just notify about all guesses that match this answer. Some may already have done so but that's OK.
                 cls.send_new_unlock(g, unlock)
+                # Send out hints unlocked by this. Again, we may send already-sent hints but the client will ignore it.
+                for h in unlock.hint_set.all():
+                    if h.unlocked_by(g.by_team, None):
+                        cls.send_new_hint_to_team(g.by_team, h)
+                    else:
+                        async_to_sync(layer.group_send)(
+                            cls._puzzle_groupname(h.puzzle, g.by_team),
+                            {'type': 'schedule_hint_msg', 'hint_uid': str(h.id)}
+                        )
 
     # handler: Unlock.pre_save
     @pre_save_handler
