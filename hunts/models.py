@@ -17,6 +17,7 @@ import secrets
 
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -429,9 +430,13 @@ class Hint(Clue):
         on_delete=models.PROTECT,
         help_text='If you select an unlock here, the time will start counting from when that is unlocked.',
     )
+    # Minimum time is 1 second because instant hints don't make sense!
+    # Note that this also means the websocket does not need worry about sending out hints immediately in
+    # response to guesses.
     time = models.DurationField(
         verbose_name='Delay',
-        help_text='Time after anyone on the team first loads the puzzle to display this hint'
+        help_text='Time after anyone on the team first loads the puzzle to display this hint',
+        validators=(MinValueValidator(timedelta(seconds=1)),),
     )
 
     def __str__(self):
