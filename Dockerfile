@@ -25,6 +25,7 @@ WORKDIR /usr/src/app
 RUN apk add --no-cache \
     gcc \
     git \
+    libffi-dev \
     linux-headers \
     lua5.2-dev \
     musl-dev \
