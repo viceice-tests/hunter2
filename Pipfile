@@ -26,7 +26,7 @@ django-prometheus = "*"
 django-sendfile = "*"
 django-solo = "*"
 django-sortedm2m = "*"
-django-tenants = { git = "https://github.com/tomturner/django-tenants.git", ref = "356386545de68094ce917c34b5c79ba184762f5f" }
+django-tenants = "*"
 django-webpack-loader = "*"
 factory_boy = "*"
 freezegun = "*"
