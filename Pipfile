@@ -11,7 +11,7 @@ channels_redis = "*"
 colour-runner = "*"
 coverage = "*"
 daphne = "*"
-django-allauth = { git = "https://github.com/riconnon/django-allauth.git", ref = "0.36.0+stateless" }
+django-allauth = { git = "https://github.com/riconnon/django-allauth.git", ref = "0.39.1+stateless" }
 django-analytical = "*"
 django-autocomplete-light = "*"
 django-bootstrap4 = "*"
