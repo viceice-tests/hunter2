@@ -442,7 +442,7 @@ class Hint(Clue):
         verbose_name='Delay',
         help_text=('Time after anyone on the team first loads the puzzle or (if set) unlocks the related '
                    'unlock to display this hint'),
-        validators=(MinValueValidator(timedelta(seconds=1)),),
+        validators=(MinValueValidator(timedelta(seconds=0)),),
     )
 
     def __str__(self):
