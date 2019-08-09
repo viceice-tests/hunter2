@@ -27,6 +27,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='hint',
             name='time',
-            field=models.DurationField(help_text='Time after anyone on the team first loads the puzzle or (if set) unlocks the related unlock to display this hint', validators=[django.core.validators.MinValueValidator(datetime.timedelta(seconds=1))], verbose_name='Delay'),
+            field=models.DurationField(help_text='Time after anyone on the team first loads the puzzle or (if set) unlocks the related unlock to display this hint', validators=[django.core.validators.MinValueValidator(datetime.timedelta(0))], verbose_name='Delay'),
         ),
     ]
