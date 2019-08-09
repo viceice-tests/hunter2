@@ -27,7 +27,6 @@ from events.consumers import EventMixin
 from teams.models import Team
 from teams.consumers import TeamMixin
 from .models import Guess
-from .utils import encode_uuid
 from . import models, utils
 
 
@@ -249,7 +248,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
         return {
             'guess': guess.guess,
             'unlock': unlock.text,
-            'unlock_uid': encode_uuid(unlock.id)
+            'unlock_uid': unlock.compact_id
         }
 
     @classmethod
@@ -265,7 +264,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
         content = {
             'timestamp': str(guess.given),
             'guess': guess.guess,
-            'guess_uid': encode_uuid(guess.id),
+            'guess_uid': guess.compact_id,
             'correct': correct,
             'by': guess.by.username,
         }
@@ -297,7 +296,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
             'type': 'change_unlock',
             'content': {
                 'unlock': new_unlock.text,
-                'unlock_uid': encode_uuid(old_unlock.id)
+                'unlock_uid': old_unlock.compact_id,
             }
         })
 
@@ -306,7 +305,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
         cls._send_message(cls._puzzle_groupname(unlock.puzzle, guess.by_team), {
             'type': 'delete_unlock',
             'content': {
-                'unlock_uid': encode_uuid(unlock.id),
+                'unlock_uid': unlock.compact_id,
             }
         })
 
@@ -324,7 +323,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
             'type': 'delete_unlockguess',
             'content': {
                 'guess': guess.guess,
-                'unlock_uid': encode_uuid(unlock.id),
+                'unlock_uid': unlock.compact_id,
             }
         })
 
@@ -334,9 +333,9 @@ class PuzzleEventWebsocket(HuntWebsocket):
             'type': 'new_hint',
             'content': {
                 'hint': hint.text,
-                'hint_uid': encode_uuid(hint.id),
+                'hint_uid': hint.compact_id,
                 'time': str(hint.time),
-                'depends_on_unlock_uid': encode_uuid(hint.start_after.id) if hint.start_after else None
+                'depends_on_unlock_uid': hint.start_after.compact_id if hint.start_after else None
             }
         }
 
@@ -363,7 +362,8 @@ class PuzzleEventWebsocket(HuntWebsocket):
         cls._send_message(cls._puzzle_groupname(hint.puzzle, team), {
             'type': 'delete_hint',
             'content': {
-                'hint_uid': encode_uuid(hint.id)
+                'hint_uid': hint.compact_id,
+                'depends_on_unlock_uid': hint.start_after.compact_id if hint.start_after else None
             }
         })
 

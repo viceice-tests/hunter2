@@ -3,7 +3,7 @@ import * as d3 from 'd3'
 
 import '../scss/stats.scss'
 
-import 'hunter2/js/base'
+import {escapeHtml} from 'hunter2/js/base'
 
 // Keep the number of entries in here such that it has a large least common multiple with the number of colours.
 var symbolsPathList = [
@@ -22,28 +22,9 @@ var symbolsPathList = [
 
 var hiddenOpacity = 0.1
 
-// Fuck JS and its lack of a standard library
-var entityMap = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  '\'': '&#39;',
-  '/': '&#x2F;',
-  '`': '&#x60;',
-  '=': '&#x3D;',
-  ' ': '&nbsp;',
-}
-
 var globalData = null
 var timeout = null
 var invisteams = []
-
-function escapeHtml (string) {
-  return String(string).replace(/[&<>"'`=/ ]/g, function (s) {
-    return entityMap[s]
-  })
-}
 
 function getStats(force) {
   if (timeout) {

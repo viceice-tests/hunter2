@@ -446,8 +446,9 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 
         answered = puzzle.answered_by(request.team)
         hints = [
-            h for h in puzzle.hint_set.all().order_by('time') if h.unlocked_by(request.team, data)
+            h for h in puzzle.hint_set.filter(start_after=None).order_by('time') if h.unlocked_by(request.team, data)
         ]
+
         unlocks = []
         for u in puzzle.unlock_set.order_by('text'):
             guesses = u.unlocked_by(request.team)
@@ -459,7 +460,12 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
             duplicates = set()
             guesses = [g for g in guesses if not (g in duplicates or duplicates.add(g))]
             unlock_text = mark_safe(u.text)  # nosec unlock text is provided by puzzle admins, we consider this safe
-            unlocks.append({'guesses': guesses, 'text': unlock_text})
+            unlocks.append({
+                'compact_id': u.compact_id,
+                'guesses': guesses,
+                'text': unlock_text,
+                'hints': u.hint_set.all()
+            })
 
         event_files = {f.slug: f.file.url for f in request.tenant.eventfile_set.filter(slug__isnull=False)}
         puzzle_files = {f.slug: reverse(

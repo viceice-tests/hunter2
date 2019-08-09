@@ -29,6 +29,7 @@ from ordered_model.models import OrderedModel
 import accounts
 import events
 import teams
+from . import utils
 from .runtimes import Runtime
 
 
@@ -418,6 +419,10 @@ class Clue(models.Model):
         abstract = True
         unique_together = (('puzzle', 'text'), )
 
+    @property
+    def compact_id(self):
+        return utils.encode_uuid(self.id)
+
 
 class Hint(Clue):
     # This is PROTECTed because it is not clear whether hints should be preserved when dependent unlocks
@@ -611,6 +616,10 @@ class Guess(ExportModelOperationsMixin('guess'), models.Model):
 
     def __str__(self):
         return f'"{self.guess}" by {self.by} ({self.by_team}) @ {self.given}'
+
+    @property
+    def compact_id(self):
+        return utils.encode_uuid(self.id)
 
     def get_team(self):
         event = self.for_puzzle.episode.event

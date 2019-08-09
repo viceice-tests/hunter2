@@ -9,6 +9,22 @@
 
 {% block script %}
 {% render_bundle 'hunts_puzzle' 'js' attrs='defer' %}
+	<script>
+		"use strict"
+		var hints = { {% for hint in hints %}
+			'{{ hint.compact_id }}': {'time': '{{ hint.time }}', 'hint': '{{ hint.text|escapejs }}'}, {% endfor %}
+		};
+		var unlocks = {{% for unlock in unlocks %}
+			'{{ unlock.compact_id }}': {
+				'unlock': '{{ unlock.text|escapejs }}',
+				'guesses': [{% for g in unlock.guesses %}'{{ g|escapejs }}'{% if not forloop.last %}, {%endif %}{% endfor %}],
+				'hints': {{% for h in unlock.hints %}
+					'{{ h.compact_id }}': {'time': '{{ h.time }}', 'hint': '{{ h.text|escapejs }}'}{% if not forloop.last %}, {% endif %}{% endfor %}
+				}
+			}{% if not forloop.last %}, {% endif %}{% endfor %}
+		};
+		//hunts_puzzle.updateHints();
+	</script>
 {% endblock %}
 
 {% block page_header %}
@@ -30,26 +46,13 @@
 </section>
 
 <section id="puzzle-clues">
-<h3>Hints</h3>
+<h3>Clues</h3>
+{% if not hints and not unlocks %}
+	<i>None yet</i>
+{% endif %}
 <ul id="hints">
-{% if not hints %}
-  <li><i>None yet</i></li>
-{% else %}
-  {% for hint in hints %}
-    <li>{{hint.time}}: {{hint.text}}</li>
-  {% endfor %}
-{% endif %}
 </ul>
-
-<h3>Unlocks</h3>
 <ul id="unlocks">
-{% if not unlocks %}
-  <li><i>None yet</i></li>
-{% else %}
-  {% for unlock in unlocks %}
-    <li>{% for guess in unlock.guesses %}{{guess}}{% if not forloop.last %}, {% endif %}{% endfor %}: {{unlock.text}}</li>
-  {% endfor %}
-{% endif %}
 </ul>
 </section>
 
