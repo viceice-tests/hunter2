@@ -774,6 +774,32 @@ class ClueDisplayTests(EventTestCase):
             frozen_datetime.tick(hint.time)
             self.assertTrue(hint.unlocked_by(self.team, self.data), "Hint unlocked by team after required time elapsed.")
 
+    def test_hint_unlocks_at(self):
+        hint = HintFactory(puzzle=self.puzzle, time=datetime.timedelta(seconds=42))
+
+        with freezegun.freeze_time() as frozen_datetime:
+            now = timezone.now()
+            self.assertEqual(hint.unlocks_at(self.team, self.data), None)
+            self.data.tp_data.start_time = now
+            target = now + datetime.timedelta(seconds=42)
+
+            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+            frozen_datetime.tick(datetime.timedelta(seconds=12))
+            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+
+        unlock = UnlockFactory(puzzle=self.puzzle)
+        hint.start_after = unlock
+
+        with freezegun.freeze_time() as frozen_datetime:
+            now = timezone.now()
+            self.assertEqual(hint.unlocks_at(self.team, self.data), None)
+            GuessFactory(for_puzzle=self.puzzle, by=self.user, guess=unlock.unlockanswer_set.get().guess)
+            target = now + datetime.timedelta(seconds=42)
+
+            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+            frozen_datetime.tick(datetime.timedelta(seconds=12))
+            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+
     def test_dependent_hints(self):
         unlock = UnlockFactory(puzzle=self.puzzle)
         hint = HintFactory(puzzle=self.puzzle, start_after=unlock)
