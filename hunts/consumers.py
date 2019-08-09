@@ -210,9 +210,10 @@ class PuzzleEventWebsocket(HuntWebsocket):
             hint = models.Hint.objects.get(id=message['hint_uid'])
         except (TypeError, KeyError):
             raise ValueError('Cannot schedule a hint without either a hint instance or a dictionary with `hint_uid` key.')
-        self.schedule_hint(hint)
+        send_expired = message.get('send_expired', False)
+        self.schedule_hint(hint, send_expired)
 
-    def schedule_hint(self, hint):
+    def schedule_hint(self, hint, send_expired=False):
         try:
             self.hint_events[hint.id].cancel()
         except KeyError:
@@ -223,7 +224,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
         if delay is None:
             return
         delay = delay.total_seconds()
-        if delay < 0:
+        if not send_expired and delay < 0:
             return
         loop = sync_to_async.threadlocal.main_event_loop
         # run the hint sender function on the asyncio event loop so we don't have to bother writing scheduler stuff
@@ -504,7 +505,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
                     else:
                         async_to_sync(layer.group_send)(
                             cls._puzzle_groupname(h.puzzle, g.by_team),
-                            {'type': 'schedule_hint_msg', 'hint_uid': str(h.id)}
+                            {'type': 'schedule_hint_msg', 'hint_uid': str(h.id), 'send_expired': True}
                         )
 
     # handler: Unlock.pre_save
@@ -567,7 +568,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
                 # The same applies in _saved_unlockanswer.
                 async_to_sync(layer.group_send)(
                     cls._puzzle_groupname(hint.puzzle, team),
-                    {'type': 'schedule_hint_msg', 'hint_uid': str(hint.id)}
+                    {'type': 'schedule_hint_msg', 'hint_uid': str(hint.id), 'send_expired': True}
                 )
 
     # handler: UnlockAnswer.pre_delete
