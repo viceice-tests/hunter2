@@ -440,7 +440,8 @@ class Hint(Clue):
     # response to guesses.
     time = models.DurationField(
         verbose_name='Delay',
-        help_text='Time after anyone on the team first loads the puzzle to display this hint',
+        help_text=('Time after anyone on the team first loads the puzzle or (if set) unlocks the related '
+                   'unlock to display this hint'),
         validators=(MinValueValidator(timedelta(seconds=1)),),
     )
 
