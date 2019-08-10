@@ -1595,7 +1595,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
             self.fail('Websocket did not receive exactly one each of new_guess and new_unlock')
 
         self.assertEqual(new_unlock['content']['unlock'], ua.unlock.text)
-        self.assertEqual(new_unlock['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(new_unlock['content']['unlock_uid'], ua.unlock.compact_id)
         self.assertEqual(new_unlock['content']['guess'], g1.guess)
 
         g2 = GuessFactory(for_puzzle=self.pz, by=user, guess='different_unlock_guess')
@@ -1623,9 +1623,9 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
             self.fail('Websocket did not receive exactly one each of new_guess and delete_unlockguess')
 
         self.assertEqual(delete_unlockguess['content']['guess'], g1.guess)
-        self.assertEqual(delete_unlockguess['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(delete_unlockguess['content']['unlock_uid'], ua.unlock.compact_id)
         self.assertEqual(new_unlock['content']['unlock'], ua.unlock.text)
-        self.assertEqual(new_unlock['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(new_unlock['content']['unlock_uid'], ua.unlock.compact_id)
         self.assertEqual(new_unlock['content']['guess'], g2.guess)
 
         # Change the unlock and check we're told about it
@@ -1636,14 +1636,14 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
 
         self.assertEqual(output['type'], 'change_unlock')
         self.assertEqual(output['content']['unlock'], ua.unlock.text)
-        self.assertEqual(output['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(output['content']['unlock_uid'], ua.unlock.compact_id)
 
         # Delete unlockanswer, check we are told
         ua.delete()
         output = self.receive_json(comm, 'Websocket did nothing in response to a deleted, unlocked unlockanswer')
         self.assertEqual(output['type'], 'delete_unlockguess')
         self.assertEqual(output['content']['guess'], g2.guess)
-        self.assertEqual(output['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(output['content']['unlock_uid'], ua.unlock.compact_id)
 
         # Re-add, check we are told
         ua.save()
@@ -1651,7 +1651,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertEqual(output['type'], 'new_unlock')
         self.assertEqual(output['content']['guess'], g2.guess)
         self.assertEqual(output['content']['unlock'], ua.unlock.text)
-        self.assertEqual(output['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(output['content']['unlock_uid'], ua.unlock.compact_id)
 
         # Delete the entire unlock, check we are told
         old_id = ua.unlock.id
@@ -1752,7 +1752,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
 
         self.assertEqual(output['type'], 'new_hint')
         self.assertEqual(output['content']['hint'], hint.text)
-        self.assertEqual(output['content']['depends_on_unlock_uid'], encode_uuid(unlock.id))
+        self.assertEqual(output['content']['depends_on_unlock_uid'], unlock.compact_id)
 
         # alter the unlockanswer again, check hint re-appears
         guess.guess = '__DIFFERENT_2__'
@@ -1762,10 +1762,34 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         _ = self.receive_json(comm, 'Websocket did not resend unlock')
         output = self.receive_json(comm, 'Websocket did not resend hint')
         self.assertEqual(output['type'], 'new_hint')
-        self.assertEqual(output['content']['hint_uid'], encode_uuid(hint.id))
+        self.assertEqual(output['content']['hint_uid'], hint.compact_id)
 
-        # TODO: test that scheduling the hint through altering an unlockanswer works
+        # delete the unlockanswer, check for notification
+        unlockanswer.delete()
 
+        _ = self.receive_json(comm, 'Websocket did not delete unlockanswer')
+
+        # guesses are write-only - no notification
+        guess.delete()
+
+        # create a new unlockanswer for this unlock
+        unlockanswer = UnlockAnswerFactory(unlock=unlock)
+        guess = GuessFactory(for_puzzle=self.pz, by=user, guess='__INITIALLY_WRONG__')
+        _ = self.receive_json(comm, 'Websocket did not send guess')
+        # update the unlockanswer to match the given guess, and check that the dependent
+        # hint is scheduled and arrives correctly
+        unlockanswer.guess = guess.guess
+        unlockanswer.save()
+        _ = self.receive_json(comm, 'Websocket did not send unlock')
+        self.assertFalse(hint.unlocked_by(team, data))
+        self.assertTrue(self.run_async(comm.receive_nothing)(delay / 2))
+        time.sleep(delay / 2)
+        self.assertTrue(hint.unlocked_by(team, data))
+        output = self.receive_json(comm, 'Websocket did not send unlocked hint')
+
+        self.assertEqual(output['type'], 'new_hint')
+        self.assertEqual(output['content']['hint'], hint.text)
+        self.assertEqual(output['content']['depends_on_unlock_uid'], unlock.compact_id)
         self.run_async(comm.disconnect)()
 
     def test_websocket_receives_hint_updates(self):
