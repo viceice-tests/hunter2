@@ -600,7 +600,7 @@ var drawFunction = drawCompletion
 $(function () {
   $.get('episode_list', {}, function (episodes) {
     var select = $('#episode')
-    select.children(':not([value="all"])').remove()
+    select.children(':not([value=""])').remove()
     episodes.forEach(function (d) {
       select.append('<option value="' + d.id + '">' + escapeHtml(d.name) + '</option>')
     })
