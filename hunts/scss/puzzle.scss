@@ -68,10 +68,9 @@
 
 #unlocks > li {
     font-style: italic;
-}
-
-#unlocks > li > * {
-    font-style: normal;
+    > * {
+        font-style: normal;
+    }
 }
 
 #guesses td, #guesses th {

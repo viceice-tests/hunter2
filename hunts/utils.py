@@ -61,6 +61,4 @@ def finishing_positions(event):
 
 
 def encode_uuid(uuid):
-    if uuid is None:
-        return None
     return urlsafe_b64encode(uuid.bytes).strip(b'=').decode('ascii')

@@ -392,7 +392,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
                 cls.send_new_unlock(guess, u)
             for hint in u.hint_set.all():
                 layer = get_channel_layer()
-                # It is impossible for a hint to already unlocked if it's dependent on what we just entered,
+                # It is impossible for a hint to already be unlocked if it's dependent on what we just entered,
                 # so we just schedule it here rather than checking if it's unlocked and perhaps sending straight away.
                 async_to_sync(layer.group_send)(cls._puzzle_groupname(guess.for_puzzle, guess.by_team), {
                     'type': 'schedule_hint_msg',
@@ -563,9 +563,6 @@ class PuzzleEventWebsocket(HuntWebsocket):
             else:
                 if old and old.unlocked_by(team, data):
                     cls.send_delete_hint(team, hint)
-                # BUG: if the hint is scheduled very very soon, by the time the scheduled method actually
-                # gets called it could be in the past, in which case it will never be sent.
-                # The same applies in _saved_unlockanswer.
                 async_to_sync(layer.group_send)(
                     cls._puzzle_groupname(hint.puzzle, team),
                     {'type': 'schedule_hint_msg', 'hint_uid': str(hint.id), 'send_expired': True}

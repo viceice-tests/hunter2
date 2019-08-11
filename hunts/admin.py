@@ -85,6 +85,8 @@ class HintInline(NestedTabularInline):
         make_textinput('options', db_field, kwargs)
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
         if db_field.name == 'start_after':
+            # We set the parent property when getting the formset above. It will be None when adding
+            # a new puzzle, in which case there will be no unlocks available yet to be selected.
             if self.parent:
                 formfield.queryset = self.parent.unlock_set
                 formfield.label_from_instance = self.start_after_label_from_instance

@@ -425,19 +425,14 @@ class Clue(models.Model):
 
 
 class Hint(Clue):
-    # This is PROTECTed because it is not clear whether hints should be preserved when dependent unlocks
-    # are deleted.
     start_after = models.ForeignKey(
         'Unlock',
         verbose_name='Start after Unlock',
         null=True,
         blank=True,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         help_text='If you select an unlock here, the time will start counting from when that is unlocked.',
     )
-    # Minimum time is 1 second because instant hints don't make sense!
-    # Note that this also means the websocket does not need worry about sending out hints immediately in
-    # response to guesses.
     time = models.DurationField(
         verbose_name='Delay',
         help_text=('Time after anyone on the team first loads the puzzle or (if set) unlocks the related '

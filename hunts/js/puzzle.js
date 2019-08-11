@@ -5,7 +5,7 @@ import RobustWebSocket from 'robust-websocket'
 
 import '../scss/puzzle.scss'
 
-import {escapeHtml} from 'hunter2/js/base'
+import { XmlEntities as entities } from 'html-entities'
 
 /* global unlocks, hints */
 
@@ -224,7 +224,7 @@ var guesses = []
 
 function addAnswer(user, guess, correct, guess_uid) {
   var guesses_table = $('#guesses .guess-viewer-header')
-  guesses_table.after('<tr><td>' + escapeHtml(user) + '</td><td>' + escapeHtml(guess) + '</td></tr>')
+  guesses_table.after('<tr><td>' + entities.encode(user) + '</td><td>' + entities.encode(guess) + '</td></tr>')
   guesses.push(guess_uid)
 }
 
@@ -252,7 +252,7 @@ function receivedOldAnswer(content) {
   addAnswer(content.by, content.guess, content.correct, content.guess_uid)
 }
 
-function sortEntryKey(key) {
+function getSortEntryKeyFunc(key) {
   /* comparison function for sorting based on a key on the second element of array elements */
   return function(a, b) {
     if (a[1][key] < b[1][key]) return -1
@@ -261,9 +261,9 @@ function sortEntryKey(key) {
   }
 }
 
-export function updateUnlocks() {
+function updateUnlocks() {
   var entries = Object.entries(unlocks)
-  entries.sort(sortEntryKey('unlock'))
+  entries.sort(getSortEntryKeyFunc('unlock'))
   var list = select('#unlocks')
     .selectAll('#unlocks > li')
     .data(entries)
@@ -271,8 +271,7 @@ export function updateUnlocks() {
   var subList = listEnter.append('li')
     .merge(list)
     .html(function (d) {
-      //return d[1].guesses.join('<br>') + '<ul class="unlock-unlocks"><li><b>' + d[1].unlock + '</b></li></ul>'
-      return d[1].guesses.join('<br>')// + ': ' + d[1].unlock
+      return d[1].guesses.join('<br>')
     })
     .append('ul')
     .attr('class', 'unlock-texts')
@@ -284,7 +283,7 @@ export function updateUnlocks() {
   subList.selectAll('ul.unlock-texts')
     .data(function(d) {
       var hintEntries = Object.entries(d[1].hints)
-      hintEntries.sort(sortEntryKey('time'))
+      hintEntries.sort(getSortEntryKeyFunc('time'))
       return hintEntries
     }).enter()
     .append('li')
@@ -303,7 +302,7 @@ function receivedNewUnlock(content) {
     createBlankUnlock(content.unlock_uid)
   }
   unlocks[content.unlock_uid].unlock = content.unlock
-  var guess = escapeHtml(content.guess)
+  var guess = entities.encode(content.guess)
   if (!unlocks[content.unlock_uid].guesses.includes(guess)) {
     unlocks[content.unlock_uid].guesses.push(guess)
   }
@@ -339,9 +338,7 @@ function receivedDeleteUnlockGuess(content) {
   updateUnlocks()
 }
 
-//var hints = {}
-
-export function updateHints() {
+function updateHints() {
   var entries = Object.entries(hints)
   entries.sort(function (a, b) {
     if (a[1].time < b[1].time) return -1
@@ -433,11 +430,10 @@ function openEventSocket() {
     if (lastUpdated != undefined) {
       sock.send(JSON.stringify({'type': 'guesses-plz', 'from': lastUpdated}))
       sock.send(JSON.stringify({'type': 'hints-plz', 'from': lastUpdated}))
+      sock.send(JSON.stringify({'type': 'unlocks-plz'}))
     } else {
-      //sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}))
-      //sock.send(JSON.stringify({'type': 'hints-plz', 'from': 'all'}))
+      sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}))
     }
-    //sock.send(JSON.stringify({'type': 'unlocks-plz'}))
   }
 }
 
