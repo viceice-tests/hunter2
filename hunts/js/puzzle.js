@@ -13,11 +13,11 @@ function incorrect_answer(guess, timeout_length, timeout) {
   var milliseconds = Date.parse(timeout) - Date.now()
   var difference = timeout_length - milliseconds
 
-  // If the time the server is saying it will accept answers again is very different from our own
-  // calculation of the same thing, assume that it's due to clock problems (rather than latency somewhere)
-  // and just wait however long the server was trying to tell us.
-  if (difference > 2000 || difference < 0) {
-    message('Possible clock mismatch. Cooldown may be inaccurate.')
+  // There will be a small difference in when the server says we should re-enable the guessing and
+  // when the client thinks we should due to latency. However, if the client and server clocks are
+  // different it will be worse and could lead to a team getting disadvantaged or seeing tons of
+  // errors. Hence in that case we use our own calculation and ignore latency.
+  if (Math.abs(difference) > 1000) {
     milliseconds = timeout_length
   }
   doCooldown(milliseconds)
