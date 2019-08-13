@@ -289,7 +289,7 @@ class StatsContent(LoginRequiredMixin, View):
             if not episodes.exists():
                 raise Http404
 
-        puzzles = models.Puzzle.objects.all()
+        puzzles = models.Puzzle.objects.filter(episode__in=episodes)
 
         all_teams = teams.models.Team.objects.annotate(
             num_members=Count('members')
