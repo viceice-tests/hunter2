@@ -71,10 +71,29 @@ class HintInline(NestedTabularInline):
     ordering = ('time',)
     extra = 0
 
+    def get_formset(self, request, obj=None, **kwargs):
+        self.parent = obj
+        return super().get_formset(request, obj, **kwargs)
+
+    @staticmethod
+    def start_after_label_from_instance(instance):
+        truncated = instance.text[:50] + '…' if len(instance.text) > 50 else instance.text
+        return truncated
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         make_textinput('text', db_field, kwargs)
         make_textinput('options', db_field, kwargs)
-        return super().formfield_for_dbfield(db_field, **kwargs)
+        formfield = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'start_after':
+            # We set the parent property when getting the formset above. It will be None when adding
+            # a new puzzle, in which case there will be no unlocks available yet to be selected.
+            if self.parent:
+                formfield.queryset = self.parent.unlock_set
+                formfield.label_from_instance = self.start_after_label_from_instance
+            else:
+                formfield.queryset = models.Unlock.objects.none()
+
+        return formfield
 
 
 class UnlockAnswerInline(NestedTabularInline):

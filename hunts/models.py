@@ -17,6 +17,7 @@ import secrets
 
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -28,6 +29,7 @@ from ordered_model.models import OrderedModel
 import accounts
 import events
 import teams
+from . import utils
 from .runtimes import Runtime
 
 
@@ -417,33 +419,51 @@ class Clue(models.Model):
         abstract = True
         unique_together = (('puzzle', 'text'), )
 
+    @property
+    def compact_id(self):
+        return utils.encode_uuid(self.id)
+
 
 class Hint(Clue):
+    start_after = models.ForeignKey(
+        'Unlock',
+        verbose_name='Start after Unlock',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text='If you select an unlock here, the time will start counting from when that is unlocked.',
+    )
     time = models.DurationField(
         verbose_name='Delay',
-        help_text='Time after anyone on the team first loads the puzzle to display this hint'
+        help_text=('Time after anyone on the team first loads the puzzle or (if set) unlocks the related '
+                   'unlock to display this hint'),
+        validators=(MinValueValidator(timedelta(seconds=0)),),
     )
 
     def __str__(self):
         return f'Hint unlocked after {self.time}'
 
     def unlocked_by(self, team, data):
-        if data.tp_data.start_time:
-            return data.tp_data.start_time + self.time < timezone.now()
-        else:
-            return False
+        unlocks_at = self.unlocks_at(team, data)
+        return unlocks_at is not None and unlocks_at < timezone.now()
 
     def delay_for_team(self, team, data):
-        if data.tp_data.start_time is None:
-            return None
-        elapsed = timezone.now() - data.tp_data.start_time
-        return self.time - elapsed
+        unlocks_at = self.unlocks_at(team, data)
+        return None if unlocks_at is None else unlocks_at - timezone.now()
 
-    def unlocks_at(self, team):
-        data = TeamPuzzleData.objects.get(puzzle=self.puzzle, team=team)
-        if data.start_time is None:
+    def unlocks_at(self, team, data):
+        if self.start_after:
+            guesses = self.start_after.unlocked_by(team)
+            if guesses:
+                start_time = guesses[0].given
+            else:
+                return None
+        elif data.tp_data.start_time:
+            start_time = data.tp_data.start_time
+        else:
             return None
-        return data.start_time + self.time
+
+        return start_time + self.time
 
 
 class Unlock(Clue):
@@ -452,12 +472,13 @@ class Unlock(Clue):
             by__in=team.members.all()
         ).filter(
             for_puzzle=self.puzzle
-        )
+        ).order_by('given')
+
         unlockanswers = self.unlockanswer_set.all()
         return [g for g in guesses if any([u.validate_guess(g) for u in unlockanswers])]
 
     def __str__(self):
-        return f'Unlock for {self.puzzle}'
+        return f'"{self.text}"'
 
 
 class UnlockAnswer(models.Model):
@@ -591,6 +612,10 @@ class Guess(ExportModelOperationsMixin('guess'), models.Model):
 
     def __str__(self):
         return f'"{self.guess}" by {self.by} ({self.by_team}) @ {self.given}'
+
+    @property
+    def compact_id(self):
+        return utils.encode_uuid(self.id)
 
     def get_team(self):
         event = self.for_puzzle.episode.event

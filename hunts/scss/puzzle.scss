@@ -63,7 +63,14 @@
 }
 
 #hints li, #unlocks li {
-    margin-left: 2em;
+    margin-left: 16pt;
+}
+
+#unlocks > li {
+    font-style: italic;
+    > * {
+        font-style: normal;
+    }
 }
 
 #guesses td, #guesses th {

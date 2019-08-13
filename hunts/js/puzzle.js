@@ -5,7 +5,9 @@ import RobustWebSocket from 'robust-websocket'
 
 import '../scss/puzzle.scss'
 
-import 'hunter2/js/base'
+import { XmlEntities as entities } from 'html-entities'
+
+/* global unlocks, hints */
 
 function incorrect_answer(guess, timeout_length, timeout) {
   var milliseconds = Date.parse(timeout) - Date.now()
@@ -222,7 +224,7 @@ var guesses = []
 
 function addAnswer(user, guess, correct, guess_uid) {
   var guesses_table = $('#guesses .guess-viewer-header')
-  guesses_table.after('<tr><td>' + user + '</td><td>' + guess + '</td></tr>')
+  guesses_table.after('<tr><td>' + entities.encode(user) + '</td><td>' + entities.encode(guess) + '</td></tr>')
   guesses.push(guess_uid)
 }
 
@@ -250,34 +252,59 @@ function receivedOldAnswer(content) {
   addAnswer(content.by, content.guess, content.correct, content.guess_uid)
 }
 
-var unlocks = {}
+function getSortEntryKeyFunc(key) {
+  /* comparison function for sorting based on a key on the second element of array elements */
+  return function(a, b) {
+    if (a[1][key] < b[1][key]) return -1
+    else if(a[1][key] > b[1][key]) return 1
+    return 0
+  }
+}
 
 function updateUnlocks() {
   var entries = Object.entries(unlocks)
-  entries.sort(function (a, b) {
-    if (a[1].unlock < b[1].unlock) return -1
-    else if(a[1].unlock > b[1].unlock) return 1
-    return 0
-  })
+  entries.sort(getSortEntryKeyFunc('unlock'))
   var list = select('#unlocks')
-    .selectAll('li')
+    .selectAll('#unlocks > li')
     .data(entries)
-  list.enter()
-    .append('li')
+  var listEnter = list.enter()
+  var subList = listEnter.append('li')
     .merge(list)
-    .text(function (d) {
-      return d[1].guesses.join(', ') + ': ' + d[1].unlock
+    .html(function (d) {
+      return d[1].guesses.join('<br>')
     })
+    .append('ul')
+    .attr('class', 'unlock-texts')
+  subList.append('li')
+    .html(function(d) { return `<b>${d[1].unlock}</b>` })
   list.exit()
     .remove()
+
+  subList.selectAll('ul.unlock-texts')
+    .data(function(d) {
+      var hintEntries = Object.entries(d[1].hints)
+      hintEntries.sort(getSortEntryKeyFunc('time'))
+      return hintEntries
+    }).enter()
+    .append('li')
+    .attr('class', 'hint')
+    .html(function (d) {
+      return `${d[1].time}: <b>${d[1].hint}</b>`
+    })
+}
+
+function createBlankUnlock(uid) {
+  unlocks[uid] = {'unlock': null, 'guesses': [], 'hints': {}}
 }
 
 function receivedNewUnlock(content) {
   if (!(content.unlock_uid in unlocks)) {
-    unlocks[content.unlock_uid] = {'unlock': content.unlock, 'guesses': []}
+    createBlankUnlock(content.unlock_uid)
   }
-  if (!unlocks[content.unlock_uid].guesses.includes(content.guess)) {
-    unlocks[content.unlock_uid].guesses.push(content.guess)
+  unlocks[content.unlock_uid].unlock = content.unlock
+  var guess = entities.encode(content.guess)
+  if (!unlocks[content.unlock_uid].guesses.includes(guess)) {
+    unlocks[content.unlock_uid].guesses.push(guess)
   }
   updateUnlocks()
 }
@@ -311,8 +338,6 @@ function receivedDeleteUnlockGuess(content) {
   updateUnlocks()
 }
 
-var hints = {}
-
 function updateHints() {
   var entries = Object.entries(hints)
   entries.sort(function (a, b) {
@@ -326,8 +351,8 @@ function updateHints() {
   list.enter()
     .append('li')
     .merge(list)
-    .text(function (d) {
-      return d[1].time + ': ' + d[1].hint
+    .html(function (d) {
+      return `${d[1].time}: <b>${d[1].hint}</b>`
     })
   list.exit()
     .remove()
@@ -335,16 +360,30 @@ function updateHints() {
 
 
 function receivedNewHint(content) {
-  hints[content.hint_uid] = {'time': content.time, 'hint': content.hint}
-  updateHints()
+  if (content.depends_on_unlock_uid === null) {
+    hints[content.hint_uid] = {'time': content.time, 'hint': content.hint}
+    updateHints()
+  } else {
+    if (!(content.depends_on_unlock_uid in unlocks)) {
+      createBlankUnlock(content.depends_on_unlock_uid)
+    }
+    unlocks[content.depends_on_unlock_uid].hints[content.hint_uid] = {'time': content.time, 'hint': content.hint}
+    updateUnlocks()
+  }
 }
 
 function receivedDeleteHint(content) {
-  if (!(content.hint_uid in hints)) {
+  if (!(content.hint_uid in hints || (content.depends_on_unlock_uid in unlocks &&
+         content.hint_uid in unlocks[content.depends_on_unlock_uid].hints))) {
     throw `WebSocket deleted invalid hint: ${content.hint_uid}`
   }
-  delete hints[content.hint_uid]
-  updateHints()
+  if (content.depends_on_unlock_uid === null) {
+    delete hints[content.hint_uid]
+    updateHints()
+  } else {
+    delete unlocks[content.depends_on_unlock_uid].hints[content.hint_uid]
+    updateUnlocks()
+  }
 }
 
 function receivedError(content) {
@@ -391,16 +430,17 @@ function openEventSocket() {
     if (lastUpdated != undefined) {
       sock.send(JSON.stringify({'type': 'guesses-plz', 'from': lastUpdated}))
       sock.send(JSON.stringify({'type': 'hints-plz', 'from': lastUpdated}))
+      sock.send(JSON.stringify({'type': 'unlocks-plz'}))
     } else {
       sock.send(JSON.stringify({'type': 'guesses-plz', 'from': 'all'}))
-      sock.send(JSON.stringify({'type': 'hints-plz', 'from': 'all'}))
     }
-    sock.send(JSON.stringify({'type': 'unlocks-plz'}))
   }
 }
 
 $(function() {
   addSVG()
+  updateHints()
+  updateUnlocks()
 
   let field = $('#answer-entry')
   let button = $('#answer-button')

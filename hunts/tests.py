@@ -774,6 +774,64 @@ class ClueDisplayTests(EventTestCase):
             frozen_datetime.tick(hint.time)
             self.assertTrue(hint.unlocked_by(self.team, self.data), "Hint unlocked by team after required time elapsed.")
 
+    def test_hint_unlocks_at(self):
+        hint = HintFactory(puzzle=self.puzzle, time=datetime.timedelta(seconds=42))
+
+        with freezegun.freeze_time() as frozen_datetime:
+            now = timezone.now()
+            self.assertEqual(hint.unlocks_at(self.team, self.data), None)
+            self.data.tp_data.start_time = now
+            target = now + datetime.timedelta(seconds=42)
+
+            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+            frozen_datetime.tick(datetime.timedelta(seconds=12))
+            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+
+        unlock = UnlockFactory(puzzle=self.puzzle)
+        hint.start_after = unlock
+
+        with freezegun.freeze_time() as frozen_datetime:
+            now = timezone.now()
+            self.assertEqual(hint.unlocks_at(self.team, self.data), None)
+            GuessFactory(for_puzzle=self.puzzle, by=self.user, guess=unlock.unlockanswer_set.get().guess)
+            target = now + datetime.timedelta(seconds=42)
+
+            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+            frozen_datetime.tick(datetime.timedelta(seconds=12))
+            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+
+    def test_dependent_hints(self):
+        unlock = UnlockFactory(puzzle=self.puzzle)
+        hint = HintFactory(puzzle=self.puzzle, start_after=unlock)
+
+        with freezegun.freeze_time() as frozen_datetime:
+            self.data.tp_data.start_time = timezone.now()
+            self.assertFalse(hint.unlocked_by(self.team, self.data), "Hint unlocked by team at start")
+
+            frozen_datetime.tick(hint.time * 2)
+            self.assertFalse(hint.unlocked_by(self.team, self.data),
+                             "Hint unlocked by team when dependent unlock not unlocked.")
+
+            GuessFactory(for_puzzle=self.puzzle, by=self.user, guess=unlock.unlockanswer_set.get().guess)
+            self.assertFalse(hint.unlocked_by(self.team, self.data),
+                             "Hint unlocked by team as soon as dependent unlock unlocked")
+
+            frozen_datetime.tick(hint.time / 2)
+            self.assertFalse(hint.unlocked_by(self.team, self.data),
+                             "Hint unlocked by team before time after dependent unlock was unlocked elapsed")
+
+            frozen_datetime.tick(hint.time)
+            self.assertTrue(hint.unlocked_by(self.team, self.data),
+                            "Hint not unlocked by team after time after dependent unlock was unlocked elapsed")
+
+            GuessFactory(for_puzzle=self.puzzle, by=self.user, guess=unlock.unlockanswer_set.get().guess)
+            self.assertTrue(hint.unlocked_by(self.team, self.data),
+                            "Hint re-locked by subsequent unlock-validating guess!")
+
+            GuessFactory(for_puzzle=self.puzzle, by=self.user, guess='NOT_CORRECT')
+            self.assertTrue(hint.unlocked_by(self.team, self.data),
+                            "Hint re-locked by subsequent non-unlock-validating guess!")
+
     def test_unlock_display(self):
         other_team = TeamFactory(at_event=self.episode.event)
 
@@ -1537,7 +1595,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
             self.fail('Websocket did not receive exactly one each of new_guess and new_unlock')
 
         self.assertEqual(new_unlock['content']['unlock'], ua.unlock.text)
-        self.assertEqual(new_unlock['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(new_unlock['content']['unlock_uid'], ua.unlock.compact_id)
         self.assertEqual(new_unlock['content']['guess'], g1.guess)
 
         g2 = GuessFactory(for_puzzle=self.pz, by=user, guess='different_unlock_guess')
@@ -1565,9 +1623,9 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
             self.fail('Websocket did not receive exactly one each of new_guess and delete_unlockguess')
 
         self.assertEqual(delete_unlockguess['content']['guess'], g1.guess)
-        self.assertEqual(delete_unlockguess['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(delete_unlockguess['content']['unlock_uid'], ua.unlock.compact_id)
         self.assertEqual(new_unlock['content']['unlock'], ua.unlock.text)
-        self.assertEqual(new_unlock['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(new_unlock['content']['unlock_uid'], ua.unlock.compact_id)
         self.assertEqual(new_unlock['content']['guess'], g2.guess)
 
         # Change the unlock and check we're told about it
@@ -1578,14 +1636,14 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
 
         self.assertEqual(output['type'], 'change_unlock')
         self.assertEqual(output['content']['unlock'], ua.unlock.text)
-        self.assertEqual(output['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(output['content']['unlock_uid'], ua.unlock.compact_id)
 
         # Delete unlockanswer, check we are told
         ua.delete()
         output = self.receive_json(comm, 'Websocket did nothing in response to a deleted, unlocked unlockanswer')
         self.assertEqual(output['type'], 'delete_unlockguess')
         self.assertEqual(output['content']['guess'], g2.guess)
-        self.assertEqual(output['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(output['content']['unlock_uid'], ua.unlock.compact_id)
 
         # Re-add, check we are told
         ua.save()
@@ -1593,7 +1651,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertEqual(output['type'], 'new_unlock')
         self.assertEqual(output['content']['guess'], g2.guess)
         self.assertEqual(output['content']['unlock'], ua.unlock.text)
-        self.assertEqual(output['content']['unlock_uid'], encode_uuid(ua.unlock.id))
+        self.assertEqual(output['content']['unlock_uid'], ua.unlock.compact_id)
 
         # Delete the entire unlock, check we are told
         old_id = ua.unlock.id
@@ -1658,6 +1716,80 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertEqual(output['type'], 'new_hint')
         self.assertEqual(output['content']['hint'], hint.text)
 
+        self.run_async(comm.disconnect)()
+
+    def test_websocket_dependent_hints(self):
+        delay = 0.2
+
+        user = TeamMemberFactory()
+        team = user.team_at(self.tenant)
+        data = PuzzleData(self.pz, team, user)
+        data.tp_data.start_time = timezone.now()
+        data.save()
+        unlock = UnlockFactory(puzzle=self.pz)
+        unlockanswer = unlock.unlockanswer_set.get()
+        hint = HintFactory(puzzle=self.pz, time=datetime.timedelta(seconds=delay), start_after=unlock)
+
+        comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
+        connected, subprotocol = self.run_async(comm.connect)()
+        self.assertTrue(connected)
+
+        # wait for the remaining time for output
+        self.assertTrue(self.run_async(comm.receive_nothing)(delay))
+
+        guess = GuessFactory(for_puzzle=self.pz, by=user, guess=unlockanswer.guess)
+        _ = self.receive_json(comm, 'Websocket did not send unlock')
+        _ = self.receive_json(comm, 'Websocket did not send guess')
+        remaining = hint.delay_for_team(team, data).total_seconds()
+        self.assertFalse(hint.unlocked_by(team, data))
+        self.assertTrue(self.run_async(comm.receive_nothing)(remaining / 2))
+
+        # advance time by all the remaining time
+        time.sleep(remaining / 2)
+        self.assertTrue(hint.unlocked_by(team, data))
+
+        output = self.receive_json(comm, 'Websocket did not send unlocked hint')
+
+        self.assertEqual(output['type'], 'new_hint')
+        self.assertEqual(output['content']['hint'], hint.text)
+        self.assertEqual(output['content']['depends_on_unlock_uid'], unlock.compact_id)
+
+        # alter the unlockanswer again, check hint re-appears
+        guess.guess = '__DIFFERENT_2__'
+        guess.save()
+        unlockanswer.guess = guess.guess
+        unlockanswer.save()
+        _ = self.receive_json(comm, 'Websocket did not resend unlock')
+        output = self.receive_json(comm, 'Websocket did not resend hint')
+        self.assertEqual(output['type'], 'new_hint')
+        self.assertEqual(output['content']['hint_uid'], hint.compact_id)
+
+        # delete the unlockanswer, check for notification
+        unlockanswer.delete()
+
+        _ = self.receive_json(comm, 'Websocket did not delete unlockanswer')
+
+        # guesses are write-only - no notification
+        guess.delete()
+
+        # create a new unlockanswer for this unlock
+        unlockanswer = UnlockAnswerFactory(unlock=unlock)
+        guess = GuessFactory(for_puzzle=self.pz, by=user, guess='__INITIALLY_WRONG__')
+        _ = self.receive_json(comm, 'Websocket did not send guess')
+        # update the unlockanswer to match the given guess, and check that the dependent
+        # hint is scheduled and arrives correctly
+        unlockanswer.guess = guess.guess
+        unlockanswer.save()
+        _ = self.receive_json(comm, 'Websocket did not send unlock')
+        self.assertFalse(hint.unlocked_by(team, data))
+        self.assertTrue(self.run_async(comm.receive_nothing)(delay / 2))
+        time.sleep(delay / 2)
+        self.assertTrue(hint.unlocked_by(team, data))
+        output = self.receive_json(comm, 'Websocket did not send unlocked hint')
+
+        self.assertEqual(output['type'], 'new_hint')
+        self.assertEqual(output['content']['hint'], hint.text)
+        self.assertEqual(output['content']['depends_on_unlock_uid'], unlock.compact_id)
         self.run_async(comm.disconnect)()
 
     def test_websocket_receives_hint_updates(self):
