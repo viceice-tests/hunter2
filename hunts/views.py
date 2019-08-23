@@ -464,7 +464,7 @@ class Puzzle(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
                 'compact_id': u.compact_id,
                 'guesses': guesses,
                 'text': unlock_text,
-                'hints': u.hint_set.all()
+                'hints': [h for h in u.hint_set.all() if h.unlocked_by(request.team, data)]
             })
 
         event_files = {f.slug: f.file.url for f in request.tenant.eventfile_set.filter(slug__isnull=False)}
