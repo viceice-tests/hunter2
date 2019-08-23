@@ -2,10 +2,11 @@ import $ from 'jquery'
 import 'bootstrap/js/dist/collapse'
 import { easeLinear, format, select } from 'd3'
 import RobustWebSocket from 'robust-websocket'
+import { XmlEntities as entities } from 'html-entities'
+
+import 'hunter2/js/base'
 
 import '../scss/puzzle.scss'
-
-import { XmlEntities as entities } from 'html-entities'
 
 /* global unlocks, hints */
 
