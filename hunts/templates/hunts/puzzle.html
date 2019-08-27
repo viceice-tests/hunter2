@@ -7,6 +7,10 @@
 {% render_bundle 'hunts_puzzle' 'css' %}
 {% endblock %}
 
+{% block title %}
+{{ title }} - {{ block.super }}
+{% endblock %}
+
 {% block script %}
 {% render_bundle 'hunts_puzzle' 'js' attrs='defer' %}
 	<script>
