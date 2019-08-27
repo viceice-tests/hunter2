@@ -5,7 +5,7 @@ FROM ${IMAGE_TAG} AS app
 USER root
 RUN python manage.py collectstatic
 
-FROM alpine:3.9
+FROM alpine:3.10
 
 RUN apk add --no-cache \
     nginx \

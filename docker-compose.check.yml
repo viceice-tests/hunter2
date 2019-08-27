@@ -16,18 +16,10 @@ services:
       - ${PWD:-.}:/files
   eslint:
     command: ["."]
-    image: registry.gitlab.com/rconan/docker-eslint:5.14.1-0
+    image: registry.gitlab.com/rconan/docker-eslint:6.2.2-0
     volumes:
       - ${PWD:-.}:/code
   flake8:
-    image: registry.gitlab.com/rconan/docker-flake8:3.7.7-0
+    image: registry.gitlab.com/rconan/docker-flake8:3.7.8-0
     volumes:
       - ${PWD:-.}:/code
-  webpack:
-    build:
-      context: .
-      dockerfile: webpack/Dockerfile
-      args:
-        webpack_tag: 4.23.1-1
-    volumes:
-      - ${PWD:-.}:/usr/src/app

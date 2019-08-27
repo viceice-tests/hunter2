@@ -8,7 +8,7 @@ RUN [ -z ${DEVELOPMENT} ] || pipenv lock -d -r --keep-outdated >> /requirements.
 
 
 # Construct a common base image for creating python wheels and the final image
-FROM python:3.7.3-alpine3.9 AS runtime_base
+FROM python:3.7.4-alpine3.10 AS runtime_base
 
 RUN apk add --no-cache \
     lua5.2 \
@@ -34,7 +34,7 @@ RUN pip install --no-deps -r requirements.txt
 
 
 # Build all the required Lua components
-FROM alpine:3.9 AS lua_build
+FROM alpine:3.10 AS lua_build
 
 COPY hunts/runtimes/lua/luarocks/config.lua /etc/luarocks/config-5.2.lua
 
@@ -50,7 +50,7 @@ RUN luarocks-5.2 install lua-imlib2 dev-2
 
 
 # Build the production webpack'ed assets
-FROM node:11.14.0-alpine as webpack_build
+FROM node:12.7.0-alpine as webpack_build
 
 WORKDIR /usr/src/app
 COPY . .
