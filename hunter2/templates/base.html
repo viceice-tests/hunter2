@@ -14,7 +14,7 @@
 	{% render_bundle 'hunter2' 'css' %}
 	{% block style %}{% endblock %}
 
-	<title>{{ request.site.name }}</title>
+	<title>{% block title %}{{ request.site.name }}{% endblock %}</title>
 
 	{% if sentry_dsn %}
 	<script>window.sentry_dsn = '{{ sentry_dsn }}'</script>
