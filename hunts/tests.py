@@ -1719,7 +1719,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.run_async(comm.disconnect)()
 
     def test_websocket_dependent_hints(self):
-        delay = 0.2
+        delay = 0.3
 
         user = TeamMemberFactory()
         team = user.team_at(self.tenant)
