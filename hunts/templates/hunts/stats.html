@@ -7,6 +7,10 @@
 {% render_bundle 'hunts_stats' 'css' %}
 {% endblock %}
 
+{% block title %}
+Admin Stats - {{ block.super }}
+{% endblock %}
+
 {% block script %}
 {% render_bundle 'hunts_stats' 'js' attrs='defer' %}
 {% endblock %}

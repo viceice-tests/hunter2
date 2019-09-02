@@ -3,6 +3,8 @@ import 'bootstrap'
 
 import 'hunter2/js/base'
 
+/* global eventTitle */
+
 $(function () {
   $('a[data-toggle="tab"]').on('show.bs.tab', function () {
     var url = $(this).data('url')
@@ -11,6 +13,7 @@ $(function () {
     $(target).load(url, function () {
       tab.tab('show')
       window.location.hash = target.substr(1)
+      window.document.title = tab.text() + ' - ' + eventTitle
     })
   })
 
