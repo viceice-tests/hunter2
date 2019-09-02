@@ -7,6 +7,10 @@
 {% render_bundle 'hunts_guesses' 'css' %}
 {% endblock %}
 
+{% block title %}
+Admin Guess List - {{ block.super }}
+{% endblock %}
+
 {% block script %}
 {% render_bundle 'hunts_guesses' 'js' attrs='defer' %}
 {% endblock %}

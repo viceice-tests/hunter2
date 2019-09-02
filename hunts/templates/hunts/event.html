@@ -6,6 +6,10 @@
 {% endblock %}
 
 {% block script %}
+<script>
+"use strict"
+var eventTitle = '{{ event.name }}'
+</script>
 {% render_bundle 'hunts_event' 'js' attrs='defer' %}
 {% endblock %}
 
