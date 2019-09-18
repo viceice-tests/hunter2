@@ -10,66 +10,70 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-
-from teams.models import Team
-
 import rules
 
+from teams.rules import is_admin_for_event, is_admin_for_event_child
+from .models import Episode, Puzzle, Unlock
+
+
+def set_all_perms_for_model(app, model, predicate):
+    rules.add_perm(f'{app}.add_{model}', predicate)
+    rules.add_perm(f'{app}.change_{model}', predicate)
+    rules.add_perm(f'{app}.delete_{model}', predicate)
+    rules.add_perm(f'{app}.view_{model}', predicate)
+
 
 @rules.predicate
-def is_admin_for_event(user, event):
+def is_admin_for_episode_child(user, obj):
+    if obj is None:  # If we have no object we're checking globally for the event specified by the active schema
+        return is_admin_for_event.test(user, None)
+
+    # We should either have an Episode or something with a direct foreign key to an Episode named episode
     try:
-        admin_team = event.teams.filter(is_admin=True).get()
-    except Team.DoesNotExist:
-        return False
-    return user.profile in admin_team.members.all()
+        episode = obj if isinstance(obj, Episode) else obj.episode
+    except AttributeError as e:
+        raise TypeError('is_admin_for_episode_child must be called with an Episode or a type with a foreign key to it called "episode"') from e
 
-
-rules.add_perm('hunts.change_event', is_admin_for_event)
-
-
-@rules.predicate
-def is_admin_for_episode(user, episode):
-    return is_admin_for_event(user, episode.event)
-
-
-rules.add_perm('hunts.change_episode', is_admin_for_episode)
-rules.add_perm('hunts.delete_episode', is_admin_for_episode)
+    return is_admin_for_event_child.test(user, episode)
 
 
 @rules.predicate
-def is_admin_for_puzzle(user, puzzle):
-    return is_admin_for_episode(user, puzzle.episode)
+def is_admin_for_puzzle_child(user, obj):
+    if obj is None:  # If we have no object we're checking globally for the event specified by the active schema
+        return is_admin_for_event.test(user, None)
 
+    # We should either have a Puzzle or something with a direct foreign key to an Puzzle named puzzle
+    try:
+        puzzle = obj if isinstance(obj, Puzzle) else obj.puzzle
+    except AttributeError as e:
+        raise TypeError('is_admin_for_puzzle_child must be called with a Puzzle or a type with a foreign key to it called "puzzle"') from e
 
-rules.add_perm('hunts.change_puzzle', is_admin_for_puzzle)
-rules.add_perm('hunts.delete_puzzle', is_admin_for_puzzle)
-
-
-@rules.predicate
-def is_admin_for_clue(user, clue):
-    return is_admin_for_puzzle(user, clue.puzzle)
-
-
-rules.add_perm('hunts.change_hint', is_admin_for_clue)
-rules.add_perm('hunts.delete_hint', is_admin_for_clue)
-rules.add_perm('hunts.change_unlock', is_admin_for_clue)
-rules.add_perm('hunts.delete_unlock', is_admin_for_clue)
+    return is_admin_for_episode_child.test(user, puzzle)
 
 
 @rules.predicate
-def is_user_for_userdata(user, userdata):
-    return user is userdata.user
+def is_admin_for_unlock_child(user, obj):
+    if obj is None:  # If we have no object we're checking globally for the event specified by the active schema
+        return is_admin_for_event.test(user, None)
+
+    # We should either have a Unlock or something with a direct foreign key to an Unlock named unlock
+    try:
+        unlock = obj if isinstance(obj, Unlock) else obj.unlock
+    except AttributeError as e:
+        raise TypeError('is_admin_for_unlock_child must be called with a Unlock or a type with a foreign key to it called "unlock"') from e
+
+    return is_admin_for_puzzle_child.test(user, unlock)
 
 
-rules.add_perm('hunts.change_userdata', is_user_for_userdata)
-rules.add_perm('hunts.delete_userdata', is_user_for_userdata)
+rules.add_perm('hunts', is_admin_for_event)
 
-
-@rules.predicate
-def is_user_for_teamdata(user, teamdata):
-    return user in teamdata.team.users
-
-
-rules.add_perm('hunts.change_teamdata', is_user_for_teamdata)
-rules.add_perm('hunts.delete_teamdata', is_user_for_teamdata)
+set_all_perms_for_model('hunts', 'announcement', is_admin_for_event_child)
+set_all_perms_for_model('hunts', 'episode', is_admin_for_event_child)
+set_all_perms_for_model('hunts', 'headstart', is_admin_for_episode_child)
+set_all_perms_for_model('hunts', 'puzzle', is_admin_for_episode_child)
+set_all_perms_for_model('hunts', 'answer', is_admin_for_puzzle_child)
+set_all_perms_for_model('hunts', 'hint', is_admin_for_puzzle_child)
+set_all_perms_for_model('hunts', 'unlock', is_admin_for_puzzle_child)
+set_all_perms_for_model('hunts', 'puzzlefile', is_admin_for_puzzle_child)
+set_all_perms_for_model('hunts', 'solutionfile', is_admin_for_puzzle_child)
+set_all_perms_for_model('hunts', 'unlockanswer', is_admin_for_unlock_child)

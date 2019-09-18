@@ -21,18 +21,22 @@ from django_tenants.test.client import TenantRequestFactory
 
 from accounts.factories import UserFactory, UserProfileFactory
 from accounts.models import UserProfile
-from events.factories import EventFactory
+from events.factories import EventFactory, EventFileFactory
 from events.models import Event
 from events.test import EventAwareTestCase, EventTestCase
-from .factories import TeamFactory
+from .factories import TeamFactory, TeamMemberFactory
 from .mixins import TeamMixin
 from .models import Team
+from . import rules
 
 
 class FactoryTests(EventTestCase):
 
     def test_team_factory_default_construction(self):
         TeamFactory.create()
+
+    def test_team_member_factory_default_construction(self):
+        TeamMemberFactory.create()
 
 
 class EmptyTeamView(TeamMixin, View):
@@ -347,3 +351,42 @@ class RequestTests(EventTestCase):
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 403)
+
+
+class RulesTests(EventTestCase):
+    def test_is_admin_for_event_true(self):
+        profile = TeamMemberFactory(team__is_admin=True)
+        self.assertTrue(rules.is_admin_for_event.test(profile.user, None))
+        self.assertTrue(rules.is_admin_for_event.test(profile.user, self.tenant))
+
+    def test_is_admin_for_event_false(self):
+        profile = TeamMemberFactory(team__is_admin=False)
+        self.assertFalse(rules.is_admin_for_event.test(profile.user, None))
+        self.assertFalse(rules.is_admin_for_event.test(profile.user, self.tenant))
+
+    def test_is_admin_for_event_with_no_profile(self):
+        user = UserFactory()
+        self.assertFalse(rules.is_admin_for_event.test(user, self.tenant))
+
+    def test_is_admin_for_event_with_no_team(self):
+        profile = UserProfileFactory()
+        self.assertFalse(rules.is_admin_for_event.test(profile.user, self.tenant))
+
+    def test_is_admin_for_event_child_true(self):
+        profile = TeamMemberFactory(team__is_admin=True)
+        child = EventFileFactory()
+        self.assertTrue(rules.is_admin_for_event_child.test(profile.user, None))
+        self.assertTrue(rules.is_admin_for_event_child.test(profile.user, self.tenant))
+        self.assertTrue(rules.is_admin_for_event_child.test(profile.user, child))
+
+    def test_is_admin_for_event_child_false(self):
+        profile = TeamMemberFactory(team__is_admin=False)
+        child = EventFileFactory()
+        self.assertFalse(rules.is_admin_for_event_child.test(profile.user, None))
+        self.assertFalse(rules.is_admin_for_event_child.test(profile.user, self.tenant))
+        self.assertFalse(rules.is_admin_for_event_child.test(profile.user, child))
+
+    def test_is_admin_for_event_child_type_error(self):
+        user = UserFactory()
+        with self.assertRaises(TypeError):
+            rules.is_admin_for_event_child(user, "A string is not an event child")
