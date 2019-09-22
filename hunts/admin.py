@@ -68,12 +68,16 @@ class SolutionFileInline(NestedTabularInline):
 
 class HintInline(NestedTabularInline):
     model = models.Hint
-    ordering = ('time',)
     extra = 0
 
     def get_formset(self, request, obj=None, **kwargs):
         self.parent = obj
         return super().get_formset(request, obj, **kwargs)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.annotate(Count('start_after')).order_by('start_after__count', 'start_after', 'time')
+        return qs
 
     @staticmethod
     def start_after_label_from_instance(instance):
