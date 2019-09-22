@@ -11,17 +11,17 @@
 {% endblock %}
 
 {% block content %}
-<section id="admins">
+<section id="authors">
 <h2>Admins</h2>
-<p>{{ event_name }} {{ admin_verb }} run by:</p>
-<div class="admin-list">
-{% for admin in admins %}
-<div class="admin">
-	<h3><a href="{{ admin.get_absolute_url }}">{{ admin.username }}</a></h3>
-	<img src="{{ admin.picture }}" alt="{{ admin.username }}" />
+<p>{{ event_name }} {{ author_verb }} run by:</p>
+<div class="author-list">
+{% for author in authors %}
+<div class="author">
+	<h3><a href="{{ author.get_absolute_url }}">{{ author.username }}</a></h3>
+	<img src="{{ author.picture }}" alt="{{ author.username }}" />
 	<p>
-	{% if admin.seat %}
-		Seat {{ admin.seat }}
+	{% if author.seat %}
+		Seat {{ author.seat }}
 	{% endif %}
 	</p>
 </div>

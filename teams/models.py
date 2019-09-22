@@ -14,9 +14,16 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
+from enumfields import Enum, EnumField
 
 import accounts
 import events
+
+
+class TeamRole(Enum):
+    PLAYER = 'p'
+    ADMIN  = 'a'
+    AUTHOR = 'A'
 
 
 class Team(models.Model):
@@ -24,7 +31,10 @@ class Team(models.Model):
     # DB will allow multiple teams with no name while still enforcing name uniqueness
     name = models.CharField(blank=True, null=True, unique=True, max_length=100)
     at_event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING, related_name='teams')
-    is_admin = models.BooleanField(default=False)
+    role = EnumField(
+        TeamRole, max_length=1, default=TeamRole.PLAYER,
+        help_text='Role of the team. Admins can edit the event and see admin views, authors are credited on the about page'
+    )
     members = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='teams')
     invites = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='team_invites')
     requests = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='team_requests')
@@ -46,10 +56,10 @@ class Team(models.Model):
 
     def clean(self):
         if (
-            self.is_admin and
-            Team.objects.exclude(id=self.id).filter(at_event=self.at_event).filter(is_admin=True).count() > 0
+            self.role == TeamRole.AUTHOR and
+            Team.objects.exclude(id=self.id).filter(at_event=self.at_event).filter(role=TeamRole.AUTHOR).count() > 0
         ):
-            raise ValidationError('There can only be one admin team per event')
+            raise ValidationError('There can only be one author team per event')
 
     def save(self, *args, **kwargs):
         # We don't want to use '' as our empty value because we would trip over the uniqueness constraint
@@ -59,6 +69,10 @@ class Team(models.Model):
 
     def get_absolute_url(self):
         return reverse('team', kwargs={'team_id': self.pk})
+
+    @property
+    def is_admin(self):
+        return self.role == TeamRole.ADMIN or self.role == TeamRole.AUTHOR
 
     def is_explicit(self):
         return self.name is not None

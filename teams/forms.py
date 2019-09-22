@@ -61,7 +61,7 @@ class TeamForm(forms.ModelForm):
 
     class Meta:
         model = models.Team
-        fields = ('name', 'is_admin', 'at_event', 'members', 'move_user', 'invites', 'requests')
+        fields = ('name', 'role', 'at_event', 'members', 'move_user', 'invites', 'requests')
         widgets = {
             'members': autocomplete.ModelSelect2Multiple(
                 url='userprofile_autocomplete',

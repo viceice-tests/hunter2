@@ -26,7 +26,7 @@ from events.models import Event
 from events.test import EventAwareTestCase, EventTestCase
 from .factories import TeamFactory, TeamMemberFactory
 from .mixins import TeamMixin
-from .models import Team
+from .models import Team, TeamRole
 from . import rules
 
 
@@ -355,12 +355,12 @@ class RequestTests(EventTestCase):
 
 class RulesTests(EventTestCase):
     def test_is_admin_for_event_true(self):
-        profile = TeamMemberFactory(team__is_admin=True)
+        profile = TeamMemberFactory(team__role=TeamRole.ADMIN)
         self.assertTrue(rules.is_admin_for_event.test(profile.user, None))
         self.assertTrue(rules.is_admin_for_event.test(profile.user, self.tenant))
 
     def test_is_admin_for_event_false(self):
-        profile = TeamMemberFactory(team__is_admin=False)
+        profile = TeamMemberFactory(team__role=TeamRole.PLAYER)
         self.assertFalse(rules.is_admin_for_event.test(profile.user, None))
         self.assertFalse(rules.is_admin_for_event.test(profile.user, self.tenant))
 
@@ -373,14 +373,14 @@ class RulesTests(EventTestCase):
         self.assertFalse(rules.is_admin_for_event.test(profile.user, self.tenant))
 
     def test_is_admin_for_event_child_true(self):
-        profile = TeamMemberFactory(team__is_admin=True)
+        profile = TeamMemberFactory(team__role=TeamRole.ADMIN)
         child = EventFileFactory()
         self.assertTrue(rules.is_admin_for_event_child.test(profile.user, None))
         self.assertTrue(rules.is_admin_for_event_child.test(profile.user, self.tenant))
         self.assertTrue(rules.is_admin_for_event_child.test(profile.user, child))
 
     def test_is_admin_for_event_child_false(self):
-        profile = TeamMemberFactory(team__is_admin=False)
+        profile = TeamMemberFactory(team__role=TeamRole.PLAYER)
         child = EventFileFactory()
         self.assertFalse(rules.is_admin_for_event_child.test(profile.user, None))
         self.assertFalse(rules.is_admin_for_event_child.test(profile.user, self.tenant))

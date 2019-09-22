@@ -19,6 +19,8 @@ from faker import Faker
 from accounts.factories import UserProfileFactory
 from events.models import Event
 
+from .models import TeamRole
+
 
 class TeamFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -26,7 +28,7 @@ class TeamFactory(factory.django.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: f'{n}{Faker().color_name()}')
     at_event = factory.LazyFunction(Event.objects.get)
-    is_admin = False
+    role = TeamRole.PLAYER
 
     @factory.post_generation
     def members(self, create, extracted, **kwargs):

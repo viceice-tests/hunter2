@@ -33,11 +33,12 @@ from django.views import View
 from django.views.generic import TemplateView, RedirectView
 from django.views.generic.edit import FormView
 from sendfile import sendfile
-from teams.mixins import TeamMixin
 
 from accounts.models import UserInfo
 from events.models import Attendance
 from events.utils import annotate_userinfo_queryset_with_seat
+from teams.models import TeamRole
+from teams.mixins import TeamMixin
 from teams.rules import is_admin_for_event
 from .forms import BulkUploadForm
 from .mixins import EpisodeUnlockedMixin, PuzzleAdminMixin, PuzzleUnlockedMixin
@@ -300,7 +301,7 @@ class StatsContent(LoginRequiredMixin, View):
             num_members=Count('members')
         ).filter(
             at_event=request.tenant,
-            is_admin=False,
+            role=TeamRole.PLAYER,
             num_members__gte=1,
         ).prefetch_related('members', 'members__user')
 
@@ -704,19 +705,19 @@ class AboutView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        admin_team = self.request.tenant.teams.get(is_admin=True)
+        author_team = self.request.tenant.teams.get(role=TeamRole.AUTHOR)
 
         files = {f.slug: f.file.url for f in self.request.tenant.eventfile_set.filter(slug__isnull=False)}
         content = Template(self.request.tenant.about_text).safe_substitute(**files)
 
-        admin_members = UserInfo.objects.filter(user__profile__in=admin_team.members.all())
-        admin_members = annotate_userinfo_queryset_with_seat(admin_members, self.request.tenant)
+        author_members = UserInfo.objects.filter(user__profile__in=author_team.members.all())
+        author_members = annotate_userinfo_queryset_with_seat(author_members, self.request.tenant)
 
-        admin_verb = 'was' if self.request.tenant.end_date < timezone.now() else 'is'
+        author_verb = 'was' if self.request.tenant.end_date < timezone.now() else 'is'
 
         context.update({
-            'admins': admin_members,
-            'admin_verb': admin_verb,
+            'authors': author_members,
+            'author_verb': author_verb,
             'content': content,
             'event_name': self.request.tenant.name,
         })
