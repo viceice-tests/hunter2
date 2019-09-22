@@ -454,7 +454,7 @@ $(function() {
     }
     evaluateButtonDisabledState(button)
   }
-  field.keyup(fieldKeyup)
+  field.on('input', fieldKeyup)
 
   $('#announcements > .alert:not(.special)').each(function() {
     announcements[$(this).attr('data-announcement-id')] = {}
