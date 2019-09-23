@@ -129,7 +129,10 @@ class BulkUpload(LoginRequiredMixin, PuzzleAdminMixin, FormView):
                     pf = FileModel.objects.get(puzzle=self.request.puzzle, url_path=url_path)
                 except FileModel.DoesNotExist:
                     pf = FileModel(puzzle=self.request.puzzle, url_path=url_path)
-                pf.file.save(path.basename(member.name), File(content))
+                try:
+                    pf.file.save(path.basename(member.name), File(content))
+                except ValidationError as e:
+                    return self.upload_error(form, e)
         except tarfile.ReadError as e:
             return self.upload_error(form, e)
         return HttpResponseRedirect(reverse('admin:hunts_puzzle_change', kwargs={'object_id': self.request.puzzle.pk}))
