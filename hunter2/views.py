@@ -21,7 +21,7 @@ class DefaultEventView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         event = Event.objects.get(current=True)
         domain = event.domains.first()
-        uri = self.request.build_absolute_uri('/')
+        uri = self.request.build_absolute_uri(self.uri)
         components = urlsplit(uri)
         try:
             port = components.netloc.split(':')[1]
@@ -29,3 +29,11 @@ class DefaultEventView(RedirectView):
         except IndexError:
             netloc = domain.domain
         return urlunsplit(components[:1] + (netloc,) + components[2:])
+
+
+class DefaultIndexView(DefaultEventView):
+    uri = '/'
+
+
+class DefaultAdminView(DefaultEventView):
+    uri = '/admin'

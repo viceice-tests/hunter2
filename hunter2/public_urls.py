@@ -11,10 +11,7 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from allauth.account.views import logout as allauth_logout
 from django.conf.urls.static import static
-from django.contrib import admin
-from django.contrib.auth.decorators import login_required
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include, path
 from django.views.defaults import page_not_found, server_error, bad_request, permission_denied
@@ -22,19 +19,12 @@ from django.views.csrf import csrf_failure
 from django_prometheus.urls import urlpatterns as prometheus_patterns
 
 from . import settings
-from .views import DefaultEventView
-
-# Wrap the admin login page with login_required so that it goes through allauth login.
-admin.site.login = login_required(admin.site.login)
-# Replace the admin logout view with the allauth logout view.
-# Unfortunately the admin UI makes a GET so we can't avoid the confirmation page.
-admin.site.logout = allauth_logout
+from .views import DefaultAdminView, DefaultIndexView
 
 urlpatterns = [
     path('accounts/', include('allauth.urls')),
-    path('admin/', admin.site.urls),
-    path('nested_admin/', include('nested_admin.urls')),
-    path('', DefaultEventView.as_view(), name='index'),
+    path('admin/', DefaultAdminView.as_view(), name='admin'),
+    path('', DefaultIndexView.as_view(), name='index'),
 ] \
     + staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
