@@ -10,10 +10,10 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+from functools import partialmethod
 
 from django import forms
 from django.contrib import admin
-from django.utils.functional import curry
 from django.utils.html import format_html
 from django.urls import path, reverse
 from django.db.models import Count, Sum
@@ -137,7 +137,7 @@ class NewUnlockAnswerInline(UnlockAnswerInline):
                 'guess': request.GET['new_guess']
             })
         formset = super().get_formset(request, obj, **kwargs)
-        formset.__init__ = curry(formset.__init__, initial=initial)
+        formset.__init__ = partialmethod(formset.__init__, initial=initial)
         return formset
 
 

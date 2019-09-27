@@ -1,4 +1,0 @@
-certifi==2018.1.18
-pipenv==11.9.0
-virtualenv==15.2.0
-virtualenv-clone==0.3.0
