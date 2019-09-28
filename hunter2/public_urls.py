@@ -18,16 +18,20 @@ from django.views.defaults import page_not_found, server_error, bad_request, per
 from django.views.csrf import csrf_failure
 from django_prometheus.urls import urlpatterns as prometheus_patterns
 
+from accounts.urls import urlpatterns as accounts_patterns
+
 from . import settings
-from .views import DefaultAdminView, DefaultIndexView
+from .views import DefaultAdminView, DefaultIndexView, PrivacyView
 
 urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('admin/', DefaultAdminView.as_view(), name='admin'),
     path('', DefaultIndexView.as_view(), name='index'),
+    path('privacy', PrivacyView.as_view(), name='privacy'),
 ] \
     + staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
+    + accounts_patterns \
     + prometheus_patterns
 
 if settings.DEBUG:

@@ -17,3 +17,4 @@ from solo.models import SingletonModel
 
 class Configuration(SingletonModel):
     index_content = models.TextField()
+    privacy_policy = models.TextField(blank=True)

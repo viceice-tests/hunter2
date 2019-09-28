@@ -25,6 +25,7 @@ from hunts.urls import urlpatterns as hunts_patterns
 from teams.urls import urlpatterns as teams_patterns
 
 from . import settings
+from .views import PrivacyView
 
 # Wrap the admin login page with login_required so that it goes through allauth login.
 admin.site.login = login_required(admin.site.login)
@@ -36,6 +37,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('admin/crud/', admin.site.urls),
     path('nested_admin/', include('nested_admin.urls')),
+    path('privacy', PrivacyView.as_view(), name='privacy'),
 ] \
     + staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \

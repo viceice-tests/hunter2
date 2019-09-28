@@ -13,8 +13,10 @@
 from urllib.parse import urlsplit, urlunsplit
 
 from django.views.generic.base import RedirectView
+from django.views.generic import TemplateView
 
 from events.models import Event
+from .models import Configuration
 
 
 class DefaultEventView(RedirectView):
@@ -37,3 +39,12 @@ class DefaultIndexView(DefaultEventView):
 
 class DefaultAdminView(DefaultEventView):
     uri = '/admin'
+
+
+class PrivacyView(TemplateView):
+    template_name = "privacy.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['privacy_policy'] = Configuration.get_solo().privacy_policy
+        return context

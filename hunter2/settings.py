@@ -83,7 +83,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
-ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.UserInfoForm'
+ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.UserSignupForm'
 
 ACCOUNT_USERNAME_VALIDATORS = 'hunter2.validators.username_validators'
 
@@ -281,6 +281,7 @@ TEMPLATES = [
                 'events.context_processors.event_theme',
                 'teams.context_processors.event_team',
                 'hunts.context_processors.announcements',
+                'hunter2.context_processors.privacy_policy',
                 'hunter2.context_processors.login_url',
                 'hunter2.context_processors.sentry_dsn',
             ],

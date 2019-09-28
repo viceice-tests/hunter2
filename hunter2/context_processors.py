@@ -12,6 +12,7 @@
 
 from django.urls import reverse
 
+from .models import Configuration
 from .utils import wwwize
 from . import settings
 
@@ -30,4 +31,12 @@ def sentry_dsn(request):
         dsn = stripped.geturl()
     return {
         'sentry_dsn': dsn,
+    }
+
+
+def privacy_policy(request):
+    has_privacy_policy = Configuration.get_solo().privacy_policy != ''
+    return {
+        'footer_column_class': 'col-md-3' if has_privacy_policy else 'col-md-4',
+        'has_privacy_policy': has_privacy_policy,
     }

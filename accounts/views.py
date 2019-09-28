@@ -96,7 +96,7 @@ class EditProfileView(LoginRequiredMixin, View):
     def get(self, request):
         user_form = forms.UserForm(instance=request.user)
         profile_formset = self._get_profile_formset(request)
-        attendance_formset = self._get_attendance_formset(request)
+        attendance_formset = self._get_attendance_formset(request) if request.tenant else None
         return self._render(request, user_form, profile_formset, attendance_formset)
 
     def post(self, request):
@@ -117,6 +117,6 @@ class EditProfileView(LoginRequiredMixin, View):
                     return HttpResponseRedirect(reverse('edit_profile'))
         if not profile_formset:
             profile_formset = self._get_profile_formset(request)
-        if not attendance_formset:
+        if not attendance_formset and request.tenant:
             attendance_formset = self._get_attendance_formset(request)
         return self._render(request, user_form, profile_formset, attendance_formset)
