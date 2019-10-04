@@ -12,19 +12,31 @@
 
 
 from django.contrib import admin
+from django.db.models import Count
+from rules.contrib.admin import ObjectPermissionsModelAdmin, ObjectPermissionsTabularInline
 from . import models
 
 
-class FileInline(admin.TabularInline):
+class FileInline(ObjectPermissionsTabularInline):
     model = models.EventFile
     extra = 0
 
 
 @admin.register(models.Event)
-class EventAdmin(admin.ModelAdmin):
+class EventAdmin(ObjectPermissionsModelAdmin):
     inlines = [
         FileInline,
     ]
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser:
+            qs = qs.annotate(
+                Count('teams', is_admin=True, members=request.user)
+            ).filter(
+                teams__count__gt=0
+            )
+        return qs
 
 
 admin.site.register(models.Domain)

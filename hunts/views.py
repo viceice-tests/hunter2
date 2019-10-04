@@ -35,12 +35,14 @@ from django.views.generic.edit import FormView
 from sendfile import sendfile
 from teams.mixins import TeamMixin
 
-from . import models, rules, utils
-from .forms import BulkUploadForm
-from .mixins import EpisodeUnlockedMixin, PuzzleAdminMixin, PuzzleUnlockedMixin
 from accounts.models import UserInfo
 from events.models import Attendance
 from events.utils import annotate_userinfo_queryset_with_seat
+from teams.rules import is_admin_for_event
+from .forms import BulkUploadForm
+from .mixins import EpisodeUnlockedMixin, PuzzleAdminMixin, PuzzleUnlockedMixin
+from .rules import is_admin_for_episode_child
+from . import models, utils
 
 import hunter2
 import teams
@@ -97,7 +99,7 @@ class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
 
 class EpisodeList(LoginRequiredMixin, View):
     def get(self, request):
-        admin = rules.is_admin_for_event(request.user, request.tenant)
+        admin = is_admin_for_event.test(request.user, request.tenant)
 
         if not admin:
             raise PermissionDenied
@@ -145,7 +147,7 @@ class BulkUpload(LoginRequiredMixin, PuzzleAdminMixin, FormView):
 
 class Guesses(LoginRequiredMixin, View):
     def get(self, request):
-        admin = rules.is_admin_for_event(request.user, request.tenant)
+        admin = is_admin_for_event.test(request.user, request.tenant)
 
         if not admin:
             raise PermissionDenied
@@ -159,7 +161,7 @@ class Guesses(LoginRequiredMixin, View):
 
 class GuessesList(LoginRequiredMixin, View):
     def get(self, request):
-        admin = rules.is_admin_for_event(request.user, request.tenant)
+        admin = is_admin_for_event.test(request.user, request.tenant)
 
         if not admin:
             return JsonResponse({
@@ -263,7 +265,7 @@ class GuessesList(LoginRequiredMixin, View):
 
 class Stats(LoginRequiredMixin, View):
     def get(self, request):
-        admin = rules.is_admin_for_event(request.user, request.tenant)
+        admin = is_admin_for_event.test(request.user, request.tenant)
 
         if not admin:
             raise PermissionDenied
@@ -277,7 +279,7 @@ class Stats(LoginRequiredMixin, View):
 
 class StatsContent(LoginRequiredMixin, View):
     def get(self, request, episode_id=None):
-        admin = rules.is_admin_for_event(request.user, request.tenant)
+        admin = is_admin_for_event.test(request.user, request.tenant)
 
         if not admin:
             raise PermissionDenied
@@ -535,7 +537,7 @@ class AbsolutePuzzleView(RedirectView):
 class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
     def get(self, request, episode_number, puzzle_number):
         episode, puzzle = utils.event_episode_puzzle(request.tenant, episode_number, puzzle_number)
-        admin = rules.is_admin_for_puzzle(request.user, puzzle)
+        admin = is_admin_for_episode_child.test(request.user, puzzle)
 
         if request.tenant.end_date > timezone.now() and not admin:
             raise PermissionDenied
@@ -581,7 +583,7 @@ class PuzzleFile(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 class SolutionFile(View):
     def get(self, request, episode_number, puzzle_number, file_path):
         episode, puzzle = utils.event_episode_puzzle(request.tenant, episode_number, puzzle_number)
-        admin = rules.is_admin_for_puzzle(request.user, puzzle)
+        admin = is_admin_for_episode_child.test(request.user, puzzle)
 
         if request.tenant.end_date > timezone.now() and not admin:
             raise Http404

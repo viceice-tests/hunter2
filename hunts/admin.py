@@ -19,6 +19,7 @@ from django.urls import path, reverse
 from django.db.models import Count, Sum
 from nested_admin import NestedModelAdmin, NestedModelAdminMixin, NestedStackedInline, NestedTabularInline
 from ordered_model.admin import OrderedModelAdmin
+from rules.contrib.admin import ObjectPermissionsModelAdmin, ObjectPermissionsModelAdminMixin, ObjectPermissionsInlineModelAdminMixin
 from webpack_loader.utils import get_files
 
 from . import models
@@ -31,7 +32,7 @@ def make_textinput(field, db_field, kwdict):
 
 
 @admin.register(models.Answer)
-class AnswerAdmin(NestedModelAdmin):
+class AnswerAdmin(ObjectPermissionsModelAdminMixin, NestedModelAdmin):
     form = AnswerForm
 
     def formfield_for_dbfield(self, db_field, **kwargs):
@@ -43,7 +44,7 @@ class AnswerAdmin(NestedModelAdmin):
         return False
 
 
-class AnswerInline(NestedTabularInline):
+class AnswerInline(ObjectPermissionsInlineModelAdminMixin, NestedTabularInline):
     model = models.Answer
     fields = ('alter_progress', 'answer', 'runtime', 'options')
     extra = 0
@@ -56,17 +57,17 @@ class AnswerInline(NestedTabularInline):
         return super().formfield_for_dbfield(db_field, **kwargs)
 
 
-class PuzzleFileInline(NestedTabularInline):
+class PuzzleFileInline(ObjectPermissionsInlineModelAdminMixin, NestedTabularInline):
     model = models.PuzzleFile
     extra = 0
 
 
-class SolutionFileInline(NestedTabularInline):
+class SolutionFileInline(ObjectPermissionsInlineModelAdminMixin, NestedTabularInline):
     model = models.SolutionFile
     extra = 0
 
 
-class HintInline(NestedTabularInline):
+class HintInline(ObjectPermissionsInlineModelAdminMixin, NestedTabularInline):
     model = models.Hint
     extra = 0
 
@@ -100,7 +101,7 @@ class HintInline(NestedTabularInline):
         return formfield
 
 
-class UnlockAnswerInline(NestedTabularInline):
+class UnlockAnswerInline(ObjectPermissionsInlineModelAdminMixin, NestedTabularInline):
     class Form(forms.ModelForm):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -141,7 +142,7 @@ class NewUnlockAnswerInline(UnlockAnswerInline):
 
 
 @admin.register(models.Unlock)
-class UnlockAdmin(NestedModelAdmin):
+class UnlockAdmin(ObjectPermissionsModelAdminMixin, NestedModelAdmin):
     inlines = [
         NewUnlockAnswerInline,
     ]
@@ -155,7 +156,7 @@ class UnlockAdmin(NestedModelAdmin):
         return False
 
 
-class UnlockInline(NestedStackedInline):
+class UnlockInline(ObjectPermissionsInlineModelAdminMixin, NestedStackedInline):
     model = models.Unlock
     inlines = [
         UnlockAnswerInline,
@@ -175,7 +176,7 @@ class GuessAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.Puzzle)
-class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
+class PuzzleAdmin(ObjectPermissionsModelAdminMixin, NestedModelAdminMixin, OrderedModelAdmin):
     class Form(forms.ModelForm):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -316,7 +317,7 @@ class PuzzleAdmin(NestedModelAdminMixin, OrderedModelAdmin):
 
 
 @admin.register(models.Episode)
-class EpisodeAdmin(NestedModelAdmin):
+class EpisodeAdmin(ObjectPermissionsModelAdminMixin, NestedModelAdmin):
     class Form(forms.ModelForm):
         class Meta:
             model = models.Episode
@@ -379,11 +380,17 @@ class UserPuzzleDataAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.Announcement)
-class AnnoucementAdmin(admin.ModelAdmin):
+class AnnoucementAdmin(ObjectPermissionsModelAdminMixin, admin.ModelAdmin):
     ordering = ['event', 'puzzle__start_date', 'pk']
     list_display = ('event', 'puzzle', 'type', 'title', 'message', 'posted')
     list_display_links = ('title', )
 
 
-admin.site.register(models.Headstart)
+@admin.register(models.Headstart)
+class HeadstartAdmin(ObjectPermissionsModelAdmin):
+    pass
+
+
 admin.site.register(models.TeamPuzzleData)
+admin.site.register(models.TeamData)
+admin.site.register(models.UserData)
