@@ -1,11 +1,12 @@
 import $ from 'jquery'
 import * as d3 from 'd3'
+import colors from 'd3-scale-chromatic/src/colors.js'
 
 import '../scss/stats.scss'
 
 import { XmlEntities as entities } from 'html-entities'
 
-let schemeCategory20 = d3.colors('1f77b4aec7e8ff7f0effbb782ca02c98df8ad62728ff98969467bdc5b0d58c564bc49c94e377c2f7b6d27f7f7fc7c7c7bcbd22dbdb8d17becf9edae5')
+let schemeCategory20 = colors('1f77b4aec7e8ff7f0effbb782ca02c98df8ad62728ff98969467bdc5b0d58c564bc49c94e377c2f7b6d27f7f7fc7c7c7bcbd22dbdb8d17becf9edae5')
 
 // Keep the number of entries in here such that it has a large least common multiple with the number of colours.
 var symbolsPathList = [
