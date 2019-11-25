@@ -3,8 +3,8 @@ FROM registry.gitlab.com/rconan/docker-pipenv:2018.11.29-0 AS req_export
 ARG DEVELOPMENT
 COPY Pipfile Pipfile.lock /
 
-RUN pipenv lock -r --keep-outdated > /requirements.txt
-RUN [ -z ${DEVELOPMENT} ] || pipenv lock -d -r --keep-outdated >> /requirements.txt
+RUN pipenv --bare lock -r --keep-outdated > /requirements.txt
+RUN [ -z ${DEVELOPMENT} ] || pipenv --bare lock -d -r --keep-outdated >> /requirements.txt
 
 
 # Construct a common base image for creating python wheels and the final image
