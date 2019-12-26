@@ -768,26 +768,26 @@ class ClueDisplayTests(EventTestCase):
 
         with freezegun.freeze_time() as frozen_datetime:
             self.data.tp_data.start_time = timezone.now()
-            self.assertFalse(hint.unlocked_by(self.team, self.data), "Hint not unlocked by team at start")
+            self.assertFalse(hint.unlocked_by(self.team, self.data.tp_data), "Hint not unlocked by team at start")
 
             frozen_datetime.tick(hint.time / 2)
-            self.assertFalse(hint.unlocked_by(self.team, self.data), "Hint not unlocked by less than hint time duration.")
+            self.assertFalse(hint.unlocked_by(self.team, self.data.tp_data), "Hint not unlocked by less than hint time duration.")
 
             frozen_datetime.tick(hint.time)
-            self.assertTrue(hint.unlocked_by(self.team, self.data), "Hint unlocked by team after required time elapsed.")
+            self.assertTrue(hint.unlocked_by(self.team, self.data.tp_data), "Hint unlocked by team after required time elapsed.")
 
     def test_hint_unlocks_at(self):
         hint = HintFactory(puzzle=self.puzzle, time=datetime.timedelta(seconds=42))
 
         with freezegun.freeze_time() as frozen_datetime:
             now = timezone.now()
-            self.assertEqual(hint.unlocks_at(self.team, self.data), None)
+            self.assertEqual(hint.unlocks_at(self.team, self.data.tp_data), None)
             self.data.tp_data.start_time = now
             target = now + datetime.timedelta(seconds=42)
 
-            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+            self.assertEqual(hint.unlocks_at(self.team, self.data.tp_data), target)
             frozen_datetime.tick(datetime.timedelta(seconds=12))
-            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+            self.assertEqual(hint.unlocks_at(self.team, self.data.tp_data), target)
 
         unlock = UnlockFactory(puzzle=self.puzzle)
         hint.start_after = unlock
@@ -1702,7 +1702,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertTrue(connected)
 
         # account for delays getting started
-        remaining = hint.delay_for_team(team, data).total_seconds()
+        remaining = hint.delay_for_team(team, data.tp_data).total_seconds()
         if remaining < 0:
             raise Exception('Websocket hint scheduling test took too long to start up')
 
@@ -1711,7 +1711,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
 
         # advance time by all the remaining time
         time.sleep(remaining / 2)
-        self.assertTrue(hint.unlocked_by(team, data))
+        self.assertTrue(hint.unlocked_by(team, data.tp_data))
 
         output = self.receive_json(comm, 'Websocket did not send unlocked hint')
 
@@ -1742,13 +1742,13 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         guess = GuessFactory(for_puzzle=self.pz, by=user, guess=unlockanswer.guess)
         _ = self.receive_json(comm, 'Websocket did not send unlock')
         _ = self.receive_json(comm, 'Websocket did not send guess')
-        remaining = hint.delay_for_team(team, data).total_seconds()
-        self.assertFalse(hint.unlocked_by(team, data))
+        remaining = hint.delay_for_team(team, data.tp_data).total_seconds()
+        self.assertFalse(hint.unlocked_by(team, data.tp_data))
         self.assertTrue(self.run_async(comm.receive_nothing)(remaining / 2))
 
         # advance time by all the remaining time
         time.sleep(remaining / 2)
-        self.assertTrue(hint.unlocked_by(team, data))
+        self.assertTrue(hint.unlocked_by(team, data.tp_data))
 
         output = self.receive_json(comm, 'Websocket did not send unlocked hint')
 
@@ -1783,10 +1783,10 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         unlockanswer.guess = guess.guess
         unlockanswer.save()
         _ = self.receive_json(comm, 'Websocket did not send unlock')
-        self.assertFalse(hint.unlocked_by(team, data))
+        self.assertFalse(hint.unlocked_by(team, data.tp_data))
         self.assertTrue(self.run_async(comm.receive_nothing)(delay / 2))
         time.sleep(delay / 2)
-        self.assertTrue(hint.unlocked_by(team, data))
+        self.assertTrue(hint.unlocked_by(team, data.tp_data))
         output = self.receive_json(comm, 'Websocket did not send unlocked hint')
 
         self.assertEqual(output['type'], 'new_hint')
@@ -1804,7 +1804,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
 
             hint = HintFactory(text='hint_text', puzzle=self.pz, time=datetime.timedelta(seconds=1))
             frozen_datetime.tick(delta=datetime.timedelta(seconds=2))
-            self.assertTrue(hint.unlocked_by(team, data))
+            self.assertTrue(hint.unlocked_by(team, data.tp_data))
 
             comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
             connected, subprotocol = self.run_async(comm.connect)()

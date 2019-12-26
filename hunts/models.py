@@ -443,23 +443,23 @@ class Hint(Clue):
     def __str__(self):
         return f'Hint unlocked after {self.time}'
 
-    def unlocked_by(self, team, data):
-        unlocks_at = self.unlocks_at(team, data)
+    def unlocked_by(self, team, tp_data):
+        unlocks_at = self.unlocks_at(team, tp_data)
         return unlocks_at is not None and unlocks_at < timezone.now()
 
-    def delay_for_team(self, team, data):
-        unlocks_at = self.unlocks_at(team, data)
+    def delay_for_team(self, team, tp_data):
+        unlocks_at = self.unlocks_at(team, tp_data)
         return None if unlocks_at is None else unlocks_at - timezone.now()
 
-    def unlocks_at(self, team, data):
+    def unlocks_at(self, team, tp_data):
         if self.start_after:
             guesses = self.start_after.unlocked_by(team)
             if guesses:
                 start_time = guesses[0].given
             else:
                 return None
-        elif data.tp_data.start_time:
-            start_time = data.tp_data.start_time
+        elif tp_data.start_time:
+            start_time = tp_data.start_time
         else:
             return None
 
