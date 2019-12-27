@@ -1,6 +1,5 @@
 import $ from 'jquery'
-import BPagination from 'bootstrap-vue/es/components/pagination/pagination'
-import BTable from 'bootstrap-vue/es/components/table/table'
+import {BTable, BPagination} from 'bootstrap-vue'
 import URI from 'urijs'
 import moment from 'moment'
 
