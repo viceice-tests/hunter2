@@ -550,34 +550,32 @@ function episodeChanged() {
   getStats(true)
 }
 
+var drawFunctions = new Map([
+  ['percent-complete', drawCompletion],
+  ['time-completed', drawTimeCompleted(false)],
+  ['progress', drawTimeCompleted(true)],
+  ['team-total-stuckness', drawTeamStuckness],
+  ['team-puzzle-stuckness', drawTeamPuzzleStuckness],
+  ['puzzle-stuckness', puzzleTimeDrawer('puzzleAverageStuckness', 'stuckness')],
+  ['puzzle-difficulty', puzzleTimeDrawer('puzzleDifficulty', 'average_time')],
+])
+
 function typeChanged() {
   var graphType = $('#type').val()
-  drawFunction = {
-    'percent-complete': drawCompletion,
-    'time-completed': drawTimeCompleted(false),
-    'progress': drawTimeCompleted(true),
-    'team-total-stuckness': drawTeamStuckness,
-    'team-puzzle-stuckness': drawTeamPuzzleStuckness,
-    'puzzle-stuckness': puzzleTimeDrawer('puzzleAverageStuckness', 'stuckness'),
-    'puzzle-difficulty': puzzleTimeDrawer('puzzleDifficulty', 'average_time'),
-  }[graphType]
+  drawFunction = drawFunctions.get(graphType)
   if (globalData) {
     drawGraph()
   }
 }
 
 function restoreView(invisteams) {
-  var nteams = invisteams.length
-  for (var i=0; i<nteams; i++) {
-    var team = invisteams[i]
-    var teamclass = '.team-' + entities.encode(team)
+  for (let team of invisteams) {
+    let teamclass = '.team-' + entities.encode(team)
     d3.selectAll(teamclass)
       .classed('invis', invisteams)
       .style('opacity', invisteams ? hiddenOpacity : 1)
   }
 }
-
-
 
 var drawFunction = drawCompletion
 

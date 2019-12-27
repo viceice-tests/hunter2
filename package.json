@@ -42,6 +42,7 @@
     "d3": "^5.11.0",
     "html-entities": "1.2.1",
     "jquery": "^3.3.1",
+    "js-cookie": "^2.2.1",
     "moment": "^2.24.0",
     "popper.js": "^1.14.4",
     "robust-websocket": "^1.0.0",
