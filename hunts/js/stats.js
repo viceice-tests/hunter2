@@ -569,10 +569,8 @@ function typeChanged() {
 }
 
 function restoreView(invisteams) {
-  var nteams = invisteams.length
-  for (var i=0; i<nteams; i++) {
-    var team = invisteams[i]
-    var teamclass = '.team-' + entities.encode(team)
+  for (let team of invisteams) {
+    let teamclass = '.team-' + entities.encode(team)
     d3.selectAll(teamclass)
       .classed('invis', invisteams)
       .style('opacity', invisteams ? hiddenOpacity : 1)
