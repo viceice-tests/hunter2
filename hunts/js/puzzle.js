@@ -263,13 +263,13 @@ function getSortEntryKeyFunc(key) {
 }
 
 function updateUnlocks() {
-  var entries = Object.entries(unlocks)
+  let entries = Array.from(unlocks.entries())
   entries.sort(getSortEntryKeyFunc('unlock'))
-  var list = select('#unlocks')
+  let list = select('#unlocks')
     .selectAll('#unlocks > li')
     .data(entries)
-  var listEnter = list.enter()
-  var subList = listEnter.append('li')
+  let listEnter = list.enter()
+  let subList = listEnter.append('li')
     .merge(list)
     .html(function (d) {
       return d[1].guesses.join('<br>')
@@ -283,7 +283,7 @@ function updateUnlocks() {
 
   subList.selectAll('ul.unlock-texts')
     .data(function(d) {
-      var hintEntries = Object.entries(d[1].hints)
+      let hintEntries = Object.entries(d[1].hints)
       hintEntries.sort(getSortEntryKeyFunc('time'))
       return hintEntries
     }).enter()
@@ -295,17 +295,17 @@ function updateUnlocks() {
 }
 
 function createBlankUnlock(uid) {
-  unlocks[uid] = {'unlock': null, 'guesses': [], 'hints': {}}
+  unlocks.set(uid, {'unlock': null, 'guesses': [], 'hints': {}})
 }
 
 function receivedNewUnlock(content) {
   if (!(content.unlock_uid in unlocks)) {
     createBlankUnlock(content.unlock_uid)
   }
-  unlocks[content.unlock_uid].unlock = content.unlock
+  unlocks.get(content.unlock_uid).unlock = content.unlock
   var guess = entities.encode(content.guess)
-  if (!unlocks[content.unlock_uid].guesses.includes(guess)) {
-    unlocks[content.unlock_uid].guesses.push(guess)
+  if (!unlocks.get(content.unlock_uid).guesses.includes(guess)) {
+    unlocks.get(content.unlock_uid).guesses.push(guess)
   }
   updateUnlocks()
 }
@@ -314,7 +314,7 @@ function receivedChangeUnlock(content) {
   if (!(content.unlock_uid in unlocks)) {
     throw `WebSocket changed invalid unlock: ${content.unlock_uid}`
   }
-  unlocks[content.unlock_uid].unlock = content.unlock
+  unlocks.get(content.unlock_uid).unlock = content.unlock
   updateUnlocks()
 }
 
@@ -330,10 +330,10 @@ function receivedDeleteUnlockGuess(content) {
   if (!(content.unlock_uid in unlocks)) {
     throw `WebSocket deleted guess for invalid unlock: ${content.unlock_uid}`
   }
-  if (!(unlocks[content.unlock_uid].guesses.includes(content.guess))) {
+  if (!(unlocks.get(content.unlock_uid).guesses.includes(content.guess))) {
     throw `WebSocket deleted invalid guess (can happen if team made identical guesses): ${content.guess}`
   }
-  var unlockguesses = unlocks[content.unlock_uid].guesses
+  var unlockguesses = unlocks.get(content.unlock_uid).guesses
   var i = unlockguesses.indexOf(content.guess)
   unlockguesses.splice(i, 1)
   updateUnlocks()
@@ -365,24 +365,24 @@ function receivedNewHint(content) {
     hints[content.hint_uid] = {'time': content.time, 'hint': content.hint}
     updateHints()
   } else {
-    if (!(content.depends_on_unlock_uid in unlocks)) {
+    if (!(unlocks.has(content.depends_on_unlock_uid))) {
       createBlankUnlock(content.depends_on_unlock_uid)
     }
-    unlocks[content.depends_on_unlock_uid].hints[content.hint_uid] = {'time': content.time, 'hint': content.hint}
+    unlocks.get(content.depends_on_unlock_uid).hints[content.hint_uid] = {'time': content.time, 'hint': content.hint}
     updateUnlocks()
   }
 }
 
 function receivedDeleteHint(content) {
-  if (!(content.hint_uid in hints || (content.depends_on_unlock_uid in unlocks &&
-         content.hint_uid in unlocks[content.depends_on_unlock_uid].hints))) {
+  if (!(content.hint_uid in hints || (unlocks.has(content.depends_on_unlock_uid) &&
+         content.hint_uid in unlocks.get(content.depends_on_unlock_uid).hints))) {
     throw `WebSocket deleted invalid hint: ${content.hint_uid}`
   }
   if (content.depends_on_unlock_uid === null) {
     delete hints[content.hint_uid]
     updateHints()
   } else {
-    delete unlocks[content.depends_on_unlock_uid].hints[content.hint_uid]
+    delete unlocks.get(content.depends_on_unlock_uid).hints[content.hint_uid]
     updateUnlocks()
   }
 }

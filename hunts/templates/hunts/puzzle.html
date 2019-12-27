@@ -17,16 +17,16 @@
 		"use strict"
 		var hints = { {% for hint in hints %}
 			'{{ hint.compact_id }}': {'time': '{{ hint.time }}', 'hint': '{{ hint.text|escapejs }}'}, {% endfor %}
-		};
-		var unlocks = {{% for unlock in unlocks %}
-			'{{ unlock.compact_id }}': {
+		}
+		var unlocks = new Map([{% for unlock in unlocks %}[
+			'{{ unlock.compact_id }}', {
 				'unlock': '{{ unlock.text|escapejs }}',
 				'guesses': [{% for g in unlock.guesses %}'{{ g|escapejs }}'{% if not forloop.last %}, {%endif %}{% endfor %}],
 				'hints': {{% for h in unlock.hints %}
 					'{{ h.compact_id }}': {'time': '{{ h.time }}', 'hint': '{{ h.text|escapejs }}'}{% if not forloop.last %}, {% endif %}{% endfor %}
 				}
-			}{% if not forloop.last %}, {% endif %}{% endfor %}
-		};
+			}]{% if not forloop.last %}, {% endif %}{% endfor %}
+		])
 	</script>
 {% endblock %}
 
