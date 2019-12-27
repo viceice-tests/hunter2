@@ -550,17 +550,19 @@ function episodeChanged() {
   getStats(true)
 }
 
+var drawFunctions = new Map([
+  ['percent-complete', drawCompletion],
+  ['time-completed', drawTimeCompleted(false)],
+  ['progress', drawTimeCompleted(true)],
+  ['team-total-stuckness', drawTeamStuckness],
+  ['team-puzzle-stuckness', drawTeamPuzzleStuckness],
+  ['puzzle-stuckness', puzzleTimeDrawer('puzzleAverageStuckness', 'stuckness')],
+  ['puzzle-difficulty', puzzleTimeDrawer('puzzleDifficulty', 'average_time')],
+])
+
 function typeChanged() {
   var graphType = $('#type').val()
-  drawFunction = {
-    'percent-complete': drawCompletion,
-    'time-completed': drawTimeCompleted(false),
-    'progress': drawTimeCompleted(true),
-    'team-total-stuckness': drawTeamStuckness,
-    'team-puzzle-stuckness': drawTeamPuzzleStuckness,
-    'puzzle-stuckness': puzzleTimeDrawer('puzzleAverageStuckness', 'stuckness'),
-    'puzzle-difficulty': puzzleTimeDrawer('puzzleDifficulty', 'average_time'),
-  }[graphType]
+  drawFunction = drawFunctions.get(graphType)
   if (globalData) {
     drawGraph()
   }
@@ -576,8 +578,6 @@ function restoreView(invisteams) {
       .style('opacity', invisteams ? hiddenOpacity : 1)
   }
 }
-
-
 
 var drawFunction = drawCompletion
 
