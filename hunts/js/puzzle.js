@@ -253,18 +253,13 @@ function receivedOldAnswer(content) {
   addAnswer(content.by, content.guess, content.correct, content.guess_uid)
 }
 
-function getSortEntryKeyFunc(key) {
-  /* comparison function for sorting based on a key on the second element of array elements */
-  return function(a, b) {
-    if (a[1][key] < b[1][key]) return -1
-    else if(a[1][key] > b[1][key]) return 1
-    return 0
-  }
-}
-
 function updateUnlocks() {
   let entries = Array.from(unlocks.entries())
-  entries.sort(getSortEntryKeyFunc('unlock'))
+  entries.sort(function(a, b) {
+    if (a[1].unlock < b[1].unlock) return -1
+    else if (a[1].unlock > b[1].unlock) return 1
+    return 0
+  })
   let list = select('#unlocks')
     .selectAll('#unlocks > li')
     .data(entries)
@@ -284,7 +279,11 @@ function updateUnlocks() {
   subList.selectAll('ul.unlock-texts')
     .data(function(d) {
       let hintEntries = Object.entries(d[1].hints)
-      hintEntries.sort(getSortEntryKeyFunc('time'))
+      hintEntries.sort(function(a, b) {
+        if (a[1].unlock < b[1].unlock) return -1
+        else if (a[1].unlock > b[1].unlock) return 1
+        return 0
+      })
       return hintEntries
     }).enter()
     .append('li')
