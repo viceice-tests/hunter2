@@ -443,17 +443,17 @@ class Hint(Clue):
     def __str__(self):
         return f'Hint unlocked after {self.time}'
 
-    def unlocked_by(self, team, tp_data):
-        unlocks_at = self.unlocks_at(team, tp_data)
+    def unlocked_by(self, team, tp_data, possible_guesses=None):
+        unlocks_at = self.unlocks_at(team, tp_data, possible_guesses)
         return unlocks_at is not None and unlocks_at < timezone.now()
 
     def delay_for_team(self, team, tp_data):
         unlocks_at = self.unlocks_at(team, tp_data)
         return None if unlocks_at is None else unlocks_at - timezone.now()
 
-    def unlocks_at(self, team, tp_data):
+    def unlocks_at(self, team, tp_data, possible_guesses=None):
         if self.start_after:
-            guesses = self.start_after.unlocked_by(team)
+            guesses = self.start_after.unlocked_by(team, possible_guesses)
             if guesses:
                 start_time = guesses[0].given
             else:
@@ -467,12 +467,13 @@ class Hint(Clue):
 
 
 class Unlock(Clue):
-    def unlocked_by(self, team):
-        guesses = Guess.objects.filter(
-            by__in=team.members.all()
-        ).filter(
-            for_puzzle=self.puzzle
-        ).order_by('given')
+    def unlocked_by(self, team, guesses=None):
+        if guesses is None:
+            guesses = Guess.objects.filter(
+                by__in=team.members.all()
+            ).filter(
+                for_puzzle=self.puzzle
+            ).order_by('given')
 
         unlockanswers = self.unlockanswer_set.all()
         return [g for g in guesses if any([u.validate_guess(g) for u in unlockanswers])]
