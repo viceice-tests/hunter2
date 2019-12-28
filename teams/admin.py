@@ -21,7 +21,7 @@ from . import models
 class TeamAdmin(admin.ModelAdmin):
     form = TeamForm
     ordering = ['at_event', 'name']
-    list_display = ('the_name', 'at_event', 'is_admin', 'member_count')
+    list_display = ('the_name', 'at_event', 'role', 'member_count')
     list_display_links = ('the_name', )
 
     def get_queryset(self, request):

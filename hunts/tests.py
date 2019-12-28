@@ -27,6 +27,7 @@ from accounts.factories import UserFactory, UserProfileFactory
 from events.factories import EventFileFactory
 from events.test import EventTestCase, AsyncEventTestCase
 from hunter2.routing import application as websocket_app
+from teams.models import TeamRole
 from teams.factories import TeamFactory, TeamMemberFactory
 from . import utils
 from .factories import (
@@ -295,7 +296,7 @@ class PuzzleStartTimeTests(EventTestCase):
 
 class AdminPuzzleAccessTests(EventTestCase):
     def setUp(self):
-        self.user = TeamMemberFactory(team__at_event=self.tenant, team__is_admin=True)
+        self.user = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.ADMIN)
         self.client.force_login(self.user.user)
 
     def test_admin_overrides_episode_start_time(self):
@@ -951,7 +952,7 @@ class AdminTeamTests(EventTestCase):
         self.event = self.tenant
         self.episode = EpisodeFactory(event=self.event)
         self.admin_user = UserProfileFactory()
-        self.admin_team = TeamFactory(at_event=self.event, is_admin=True, members={self.admin_user})
+        self.admin_team = TeamFactory(at_event=self.event, role=TeamRole.ADMIN, members={self.admin_user})
 
     def test_can_view_episode(self):
         self.client.force_login(self.admin_user.user)
@@ -974,7 +975,7 @@ class AdminTeamTests(EventTestCase):
 class AdminContentTests(EventTestCase):
     def setUp(self):
         self.episode = EpisodeFactory(event=self.tenant)
-        self.admin_user = TeamMemberFactory(team__at_event=self.tenant, team__is_admin=True)
+        self.admin_user = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.ADMIN)
         puzzle = PuzzleFactory()
         self.guesses = GuessFactory.create_batch(5, for_puzzle=puzzle)
         self.guesses_url = reverse('guesses_list')
@@ -1930,14 +1931,14 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
 
 class RulesTests(EventTestCase):
     def test_is_admin_for_episode_child_true(self):
-        profile = TeamMemberFactory(team__is_admin=True)
+        profile = TeamMemberFactory(team__role=TeamRole.ADMIN)
         child = PuzzleFactory()
         self.assertTrue(rules.is_admin_for_episode_child.test(profile.user, None))
         self.assertTrue(rules.is_admin_for_episode_child.test(profile.user, child.episode))
         self.assertTrue(rules.is_admin_for_episode_child.test(profile.user, child))
 
     def test_is_admin_for_episode_child_false(self):
-        profile = TeamMemberFactory(team__is_admin=False)
+        profile = TeamMemberFactory(team__role=TeamRole.PLAYER)
         child = PuzzleFactory()
         self.assertFalse(rules.is_admin_for_episode_child.test(profile.user, None))
         self.assertFalse(rules.is_admin_for_episode_child.test(profile.user, child.episode))
@@ -1949,14 +1950,14 @@ class RulesTests(EventTestCase):
             rules.is_admin_for_episode_child(user, "A string is not an episode child")
 
     def test_is_admin_for_puzzle_child_true(self):
-        profile = TeamMemberFactory(team__is_admin=True)
+        profile = TeamMemberFactory(team__role=TeamRole.ADMIN)
         child = PuzzleFileFactory()
         self.assertTrue(rules.is_admin_for_puzzle_child.test(profile.user, None))
         self.assertTrue(rules.is_admin_for_puzzle_child.test(profile.user, child.puzzle))
         self.assertTrue(rules.is_admin_for_puzzle_child.test(profile.user, child))
 
     def test_is_admin_for_puzzle_child_false(self):
-        profile = TeamMemberFactory(team__is_admin=False)
+        profile = TeamMemberFactory(team__role=TeamRole.PLAYER)
         child = PuzzleFileFactory()
         self.assertFalse(rules.is_admin_for_puzzle_child.test(profile.user, None))
         self.assertFalse(rules.is_admin_for_puzzle_child.test(profile.user, child.puzzle))
@@ -1968,14 +1969,14 @@ class RulesTests(EventTestCase):
             rules.is_admin_for_puzzle_child(user, "A string is not an puzzle child")
 
     def test_is_admin_for_unlock_child_true(self):
-        profile = TeamMemberFactory(team__is_admin=True)
+        profile = TeamMemberFactory(team__role=TeamRole.ADMIN)
         child = UnlockAnswerFactory()
         self.assertTrue(rules.is_admin_for_unlock_child.test(profile.user, None))
         self.assertTrue(rules.is_admin_for_unlock_child.test(profile.user, child.unlock))
         self.assertTrue(rules.is_admin_for_unlock_child.test(profile.user, child))
 
     def test_is_admin_for_unlock_child_false(self):
-        profile = TeamMemberFactory(team__is_admin=False)
+        profile = TeamMemberFactory(team__role=TeamRole.PLAYER)
         child = UnlockAnswerFactory()
         self.assertFalse(rules.is_admin_for_unlock_child.test(profile.user, None))
         self.assertFalse(rules.is_admin_for_unlock_child.test(profile.user, child.unlock))
