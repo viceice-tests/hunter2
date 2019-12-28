@@ -30,6 +30,7 @@ from django.views import View
 from django.views.generic.edit import FormView
 
 from events.models import Attendance
+from events.utils import annotate_userprofile_queryset_with_seat
 from teams.models import Team, TeamRole
 from teams.rules import is_admin_for_event
 from .mixins import PuzzleAdminMixin
@@ -347,3 +348,164 @@ class EpisodeList(LoginRequiredMixin, View):
             'id': episode.pk,
             'name': episode.name
         } for episode in models.Episode.objects.filter(event=request.tenant)], safe=False)
+
+
+class TeamAdmin(LoginRequiredMixin, View):
+    def get(self, request):
+        admin = is_admin_for_event.test(request.user, request.tenant)
+        event = request.tenant
+
+        if not admin:
+            raise PermissionDenied
+
+        context = {
+            'teams': Team.objects.filter(at_event=event)
+        }
+
+        return TemplateResponse(
+            request,
+            'hunts/admin/admin_teams.html',
+            context
+        )
+
+
+class TeamAdminDetail(LoginRequiredMixin, View):
+    def get(self, request, team_id):
+        admin = is_admin_for_event.test(request.user, request.tenant)
+        event = request.tenant
+
+        if not admin:
+            raise PermissionDenied
+
+        team = Team.objects.get(id=team_id)
+        members = annotate_userprofile_queryset_with_seat(team.members, event)
+
+        context = {
+            'team': team,
+            'members': members,
+        }
+
+        return TemplateResponse(
+            request,
+            'hunts/admin/admin_teams_detail.html',
+            context
+        )
+
+
+class TeamAdminDetailContent(LoginRequiredMixin, View):
+    def get(self, request, team_id):
+        admin = is_admin_for_event.test(request.user, request.tenant)
+        event = request.tenant
+
+        if not admin:
+            raise PermissionDenied
+
+        team = Team.objects.filter(id=team_id).get()
+
+        # All the data is keyed off puzzles. Only return puzzles which
+        # are unsolved but have a guess.
+        puzzles = models.Puzzle.objects.filter(
+            guess__by_team=team_id
+        ).distinct().annotate(
+            num_guesses=Count('guess')
+        ).prefetch_related(
+            # Only prefetch guesses by the requested team; puzzle.guess_set.all()
+            # will not be all, which means we don't need to filter again.
+            Prefetch(
+                'guess_set',
+                queryset=models.Guess.objects.filter(
+                    by_team_id=team_id
+                ).order_by(
+                    'given'
+                ).select_related('by', 'by__user')
+            ),
+            Prefetch(
+                'hint_set',
+                queryset=models.Hint.objects.select_related(
+                    'start_after', 'start_after__puzzle'
+                ).prefetch_related('start_after__unlockanswer_set')
+            ),
+            'unlock_set',
+            'unlock_set__unlockanswer_set',
+        )
+
+        # Most info is only needed for un-solved puzzles; find which are solved
+        # now so we can save some work
+        solved_puzzles = {}
+        for pz in puzzles:
+            correct = [g for g in pz.guess_set.all() if g.correct_for]
+            if correct:
+                solved_puzzles[pz.id] = correct[0]
+
+        # Grab the TeamPuzzleData necessary to calculate hint timings
+        tp_datas = models.TeamPuzzleData.objects.filter(
+            puzzle__in=puzzles,
+            team_id=team_id
+        )
+        tp_datas = {tp_data.puzzle_id: tp_data for tp_data in tp_datas}
+
+        # Collate visible hints and unlocks
+        clues_visible = {
+            puzzle.id: [{
+                'type': 'Unlock',
+                'text': u.text,
+                'received_at': u.unlocked_by(team, puzzle.guess_set.all())[0].given}
+                for u in puzzle.unlock_set.all()
+                if u.unlocked_by(team, puzzle.guess_set.all())
+            ] + [{
+                'type': 'Hint',
+                'text': h.text,
+                'received_at': h.unlocks_at(team, tp_datas[puzzle.id], puzzle.guess_set.all())}
+                for h in puzzle.hint_set.all()
+                if h.unlocked_by(team, tp_datas[puzzle.id], puzzle.guess_set.all())
+            ]
+            for puzzle in puzzles
+        }
+
+        # Hints which depend on not-unlocked unlocks are not included
+        hints_scheduled = {
+            puzzle.id: [
+                {
+                    'text': h.text,
+                    'time': h.unlocks_at(team, tp_datas[puzzle.id])
+                }
+                for h in puzzle.hint_set.all()
+                if not h.unlocked_by(team, tp_datas[puzzle.id], puzzle.guess_set.all())
+            ]
+            for puzzle in puzzles
+        }
+
+        # Unsolved puzzles from last year's hunts haven't been "on" for a year :)
+        latest = min(timezone.now(), event.end_date)
+
+        response = {
+            'puzzles': [{
+                'title': puzzle.title,
+                'episode_name': puzzle.episode.name,
+                'id': puzzle.id,
+                'time_started': tp_datas[puzzle.id].start_time,
+                'time_on': latest - tp_datas[puzzle.id].start_time,
+                'num_guesses': puzzle.num_guesses,
+                'guesses': [{
+                    'user': guess.by.username,
+                    'guess': guess.guess,
+                    'given': guess.given}
+                    for guess in puzzle.guess_set.all()[:5]
+                ],
+                'clues_visible': clues_visible[puzzle.id],
+                'hints_scheduled': hints_scheduled[puzzle.id]}
+                for puzzle in puzzles
+                if puzzle.id not in solved_puzzles
+            ],
+            'solved_puzzles': [{
+                'title': puzzle.title,
+                'id': puzzle.id,
+                'time_finished': solved_puzzles[puzzle.id].given,
+                'time_taken': solved_puzzles[puzzle.id].given - tp_datas[puzzle.id].start_time,
+                'num_guesses': puzzle.num_guesses}
+                for puzzle in puzzles
+                if puzzle.id in solved_puzzles
+            ],
+        }
+
+        return JsonResponse(response)

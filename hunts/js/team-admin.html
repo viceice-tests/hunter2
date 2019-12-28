@@ -1,0 +1,62 @@
+<div class="team_puzzles_admin_widget">
+	<h3>Started Puzzles: {{ puzzles.length }}</h3>
+	<ul id="started-puzzles-widget">
+		<div :id="'puzzle-' + puzzle.id" v-for="puzzle in sortedPuzzles" class="card">
+			<button class="btn card-header"
+					data-toggle="collapse"
+					:data-target="'.puzzle-' + puzzle.id + '-detail'"
+					aria-expanded="false">
+				<h4>{{ puzzle.episode_name }}: {{ puzzle.title }}</h4>
+				<div >
+					<b>Total guesses:</b> {{ puzzle.num_guesses }} &emsp;
+					<b>Time on puzzle:</b> <span :title="puzzle.time_started | moment('ddd LTS')">{{ puzzle.time_on | duration('humanize') }}</span> &emsp;
+					<b>Latest guess:</b> <span :title="puzzle.guesses[0].given | moment('ddd LTS')">{{ puzzle.guesses[0].given | moment('from', 'now') }}</span> &emsp;
+					<b>Unlocks received:</b> {{ puzzle.clues_visible.length }}&emsp;
+					<b>Hints scheduled:</b> {{ puzzle.hints_scheduled.length }}
+				</div>
+			</button>
+			<div :class="'puzzle-' + puzzle.id + '-detail'"
+				 data-parent="#started-puzzles-widget"
+				 class="card-body collapse"
+			>
+				<h5>Clues Visible</h5>
+				<b-table v-bind:fields="clue_fields" v-bind:items="puzzle.clues_visible" small striped>
+					<template v-slot:received_at="row">
+						<span class="date">{{ row.value | moment("ll") }}</span>
+						<span class="time">{{ row.value | moment("LTS") }}</span>
+					</template>
+				</b-table>
+				<template v-if="puzzle.hints_scheduled.length > 0">
+					<h5>Timed Hints Scheduled</h5>
+					<span v-for="(hint, index) in puzzle.hints_scheduled">
+						<abbr :title="hint.text">
+							{{ hint.time | moment('from', 'now', true) }}
+						</abbr>
+						<span v-if="index+1 < puzzle.hints_scheduled.length">, </span>
+					</span>
+				</template>
+				<template v-else>
+					<h5>No Timed Hints Scheduled</h5>
+				</template>
+				<h5>Recent Guesses</h5>
+				<b-table v-bind:fields="guess_fields" v-bind:items="puzzle.guesses" small striped>
+					<template v-slot:given="row">
+						<span class="date">{{ row.value | moment("ll") }}</span>
+						<span class="time">{{ row.value | moment("LTS") }}</span>
+					</template>
+				</b-table>
+			</div>
+		</div>
+	</ul>
+	<h3>Solved Puzzles: {{ solved_puzzles.length }}</h3>
+	<ul class="d-flex flex-wrap">
+		<div :id="'solved-puzzle-' + puzzle.id" v-for="puzzle in solved_puzzles" class="card solved-puzzle">
+			<h4 class="card-header">{{ puzzle.title }}</h4>
+			<span class="card-body">After
+				<span :title="'Solved ' + moment(puzzle.time_finished).format('ddd LTS')">
+					{{ puzzle.time_taken | duration('humanize', false) }}
+				</span> with {{ puzzle.num_guesses }} guesses.
+			</span>
+		</div>
+	</ul>
+</div>
