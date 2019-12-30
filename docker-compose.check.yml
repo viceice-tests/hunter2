@@ -20,6 +20,7 @@ services:
     volumes:
       - ${PWD:-.}:/code
   flake8:
+    command: --per-file-ignores="__init__.py:F401,F403"
     image: registry.gitlab.com/rconan/docker-flake8:3.7.8-0
     volumes:
       - ${PWD:-.}:/code

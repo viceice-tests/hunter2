@@ -17,9 +17,9 @@ from django.template.response import TemplateResponse
 from django.urls import reverse
 
 from teams.rules import is_admin_for_event_child
-from .models import Puzzle
-from .rules import is_admin_for_episode_child
-from . import utils
+from ..models import Puzzle
+from ..rules import is_admin_for_episode_child
+from .. import utils
 
 # If PuzzleUnlockedMixin inherits from EpisodeUnlockedMixin the dispatch methods execute in the wrong order
 
