@@ -11,6 +11,9 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from .rules import is_admin_for_event
+
+
 def event_team(request):
     context = {
         'event': request.tenant,
@@ -18,5 +21,7 @@ def event_team(request):
 
     if hasattr(request, 'team'):
         context['team'] = request.team
+        if request.team:
+            context['is_admin'] = is_admin_for_event.test(request.user, request.tenant)
 
     return context

@@ -29,7 +29,6 @@ from accounts.models import UserInfo
 from events.utils import annotate_userinfo_queryset_with_seat
 from teams.models import TeamRole
 from teams.mixins import TeamMixin
-from teams.rules import is_admin_for_event
 from .mixins import EpisodeUnlockedMixin, PuzzleUnlockedMixin
 from ..rules import is_admin_for_episode_child
 from .. import models, utils
@@ -84,19 +83,6 @@ class EpisodeContent(LoginRequiredMixin, TeamMixin, EpisodeUnlockedMixin, View):
                 'puzzles': puzzles,
             }
         )
-
-
-class EpisodeList(LoginRequiredMixin, View):
-    def get(self, request):
-        admin = is_admin_for_event.test(request.user, request.tenant)
-
-        if not admin:
-            raise PermissionDenied
-
-        return JsonResponse([{
-            'id': episode.pk,
-            'name': episode.name
-        } for episode in models.Episode.objects.filter(event=request.tenant)], safe=False)
 
 
 class EventDirect(LoginRequiredMixin, View):

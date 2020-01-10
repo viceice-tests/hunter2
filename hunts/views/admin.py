@@ -72,6 +72,19 @@ class BulkUpload(LoginRequiredMixin, PuzzleAdminMixin, FormView):
         return self.render_to_response(context)
 
 
+class AdminIndex(LoginRequiredMixin, View):
+    def get(self, request):
+        admin = is_admin_for_event.test(request.user, request.tenant)
+
+        if not admin:
+            raise PermissionDenied
+
+        return TemplateResponse(
+            request,
+            'hunts/admin/index.html',
+        )
+
+
 class Guesses(LoginRequiredMixin, View):
     def get(self, request):
         admin = is_admin_for_event.test(request.user, request.tenant)
@@ -223,7 +236,7 @@ class StatsContent(LoginRequiredMixin, View):
 
         puzzles = models.Puzzle.objects.filter(episode__in=episodes)
 
-        all_teams = teams.models.Team.objects.annotate(
+        all_teams = Team.objects.annotate(
             num_members=Count('members')
         ).filter(
             at_event=request.tenant,
@@ -321,3 +334,16 @@ class StatsContent(LoginRequiredMixin, View):
             'puzzleDifficulty': puzzle_difficulty
         }
         return JsonResponse(data)
+
+
+class EpisodeList(LoginRequiredMixin, View):
+    def get(self, request):
+        admin = is_admin_for_event.test(request.user, request.tenant)
+
+        if not admin:
+            raise PermissionDenied
+
+        return JsonResponse([{
+            'id': episode.pk,
+            'name': episode.name
+        } for episode in models.Episode.objects.filter(event=request.tenant)], safe=False)

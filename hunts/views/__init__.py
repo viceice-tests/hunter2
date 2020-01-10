@@ -1,2 +1,4 @@
-from .player import *
-from .admin import *
+from . import admin
+from . import player
+
+__all__ = (admin, player)
