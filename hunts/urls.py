@@ -69,6 +69,6 @@ urlpatterns = [
         name='help'
     ),
     path('hunt/', include(eventpatterns)),
-    path('huntadmin/', include(eventadminpatterns)),
+    path('admin/', include(eventadminpatterns)),
     path('puzzle_info', views.PuzzleInfo.as_view(), name='puzzle_info'),
 ]
