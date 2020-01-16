@@ -1223,6 +1223,123 @@ class AdminContentTests(EventTestCase):
             self.assertEqual(len(response_json['puzzles'][0]['hints_scheduled']), 1)
             self.assertEqual(response_json['puzzles'][0]['hints_scheduled'][0]['text'], hint.text)
 
+    def test_can_view_admin_progress(self):
+        self.client.force_login(self.admin_user.user)
+        url = reverse('admin_progress')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_non_admin_cannot_view_admin_progress(self):
+        player = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.PLAYER)
+        self.client.force_login(player.user)
+        response = self.client.get(reverse('admin_progress'))
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(reverse('admin_progress_content'))
+        self.assertEqual(response.status_code, 403)
+
+    def _check_team_get_progress(self, response, team):
+        data = [x for x in response.json()['team_progress'] if x['id'] == team.id]
+        self.assertEqual(len(data), 1)
+        data = data[0]
+        self.assertEqual(data['name'], team.name)
+        self.assertEqual(data['url'], reverse('admin_team_detail', kwargs={'team_id': team.id}))
+
+        return data['progress']
+
+    def test_admin_progress_content(self):
+        team1 = self.guesses[0].by_team
+        team2 = self.guesses[1].by_team
+
+        tp_data1 = TeamPuzzleDataFactory(team=team1, puzzle=self.puzzle)
+        # FIXME: the above does not give tp_data1 a start_time :S
+        now = timezone.now()
+        tp_data1.start_time = now
+        tp_data1.save()
+
+        GuessFactory(by=team2.members.all()[0], for_puzzle=self.puzzle, correct=True)
+        team3 = TeamPuzzleDataFactory(puzzle=self.puzzle).team
+
+        self.client.force_login(self.admin_user.user)
+        url = reverse('admin_progress_content')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        content = response.json()
+        self.assertEqual(len(content['puzzles']), 1)
+        self.assertEqual(content['puzzles'][0]['title'], self.puzzle.title)
+
+        self.assertEqual(len(content['team_progress']), 7)
+
+        # team1 has opened the puzzle and made an incorrect guess
+        team1_data = self._check_team_get_progress(response, team1)
+        self.assertEqual(team1_data[0]['puzzle_id'], self.puzzle.id)
+        self.assertEqual(team1_data[0]['state'], 'open')
+        self.assertEqual(team1_data[0]['guesses'], 1)
+        self.assertIsNotNone(team1_data[0]['latest_guess'])
+        # Django's JSON encoder truncates the microseconds to milliseconds
+        latest_guess = datetime.datetime.fromisoformat(team1_data[0]['latest_guess'].replace('Z', '+00:00'))
+        diff = abs(latest_guess - self.guesses[0].given).total_seconds()
+        self.assertTrue(diff < 0.001)
+
+        # team2 has opened the puzzle and made a correct guess
+        team2_data = self._check_team_get_progress(response, team2)
+        self.assertEqual(team2_data[0]['puzzle_id'], self.puzzle.id)
+        self.assertEqual(team2_data[0]['state'], 'solved')
+        self.assertEqual(team2_data[0]['guesses'], 2)
+        self.assertIsNone(team2_data[0]['latest_guess'])
+
+        # team3 has opened the puzzle and made no guesses
+        team3_data = self._check_team_get_progress(response, team3)
+        self.assertEqual(team3_data[0]['puzzle_id'], self.puzzle.id)
+        self.assertEqual(team3_data[0]['state'], 'open')
+        self.assertEqual(team3_data[0]['guesses'], 0)
+        self.assertIsNone(team3_data[0]['latest_guess'])
+
+    def test_admin_progress_content_hints(self):
+        team = self.guesses[0].by_team
+        member = self.guesses[0].by
+        self.client.force_login(self.admin_user.user)
+
+        url = reverse('admin_progress_content')
+
+        with freezegun.freeze_time() as frozen_datetime:
+            tp_data = TeamPuzzleDataFactory(team=team, puzzle=self.puzzle)
+            tp_data.start_time = timezone.now()
+            tp_data.save()
+            hint = HintFactory(puzzle=self.puzzle, time=datetime.timedelta(minutes=10), start_after=None)
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            progress = self._check_team_get_progress(response, team)
+
+            # Initially the hint is not unlocked, but scheduled
+            self.assertTrue(progress[0]['hints_scheduled'])
+
+            # Advance time and retry; now no hints are scheduled again
+            frozen_datetime.tick(datetime.timedelta(minutes=11))
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            progress = self._check_team_get_progress(response, team)
+            self.assertFalse(progress[0]['hints_scheduled'])
+
+            # Make the hint dependent on an unlock that is not unlocked. It should remain unscheduled.
+            unlock = UnlockFactory(puzzle=self.puzzle)
+            hint.start_after = unlock
+            hint.save()
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            progress = self._check_team_get_progress(response, team)
+            self.assertFalse(progress[0]['hints_scheduled'])
+
+            # Unlock the unlock, it should now be scheduled again
+            GuessFactory(for_puzzle=self.puzzle, by=member, guess=unlock.unlockanswer_set.all()[0].guess)
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            progress = self._check_team_get_progress(response, team)
+            self.assertTrue(progress[0]['hints_scheduled'])
+
 
 class StatsTests(EventTestCase):
     def setUp(self):

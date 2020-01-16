@@ -15,9 +15,10 @@
 					<b>Hints scheduled:</b> {{ puzzle.hints_scheduled.length }}
 				</div>
 			</button>
-			<div :class="'puzzle-' + puzzle.id + '-detail'"
+			<div :class="'card-body ' +
+			             'puzzle-' + puzzle.id + '-detail' +
+			             (parseInt(anchor().substring(7)) == parseInt(puzzle.id) ? '' : ' collapse')"
 				 data-parent="#started-puzzles-widget"
-				 class="card-body collapse"
 			>
 				<h5>Clues Visible</h5>
 				<b-table v-bind:fields="clue_fields" v-bind:items="puzzle.clues_visible" small striped>
@@ -47,7 +48,7 @@
 	</ul>
 	<h3>Solved Puzzles: {{ solved_puzzles.length }}</h3>
 	<ul class="d-flex flex-wrap">
-		<div :id="'solved-puzzle-' + puzzle.id" v-for="puzzle in solved_puzzles" class="card solved-puzzle">
+		<div :id="'puzzle-' + puzzle.id" v-for="puzzle in solved_puzzles" class="card solved-puzzle">
 			<h4 class="card-header">{{ puzzle.title }}</h4>
 			<span class="card-body">
 				After <human-duration v-bind:value="puzzle.time_taken" /> with {{ puzzle.num_guesses }} guesses.
