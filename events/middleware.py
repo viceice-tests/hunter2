@@ -14,8 +14,10 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.db import connection, close_old_connections
+from django.db import connection
+from django.utils.functional import LazyObject
 from django_tenants.middleware import TenantMainMiddleware
+from channels.db import database_sync_to_async
 from channels.middleware import BaseMiddleware
 
 from accounts.models import UserInfo, UserProfile
@@ -54,10 +56,25 @@ class TenantMiddleware(TenantMainMiddleware):
             ContentType.objects.clear_cache()
 
 
+@database_sync_to_async
+def get_tenant(scope):
+    domain = scope['domain']
+    try:
+        return Domain.objects.get(domain=domain).tenant
+    except Domain.DoesNotExist:
+        raise ValueError(f'No tenant Domain matching origin {domain}')
+
+
+class TenantLazyObject(LazyObject):
+    """
+    Throw a more useful error message when scope['tenant'] is accessed before it's resolved
+    """
+    def _setup(self):
+        raise ValueError("Accessing scope tenant before it is ready.")
+
+
 class TenantWebsocketMiddleware(BaseMiddleware):
     def populate_scope(self, scope):
-        close_old_connections()
-
         headers = dict(scope['headers'])
 
         if settings.USE_X_FORWARDED_HOST and b'x-forwarded-host' in headers:
@@ -71,15 +88,8 @@ class TenantWebsocketMiddleware(BaseMiddleware):
             raise ValueError('TenantWebsocketMiddleware got malformed origin %s' % headers[b'host'])
 
         # urlparse will fail to parse an absolute URL without initial //
-        domain = urlparse('//' + host).hostname
-
-        try:
-            scope['tenant'] = Domain.objects.get(domain=domain).tenant
-        except Domain.DoesNotExist:
-            raise ValueError('No tenant Domain matching origin %s' % domain)
+        scope['domain'] = urlparse('//' + host).hostname
+        scope['tenant'] = TenantLazyObject()
 
     async def resolve_scope(self, scope):
-        # Unsure how you're actually supposed to correctly subclass Channels Middleware.
-        # If we implement populate_scope instead of overriding __call__, we need to define
-        # this method.
-        pass
+        scope['tenant']._wrapped = await get_tenant(scope)
