@@ -36,7 +36,7 @@
     "webpack-merge": "4.2.2"
   },
   "dependencies": {
-    "@sentry/browser": "5.9.1",
+    "@sentry/browser": "5.11.1",
     "bootstrap": "4.3.1",
     "bootstrap-vue": "2.1.0",
     "d3": "5.14.2",
