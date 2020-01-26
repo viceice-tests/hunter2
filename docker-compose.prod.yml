@@ -25,7 +25,7 @@ services:
       - uploads_puzzles:/uploads/puzzles
       - uploads_solutions:/uploads/solutions
   db:
-    image: postgres:9.6.15-alpine
+    image: postgres:9.6.16-alpine
     volumes:
       - db:/var/lib/postgresql/data
   db_exporter:
