@@ -34,7 +34,7 @@ RUN pip install --no-deps -r requirements.txt
 
 
 # Build all the required Lua components
-FROM alpine:3.10 AS lua_build
+FROM alpine:3.11 AS lua_build
 
 COPY hunts/runtimes/lua/luarocks/config.lua /etc/luarocks/config-5.2.lua
 
