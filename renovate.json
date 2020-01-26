@@ -1,5 +1,12 @@
 {
   "extends": [
     "config:base"
+  ],
+  "packageRules": [
+    {
+      "datasources": ["docker"],
+      "packageNames": ["python"],
+      "versionScheme": "pep440"
+    }
   ]
 }
