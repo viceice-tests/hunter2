@@ -155,7 +155,7 @@ class Guesses(LoginRequiredMixin, View):
 
         return TemplateResponse(
             request,
-            'hunts/guesses.html',
+            'hunts/admin/guesses.html',
             {'wide': True},
         )
 
@@ -273,7 +273,7 @@ class Stats(LoginRequiredMixin, View):
 
         return TemplateResponse(
             request,
-            'hunts/stats.html',
+            'hunts/admin/stats.html',
             {'wide': True},
         )
 
