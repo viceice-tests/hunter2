@@ -12,7 +12,7 @@ services:
       - H2_TEST_SEED
       - H2_SENDFILE=sendfile.backends.nginx
       - H2_SENTRY_DSN
-    image: ${IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/app}
+    image: ${APP_IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/app}
     volumes:
       - config:/config
       - uploads_events:/uploads/events
@@ -30,7 +30,7 @@ services:
     image: wrouesnel/postgres_exporter:v0.8.0
   metrics:
     build: ./prometheus
-    image: ${IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/metrics}
+    image: ${METRICS_IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/metrics}
     ports:
       - 127.0.0.1:9090:9090
     volumes:
@@ -49,7 +49,7 @@ services:
     build: ./nginx
     depends_on:
       - app
-    image: ${IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/web}
+    image: ${WEB_IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/web}
     ports:
       - 80
     volumes:

@@ -40,7 +40,7 @@ class TestRunner(ColourRunnerMixin, DiscoverRunner):
         default_seed = random.randrange(sys.maxsize)  # nosec random is fine for testing
         random_seed = os.getenv('H2_TEST_SEED', default_seed)
         random.seed(random_seed)
-        Faker().seed(random_seed)
+        Faker.seed(random_seed)
         print(f'Testing Seed: {random_seed}')
 
         return super().run_tests(test_labels, extra_tests, **kwargs)

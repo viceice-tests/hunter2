@@ -71,6 +71,14 @@ docker-compose run --rm app createsuperuser
 docker-compose run --rm app createevent
 ```
 
+Development Process
+-------------------
+
+To manipulate the Python dependencies you need to run `poetry`. The easiest way to do this is from the latest python build container as follows:
+```shell
+docker-compose -f docker-compose.check.yml run --rm poetry ...
+```
+
 Copyright
 =======
 Hunter 2 is a platform for running online puzzle hunts. Further information can be found at https://www.hunter2.app/ including details of contributors.

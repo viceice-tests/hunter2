@@ -4,7 +4,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 
 module.exports = {
-  context: '/usr/src/app',
+  context: '/opt/hunter2/src',
 
   entry: {
     sentry:             'hunter2/js/sentry.js',
@@ -39,7 +39,7 @@ module.exports = {
   },
 
   output: {
-    path: path.resolve('assets/bundles/'),
+    path: path.resolve('../assets/bundles/'),
     filename: '[name]/[hash].js',
     libraryTarget: 'var',
     library: '[name]',
