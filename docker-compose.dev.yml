@@ -13,10 +13,6 @@ services:
       - redis:/data
   webpack:
     build: webpack
-    entrypoint:
-      - yarn
-      - --cwd
-      - /opt/hunter2/src
     environment:
       - H2_WEBPACK_DEV_HOST
       - H2_WEBPACK_DEV_PORT
