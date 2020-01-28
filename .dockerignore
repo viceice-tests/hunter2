@@ -1,6 +1,7 @@
 # Ignore dotfiles in the top level dir (eg .git)
 .*
 !.coveragerc
+!.yarnrc
 
 # Ignore docker-related files
 Dockerfile

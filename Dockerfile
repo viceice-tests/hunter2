@@ -64,10 +64,11 @@ RUN luarocks-5.2 install lua-imlib2 dev-2
 FROM node:12.14.1-alpine3.11 as webpack_build
 
 WORKDIR /opt/hunter2/src
-COPY . .
 
+COPY .yarnrc package.json yarn.lock /opt/hunter2/src/
 RUN yarn install --frozen-lockfile
-RUN ./node_modules/.bin/webpack --config webpack.prod.js
+COPY . .
+RUN "$(yarn bin webpack)" --config webpack.prod.js
 
 
 # Build the final image
