@@ -44,7 +44,7 @@ wait = "^0.0.3"
 [tool.poetry.dev-dependencies]
 django-silk = "^4.0.0"
 ipython = "^7.11.1"
-ptpython = "^2.0.6"
+ptpython = "^3.0.0"
 
 [build-system]
 requires = ["poetry>=0.12"]
