@@ -1,8 +1,14 @@
 {% extends "teams/base.html" %}
+{% load render_bundle from webpack_loader %}
+
+{% block style %}
+{{ block.super }}
+{% render_bundle 'accounts_profile' 'css' %}
+{% endblock %}
 
 {% block content %}
 <h1>{{ object.username }}</h1>
-<img src="{{ object.picture }}" />
+<img class="profile-picture" src="{{ object.picture }}" />
 {% if participations %}
 <h2>Participated Events</h2>
 <ul>
