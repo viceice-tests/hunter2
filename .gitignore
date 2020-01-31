@@ -17,3 +17,6 @@ webpack-stats.json
 # Ignore interactive python stuff
 .ipython
 .ptpython_history
+
+# Ignore Makefile artifacts
+.artifacts
