@@ -1,7 +1,8 @@
+# syntax=docker/dockerfile:1.1.3-experimental
 # Construct a common base image for creating python wheels and the final image
 FROM python:3.8.1-alpine3.11 AS runtime_base
 
-RUN apk add --no-cache \
+RUN --mount=type=cache,target=/var/cache/apk apk add \
     lua5.2 \
     postgresql-client \
     postgresql-libs \
@@ -16,7 +17,7 @@ WORKDIR /opt/hunter2/src
 # Build image with all the pythong dependancies.
 FROM runtime_base AS python_build
 
-RUN apk add --no-cache \
+RUN --mount=type=cache,target=/var/cache/apk apk add \
     gcc \
     git \
     libffi-dev \
@@ -27,8 +28,6 @@ RUN apk add --no-cache \
 
 # Suppress pip version warning, we're keeping the version from the docker base image
 ARG PIP_DISABLE_PIP_VERSION_CHECK=1
-# Disable caching in pip, this is unecessary complexity in a docker build
-ARG PIP_NO_CACHE_DIR=1
 
 ENV PATH "/root/.poetry/bin:${PATH}"
 ARG poetry_version=1.0.2
@@ -40,7 +39,8 @@ RUN wget "https://raw.githubusercontent.com/python-poetry/poetry/${poetry_versio
 
 ARG dev_flag=" --no-dev"
 COPY poetry.lock pyproject.toml /opt/hunter2/src/
-RUN . /opt/hunter2/venv/bin/activate \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    . /opt/hunter2/venv/bin/activate \
  && poetry install${dev_flag} --no-root
 
 
@@ -49,15 +49,17 @@ FROM alpine:3.11 AS lua_build
 
 COPY hunts/runtimes/lua/luarocks/config.lua /etc/luarocks/config-5.2.lua
 
-RUN apk add --no-cache \
+RUN  --mount=type=cache,target=/var/cache/apk apk add \
     curl \
     gcc \
     imlib2-dev \
     lua5.2-dev \
     luarocks5.2 \
     musl-dev
-RUN luarocks-5.2 install lua-cjson 2.1.0-1
-RUN luarocks-5.2 install lua-imlib2 dev-2
+RUN --mount=type=cache,target=/root/.cache/luarocks \
+    luarocks-5.2 install lua-cjson 2.1.0-1
+RUN --mount=type=cache,target=/root/.cache/luarocks \
+    luarocks-5.2 install lua-imlib2 dev-2
 
 
 # Build the production webpack'ed assets
@@ -66,7 +68,8 @@ FROM node:12.16.0-alpine3.11 as webpack_build
 WORKDIR /opt/hunter2/src
 
 COPY .yarnrc package.json yarn.lock /opt/hunter2/src/
-RUN yarn install --frozen-lockfile
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
+    yarn install --frozen-lockfile
 COPY . .
 RUN "$(yarn bin webpack)" --config webpack.prod.js
 

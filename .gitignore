@@ -18,5 +18,5 @@ webpack-stats.json
 .ipython
 .ptpython_history
 
-# Ignore Makefile artifacts
-.artifacts
+# Ignore tracking files from make
+.build

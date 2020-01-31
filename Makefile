@@ -1,28 +1,37 @@
 .PHONY: help
 help:
-	echo "Ask for help"
+	@echo "Builds and runs a development instance of Hunter 2"
+	@echo "Targets:"
+	@echo "    help                   - Prints this help text"
+	@echo "    run                    - Rebuilds images if Dockerfile or project manifests have changed,"
+	@echo "                             then starts or updates the service"
+	@echo "    .build/<component>.txt - Builds the docker image for <component> and outputs its image ID"
+	@echo "                             to a text file for dependency tracking."
 
 .PHONY: run
-run: .artifacts/app.txt .artifacts/webpack.txt
+run: .build/app.txt .build/webpack.txt
 	docker-compose up -d
 
 BUILD_TAG ?= latest
 
-.artifacts:
-	mkdir -p .artifacts
+export COMPOSE_DOCKER_CLI_BUILD := 1
+export DOCKER_BUILDKIT := 1
 
-.artifacts/app.txt: pyproject.toml poetry.lock Dockerfile | .artifacts
-	DOCKER_BUILDKIT=1 docker build -t registry.gitlab.com/hunter2.app/hunter2/app:$(BUILD_TAG) --progress plain .
-	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/app:$(BUILD_TAG) > .artifacts/app.txt
+.build:
+	mkdir -p .build
 
-.artifacts/metrics.txt: prometheus/* | .artifacts
-	DOCKER_BUILDKIT=1 docker build -t registry.gitlab.com/hunter2.app/hunter2/metrics:$(BUILD_TAG) --progress plain prometheus
-	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/metrics:$(BUILD_TAG) > .artifacts/metrics.txt
+.build/app.txt: pyproject.toml poetry.lock Dockerfile | .build
+	docker-compose build BUILD_TAG=$(BUILD_TAG) app
+	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/app:$(BUILD_TAG) > .build/app.txt
 
-.artifacts/web.txt: .artifacts/app.txt nginx/* | .artifacts
-	DOCKER_BUILDKIT=1 docker build -t registry.gitlab.com/hunter2.app/hunter2/web:$(BUILD_TAG) --progress plain nginx
-	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/web:$(BUILD_TAG) > .artifacts/web.txt
+.build/metrics.txt: prometheus/* | .build
+	docker-compose build BUILD_TAG=$(BUILD_TAG) metrics
+	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/metrics:$(BUILD_TAG) > .build/metrics.txt
 
-.artifacts/webpack.txt: webpack/* | .artifacts
-	DOCKER_BUILDKIT=1 docker build -t registry.gitlab.com/hunter2.app/hunter2/webpack:$(BUILD_TAG) --progress plain webpack
-	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/webpack:$(BUILD_TAG) > .artifacts/webpack.txt
+.build/web.txt: .build/app.txt nginx/* | .build
+	docker-compose build BUILD_TAG=$(BUILD_TAG) web
+	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/web:$(BUILD_TAG) > .build/web.txt
+
+.build/webpack.txt: webpack/* | .build
+	docker-compose build BUILD_TAG=$(BUILD_TAG) webpack
+	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/webpack:$(BUILD_TAG) > .build/webpack.txt
