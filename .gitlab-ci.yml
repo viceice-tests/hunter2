@@ -144,7 +144,7 @@ release:python:
   script:
     - export PYTHON_LATEST_TAG="${PYTHON_IMAGE_TAG%:*}:latest"
     - echo "${CI_JOB_TOKEN}" | docker login -u gitlab-ci-token --password-stdin "${CI_REGISTRY}"
-    - docker load -i app.tar
+    - docker load -i python.tar
     - docker tag "${PYTHON_IMAGE_TAG}" "${PYTHON_LATEST_TAG}"
     - docker push "${PYTHON_IMAGE_TAG}"
     - docker push "${PYTHON_LATEST_TAG}"
