@@ -113,9 +113,8 @@ release:app:
   stage: release
   dependencies:
     - image:app
-  variables:
-    APP_LATEST_TAG: "${APP_IMAGE_TAG%:*}:latest"
   script:
+    - export APP_LATEST_TAG="${APP_IMAGE_TAG%:*}:latest"
     - echo "${CI_JOB_TOKEN}" | docker login -u gitlab-ci-token --password-stdin "${CI_REGISTRY}"
     - docker load -i app.tar
     - docker tag "${APP_IMAGE_TAG}" "${APP_LATEST_TAG}"
@@ -128,9 +127,8 @@ release:metrics:
   stage: release
   dependencies:
     - image:metrics
-  variables:
-    METRICS_LATEST_TAG: "${METRICS_IMAGE_TAG%:*}:latest"
   script:
+    - export METRICS_LATEST_TAG="${METRICS_IMAGE_TAG%:*}:latest"
     - echo "${CI_JOB_TOKEN}" | docker login -u gitlab-ci-token --password-stdin "${CI_REGISTRY}"
     - docker load -i metrics.tar
     - docker tag "${METRICS_IMAGE_TAG}" "${METRICS_LATEST_TAG}"
@@ -143,9 +141,8 @@ release:python:
   stage: release
   dependencies:
     - image:app
-  variables:
-    PYTHON_LATEST_TAG: "${PYTHON_IMAGE_TAG%:*}:latest"
   script:
+    - export PYTHON_LATEST_TAG="${PYTHON_IMAGE_TAG%:*}:latest"
     - echo "${CI_JOB_TOKEN}" | docker login -u gitlab-ci-token --password-stdin "${CI_REGISTRY}"
     - docker load -i app.tar
     - docker tag "${PYTHON_IMAGE_TAG}" "${PYTHON_LATEST_TAG}"
@@ -159,8 +156,8 @@ release:web:
   dependencies:
     - image:web
   variables:
-    WEB_LATEST_TAG: "${WEB_IMAGE_TAG%:*}:latest"
   script:
+    - export WEB_LATEST_TAG="${WEB_IMAGE_TAG%:*}:latest"
     - echo "${CI_JOB_TOKEN}" | docker login -u gitlab-ci-token --password-stdin "${CI_REGISTRY}"
     - docker load -i web.tar
     - docker tag "${WEB_IMAGE_TAG}" "${WEB_LATEST_TAG}"
