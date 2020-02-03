@@ -34,7 +34,7 @@ admin.site.logout = allauth_logout
 
 urlpatterns = [
     path('accounts/', include('allauth.urls')),
-    path('admin/', admin.site.urls),
+    path('admin/crud/', admin.site.urls),
     path('nested_admin/', include('nested_admin.urls')),
 ] \
     + staticfiles_urlpatterns() \

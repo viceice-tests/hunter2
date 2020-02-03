@@ -17,45 +17,46 @@ from django.views.generic import TemplateView
 from . import views
 
 eventadminpatterns = [
-    path('bulk_upload/<int:puzzle_id>', views.BulkUpload.as_view(), name='bulk_upload'),
-    path('episode_list', views.EpisodeList.as_view(), name='episode_list'),
-    path('guesses', views.Guesses.as_view(), name='guesses'),
-    path('guesses/list', views.GuessesList.as_view(), name='guesses_list'),
-    path('stats', views.Stats.as_view(), name='stats'),
-    path('stats_content/', views.StatsContent.as_view(), name='stats_content'),
-    path('stats_content/<int:episode_id>', views.StatsContent.as_view(), name='stats_content'),
+    path('', views.admin.AdminIndex.as_view(), name='admin_index'),
+    path('bulk_upload/<int:puzzle_id>', views.admin.BulkUpload.as_view(), name='bulk_upload'),
+    path('episode_list', views.admin.EpisodeList.as_view(), name='episode_list'),
+    path('guesses', views.admin.Guesses.as_view(), name='guesses'),
+    path('guesses/list', views.admin.GuessesList.as_view(), name='guesses_list'),
+    path('stats', views.admin.Stats.as_view(), name='stats'),
+    path('stats_content/', views.admin.StatsContent.as_view(), name='stats_content'),
+    path('stats_content/<int:episode_id>', views.admin.StatsContent.as_view(), name='stats_content'),
 ]
 
 puzzlepatterns = [
-    path('', views.Puzzle.as_view(), name='puzzle'),
-    path('an', views.Answer.as_view(), name='answer'),
-    path('cb', views.Callback.as_view(), name='callback'),
-    path('media/<path:file_path>', views.PuzzleFile.as_view(), name='puzzle_file'),
-    path('soln', views.SolutionContent.as_view(), name='solution_content'),
-    path('soln/media/<path:file_path>', views.SolutionFile.as_view(), name='solution_file'),
+    path('', views.player.Puzzle.as_view(), name='puzzle'),
+    path('an', views.player.Answer.as_view(), name='answer'),
+    path('cb', views.player.Callback.as_view(), name='callback'),
+    path('media/<path:file_path>', views.player.PuzzleFile.as_view(), name='puzzle_file'),
+    path('soln', views.player.SolutionContent.as_view(), name='solution_content'),
+    path('soln/media/<path:file_path>', views.player.SolutionFile.as_view(), name='solution_file'),
 ]
 
 episodepatterns = [
-    path('', views.EpisodeIndex.as_view(), name='episode_index'),
-    path('content', views.EpisodeContent.as_view(), name='episode_content'),
+    path('', views.player.EpisodeIndex.as_view(), name='episode_index'),
+    path('content', views.player.EpisodeContent.as_view(), name='episode_content'),
     path('pz/<int:puzzle_number>/', include(puzzlepatterns)),
 ]
 
 eventpatterns = [
-    path('', views.EventIndex.as_view(), name='event'),
-    path('about', views.AboutView.as_view(), name='about'),
-    path('rules', views.RulesView.as_view(), name='rules'),
-    path('help', views.HelpView.as_view(), name='help'),
-    path('examples', views.ExamplesView.as_view(), name='examples'),
+    path('', views.player.EventIndex.as_view(), name='event'),
+    path('about', views.player.AboutView.as_view(), name='about'),
+    path('rules', views.player.RulesView.as_view(), name='rules'),
+    path('help', views.player.HelpView.as_view(), name='help'),
+    path('examples', views.player.ExamplesView.as_view(), name='examples'),
     path('ep/<int:episode_number>/', include(episodepatterns)),
-    path('puzzle/<puzzle_url_id>/', views.AbsolutePuzzleView.as_view(), name='puzzle_permalink'),
-    path('puzzle/<puzzle_url_id>/<path:path>', views.AbsolutePuzzleView.as_view()),
+    path('puzzle/<puzzle_url_id>/', views.player.AbsolutePuzzleView.as_view(), name='puzzle_permalink'),
+    path('puzzle/<puzzle_url_id>/<path:path>', views.player.AbsolutePuzzleView.as_view()),
 ]
 
 urlpatterns = [
     path(
         r'',
-        views.Index.as_view(),
+        views.player.Index.as_view(),
         name='index'
     ),
     path(
@@ -69,6 +70,6 @@ urlpatterns = [
         name='help'
     ),
     path('hunt/', include(eventpatterns)),
-    path('huntadmin/', include(eventadminpatterns)),
-    path('puzzle_info', views.PuzzleInfo.as_view(), name='puzzle_info'),
+    path('admin/', include(eventadminpatterns)),
+    path('puzzle_info', views.player.PuzzleInfo.as_view(), name='puzzle_info'),
 ]

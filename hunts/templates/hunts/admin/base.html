@@ -1,0 +1,16 @@
+{% extends "teams/base.html" %}
+
+{% block topbar_title %}
+<a class="navbar-brand" href="{% url 'admin_index' %}">{{ event.name }} : <b>Admin</b></a>
+{% endblock %}
+
+{% block topbar_admin %}
+<li class="nav-item"><a class="btn btn-secondary" href="{% url 'index' %}">Player Site</a></li>
+{% endblock %}
+
+{% block topbar_left %}
+<li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}">Create/Edit</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'guesses' %}">Guesses</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'stats' %}">Stats</a></li>
+{% endblock %}
+
