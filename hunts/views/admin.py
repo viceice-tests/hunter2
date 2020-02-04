@@ -231,8 +231,8 @@ class StatsContent(LoginRequiredMixin, View):
         episodes = models.Episode.objects.filter(event=request.tenant).order_by('start_date')
         if episode_id is not None:
             episodes = episodes.filter(pk=episode_id)
-            if not episodes.exists():
-                raise Http404
+        if not episodes.exists():
+            raise Http404
 
         puzzles = models.Puzzle.objects.filter(episode__in=episodes)
 

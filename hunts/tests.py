@@ -1017,6 +1017,25 @@ class AdminContentTests(EventTestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class StatsTests(EventTestCase):
+    def setUp(self):
+        self.admin_user = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.ADMIN)
+
+    def test_no_episodes(self):
+        stats_url = reverse('stats_content')
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(stats_url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_filter_invalid_episode(self):
+        episode = EpisodeFactory(event=self.tenant)
+        # The next sequantial ID ought to not exist
+        stats_url = reverse('stats_content', kwargs={'episode_id': episode.id + 1})
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(stats_url)
+        self.assertEqual(response.status_code, 404)
+
+
 class ProgressionTests(EventTestCase):
     def setUp(self):
         self.episode = EpisodeFactory()
