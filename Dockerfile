@@ -61,7 +61,7 @@ RUN luarocks-5.2 install lua-imlib2 dev-2
 
 
 # Build the production webpack'ed assets
-FROM node:12.14.1-alpine3.11 as webpack_build
+FROM node:12.15.0-alpine3.11 as webpack_build
 
 WORKDIR /opt/hunter2/src
 
