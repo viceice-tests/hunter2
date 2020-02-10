@@ -768,26 +768,26 @@ class ClueDisplayTests(EventTestCase):
 
         with freezegun.freeze_time() as frozen_datetime:
             self.data.tp_data.start_time = timezone.now()
-            self.assertFalse(hint.unlocked_by(self.team, self.data), "Hint not unlocked by team at start")
+            self.assertFalse(hint.unlocked_by(self.team, self.data.tp_data), "Hint not unlocked by team at start")
 
             frozen_datetime.tick(hint.time / 2)
-            self.assertFalse(hint.unlocked_by(self.team, self.data), "Hint not unlocked by less than hint time duration.")
+            self.assertFalse(hint.unlocked_by(self.team, self.data.tp_data), "Hint not unlocked by less than hint time duration.")
 
             frozen_datetime.tick(hint.time)
-            self.assertTrue(hint.unlocked_by(self.team, self.data), "Hint unlocked by team after required time elapsed.")
+            self.assertTrue(hint.unlocked_by(self.team, self.data.tp_data), "Hint unlocked by team after required time elapsed.")
 
     def test_hint_unlocks_at(self):
         hint = HintFactory(puzzle=self.puzzle, time=datetime.timedelta(seconds=42))
 
         with freezegun.freeze_time() as frozen_datetime:
             now = timezone.now()
-            self.assertEqual(hint.unlocks_at(self.team, self.data), None)
+            self.assertEqual(hint.unlocks_at(self.team, self.data.tp_data), None)
             self.data.tp_data.start_time = now
             target = now + datetime.timedelta(seconds=42)
 
-            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+            self.assertEqual(hint.unlocks_at(self.team, self.data.tp_data), target)
             frozen_datetime.tick(datetime.timedelta(seconds=12))
-            self.assertEqual(hint.unlocks_at(self.team, self.data), target)
+            self.assertEqual(hint.unlocks_at(self.team, self.data.tp_data), target)
 
         unlock = UnlockFactory(puzzle=self.puzzle)
         hint.start_after = unlock
@@ -976,8 +976,9 @@ class AdminContentTests(EventTestCase):
     def setUp(self):
         self.episode = EpisodeFactory(event=self.tenant)
         self.admin_user = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.ADMIN)
-        puzzle = PuzzleFactory()
-        self.guesses = GuessFactory.create_batch(5, for_puzzle=puzzle)
+        self.admin_team = self.admin_user.team_at(self.tenant)
+        self.puzzle = PuzzleFactory()
+        self.guesses = GuessFactory.create_batch(5, for_puzzle=self.puzzle)
         self.guesses_url = reverse('guesses_list')
 
     def test_can_view_guesses(self):
@@ -1015,6 +1016,56 @@ class AdminContentTests(EventTestCase):
         self.client.force_login(self.admin_user.user)
         response = self.client.get(stats_url)
         self.assertEqual(response.status_code, 200)
+
+    def test_non_admin_cannot_view_team_admin(self):
+        player = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.PLAYER)
+        self.client.force_login(player.user)
+        response = self.client.get(reverse('team_admin'))
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(reverse('team_admin_detail', kwargs={'team_id': self.admin_team.id}))
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(reverse('team_admin_detail_content', kwargs={'team_id': self.admin_team.id}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_can_view_team_admin(self):
+        self.client.force_login(self.admin_user.user)
+        url = reverse('team_admin')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.admin_team.get_verbose_name())
+
+    def test_can_view_team_admin_detail(self):
+        self.client.force_login(self.admin_user.user)
+        url = reverse('team_admin_detail', kwargs={'team_id': self.admin_team.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.admin_team.get_verbose_name())
+
+    def test_team_admin_detail_content(self):
+        team = self.guesses[0].by_team
+        puzzle2 = PuzzleFactory()
+        tp_data1 = TeamPuzzleDataFactory(team=team, puzzle=self.puzzle)
+        # FIXME: the above does not give tp_data1 a start_time :S
+        tp_data1.start_time = timezone.now()
+        tp_data1.save()
+        TeamPuzzleDataFactory(team=team, puzzle=puzzle2)
+        GuessFactory(by=team.members.all()[0], for_puzzle=puzzle2, correct=True)
+
+        self.client.force_login(self.admin_user.user)
+        url = reverse('team_admin_detail_content', kwargs={'team_id': team.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        response_json = response.json()
+
+        self.assertTrue('puzzles' in response_json)
+        self.assertEqual(len(response_json['puzzles']), 1)
+        self.assertEqual(response_json['puzzles'][0]['id'], self.puzzle.id)
+        self.assertEqual(len(response_json['puzzles'][0]['guesses']), 1)
+
+        self.assertTrue('solved_puzzles' in response_json)
+        self.assertEqual(len(response_json['solved_puzzles']), 1)
+        self.assertEqual(response_json['solved_puzzles'][0]['id'], puzzle2.id)
+        self.assertEqual(response_json['puzzles'][0]['num_guesses'], 1)
 
 
 class StatsTests(EventTestCase):
@@ -1721,7 +1772,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertTrue(connected)
 
         # account for delays getting started
-        remaining = hint.delay_for_team(team, data).total_seconds()
+        remaining = hint.delay_for_team(team, data.tp_data).total_seconds()
         if remaining < 0:
             raise Exception('Websocket hint scheduling test took too long to start up')
 
@@ -1730,7 +1781,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
 
         # advance time by all the remaining time
         time.sleep(remaining / 2)
-        self.assertTrue(hint.unlocked_by(team, data))
+        self.assertTrue(hint.unlocked_by(team, data.tp_data))
 
         output = self.receive_json(comm, 'Websocket did not send unlocked hint')
 
@@ -1761,13 +1812,13 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         guess = GuessFactory(for_puzzle=self.pz, by=user, guess=unlockanswer.guess)
         _ = self.receive_json(comm, 'Websocket did not send unlock')
         _ = self.receive_json(comm, 'Websocket did not send guess')
-        remaining = hint.delay_for_team(team, data).total_seconds()
-        self.assertFalse(hint.unlocked_by(team, data))
+        remaining = hint.delay_for_team(team, data.tp_data).total_seconds()
+        self.assertFalse(hint.unlocked_by(team, data.tp_data))
         self.assertTrue(self.run_async(comm.receive_nothing)(remaining / 2))
 
         # advance time by all the remaining time
         time.sleep(remaining / 2)
-        self.assertTrue(hint.unlocked_by(team, data))
+        self.assertTrue(hint.unlocked_by(team, data.tp_data))
 
         output = self.receive_json(comm, 'Websocket did not send unlocked hint')
 
@@ -1802,10 +1853,10 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         unlockanswer.guess = guess.guess
         unlockanswer.save()
         _ = self.receive_json(comm, 'Websocket did not send unlock')
-        self.assertFalse(hint.unlocked_by(team, data))
+        self.assertFalse(hint.unlocked_by(team, data.tp_data))
         self.assertTrue(self.run_async(comm.receive_nothing)(delay / 2))
         time.sleep(delay / 2)
-        self.assertTrue(hint.unlocked_by(team, data))
+        self.assertTrue(hint.unlocked_by(team, data.tp_data))
         output = self.receive_json(comm, 'Websocket did not send unlocked hint')
 
         self.assertEqual(output['type'], 'new_hint')
@@ -1823,7 +1874,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
 
             hint = HintFactory(text='hint_text', puzzle=self.pz, time=datetime.timedelta(seconds=1))
             frozen_datetime.tick(delta=datetime.timedelta(seconds=2))
-            self.assertTrue(hint.unlocked_by(team, data))
+            self.assertTrue(hint.unlocked_by(team, data.tp_data))
 
             comm = self.get_communicator(websocket_app, self.url, {'user': user.user})
             connected, subprotocol = self.run_async(comm.connect)()

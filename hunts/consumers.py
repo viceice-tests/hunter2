@@ -219,7 +219,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
             pass
 
         data = models.PuzzleData(self.puzzle, self.team)
-        delay = hint.delay_for_team(self.team, data)
+        delay = hint.delay_for_team(self.team, data.tp_data)
         if delay is None:
             return
         delay = delay.total_seconds()
@@ -425,7 +425,7 @@ class PuzzleEventWebsocket(HuntWebsocket):
     def send_old_hints(self, start='all'):
         hints = models.Hint.objects.filter(puzzle=self.puzzle).order_by('time')
         data = models.PuzzleData(self.puzzle, self.team)
-        hints = [h for h in hints if h.unlocked_by(self.team, data)]
+        hints = [h for h in hints if h.unlocked_by(self.team, data.tp_data)]
         if start != 'all':
             start = datetime.fromtimestamp(int(start) // 1000, timezone.utc)
             # The following finds the hints which were *not* unlocked at the start time given.
@@ -557,11 +557,11 @@ class PuzzleEventWebsocket(HuntWebsocket):
         for team in Team.objects.all():
             data = models.PuzzleData(hint.puzzle, team)
             layer = get_channel_layer()
-            if hint.unlocked_by(team, data):
+            if hint.unlocked_by(team, data.tp_data):
                 async_to_sync(layer.group_send)(cls._puzzle_groupname(hint.puzzle, team), {'type': 'cancel_scheduled_hint', 'hint_uid': str(hint.id)})
                 cls.send_new_hint_to_team(team, hint)
             else:
-                if old and old.unlocked_by(team, data):
+                if old and old.unlocked_by(team, data.tp_data):
                     cls.send_delete_hint(team, hint)
                 async_to_sync(layer.group_send)(
                     cls._puzzle_groupname(hint.puzzle, team),
@@ -625,8 +625,8 @@ class PuzzleEventWebsocket(HuntWebsocket):
         hint = instance
 
         for team in Team.objects.all():
-            data = models.PuzzleData(hint.puzzle, team)
-            if hint.unlocked_by(team, data):
+            tp_data = models.TeamPuzzleData.objects.get(puzzle=hint.puzzle, team=team)
+            if hint.unlocked_by(team, tp_data):
                 cls.send_delete_hint(team, hint)
 
 

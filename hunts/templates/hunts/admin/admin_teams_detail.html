@@ -1,0 +1,31 @@
+{% extends "hunts/admin/base.html" %}
+{% load static %}
+{% load render_bundle from webpack_loader %}
+
+{% block script %}
+{{ block.super }}
+{% render_bundle 'hunts_team_admin' 'js' attrs='defer' %}
+{% endblock %}
+
+{% block title %}
+{{ team.get_verbose_name }} - {{ block.super }}
+{% endblock %}
+
+{% block header %}
+<header>
+	<h1>{{ team.get_verbose_name }}</h1>
+</header>
+{% endblock %}
+
+{% block main %}
+<main class="flex-shrink-0 container-fluid pt-3">
+	<h3>Members</h3>
+	{% for member in members.all %}
+	{{ member.username }}
+	{% if member.seat %} @ {{ member.seat }}{% endif %}
+	{% endfor %}
+	<div id="team_puzzles_admin_widget" href="{% url 'team_admin_detail_content' team_id=team.id %}"></div>
+</main>
+{% endblock %}
+
+

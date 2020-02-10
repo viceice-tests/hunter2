@@ -1,0 +1,24 @@
+{% extends "hunts/admin/base.html" %}
+{% load static %}
+
+{% block title %}
+Teams - {{ block.super }}
+{% endblock %}
+
+{% block header %}
+<header class="flex-shrink-0 pt-3">
+	<h1>Teams</h1>
+</header>
+{% endblock %}
+
+{% block main %}
+<main class="flex-shrink-0 container-fluid pt-3">
+	<ul>
+		{% for team in teams %}
+		<li><h3><a href="{% url 'team_admin_detail' team_id=team.id %}">{{ team.get_verbose_name }}</a></h3>
+			<ul class="list-oneline">{% for member in team.members.all %}<li>{{ member.username }}</li>{% endfor %}</ul>
+		{% endfor %}
+	</ul>
+</main>
+{% endblock %}
+

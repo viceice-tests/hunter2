@@ -443,23 +443,37 @@ class Hint(Clue):
     def __str__(self):
         return f'Hint unlocked after {self.time}'
 
-    def unlocked_by(self, team, data):
-        unlocks_at = self.unlocks_at(team, data)
+    def unlocked_by(self, team, tp_data, possible_guesses=None):
+        """Returns whether the hint is unlocked by the given team.
+
+        The TeamPuzzleData associated with the team and puzzle must be supplied.
+        An iterable of possible guesses may be supplied in order to speed up any
+            calls to `Unlock.unlocked_by`.
+        """
+        unlocks_at = self.unlocks_at(team, tp_data, possible_guesses)
         return unlocks_at is not None and unlocks_at < timezone.now()
 
-    def delay_for_team(self, team, data):
-        unlocks_at = self.unlocks_at(team, data)
+    def delay_for_team(self, team, tp_data, possible_guesses=None):
+        """Returns how long until the hint unlocks for the given team.
+
+        Parameters as for `unlocked_by`.
+        """
+        unlocks_at = self.unlocks_at(team, tp_data, possible_guesses)
         return None if unlocks_at is None else unlocks_at - timezone.now()
 
-    def unlocks_at(self, team, data):
+    def unlocks_at(self, team, tp_data, possible_guesses=None):
+        """Returns when the hint unlocks for the given team.
+
+        Parameters as for `unlocked_by`.
+        """
         if self.start_after:
-            guesses = self.start_after.unlocked_by(team)
+            guesses = self.start_after.unlocked_by(team, possible_guesses)
             if guesses:
                 start_time = guesses[0].given
             else:
                 return None
-        elif data.tp_data.start_time:
-            start_time = data.tp_data.start_time
+        elif tp_data.start_time:
+            start_time = tp_data.start_time
         else:
             return None
 
@@ -467,12 +481,14 @@ class Hint(Clue):
 
 
 class Unlock(Clue):
-    def unlocked_by(self, team):
-        guesses = Guess.objects.filter(
-            by__in=team.members.all()
-        ).filter(
-            for_puzzle=self.puzzle
-        ).order_by('given')
+    def unlocked_by(self, team, guesses=None):
+        """Return a list of guesses (from the supplied iterable, if given) by the given team, which unlock this Unlock"""
+        if guesses is None:
+            guesses = list(Guess.objects.filter(
+                by__in=team.members.all()
+            ).filter(
+                for_puzzle=self.puzzle
+            ).order_by('given'))
 
         unlockanswers = self.unlockanswer_set.all()
         return [g for g in guesses if any([u.validate_guess(g) for u in unlockanswers])]

@@ -16,6 +16,7 @@ module.exports = {
     hunts_about:        'hunts/scss/about.scss',
     hunts_stats:        'hunts/js/stats.js',
     hunts_guesses:      'hunts/js/guesses.js',
+    hunts_team_admin:   'hunts/js/team-admin-entrypoint.js',
   },
 
   module: {
