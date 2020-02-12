@@ -1,4 +1,4 @@
-FROM node:12.15.0-alpine3.11
+FROM node:12.16.0-alpine3.11
 
 COPY package.json yarn.lock /
 RUN yarn install --frozen-lockfile
