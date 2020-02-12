@@ -23,6 +23,7 @@ from django.core.files import File
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Count, OuterRef, Prefetch, Subquery
 from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.urls import reverse
@@ -377,7 +378,7 @@ class TeamAdminDetail(LoginRequiredMixin, View):
         if not admin:
             raise PermissionDenied
 
-        team = Team.objects.get(id=team_id)
+        team = get_object_or_404(Team, pk=team_id)
         members = annotate_userprofile_queryset_with_seat(team.members, event)
 
         context = {
@@ -400,7 +401,7 @@ class TeamAdminDetailContent(LoginRequiredMixin, View):
         if not admin:
             raise PermissionDenied
 
-        team = Team.objects.filter(id=team_id).get()
+        team = get_object_or_404(Team, pk=team_id)
 
         # All the data is keyed off puzzles. Only return puzzles which
         # are unsolved but have a guess.

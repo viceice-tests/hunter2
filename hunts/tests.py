@@ -1027,6 +1027,13 @@ class AdminContentTests(EventTestCase):
         response = self.client.get(reverse('team_admin_detail_content', kwargs={'team_id': self.admin_team.id}))
         self.assertEqual(response.status_code, 403)
 
+    def test_team_admin_detail_not_found(self):
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(reverse('team_admin_detail', kwargs={'team_id': 0}))
+        self.assertEqual(response.status_code, 404)
+        response = self.client.get(reverse('team_admin_detail_content', kwargs={'team_id': 0}))
+        self.assertEqual(response.status_code, 404)
+
     def test_can_view_team_admin(self):
         self.client.force_login(self.admin_user.user)
         url = reverse('team_admin')
