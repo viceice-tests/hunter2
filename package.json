@@ -38,7 +38,7 @@
   "dependencies": {
     "@sentry/browser": "5.12.1",
     "bootstrap": "4.3.1",
-    "bootstrap-vue": "2.1.0",
+    "bootstrap-vue": "2.4.1",
     "d3": "5.14.2",
     "html-entities": "1.2.1",
     "jquery": "3.4.1",
