@@ -4,9 +4,15 @@ Launching an Environment
 Development Environment
 -----------------------
 
-Hunter 2 requires docker engine 17.05 or greater to build. Check docker engine version using the following command:
+Hunter 2 requires the following minimum versions to build:
+| -------------- | ------ |
+| docker-engine  | 18.09  |
+| docker-compose | 1.25.1 |
+
+We need to export some variables to enable the build features we are using:
 ```shell
-docker version
+export COMPOSE_DOCKER_CLI_BUILD=1
+export DOCKER_BUILDKIT=1
 ```
 
 Link the development compose file:
@@ -29,11 +35,13 @@ echo 127.0.0.1 hunter2.local www.hunter2.local dev.hunter2.local >> /etc/hosts
 Launch the containers and configure the database tables:
 ```shell
 docker-compose up -d
-docker-compose run --rm app migrate_schemas
 ```
 
-To create the base objects run the following:
+There is also a `Makefile` with some targets for developer convenience. See `make help` for details.
+
+To create the database tables and base objects run the following:
 ```shell
+docker-compose run --rm app migrate_schemas
 docker-compose run --rm app setupsite
 docker-compose run --rm app createsuperuser
 docker-compose run --rm app createevent

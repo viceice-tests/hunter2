@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.1.3-experimental
 ARG BUILD_TAG=latest
 ARG IMAGE_TAG=registry.gitlab.com/hunter2.app/hunter2/app:${BUILD_TAG}
 FROM ${IMAGE_TAG} AS app
@@ -7,7 +8,7 @@ RUN /opt/hunter2/venv/bin/python manage.py collectstatic
 
 FROM alpine:3.11
 
-RUN apk add --no-cache \
+RUN --mount=type=cache,target=/var/cache/apk apk add \
     nginx \
     nginx-mod-http-lua
 
