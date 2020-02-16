@@ -21,17 +21,17 @@ export DOCKER_BUILDKIT := 1
 	mkdir -p .build
 
 .build/app.txt: pyproject.toml poetry.lock Dockerfile | .build
-	docker-compose build BUILD_TAG=$(BUILD_TAG) app
+	docker-compose build --build-arg BUILD_TAG=$(BUILD_TAG) app
 	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/app:$(BUILD_TAG) > .build/app.txt
 
 .build/metrics.txt: prometheus/* | .build
-	docker-compose build BUILD_TAG=$(BUILD_TAG) metrics
+	docker-compose build --build-arg BUILD_TAG=$(BUILD_TAG) metrics
 	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/metrics:$(BUILD_TAG) > .build/metrics.txt
 
 .build/web.txt: .build/app.txt nginx/* | .build
-	docker-compose build BUILD_TAG=$(BUILD_TAG) web
+	docker-compose build --build-arg BUILD_TAG=$(BUILD_TAG) web
 	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/web:$(BUILD_TAG) > .build/web.txt
 
 .build/webpack.txt: webpack/* | .build
-	docker-compose build BUILD_TAG=$(BUILD_TAG) webpack
+	docker-compose build --build-arg BUILD_TAG=$(BUILD_TAG) webpack
 	docker image inspect -f '{{.Id}}' registry.gitlab.com/hunter2.app/hunter2/webpack:$(BUILD_TAG) > .build/webpack.txt
