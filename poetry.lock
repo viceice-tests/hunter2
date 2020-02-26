@@ -523,7 +523,7 @@ description = "Transparently use webpack with django"
 name = "django-webpack-loader"
 optional = false
 python-versions = "*"
-version = "0.6.0"
+version = "0.7.0"
 
 [[package]]
 category = "main"
@@ -1175,7 +1175,7 @@ test = ["zope.event"]
 testing = ["coverage", "nose", "zope.event"]
 
 [metadata]
-content-hash = "88085c31900c970f3edbed942e0d96602a2e37797a797832d00736a79980ce7a"
+content-hash = "e85cb5778e779ff202fa2a70c82077497e6d9d75987e1b980a4d40fb6d4a55a9"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1421,8 +1421,8 @@ django-tenants = [
     {file = "django-tenants-3.0.0.tar.gz", hash = "sha256:c4d7c825531609329d4869d830617bacea54e0f648a5ce4295add290a6f0c009"},
 ]
 django-webpack-loader = [
-    {file = "django-webpack-loader-0.6.0.tar.gz", hash = "sha256:60bab6b9a037a5346fad12d2a70a6bc046afb33154cf75ed640b93d3ebd5f520"},
-    {file = "django_webpack_loader-0.6.0-py2.py3-none-any.whl", hash = "sha256:970b968c2a8975fb7eff56a3bab5d0d90d396740852d1e0c50c5cfe2b824199a"},
+    {file = "django-webpack-loader-0.7.0.tar.gz", hash = "sha256:7a3c88201aa54481f9399465615cbe7b9aece8081496a6d0287b7cb8e232f447"},
+    {file = "django_webpack_loader-0.7.0-py2.py3-none-any.whl", hash = "sha256:d28a276ed3d89e97a313b74967e373693f8b86afe629f4c91eea91c5b4f2ec20"},
 ]
 factory-boy = [
     {file = "factory_boy-2.12.0-py2.py3-none-any.whl", hash = "sha256:728df59b372c9588b83153facf26d3d28947fc750e8e3c95cefa9bed0e6394ee"},
