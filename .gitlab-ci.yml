@@ -119,6 +119,7 @@ test:app:
     paths:
       - coverage/
       - "*.log"
+    when: always
   coverage: /\d+\%\s*$/
 
 release:app:
