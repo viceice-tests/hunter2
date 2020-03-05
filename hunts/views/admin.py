@@ -471,7 +471,7 @@ class TeamAdminDetailContent(LoginRequiredMixin, View):
                     'time': h.unlocks_at(team, tp_datas[puzzle.id])
                 }
                 for h in puzzle.hint_set.all()
-                if not h.unlocked_by(team, tp_datas[puzzle.id], puzzle.guess_set.all())
+                if h.unlocks_at(team, tp_datas[puzzle.id]) and not h.unlocked_by(team, tp_datas[puzzle.id], puzzle.guess_set.all())
             ]
             for puzzle in puzzles
         }

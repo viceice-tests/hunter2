@@ -1074,6 +1074,60 @@ class AdminContentTests(EventTestCase):
         self.assertEqual(response_json['solved_puzzles'][0]['id'], puzzle2.id)
         self.assertEqual(response_json['puzzles'][0]['num_guesses'], 1)
 
+    def test_team_admin_detail_content_hints(self):
+        team = self.guesses[0].by_team
+        member = self.guesses[0].by
+        self.client.force_login(self.admin_user.user)
+        url = reverse('team_admin_detail_content', kwargs={'team_id': team.id})
+
+        with freezegun.freeze_time() as frozen_datetime:
+            tp_data = TeamPuzzleDataFactory(team=team, puzzle=self.puzzle)
+            tp_data.start_time = timezone.now()
+            tp_data.save()
+            hint = HintFactory(puzzle=self.puzzle, time=datetime.timedelta(minutes=10), start_after=None)
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            response_json = response.json()
+
+            # Initially the hint is not unlocked, but scheduled
+            self.assertEqual(len(response_json['puzzles'][0]['clues_visible']), 0)
+            self.assertEqual(len(response_json['puzzles'][0]['hints_scheduled']), 1)
+            self.assertEqual(response_json['puzzles'][0]['hints_scheduled'][0]['text'], hint.text)
+
+            # Advance time and retry; now the hint should show as unlocked (and not scheduled).
+            frozen_datetime.tick(datetime.timedelta(minutes=11))
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            response_json = response.json()
+
+            self.assertEqual(len(response_json['puzzles'][0]['clues_visible']), 1)
+            self.assertEqual(len(response_json['puzzles'][0]['hints_scheduled']), 0)
+            self.assertEqual(response_json['puzzles'][0]['clues_visible'][0]['text'], hint.text)
+
+            # Make the hint dependent on an unlock that is not unlocked. It is now neither visible nor scheduled.
+            unlock = UnlockFactory(puzzle=self.puzzle)
+            hint.start_after = unlock
+            hint.save()
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            response_json = response.json()
+
+            self.assertEqual(len(response_json['puzzles'][0]['clues_visible']), 0)
+            self.assertEqual(len(response_json['puzzles'][0]['hints_scheduled']), 0)
+
+            GuessFactory(for_puzzle=self.puzzle, by=member, guess=unlock.unlockanswer_set.all()[0].guess)
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            response_json = response.json()
+
+            self.assertEqual(len(response_json['puzzles'][0]['clues_visible']), 1)
+            self.assertEqual(len(response_json['puzzles'][0]['hints_scheduled']), 1)
+            self.assertEqual(response_json['puzzles'][0]['hints_scheduled'][0]['text'], hint.text)
+
 
 class StatsTests(EventTestCase):
     def setUp(self):
