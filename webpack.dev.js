@@ -9,6 +9,7 @@ module.exports = merge(common, {
   devtool: 'source-map',
 
   output: {
+    devtoolNamespace: 'hunter2',
     publicPath: `http://${DEV_SERVER_HOST}:${DEV_SERVER_PORT}/assets/bundles/`,
   },
 
