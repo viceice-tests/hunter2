@@ -18,16 +18,21 @@ from events.models import Event
 from teams.models import Team
 
 
-def get_active_schema_event():
+@rules.predicate
+def is_admin_for_schema_event(user, obj):
     connection = connections[get_tenant_database_alias()]
     TenantModel = get_tenant_model()
-    return TenantModel.objects.get(schema_name=connection.schema_name)
+    try:
+        event = TenantModel.objects.get(schema_name=connection.schema_name)
+    except TenantModel.DoesNotExist:
+        return False
+    return is_admin_for_event.test(user, event)
 
 
 @rules.predicate
 def is_admin_for_event(user, event):
     if event is None:
-        event = get_active_schema_event()
+        return is_admin_for_schema_event.test(user, event)
     try:
         return user.profile.team_at(event).is_admin
     except (Team.DoesNotExist, AttributeError):
@@ -59,9 +64,9 @@ rules.add_perm('events.delete_eventfile', is_admin_for_event_child)
 rules.add_perm('events.view_eventfile', is_admin_for_event_child)
 
 
-rules.add_perm('teams', is_admin_for_event)
+rules.add_perm('teams', is_admin_for_schema_event)
 
-rules.add_perm('teams.add_team', is_admin_for_event_child)
-rules.add_perm('teams.change_team', is_admin_for_event_child)
-rules.add_perm('teams.delete_team', is_admin_for_event_child)
-rules.add_perm('teams.view_team', is_admin_for_event_child)
+rules.add_perm('teams.add_team', is_admin_for_schema_event)
+rules.add_perm('teams.change_team', is_admin_for_schema_event)
+rules.add_perm('teams.delete_team', is_admin_for_schema_event)
+rules.add_perm('teams.view_team', is_admin_for_schema_event)

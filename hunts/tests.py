@@ -23,7 +23,7 @@ from django.utils import timezone
 from parameterized import parameterized
 from channels.testing import WebsocketCommunicator
 
-from accounts.factories import UserFactory, UserProfileFactory
+from accounts.factories import UserProfileFactory
 from events.factories import EventFileFactory
 from events.test import EventTestCase, AsyncEventTestCase
 from hunter2.routing import application as websocket_app
@@ -50,7 +50,6 @@ from .factories import (
 from .models import PuzzleData, TeamPuzzleData
 from .utils import encode_uuid
 from .runtimes import Runtime
-from . import rules
 
 
 class FactoryTests(EventTestCase):
@@ -292,6 +291,56 @@ class PuzzleStartTimeTests(EventTestCase):
 
         second_time = TeamPuzzleData.objects.get().start_time
         self.assertEqual(first_time, second_time, msg='Start time does not alter on subsequent access')
+
+
+class AdminCreatePageLoadTests(EventTestCase):
+    def setUp(self):
+        self.user = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.ADMIN, user__is_staff=True)
+        self.client.force_login(self.user.user)
+
+    def test_load_announcement_add_page(self):
+        response = self.client.get(reverse('admin:hunts_announcement_add'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_load_answer_add_page(self):
+        response = self.client.get(reverse('admin:hunts_answer_add'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_load_episode_add_page(self):
+        response = self.client.get(reverse('admin:hunts_episode_add'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_load_guess_add_page(self):
+        response = self.client.get(reverse('admin:hunts_unlock_add'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_load_headstart_add_page(self):
+        response = self.client.get(reverse('admin:hunts_headstart_add'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_load_puzzle_add_page(self):
+        response = self.client.get(reverse('admin:hunts_puzzle_add'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_load_teamdata_add_page(self):
+        response = self.client.get(reverse('admin:hunts_teamdata_add'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_load_teampuzzledata_add_page(self):
+        response = self.client.get(reverse('admin:hunts_teampuzzledata_add'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_load_unlock_add_page(self):
+        response = self.client.get(reverse('admin:hunts_unlock_add'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_load_userdata_add_page(self):
+        response = self.client.get(reverse('admin:hunts_userdata_add'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_load_userpuzzledata_add_page(self):
+        response = self.client.get(reverse('admin:hunts_userpuzzledata_add'))
+        self.assertEqual(response.status_code, 200)
 
 
 class AdminPuzzleAccessTests(EventTestCase):
@@ -2058,62 +2107,3 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertEqual(output['content']['announcement_id'], id)
 
         self.run_async(comm.disconnect)()
-
-
-class RulesTests(EventTestCase):
-    def test_is_admin_for_episode_child_true(self):
-        profile = TeamMemberFactory(team__role=TeamRole.ADMIN)
-        child = PuzzleFactory()
-        self.assertTrue(rules.is_admin_for_episode_child.test(profile.user, None))
-        self.assertTrue(rules.is_admin_for_episode_child.test(profile.user, child.episode))
-        self.assertTrue(rules.is_admin_for_episode_child.test(profile.user, child))
-
-    def test_is_admin_for_episode_child_false(self):
-        profile = TeamMemberFactory(team__role=TeamRole.PLAYER)
-        child = PuzzleFactory()
-        self.assertFalse(rules.is_admin_for_episode_child.test(profile.user, None))
-        self.assertFalse(rules.is_admin_for_episode_child.test(profile.user, child.episode))
-        self.assertFalse(rules.is_admin_for_episode_child.test(profile.user, child))
-
-    def test_is_admin_for_episode_child_type_error(self):
-        user = UserFactory()
-        with self.assertRaises(TypeError):
-            rules.is_admin_for_episode_child(user, "A string is not an episode child")
-
-    def test_is_admin_for_puzzle_child_true(self):
-        profile = TeamMemberFactory(team__role=TeamRole.ADMIN)
-        child = PuzzleFileFactory()
-        self.assertTrue(rules.is_admin_for_puzzle_child.test(profile.user, None))
-        self.assertTrue(rules.is_admin_for_puzzle_child.test(profile.user, child.puzzle))
-        self.assertTrue(rules.is_admin_for_puzzle_child.test(profile.user, child))
-
-    def test_is_admin_for_puzzle_child_false(self):
-        profile = TeamMemberFactory(team__role=TeamRole.PLAYER)
-        child = PuzzleFileFactory()
-        self.assertFalse(rules.is_admin_for_puzzle_child.test(profile.user, None))
-        self.assertFalse(rules.is_admin_for_puzzle_child.test(profile.user, child.puzzle))
-        self.assertFalse(rules.is_admin_for_puzzle_child.test(profile.user, child))
-
-    def test_is_admin_for_puzzle_child_type_error(self):
-        user = UserFactory()
-        with self.assertRaises(TypeError):
-            rules.is_admin_for_puzzle_child(user, "A string is not an puzzle child")
-
-    def test_is_admin_for_unlock_child_true(self):
-        profile = TeamMemberFactory(team__role=TeamRole.ADMIN)
-        child = UnlockAnswerFactory()
-        self.assertTrue(rules.is_admin_for_unlock_child.test(profile.user, None))
-        self.assertTrue(rules.is_admin_for_unlock_child.test(profile.user, child.unlock))
-        self.assertTrue(rules.is_admin_for_unlock_child.test(profile.user, child))
-
-    def test_is_admin_for_unlock_child_false(self):
-        profile = TeamMemberFactory(team__role=TeamRole.PLAYER)
-        child = UnlockAnswerFactory()
-        self.assertFalse(rules.is_admin_for_unlock_child.test(profile.user, None))
-        self.assertFalse(rules.is_admin_for_unlock_child.test(profile.user, child.unlock))
-        self.assertFalse(rules.is_admin_for_unlock_child.test(profile.user, child))
-
-    def test_is_admin_for_unlock_child_type_error(self):
-        user = UserFactory()
-        with self.assertRaises(TypeError):
-            rules.is_admin_for_unlock_child(user, "A string is not an unlock child")

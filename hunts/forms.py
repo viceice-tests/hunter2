@@ -24,7 +24,7 @@ class AnswerForm(forms.ModelForm):
 
     class Meta:
         model = Answer
-        fields = ('answer', 'runtime')
+        fields = ('answer', 'runtime', 'options')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
