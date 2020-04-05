@@ -1,21 +1,21 @@
-div.admin-list {
+div.author-list {
     display: flex;
     flex-flow: row wrap;
     justify-content: space-evenly;
 }
 
-div.admin {
+div.author {
     flex: 0 0 25%;
     margin: auto;
     text-align: center;
 }
 
 // If the last line would contain one item, make it contain two
-div.admin:nth-last-child(2):nth-child(4n) {
+div.author:nth-last-child(2):nth-child(4n) {
     min-width: 33%;
 }
 
-div.admin > img {
+div.author > img {
     box-sizing: border-box;
     display: block;
     margin-left: auto;
