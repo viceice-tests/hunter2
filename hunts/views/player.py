@@ -29,8 +29,8 @@ from accounts.models import UserInfo
 from events.utils import annotate_userinfo_queryset_with_seat
 from teams.models import TeamRole
 from teams.mixins import TeamMixin
+from teams.rules import is_admin_for_event
 from .mixins import EpisodeUnlockedMixin, PuzzleUnlockedMixin
-from ..rules import is_admin_for_episode_child
 from .. import models, utils
 
 import hunter2
@@ -226,7 +226,7 @@ class AbsolutePuzzleView(RedirectView):
 class SolutionContent(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
     def get(self, request, episode_number, puzzle_number):
         episode, puzzle = utils.event_episode_puzzle(request.tenant, episode_number, puzzle_number)
-        admin = is_admin_for_episode_child.test(request.user, puzzle)
+        admin = is_admin_for_event.test(request.user, request.tenant)
 
         if request.tenant.end_date > timezone.now() and not admin:
             raise PermissionDenied
@@ -272,7 +272,7 @@ class PuzzleFile(LoginRequiredMixin, TeamMixin, PuzzleUnlockedMixin, View):
 class SolutionFile(View):
     def get(self, request, episode_number, puzzle_number, file_path):
         episode, puzzle = utils.event_episode_puzzle(request.tenant, episode_number, puzzle_number)
-        admin = is_admin_for_episode_child.test(request.user, puzzle)
+        admin = is_admin_for_event.test(request.user, request.tenant)
 
         if request.tenant.end_date > timezone.now() and not admin:
             raise Http404

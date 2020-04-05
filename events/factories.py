@@ -15,7 +15,6 @@ import factory
 import pytz
 
 from django.db import connection, transaction
-from faker import Faker
 from faker.providers import BaseProvider
 
 from accounts.factories import UserInfoFactory
@@ -35,13 +34,10 @@ factory.Faker.add_provider(EventsProvider)
 class SiteFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'sites.Site'
-        django_get_or_create = ('domain', 'name')
-        exclude = ('fake', )
+        django_get_or_create = ('domain',)
 
-    fake = Faker()
-
-    domain = fake.domain_name
-    name = fake.company
+    domain = factory.Faker('domain_name')
+    name = factory.Faker('company')
 
 
 class ThemeFactory(factory.django.DjangoModelFactory):

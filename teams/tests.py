@@ -68,7 +68,7 @@ class TeamRulesTests(EventTestCase):
         event = self.tenant
         event.max_team_size = 2
         event.save()
-        team  = TeamFactory(at_event=event)
+        team = TeamFactory(at_event=event)
 
         # Add 3 users to a team when that max is less than that.
         self.assertLess(event.max_team_size, 3)
@@ -390,3 +390,20 @@ class RulesTests(EventTestCase):
         user = UserFactory()
         with self.assertRaises(TypeError):
             rules.is_admin_for_event_child(user, "A string is not an event child")
+
+    def test_is_admin_for_schema_event_true(self):
+        profile = TeamMemberFactory(team__role=TeamRole.ADMIN)
+        self.assertTrue(rules.is_admin_for_schema_event(profile.user, None))
+
+    def test_is_admin_for_schema_event_false(self):
+        profile = TeamMemberFactory(team__role=TeamRole.PLAYER)
+        self.assertFalse(rules.is_admin_for_schema_event(profile.user, None))
+
+
+class NoSchemaRulesTests(EventAwareTestCase):
+    def test_is_admin_for_schema_event_no_event(self):
+        event = EventFactory()
+        event.activate()
+        profile = TeamMemberFactory(team__at_event=event, team__role=TeamRole.ADMIN)
+        event.deactivate()
+        self.assertFalse(rules.is_admin_for_schema_event(profile.user, None))

@@ -16,9 +16,8 @@ from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 
-from teams.rules import is_admin_for_event_child
+from teams.rules import is_admin_for_event
 from ..models import Puzzle
-from ..rules import is_admin_for_episode_child
 from .. import utils
 
 # If PuzzleUnlockedMixin inherits from EpisodeUnlockedMixin the dispatch methods execute in the wrong order
@@ -28,7 +27,7 @@ class EpisodeUnlockedMixin():
     def dispatch(self, request, episode_number, *args, **kwargs):
         # Views using this mixin inevitably want the episode object so keep it on the request
         request.episode = utils.event_episode(request.tenant, episode_number)
-        request.admin = is_admin_for_event_child.test(request.user, request.episode)
+        request.admin = is_admin_for_event.test(request.user, request.tenant)
 
         if not request.episode.started(request.team) and not request.admin:
             if request.is_ajax():
@@ -59,7 +58,7 @@ class PuzzleUnlockedMixin():
     def dispatch(self, request, episode_number, puzzle_number, *args, **kwargs):
         # Views using this mixin inevitable want the episode and puzzle objects so keep it on the request
         request.episode, request.puzzle = utils.event_episode_puzzle(request.tenant, episode_number, puzzle_number)
-        request.admin = is_admin_for_episode_child.test(request.user, request.puzzle)
+        request.admin = is_admin_for_event.test(request.user, request.tenant)
 
         if (not request.episode.started(request.team) or not request.episode.unlocked_by(request.team)) and not request.admin:
             if request.is_ajax():
@@ -95,7 +94,7 @@ class PuzzleAdminMixin():
             request.puzzle = Puzzle.objects.get(pk=puzzle_id)
         except Puzzle.DoesNotExist:
             raise PermissionDenied
-        request.admin = is_admin_for_episode_child.test(request.user, request.puzzle)
+        request.admin = is_admin_for_event.test(request.user, request.tenant)
         if not request.admin:
             raise PermissionDenied
         return super().dispatch(request, *args, puzzle_id=puzzle_id, *args, **kwargs)
