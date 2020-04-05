@@ -19,6 +19,14 @@ class Case(Enum):
     LOWER = 'lower'
     FOLD = 'fold'
 
+    @staticmethod
+    def from_label(label):
+        for c in __class__:
+            if label.lower() == c.value:
+                return c
+
+        raise ValueError("%s is not a valid Case label" % label)
+
     class Labels:
         NONE  = 'Case Sensitive'
         LOWER = 'Case Insensitive'
