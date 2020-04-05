@@ -43,6 +43,7 @@ class Event(TenantMixin):
     help_text = models.TextField(help_text='Content for the event help page', blank=True)
     examples_text = models.TextField(help_text='Content for the example puzzles for this event', blank=True)
     max_team_size = models.IntegerField(default=0, help_text="Maximum size for a team at this event, or 0 for no limit.", validators=[MinValueValidator(0)])
+    seat_assignments = models.BooleanField(default=True, help_text='Whether the event should request seat assignments from users')
     end_date = models.DateTimeField()
 
     def __str__(self):
