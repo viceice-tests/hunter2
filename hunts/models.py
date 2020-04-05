@@ -510,14 +510,14 @@ class UnlockAnswer(models.Model):
         help_text='''Options for configuring the validator in JSON format using the following keys:
 
 Static:
-    'case_handling':
+    'case_handling': [Default: lower]
         'none' - do not adjust case
         'lower' - compare lower case
         'fold' - perform unicode case folding
-    'strip': true/false
+    'strip': true/false [Default: true]
 
 Regex:
-    'case_sensitive': true/false''',
+    'case_sensitive': true/false [Default: false]''',
     )
     guess = models.TextField()
 
@@ -565,14 +565,14 @@ class Answer(models.Model):
         help_text='''Options for configuring the validator in JSON format using the following keys:
 
 Static:
-    'case_handling':
+    'case_handling': [Default: lower]
         'none' - do not adjust case
         'lower' - compare lower case
         'fold' - perform unicode case folding
-    'strip': true/false
+    'strip': true/false [Default: true]
 
 Regex:
-    'case_sensitive': true/false''',
+    'case_sensitive': true/false [Default: false]''',
     )
     answer = models.TextField()
 
