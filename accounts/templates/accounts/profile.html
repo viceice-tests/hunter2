@@ -13,7 +13,7 @@
 <h2>Participated Events</h2>
 <ul>
 	{% for p in participations %}
-	<li>{{ p.team }} @ {{ p.event }}</li>	
+	<li>{% if p.team != None %}{{ p.team }} @ {% endif %}{{ p.event }}</li>
 	{% endfor %}
 </ul>
 {% endif %}
@@ -21,7 +21,7 @@
 <h2>Ran Events</h2>
 <ul>
 	{% for a in administrations %}
-	<li>{{ a.event }}</li>	
+	<li>{{ a.event }}</li>
 	{% endfor %}
 </ul>
 {% endif %}

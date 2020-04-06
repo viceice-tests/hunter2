@@ -4,6 +4,8 @@ import 'hunter2/js/base.js'
 import * as invite from './invite.js'
 import * as request from './request.js'
 
+import '../scss/team_members.scss'
+
 $(function(){
   $('#inv-create').on('submit', invite.create)
   $('.inv-accept').on('click', invite.accept)

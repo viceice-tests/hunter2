@@ -56,8 +56,12 @@ export function accept(event) {
   ).done(function(data) {
     $('#req-error').text('').hide('fast')
     hide(list_entry)
-    var new_element = $(`<li>${data.username}<span style="float: right">&nbsp;${data.seat}</span></li>`)
-    $('#member-list').append(new_element)
+    var new_element = `<div class="member"><h3><a href="${data.url}">${data.username}</a></h3>`
+    if (data.picture) { new_element += `<img src="${data.picture}" alt="${data.username}" />` }
+    new_element += '<p>'
+    if (data.seat) { new_element += `Seat ${data.seat}` }
+    new_element += '</p></div>'
+    $('#member-list').append($(new_element))
   }).fail(function(jqXHR) {
     var message = jqXHR.responseJSON.message
     if (jqXHR.responseJSON['delete']) {

@@ -334,6 +334,8 @@ class AcceptRequest(LoginRequiredMixin, TeamMixin, View):
             'message': 'Request accepted',
             'username': user.username,
             'seat': seat,
+            'url': user.user.info.get_absolute_url(),
+            'picture': user.user.info.picture,
         })
 
 
