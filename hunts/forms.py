@@ -84,14 +84,14 @@ class AnswerForm(forms.ModelForm):
                 msg += "The following teams will have <b>NO LONGER ANSWERED</b> this puzzle "
                 msg += "correctly and will be brought backwards unless they have another valid answer:\n<ul>"
                 msg += "\n".join(
-                    [team_line % (team.name, ', '.join([g.guess for g in guesses]))
+                    [team_line % (team.get_verbose_name(), ', '.join([g.guess for g in guesses]))
                      for team, guesses in removed_teams.items()]
                 )
                 msg += "</ul>"
             if new_teams:
                 msg += "The following teams will be <b>BROUGHT FORWARD</b> by this change:<br><ul>"
                 msg += "\n".join(
-                    [team_line % (team.name, ', '.join([g.guess for g in guesses]))
+                    [team_line % (team.get_verbose_name(), ', '.join([g.guess for g in guesses]))
                      for team, guesses in new_teams.items()]
                 )
                 msg += "</ul>"
