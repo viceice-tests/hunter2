@@ -74,7 +74,7 @@ image:web:
   script:
     - docker load -i app.tar
     - docker pull "${WEB_LATEST_TAG}" || true
-    - docker build --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from "${WEB_LATEST_TAG}" -t "${WEB_IMAGE_TAG}" -t "${WEB_LATEST_TAG}" --build-arg BUILD_TAG="${GIT_DESCRIBE}" --progress plain ./nginx
+    - docker build --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from "${WEB_LATEST_TAG}" -t "${WEB_IMAGE_TAG}" -t "${WEB_LATEST_TAG}" --build-arg IMAGE_TAG="${APP_IMAGE_TAG}" --progress plain ./nginx
     - docker save -o web.tar "${WEB_IMAGE_TAG}"
   artifacts:
     expire_in: 90 days
