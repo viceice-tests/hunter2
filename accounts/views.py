@@ -84,6 +84,7 @@ class EditProfileView(LoginRequiredMixin, View):
             'password_form': password_form,
             'profile_formset': profile_formset,
             'attendance_formset': attendance_formset,
+            'show_event_details': request.tenant.seat_assignments,  # Seat is currently the only field in event details so hide everything if they're disabled
             'steam_account': steam_account,
         }
         return TemplateResponse(

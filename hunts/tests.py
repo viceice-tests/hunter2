@@ -18,18 +18,20 @@ import time
 import freezegun
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 from parameterized import parameterized
 from channels.testing import WebsocketCommunicator
 
-from accounts.factories import UserProfileFactory
-from events.factories import EventFileFactory
+from accounts.factories import UserProfileFactory, UserFactory
+from events.factories import EventFileFactory, AttendanceFactory
 from events.test import EventTestCase, AsyncEventTestCase
 from hunter2.routing import application as websocket_app
 from teams.models import TeamRole
 from teams.factories import TeamFactory, TeamMemberFactory
 from . import utils
+from .context_processors import announcements
 from .factories import (
     AnnouncementFactory,
     AnswerFactory,
@@ -2107,3 +2109,44 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertEqual(output['content']['announcement_id'], id)
 
         self.run_async(comm.disconnect)()
+
+
+class ContextProcessorTests(AsyncEventTestCase):
+    def setUp(self):
+        super().setUp()
+        self.rf = RequestFactory()
+        self.user = UserFactory()
+        self.user.save()
+        self.client.force_login(self.user)
+
+        self.request = self.rf.get('/')
+        self.request.user = self.user
+        self.request.tenant = self.tenant
+
+    def test_shows_seat_announcement_if_enabled_and_user_has_no_seat(self):
+        AttendanceFactory(user_info=self.user.info, event=self.tenant, seat='').save()
+
+        self.tenant.seat_assignments = True
+
+        output = announcements(self.request)
+
+        self.assertEqual(1, len(output['announcements']))
+        self.assertEquals('no-seat-announcement', output['announcements'][0].id)
+
+    def test_does_not_show_seat_announcement_if_enabled_and_user_has_seat(self):
+        AttendanceFactory(user_info=self.user.info, event=self.tenant, seat='A1').save()
+
+        self.tenant.seat_assignments = True
+
+        output = announcements(self.request)
+
+        self.assertEqual(0, len(output['announcements']))
+
+    def test_does_not_show_seat_announcement_if_disabled(self):
+        AttendanceFactory(user_info=self.user.info, event=self.tenant, seat='').save()
+
+        self.tenant.seat_assignments = False
+
+        output = announcements(self.request)
+
+        self.assertEqual(0, len(output['announcements']))

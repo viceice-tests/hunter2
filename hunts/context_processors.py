@@ -33,7 +33,7 @@ def announcements(request):
             (Q(event__isnull=True) | Q(event=request.tenant)) &
             (Q(puzzle__isnull=True)))
 
-    if request.user.is_authenticated and request.user.info.attendance_at(request.tenant).seat == '':
+    if request.user.is_authenticated and request.tenant.seat_assignments and request.user.info.attendance_at(request.tenant).seat == '':
         no_seat = models.Announcement(
             id='no-seat-announcement',
             event=request.tenant,
