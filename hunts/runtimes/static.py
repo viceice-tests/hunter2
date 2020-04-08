@@ -17,7 +17,7 @@ from .options import Case
 
 class StaticRuntime(AbstractRuntime):
     def __init__(self, case_handling=Case.LOWER, strip=True):
-        self.case_handling = case_handling
+        self.case_handling = case_handling if isinstance(case_handling, Case) else Case.from_label(case_handling)
         self.strip = strip
 
     def evaluate(self, script, team_puzzle_data, user_puzzle_data, team_data, user_data):

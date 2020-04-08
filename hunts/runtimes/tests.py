@@ -13,6 +13,7 @@
 
 from django.test import TestCase, SimpleTestCase
 
+from . import Runtime
 from .iframe import IFrameRuntime
 from .options import Case
 from .regex import RegexRuntime
@@ -168,4 +169,17 @@ class StaticRuntimeTestCase(SimpleTestCase):
         self.assertTrue(result)
         guess = "GUESS"
         result = static_runtime.validate_guess(static_script, guess)
+        self.assertFalse(result)
+
+    def test_validate_create_with_options(self):
+        runtime = Runtime(Runtime.STATIC).create({"case_handling": "lower"})
+        static_script = 'Guess'
+        guess = 'Guess'
+        result = runtime.validate_guess(static_script, guess)
+        self.assertTrue(result)
+        guess = "GUESS"
+        result = runtime.validate_guess(static_script, guess)
+        self.assertTrue(result)
+        guess = 'gueß'
+        result = runtime.validate_guess(static_script, guess)
         self.assertFalse(result)
