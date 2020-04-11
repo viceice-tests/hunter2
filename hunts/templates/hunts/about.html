@@ -18,7 +18,9 @@
 {% for author in authors %}
 <div class="author">
 	<h3><a href="{{ author.get_absolute_url }}">{{ author.username }}</a></h3>
-	<img src="{{ author.picture }}" alt="{{ author.username }}" />
+	{% if author.picture %}
+		<img src="{{ author.picture }}" alt="{{ author.username }}" />
+	{% endif %}
 	<p>
 	{% if author.seat %}
 		Seat {{ author.seat }}

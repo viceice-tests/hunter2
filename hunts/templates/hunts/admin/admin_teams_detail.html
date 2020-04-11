@@ -20,10 +20,9 @@
 {% block main %}
 <main class="flex-shrink-0 container-fluid pt-3">
 	<h3>Members</h3>
-	{% for member in members.all %}
-	{{ member.username }}
-	{% if member.seat %} @ {{ member.seat }}{% endif %}
-	{% endfor %}
+	<ul class="list-oneline">{% for member in members.all %}
+		<li><a href="{{ member.user.info.get_absolute_url }}">{{ member.username }}{% if member.seat %} @ {{ member.seat }}{% endif %}</a></li>
+	{% endfor %}</ul>
 	<div id="team_puzzles_admin_widget" href="{% url 'team_admin_detail_content' team_id=team.id %}"></div>
 </main>
 {% endblock %}
