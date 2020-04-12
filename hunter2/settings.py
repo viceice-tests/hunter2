@@ -78,6 +78,8 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 
 ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.UserProfileForm'
 
+ACCOUNT_USERNAME_VALIDATORS = 'hunter2.validators.username_validators'
+
 AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
     'django.contrib.auth.backends.ModelBackend',
