@@ -2,7 +2,7 @@ import $ from 'jquery'
 import * as d3 from 'd3'
 import colors from 'd3-scale-chromatic/src/colors.js'
 
-import '../scss/stats.scss'
+import 'hunts/scss/admin/stats.scss'
 
 import { XmlEntities as entities } from 'html-entities'
 

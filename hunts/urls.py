@@ -20,14 +20,14 @@ eventadminpatterns = [
     path('', views.admin.AdminIndex.as_view(), name='admin_index'),
     path('bulk_upload/<int:puzzle_id>', views.admin.BulkUpload.as_view(), name='bulk_upload'),
     path('episode_list', views.admin.EpisodeList.as_view(), name='episode_list'),
-    path('guesses', views.admin.Guesses.as_view(), name='guesses'),
-    path('guesses/list', views.admin.GuessesList.as_view(), name='guesses_list'),
-    path('stats', views.admin.Stats.as_view(), name='stats'),
-    path('stats_content/', views.admin.StatsContent.as_view(), name='stats_content'),
-    path('stats_content/<int:episode_id>', views.admin.StatsContent.as_view(), name='stats_content'),
-    path('teams', views.admin.TeamAdmin.as_view(), name='team_admin'),
-    path('teams/<int:team_id>', views.admin.TeamAdminDetail.as_view(), name='team_admin_detail'),
-    path('teams/<int:team_id>/content', views.admin.TeamAdminDetailContent.as_view(), name='team_admin_detail_content'),
+    path('guesses', views.admin.Guesses.as_view(), name='admin_guesses'),
+    path('guesses/list', views.admin.GuessesList.as_view(), name='admin_guesses_list'),
+    path('stats', views.admin.Stats.as_view(), name='admin_stats'),
+    path('stats_content/', views.admin.StatsContent.as_view(), name='admin_stats_content'),
+    path('stats_content/<int:episode_id>', views.admin.StatsContent.as_view(), name='admin_stats_content'),
+    path('teams', views.admin.TeamAdmin.as_view(), name='admin_team'),
+    path('teams/<int:team_id>', views.admin.TeamAdminDetail.as_view(), name='admin_team_detail'),
+    path('teams/<int:team_id>/content', views.admin.TeamAdminDetailContent.as_view(), name='admin_team_detail_content'),
 ]
 
 puzzlepatterns = [

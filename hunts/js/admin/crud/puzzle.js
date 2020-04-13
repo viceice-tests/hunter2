@@ -1,6 +1,6 @@
 /* global $ */
 
-import '../scss/admin_puzzle.scss'
+import 'hunts/scss/admin/crud/puzzle.scss'
 
 var advanced_shown
 

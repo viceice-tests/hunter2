@@ -4,7 +4,7 @@
 
 {% block style %}
 {{ block.super }}
-{% render_bundle 'hunts_guesses' 'css' %}
+{% render_bundle 'hunts_admin_guesses' 'css' %}
 {% endblock %}
 
 {% block title %}
@@ -12,7 +12,7 @@ Admin Guess List - {{ block.super }}
 {% endblock %}
 
 {% block script %}
-{% render_bundle 'hunts_guesses' 'js' attrs='defer' %}
+{% render_bundle 'hunts_admin_guesses' 'js' attrs='defer' %}
 {% endblock %}
 
 {% block header %}
@@ -23,7 +23,7 @@ Admin Guess List - {{ block.super }}
 
 {% block main %}
 <main class="flex-shrink-0 container-fluid pt-3">
-	<div id="admin-guess-list" data-href="{% url 'guesses_list' %}" />
+	<div id="admin-guess-list" data-href="{% url 'admin_guesses_list' %}" />
 </main>
 {% endblock %}
 
