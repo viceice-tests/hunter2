@@ -3,7 +3,7 @@ import 'bootstrap'
 import Vue from 'vue'
 
 import 'hunter2/js/base'
-import AdminGuessList from './admin-guess-list.vue'
+import AdminGuessList from './guess-list.vue'
 
 $(function () {
   const href = $('#admin-guess-list').data('href')

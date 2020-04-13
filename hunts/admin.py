@@ -212,9 +212,9 @@ class PuzzleAdmin(ObjectPermissionsModelAdminMixin, NestedModelAdminMixin, Order
         parent_media = super().media
         return parent_media + forms.Media(
             css={
-                "all": [f['url'] for f in get_files('hunts_admin_puzzle', extension='css')],
+                "all": [f['url'] for f in get_files('hunts_admin_crud_puzzle', extension='css')],
             },
-            js=[f['url'] for f in get_files('hunts_admin_puzzle', extension='js')],
+            js=[f['url'] for f in get_files('hunts_admin_crud_puzzle', extension='js')],
         )
 
     def view_on_site(self, obj):

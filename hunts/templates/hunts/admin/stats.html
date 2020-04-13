@@ -4,7 +4,7 @@
 
 {% block style %}
 {{ block.super }}
-{% render_bundle 'hunts_stats' 'css' %}
+{% render_bundle 'hunts_admin_stats' 'css' %}
 {% endblock %}
 
 {% block title %}
@@ -12,7 +12,7 @@ Admin Stats - {{ block.super }}
 {% endblock %}
 
 {% block script %}
-{% render_bundle 'hunts_stats' 'js' attrs='defer' %}
+{% render_bundle 'hunts_admin_stats' 'js' attrs='defer' %}
 {% endblock %}
 
 {% block page_header %}

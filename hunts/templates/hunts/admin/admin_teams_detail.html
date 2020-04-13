@@ -4,7 +4,7 @@
 
 {% block script %}
 {{ block.super }}
-{% render_bundle 'hunts_team_admin' 'js' attrs='defer' %}
+{% render_bundle 'hunts_admin_team' 'js' attrs='defer' %}
 {% endblock %}
 
 {% block title %}
@@ -23,7 +23,7 @@
 	<ul class="list-oneline">{% for member in members.all %}
 		<li><a href="{{ member.user.info.get_absolute_url }}">{{ member.username }}{% if member.seat %} @ {{ member.seat }}{% endif %}</a></li>
 	{% endfor %}</ul>
-	<div id="team_puzzles_admin_widget" href="{% url 'team_admin_detail_content' team_id=team.id %}"></div>
+	<div id="team_puzzles_admin_widget" href="{% url 'admin_team_detail_content' team_id=team.id %}"></div>
 </main>
 {% endblock %}
 

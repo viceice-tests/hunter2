@@ -1014,12 +1014,12 @@ class AdminTeamTests(EventTestCase):
 
     def test_can_view_guesses(self):
         self.client.force_login(self.admin_user.user)
-        response = self.client.get(reverse('guesses'))
+        response = self.client.get(reverse('admin_guesses'))
         self.assertEqual(response.status_code, 200)
 
     def test_can_view_stats(self):
         self.client.force_login(self.admin_user.user)
-        response = self.client.get(reverse('guesses'))
+        response = self.client.get(reverse('admin_guesses'))
         self.assertEqual(response.status_code, 200)
 
 
@@ -1030,7 +1030,7 @@ class AdminContentTests(EventTestCase):
         self.admin_team = self.admin_user.team_at(self.tenant)
         self.puzzle = PuzzleFactory()
         self.guesses = GuessFactory.create_batch(5, for_puzzle=self.puzzle)
-        self.guesses_url = reverse('guesses_list')
+        self.guesses_url = reverse('admin_guesses_list')
 
     def test_can_view_guesses(self):
         self.client.force_login(self.admin_user.user)
@@ -1056,50 +1056,50 @@ class AdminContentTests(EventTestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_can_view_stats(self):
-        stats_url = reverse('stats_content')
+        stats_url = reverse('admin_stats_content')
         self.client.force_login(self.admin_user.user)
         response = self.client.get(stats_url)
         self.assertEqual(response.status_code, 200)
 
     def test_can_view_stats_by_episode(self):
         episode_id = self.guesses[0].for_puzzle.episode.id
-        stats_url = reverse('stats_content', kwargs={'episode_id': episode_id})
+        stats_url = reverse('admin_stats_content', kwargs={'episode_id': episode_id})
         self.client.force_login(self.admin_user.user)
         response = self.client.get(stats_url)
         self.assertEqual(response.status_code, 200)
 
-    def test_non_admin_cannot_view_team_admin(self):
+    def test_non_admin_cannot_view_admin_team(self):
         player = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.PLAYER)
         self.client.force_login(player.user)
-        response = self.client.get(reverse('team_admin'))
+        response = self.client.get(reverse('admin_team'))
         self.assertEqual(response.status_code, 403)
-        response = self.client.get(reverse('team_admin_detail', kwargs={'team_id': self.admin_team.id}))
+        response = self.client.get(reverse('admin_team_detail', kwargs={'team_id': self.admin_team.id}))
         self.assertEqual(response.status_code, 403)
-        response = self.client.get(reverse('team_admin_detail_content', kwargs={'team_id': self.admin_team.id}))
+        response = self.client.get(reverse('admin_team_detail_content', kwargs={'team_id': self.admin_team.id}))
         self.assertEqual(response.status_code, 403)
 
-    def test_team_admin_detail_not_found(self):
+    def test_admin_team_detail_not_found(self):
         self.client.force_login(self.admin_user.user)
-        response = self.client.get(reverse('team_admin_detail', kwargs={'team_id': 0}))
+        response = self.client.get(reverse('admin_team_detail', kwargs={'team_id': 0}))
         self.assertEqual(response.status_code, 404)
-        response = self.client.get(reverse('team_admin_detail_content', kwargs={'team_id': 0}))
+        response = self.client.get(reverse('admin_team_detail_content', kwargs={'team_id': 0}))
         self.assertEqual(response.status_code, 404)
 
-    def test_can_view_team_admin(self):
+    def test_can_view_admin_team(self):
         self.client.force_login(self.admin_user.user)
-        url = reverse('team_admin')
+        url = reverse('admin_team')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.admin_team.get_verbose_name())
 
-    def test_can_view_team_admin_detail(self):
+    def test_can_view_admin_team_detail(self):
         self.client.force_login(self.admin_user.user)
-        url = reverse('team_admin_detail', kwargs={'team_id': self.admin_team.id})
+        url = reverse('admin_team_detail', kwargs={'team_id': self.admin_team.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.admin_team.get_verbose_name())
 
-    def test_team_admin_detail_content(self):
+    def test_admin_team_detail_content(self):
         team = self.guesses[0].by_team
         puzzle2 = PuzzleFactory()
         tp_data1 = TeamPuzzleDataFactory(team=team, puzzle=self.puzzle)
@@ -1110,7 +1110,7 @@ class AdminContentTests(EventTestCase):
         GuessFactory(by=team.members.all()[0], for_puzzle=puzzle2, correct=True)
 
         self.client.force_login(self.admin_user.user)
-        url = reverse('team_admin_detail_content', kwargs={'team_id': team.id})
+        url = reverse('admin_team_detail_content', kwargs={'team_id': team.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
@@ -1125,11 +1125,11 @@ class AdminContentTests(EventTestCase):
         self.assertEqual(response_json['solved_puzzles'][0]['id'], puzzle2.id)
         self.assertEqual(response_json['puzzles'][0]['num_guesses'], 1)
 
-    def test_team_admin_detail_content_hints(self):
+    def test_admin_team_detail_content_hints(self):
         team = self.guesses[0].by_team
         member = self.guesses[0].by
         self.client.force_login(self.admin_user.user)
-        url = reverse('team_admin_detail_content', kwargs={'team_id': team.id})
+        url = reverse('admin_team_detail_content', kwargs={'team_id': team.id})
 
         with freezegun.freeze_time() as frozen_datetime:
             tp_data = TeamPuzzleDataFactory(team=team, puzzle=self.puzzle)
@@ -1185,7 +1185,7 @@ class StatsTests(EventTestCase):
         self.admin_user = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.ADMIN)
 
     def test_no_episodes(self):
-        stats_url = reverse('stats_content')
+        stats_url = reverse('admin_stats_content')
         self.client.force_login(self.admin_user.user)
         response = self.client.get(stats_url)
         self.assertEqual(response.status_code, 404)
@@ -1193,7 +1193,7 @@ class StatsTests(EventTestCase):
     def test_filter_invalid_episode(self):
         episode = EpisodeFactory(event=self.tenant)
         # The next sequantial ID ought to not exist
-        stats_url = reverse('stats_content', kwargs={'episode_id': episode.id + 1})
+        stats_url = reverse('admin_stats_content', kwargs={'episode_id': episode.id + 1})
         self.client.force_login(self.admin_user.user)
         response = self.client.get(stats_url)
         self.assertEqual(response.status_code, 404)

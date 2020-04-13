@@ -7,17 +7,17 @@ module.exports = {
   context: '/opt/hunter2/src',
 
   entry: {
-    sentry:             'hunter2/js/sentry.js',
-    hunter2:            'hunter2/js/index.js',
-    accounts_profile:   'accounts/scss/profile.scss',
-    teams_manage:       'teams/js/manage.js',
-    hunts_event:        'hunts/js/event.js',
-    hunts_admin_puzzle: 'imports-loader?$=jquery!hunts/js/admin_puzzle.js',
-    hunts_puzzle:       'hunts/js/puzzle.js',
-    hunts_about:        'hunts/scss/about.scss',
-    hunts_stats:        'hunts/js/stats.js',
-    hunts_guesses:      'hunts/js/guesses.js',
-    hunts_team_admin:   'hunts/js/team-admin-entrypoint.js',
+    sentry:                  'hunter2/js/sentry.js',
+    hunter2:                 'hunter2/js/index.js',
+    accounts_profile:        'accounts/scss/profile.scss',
+    hunts_admin_crud_puzzle: 'imports-loader?$=jquery!hunts/js/admin/crud/puzzle.js',
+    hunts_admin_guesses:     'hunts/js/admin/guesses.js',
+    hunts_admin_stats:       'hunts/js/admin/stats.js',
+    hunts_admin_team:        'hunts/js/team-admin-entrypoint.js',
+    hunts_about:             'hunts/scss/about.scss',
+    hunts_event:             'hunts/js/event.js',
+    hunts_puzzle:            'hunts/js/puzzle.js',
+    teams_manage:            'teams/js/manage.js',
   },
 
   module: {
