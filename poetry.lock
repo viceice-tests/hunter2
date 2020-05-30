@@ -322,7 +322,7 @@ description = "Integrated set of Django applications addressing authentication, 
 name = "django-allauth"
 optional = false
 python-versions = "*"
-version = "0.41.0"
+version = "0.42.0"
 
 [package.dependencies]
 Django = ">=2.0"
@@ -1175,7 +1175,7 @@ test = ["zope.event"]
 testing = ["coverage", "nose", "zope.event"]
 
 [metadata]
-content-hash = "e85cb5778e779ff202fa2a70c82077497e6d9d75987e1b980a4d40fb6d4a55a9"
+content-hash = "abcb85b97f625bd93d6e4a01a911780eb2e4a624e472f5933fb811448a547227"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1364,7 +1364,7 @@ django = [
     {file = "Django-3.0.2.tar.gz", hash = "sha256:8c3575f81e11390893860d97e1e0154c47512f180ea55bd84ce8fa69ba8051ca"},
 ]
 django-allauth = [
-    {file = "django-allauth-0.41.0.tar.gz", hash = "sha256:7ab91485b80d231da191d5c7999ba93170ef1bf14ab6487d886598a1ad03e1d8"},
+    {file = "django-allauth-0.42.0.tar.gz", hash = "sha256:f17209410b7f87da0a84639fd79d3771b596a6d3fc1a8e48ce50dabc7f441d30"},
 ]
 django-analytical = [
     {file = "django-analytical-2.5.0.tar.gz", hash = "sha256:0871db04aa8c864b0b44c98b462d2b8682ba9c31ab89f50d54a5ddfdc3ff6223"},
