@@ -67,11 +67,11 @@ FROM node:12.18.2-alpine3.11 as webpack_build
 
 WORKDIR /opt/hunter2/src
 
-COPY .yarnrc package.json yarn.lock /opt/hunter2/src/
+COPY package.json yarn.lock /opt/hunter2/src/
 RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
-    yarn install --frozen-lockfile
+    yarn --modules-folder ../node_modules install --frozen-lockfile
 COPY . .
-RUN "$(yarn bin webpack)" --config webpack.prod.js
+RUN "$(yarn --modules-folder ../node_modules bin webpack)" --config webpack.prod.js
 
 
 # Build the final image
