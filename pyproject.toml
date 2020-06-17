@@ -38,7 +38,7 @@ parameterized = "^0.7.1"
 psycopg2 = "^2.8"
 python3-openid = "^3.1"
 rules = "^2.1"
-sentry-sdk = "^0.14.1"
+sentry-sdk = "^0.15.0"
 validators = "^0.14.0"
 wait = "^0.0.3"
 [tool.poetry.dev-dependencies]
