@@ -1133,7 +1133,7 @@ description = "Python Data Validation for Humans™."
 name = "validators"
 optional = false
 python-versions = "*"
-version = "0.14.2"
+version = "0.15.0"
 
 [package.dependencies]
 decorator = ">=3.4.0"
@@ -1175,7 +1175,7 @@ test = ["zope.event"]
 testing = ["coverage", "nose", "zope.event"]
 
 [metadata]
-content-hash = "3d71a29873969e959783e07c5a50d075fcd7c5b08be9de5cf7980793d6fcef40"
+content-hash = "822f6416e83b7df7b5ceeabf2d118ee8b9f4524fcdf3f122bbdc5315e3951536"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1792,7 +1792,7 @@ urllib3 = [
     {file = "urllib3-1.25.8.tar.gz", hash = "sha256:87716c2d2a7121198ebcb7ce7cccf6ce5e9ba539041cfbaeecfb641dc0bf6acc"},
 ]
 validators = [
-    {file = "validators-0.14.2.tar.gz", hash = "sha256:b192e6bde7d617811d59f50584ed240b580375648cd032d106edeb3164099508"},
+    {file = "validators-0.15.0.tar.gz", hash = "sha256:31e8bb01b48b48940a021b8a9576b840f98fa06b91762ef921d02cb96d38727a"},
 ]
 wait = [
     {file = "wait-0.0.3.tar.gz", hash = "sha256:0eac805979a62f1c12a325d0f99c1563ee0773be1ced2017b308629d27cc7d70"},
