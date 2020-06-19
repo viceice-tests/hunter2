@@ -6,7 +6,7 @@ FROM ${IMAGE_TAG} AS app
 USER root
 RUN /opt/hunter2/venv/bin/python manage.py collectstatic
 
-FROM alpine:3.11
+FROM alpine:3.12
 
 RUN --mount=type=cache,target=/var/cache/apk apk add \
     nginx \
