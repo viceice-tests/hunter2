@@ -9,8 +9,15 @@ help:
 	@echo "                             to a text file for dependency tracking."
 
 .PHONY: run
-run: .build/app.txt .build/webpack.txt
+run: dev-images
 	docker-compose up -d
+
+.PHONY: test
+test: dev-images
+	docker-compose run --rm app test -v2
+
+.PHONY: dev-images
+	-dev-images: .build/app.txt .build/webpack.txt
 
 BUILD_TAG ?= latest
 
