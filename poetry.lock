@@ -410,8 +410,8 @@ category = "main"
 description = "Extensions for Django"
 name = "django-extensions"
 optional = false
-python-versions = "*"
-version = "2.2.6"
+python-versions = ">=3.5"
+version = "3.0.3"
 
 [package.dependencies]
 six = ">=1.2"
@@ -1212,7 +1212,7 @@ test = ["zope.event"]
 testing = ["coverage", "nose", "zope.event"]
 
 [metadata]
-content-hash = "47378a371f8638a6c0a5105a9e5e99bc5933fe082d3cbbe77add377b035b5bdb"
+content-hash = "3a7631290e37a3fbd3f880b1184a3a3003d915763a35f4eadbbfa96c8a70b728"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1428,8 +1428,8 @@ django-environ = [
     {file = "django_environ-0.4.5-py2.py3-none-any.whl", hash = "sha256:c57b3c11ec1f319d9474e3e5a79134f40174b17c7cc024bbb2fad84646b120c4"},
 ]
 django-extensions = [
-    {file = "django-extensions-2.2.6.tar.gz", hash = "sha256:936e8e3962024d3c75ea54f4e0248002404ca7ca7fb698430e60b06b5555b4e7"},
-    {file = "django_extensions-2.2.6-py2.py3-none-any.whl", hash = "sha256:4524eca892d23fa6e93b0620901983b287ff5dc806f1b978d6a98541f06b9471"},
+    {file = "django-extensions-3.0.3.tar.gz", hash = "sha256:6230898b1e1d5deb3ddab8335b2d270edb7afa4ef916a95e479a19fdfb0464cb"},
+    {file = "django_extensions-3.0.3-py2.py3-none-any.whl", hash = "sha256:d5fcf8f3bab019487e07473c24453bccd5acfb4440f3ef36788294c307b09d4c"},
 ]
 django-fullclean = []
 django-nested-admin = [
