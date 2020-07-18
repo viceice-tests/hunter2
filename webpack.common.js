@@ -10,7 +10,7 @@ module.exports = {
     sentry:                  'hunter2/js/sentry.js',
     hunter2:                 'hunter2/js/index.js',
     accounts_profile:        'accounts/scss/profile.scss',
-    hunts_admin_crud_puzzle: 'imports-loader?$=jquery!hunts/js/admin/crud/puzzle.js',
+    hunts_admin_crud_puzzle: 'imports-loader?imports=default|jquery|$!hunts/js/admin/crud/puzzle.js',
     hunts_admin_guesses:     'hunts/js/admin/guesses.js',
     hunts_admin_stats:       'hunts/js/admin/stats.js',
     hunts_admin_team:        'hunts/js/team-admin-entrypoint.js',
