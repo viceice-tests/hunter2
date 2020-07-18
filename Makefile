@@ -17,7 +17,7 @@ test: dev-images
 	docker-compose run --rm app test -v2
 
 .PHONY: dev-images
-	-dev-images: .build/app.txt .build/webpack.txt
+dev-images: .build/app.txt .build/webpack.txt
 
 BUILD_TAG ?= latest
 
