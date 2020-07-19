@@ -299,6 +299,7 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             'hosts': [('redis', 6379)],  # Should be env var
+            'prefix': 'hunter2:channels',
         },
     },
 }
