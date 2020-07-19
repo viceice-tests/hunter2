@@ -4,6 +4,9 @@
 # Ignore generated coverage files
 coverage
 
+# Ignore test reports
+TEST-*.xml
+
 # Ignore environment file
 .env
 

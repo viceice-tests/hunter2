@@ -35,14 +35,23 @@ check:flake8:
   needs: []
   stage: test
   script:
-    - docker-compose -f docker-compose.check.yml run --rm flake8 --verbose
+    - install -d -m 777 reports
+    - docker-compose -f docker-compose.check.yml run --rm flake8 --verbose --output-file reports/flake8.txt
+    - docker-compose -f docker-compose.check.yml run --entrypoint flake8_junit --rm flake8 reports/flake8.txt reports/flake8.xml
+  artifacts:
+    reports:
+      junit: reports/flake8.xml
 
 check:eslint:
   extends: .base_job
   needs: []
   stage: test
   script:
-    - docker-compose -f docker-compose.check.yml run --rm eslint
+    - install -d -m 777 reports
+    - docker-compose -f docker-compose.check.yml run -e ESLINT_JUNIT_OUTPUT=reports/junit.xml --rm eslint -f /node_modules/eslint-junit/index.js
+  artifacts:
+    reports:
+      junit: reports/junit.xml
 
 image:app:
   extends: .base_job
@@ -122,10 +131,10 @@ test:app:
   script:
     - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/${SERVICE}:${GIT_DESCRIBE}"
     - docker load -i "${SERVICE}.tar"
-    - install -d -m 777 coverage
-    - docker-compose run -e H2_TEST_SEED=1 -v "${PWD}/coverage:/opt/hunter2/src/coverage" --entrypoint "/opt/hunter2/venv/bin/python" "${SERVICE}" -Wd -m coverage run --source . manage.py test -v 2
-    - docker run -v "${PWD}/coverage:/opt/hunter2/src/coverage" --entrypoint "/opt/hunter2/venv/bin/python" "${IMAGE_TAG}" -m coverage html
-    - docker run -v "${PWD}/coverage:/opt/hunter2/src/coverage" --entrypoint "/opt/hunter2/venv/bin/python" "${IMAGE_TAG}" -m coverage report
+    - install -d -m 777 coverage reports
+    - docker-compose run -e H2_TEST_SEED=1 -v "${PWD}/coverage:/opt/hunter2/src/coverage" -v "${PWD}/reports:/opt/hunter2/src/reports" --entrypoint "/opt/hunter2/venv/bin/python" --rm "${SERVICE}" -Wd -m coverage run --source . manage.py test -v 2
+    - docker run -v "${PWD}/coverage:/opt/hunter2/src/coverage" --entrypoint "/opt/hunter2/venv/bin/python" --rm "${IMAGE_TAG}" -m coverage html
+    - docker run -v "${PWD}/coverage:/opt/hunter2/src/coverage" --entrypoint "/opt/hunter2/venv/bin/python" --rm "${IMAGE_TAG}" -m coverage report
   after_script:
     - docker-compose logs db > db.log
     - docker-compose logs redis > redis.log
@@ -135,6 +144,8 @@ test:app:
     paths:
       - coverage/
       - "*.log"
+    reports:
+      junit: reports/TEST-*.xml
     when: always
   coverage: /\d+\%\s*$/
 

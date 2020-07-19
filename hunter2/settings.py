@@ -285,6 +285,7 @@ TENANT_MODEL = 'events.Event'
 TENANT_DOMAIN_MODEL = 'events.Domain'
 
 TEST_RUNNER = 'hunter2.tests.TestRunner'
+TEST_OUTPUT_DIR = 'reports'
 
 USE_I18N = True
 

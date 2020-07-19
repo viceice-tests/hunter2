@@ -19,18 +19,17 @@ from io import StringIO
 
 import builtins
 import sys
-from colour_runner.django_runner import ColourRunnerMixin
 from django.contrib.sites.models import Site
 from django.core.management import CommandError, call_command
 from django.test import TestCase, override_settings
-from django.test.runner import DiscoverRunner
 from faker import Faker
+from xmlrunner.extra.djangotestrunner import XMLTestRunner
 
 from hunter2.management.commands import setupsite
 from .utils import generate_secret_key, load_or_create_secret_key
 
 
-class TestRunner(ColourRunnerMixin, DiscoverRunner):
+class TestRunner(XMLTestRunner):
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         # Disable non-critial logging for test runs
         logging.disable(logging.CRITICAL)
