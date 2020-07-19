@@ -8,8 +8,9 @@ services:
   - docker:19.03.12-dind
 
 stages:
+  - build1
+  - build2
   - test
-  - stage2
   - release
 
 .base_job:
@@ -31,19 +32,22 @@ include:
 
 check:flake8:
   extends: .base_job
+  needs: []
   stage: test
   script:
     - docker-compose -f docker-compose.check.yml run --rm flake8 --verbose
 
 check:eslint:
   extends: .base_job
+  needs: []
   stage: test
   script:
     - docker-compose -f docker-compose.check.yml run --rm eslint
 
 image:app:
   extends: .base_job
-  stage: test
+  needs: []
+  stage: build1
   script:
     - docker pull "${PYTHON_LATEST_TAG}" || true
     - docker pull "${APP_LATEST_TAG}" || true
@@ -60,7 +64,8 @@ image:app:
 
 image:metrics:
   extends: .base_job
-  stage: test
+  needs: []
+  stage: build1
   variables:
   script:
     - docker pull "${METRICS_LATEST_TAG}" || true
@@ -74,7 +79,8 @@ image:metrics:
 
 image:web:
   extends: .base_job
-  stage: stage2
+  needs: ["image:app"]
+  stage: build2
   dependencies:
     - image:app
   script:
@@ -90,7 +96,8 @@ image:web:
 
 doc:graph:
   extends: .base_job
-  stage: stage2
+  needs: ["image:app"]
+  stage: build2
   dependencies:
     - image:app
   script:
@@ -106,9 +113,10 @@ doc:graph:
 
 test:app:
   extends: .base_job
-  stage: stage2
   dependencies:
     - image:app
+  needs: ["image:app"]
+  stage: test
   variables:
     SERVICE: app
   script:
