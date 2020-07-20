@@ -3,8 +3,8 @@ FROM node:12.18.2-alpine3.12
 
 COPY package.json yarn.lock /
 RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
-    yarn --modules-folder ../node_modules install --frozen-lockfile
+    yarn install --frozen-lockfile
 
 EXPOSE 4000
-ENTRYPOINT ["yarn", "--modules-folder", "../node_modules"]
+ENTRYPOINT ["yarn"]
 CMD ["start"]
