@@ -20,7 +20,7 @@ services:
     ports:
       - "${H2_WEBPACK_DEV_PORT:-4000}:${H2_WEBPACK_DEV_PORT:-4000}"
     volumes:
-      - ${PWD:-.}:/opt/hunter2/src
+      - ${PWD:-.}:/opt/hunter2/src:ro,delegated
       - assets:/opt/hunter2/assets
       - node_modules:/opt/hunter2/node_modules
   app:
@@ -43,7 +43,7 @@ services:
     ports:
       - "${H2_LISTEN:-127.0.0.1:8080}:8000"
     volumes:
-      - ${PWD:-.}:/opt/hunter2/src
+      - ${PWD:-.}:/opt/hunter2/src:ro,delegated
       - config:/config
       - uploads_events:/uploads/events
       - uploads_puzzles:/uploads/puzzles

@@ -9,6 +9,13 @@ services:
     image: ${PYTHON_IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/python}
     volumes:
       - ${PWD:-.}:/opt/hunter2/src
+  yarn:
+    working_dir: /opt/hunter2/src
+    command: "help"
+    build: webpack
+    image: ${YARN_IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/webpack}
+    volumes:
+      - ${PWD:-.}:/opt/hunter2/src
   dot:
     command: -v -Tsvg -o/files/diagram/models.svg /files/diagram/models.dot
     image: registry.gitlab.com/rconan/docker-graphviz:2.40.1-0
