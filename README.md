@@ -82,19 +82,37 @@ docker-compose run --rm app createevent
 Development Process
 -------------------
 
-To manipulate the Python dependencies you need to run `poetry`. The easiest way to do this is from the latest python build container as follows:
-```shell
-docker-compose -f docker-compose.tools.yml run --rm poetry ...
-```
-
-There are several commands like this specified in the `docker-compose.tools.yml`, with the notable exception of `yarn` for which you should use the `webpack`
+There are several maintainer docker services specified in the `docker-compose.tools.yml`, with the notable exception of `yarn` for which you should use the `webpack`
 container in `docker-compose.dev.yml`. To simplify this process you can use the `h2tools.sh` alias file on a `sh` compatible shell:
 ```shell
 . h2tools.sh
 ```
 
-This will add all the tools with `h2-` prefix to your current shell. (`h2-poetry`, `h2-yarn` etc...)
+This will add all the tools with `h2-` prefix to your current shell. (`h2-poetry`, `h2-yarn` etc...). Alternatively you can execute them from `docker-compose`
+directly:
+```shell
+docker-compose -f docker-compose.tools.yml run --rm poetry ...
+```
 
+### Adding a Python Dependency ###
+Python dependencies can be added with `poetry`/`h2-poetry`:
+```shell
+h2-poetry add [dependancy]
+```
+
+### Adding JavaScript/CSS Dependency ###
+Python dependencies can be added with `yarn`/`h2-yarn`:
+```shell
+h2-yarn add [dependancy]
+```
+
+### Check Code for Conformance ###
+Hunter2 currently utilises `eslint` and `flake8` for style consistency, and these are enforced by the CI system. The current code-base can be checked with the
+following commands for compliance:
+```shell
+h2-eslint
+h2-flake8
+```
 
 Copyright
 =======
