@@ -82,8 +82,8 @@ docker-compose run --rm app createevent
 Development Process
 -------------------
 
-There are several maintainer docker services specified in the `docker-compose.tools.yml`, with the notable exception of `yarn` for which you should use the `webpack`
-container in `docker-compose.dev.yml`. To simplify this process you can use the `h2tools.sh` alias file on a `sh` compatible shell:
+There are several maintainer tools specified (as services) in the `docker-compose.tools.yml`, with the notable exception of `yarn` for which you should use the
+ `webpack` container in `docker-compose.dev.yml`. To simplify this process you can use the `h2tools.sh` alias file on a `sh` compatible shell:
 ```shell
 . h2tools.sh
 ```
@@ -113,6 +113,8 @@ following commands for compliance:
 h2-eslint
 h2-flake8
 ```
+
+These commands are helpfully combined in a `h2-lint` alias to run both together.
 
 Copyright
 =======
