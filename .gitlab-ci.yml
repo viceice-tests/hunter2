@@ -36,8 +36,8 @@ check:flake8:
   stage: test
   script:
     - install -d -m 777 reports
-    - docker-compose -f docker-compose.check.yml run --rm flake8 --verbose --output-file reports/flake8.txt
-    - docker-compose -f docker-compose.check.yml run --entrypoint flake8_junit --rm flake8 reports/flake8.txt reports/flake8.xml
+    - docker-compose -f docker-compose.tools.yml run --rm flake8 --verbose --output-file reports/flake8.txt
+    - docker-compose -f docker-compose.tools.yml run --entrypoint flake8_junit --rm flake8 reports/flake8.txt reports/flake8.xml
   artifacts:
     reports:
       junit: reports/flake8.xml
@@ -48,7 +48,7 @@ check:eslint:
   stage: test
   script:
     - install -d -m 777 reports
-    - docker-compose -f docker-compose.check.yml run -e ESLINT_JUNIT_OUTPUT=reports/junit.xml --rm eslint -f /node_modules/eslint-junit/index.js
+    - docker-compose -f docker-compose.tools.yml run -e ESLINT_JUNIT_OUTPUT=reports/junit.xml --rm eslint -f /node_modules/eslint-junit/index.js
   artifacts:
     reports:
       junit: reports/junit.xml
@@ -113,7 +113,7 @@ doc:graph:
     - docker load -i app.tar
     - install -d -m 777 diagram
     - docker run --rm --entrypoint "sh" -v "${PWD}/diagram:/diagram" "${CI_REGISTRY_IMAGE}/app:${GIT_DESCRIBE}" -c "/opt/hunter2/venv/bin/python manage.py graph_models -a > /diagram/models.dot"
-    - docker-compose -f docker-compose.check.yml run --rm dot
+    - docker-compose -f docker-compose.tools.yml run --rm dot
   artifacts:
     expire_in: 90 days
     name: models-graph
