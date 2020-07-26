@@ -87,6 +87,15 @@ To manipulate the Python dependencies you need to run `poetry`. The easiest way 
 docker-compose -f docker-compose.tools.yml run --rm poetry ...
 ```
 
+There are several commands like this specified in the `docker-compose.tools.yml`, with the notable exception of `yarn` for which you should use the `webpack`
+container in `docker-compose.dev.yml`. To simplify this process you can use the `h2tools.sh` alias file on a `sh` compatible shell:
+```shell
+. h2tools.sh
+```
+
+This will add all the tools with `h2-` prefix to your current shell. (`h2-poetry`, `h2-yarn` etc...)
+
+
 Copyright
 =======
 Hunter 2 is a platform for running online puzzle hunts. Further information can be found at https://www.hunter2.app/ including details of contributors.
