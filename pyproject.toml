@@ -38,7 +38,7 @@ psycopg2 = "^2.8"
 python3-openid = "^3.1"
 rules = "^2.1"
 sentry-sdk = "^0.17.0"
-validators = "^0.17.0"
+validators = "^0.18.0"
 wait = "^0.0.3"
 unittest-xml-reporting = "^3.0.2"
 [tool.poetry.dev-dependencies]
