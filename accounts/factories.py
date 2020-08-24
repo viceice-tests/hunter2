@@ -16,9 +16,10 @@ import unicodedata
 import factory
 import pytz
 from django.contrib.auth.models import User
+from factory.django import DjangoModelFactory
 
 
-class UserInfoFactory(factory.django.DjangoModelFactory):
+class UserInfoFactory(DjangoModelFactory):
     class Meta:
         model = 'accounts.UserInfo'
 
@@ -28,7 +29,7 @@ class UserInfoFactory(factory.django.DjangoModelFactory):
     picture = factory.Faker('url')
 
 
-class UserProfileFactory(factory.django.DjangoModelFactory):
+class UserProfileFactory(DjangoModelFactory):
     class Meta:
         model = 'accounts.UserProfile'
 
@@ -37,7 +38,7 @@ class UserProfileFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory('accounts.factories.UserFactory', profile=None)
 
 
-class UserFactory(factory.django.DjangoModelFactory):
+class UserFactory(DjangoModelFactory):
     class Meta:
         model = User
 
