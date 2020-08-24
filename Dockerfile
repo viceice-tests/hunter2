@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.1.3-experimental
 # Construct a common base image for creating python wheels and the final image
-FROM python:3.8.3-alpine3.12 AS runtime_base
+FROM python:3.8.5-alpine3.12 AS runtime_base
 
 RUN --mount=type=cache,target=/var/cache/apk apk add \
     lua5.2 \
