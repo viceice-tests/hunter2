@@ -17,7 +17,7 @@
     "start": "$(yarn bin nodemon) --watch webpack.common.js --watch webpack.dev.js --exec $(yarn bin webpack-dev-server) -- --config webpack.dev.js --watch"
   },
   "devDependencies": {
-    "autoprefixer": "10.0.0",
+    "autoprefixer": "10.0.1",
     "css-loader": "3.6.0",
     "exports-loader": "1.1.0",
     "imports-loader": "1.1.0",
