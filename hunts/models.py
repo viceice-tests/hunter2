@@ -675,10 +675,7 @@ class Guess(ExportModelOperationsMixin('guess'), models.Model):
         if not data.start_time:
             # This should never happen, but can do with sample data.
             return '0'
-        time_active = self.given - data.start_time
-        hours, seconds = divmod(time_active.total_seconds(), 3600)
-        minutes, seconds = divmod(seconds, 60)
-        return '%02d:%02d:%02d' % (hours, minutes, seconds)
+        return self.given - data.start_time
 
 
 class TeamData(models.Model):

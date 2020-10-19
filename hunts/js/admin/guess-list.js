@@ -1,11 +1,15 @@
 import {BTable, BPagination} from 'bootstrap-vue'
 import URI from 'urijs'
-import moment from 'moment'
+
+import HumanDateTime from '../human-datetime.vue'
+import HumanDuration from '../human-duration.vue'
 
 export default {
   components: {
     'b-pagination': BPagination,
     'b-table': BTable,
+    'human-datetime': HumanDateTime,
+    'human-duration': HumanDuration,
   },
   created: function() {
     this.updateData(true)
@@ -31,11 +35,6 @@ export default {
       highlightUnlocks: false,
       rows: 0,
     }
-  },
-  filters: {
-    moment: function(time, format) {
-      return moment(time).format(format)
-    },
   },
   methods: {
     changePage: function(page) {

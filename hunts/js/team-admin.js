@@ -1,10 +1,14 @@
 import {BTable} from 'bootstrap-vue'
 import URI from 'urijs'
-import moment from 'moment'
+
+import HumanDateTime from './human-datetime.vue'
+import HumanDuration from './human-duration.vue'
 
 export default {
   components: {
     'b-table': BTable,
+    'human-datetime': HumanDateTime,
+    'human-duration': HumanDuration,
   },
   computed: {
     sortedPuzzles() {
@@ -19,7 +23,6 @@ export default {
   created: function() {
     this.updateData(true)
   },
-  props: ['href'],
   data () {
     return {
       puzzles: [],
@@ -37,7 +40,6 @@ export default {
     }
   },
   methods: {
-    moment: moment,
     updateData: function(force) {
       clearTimeout(this.timer)
       if (force || this.autoUpdate) {
@@ -57,4 +59,5 @@ export default {
       }
     },
   },
+  props: ['href'],
 }
