@@ -47,7 +47,7 @@ module.exports = {
 
   output: {
     path: path.resolve('../assets/bundles/'),
-    filename: '[name]/[hash].js',
+    filename: '[name]/[contenthash].js',
     libraryTarget: 'var',
     library: '[name]',
   },
@@ -55,7 +55,7 @@ module.exports = {
   plugins: [
     new BundleTracker({filename: './webpack-stats.json'}), // Required for django-webpack-loader
     new MiniCssExtractPlugin({
-      filename: '[name]/[hash].css',
+      filename: '[name]/[contenthash].css',
     }),
     new VueLoaderPlugin(),
   ],
