@@ -1,4 +1,3 @@
-import $ from 'jquery'
 import {BTable, BPagination} from 'bootstrap-vue'
 import URI from 'urijs'
 import moment from 'moment'
@@ -72,20 +71,24 @@ export default {
       if (force || this.autoUpdate) {
         let guesses_url = URI(this.href).search({...this.filter, 'highlight_unlocks': this.highlightUnlocks, 'page': page})
         let v = this
-        $.get(guesses_url).done(function(data) {
-          for (let guess of data.guesses) {
-            if (guess.correct) {
-              guess._rowVariant = 'success'
-              continue
+        fetch(guesses_url).then(
+          response => response.json(),
+        ).then(
+          data => {
+            for (let guess of data.guesses) {
+              if (guess.correct) {
+                guess._rowVariant = 'success'
+                continue
+              }
+              if (guess.unlocked) {
+                guess._rowVariant = 'info'
+                continue
+              }
             }
-            if (guess.unlocked) {
-              guess._rowVariant = 'info'
-              continue
-            }
-          }
-          v.guesses = data.guesses
-          v.rows = data.rows
-        })
+            v.guesses = data.guesses
+            v.rows = data.rows
+          },
+        )
         if (this.autoUpdate) {
           this.timer = setTimeout(this.updateData, 5000)
         }

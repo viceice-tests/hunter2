@@ -1,4 +1,3 @@
-import $ from 'jquery'
 import {BTable} from 'bootstrap-vue'
 import URI from 'urijs'
 import moment from 'moment'
@@ -44,10 +43,14 @@ export default {
       if (force || this.autoUpdate) {
         let url = URI(this.href)
         let v = this
-        $.get(url).done(function(data) {
-          v.puzzles = data.puzzles
-          v.solved_puzzles = data.solved_puzzles
-        })
+        fetch(url).then(
+          response => response.json(),
+        ).then(
+          data => {
+            v.puzzles = data.puzzles
+            v.solved_puzzles = data.solved_puzzles
+          },
+        )
         if (this.autoUpdate) {
           this.timer = setTimeout(this.updateData, 5000)
         }
