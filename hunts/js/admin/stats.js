@@ -174,8 +174,8 @@ function drawTimeCompleted(lines) {
           .attr('fill', 'none')
           .attr('stroke-width', 8)
           .attr('d', progressLine(d.progress))
-          .on('mouseover', function () { hoverTeam(d, inverseScale, symbols, true) })
-          .on('mousemove', function () { hoverTeam(d, inverseScale, symbols, false) })
+          .on('mouseover', function (event) { hoverTeam(event, d, inverseScale, symbols, true) })
+          .on('mousemove', function (event) { hoverTeam(event, d, inverseScale, symbols, false) })
           .on('mouseout', function () { unhoverTeam(d, symbols) })
       })
     }
@@ -355,23 +355,23 @@ function teamClass(d) {
   return '[class~="team-' + entities.encode(d.team) + '"]'
 }
 
-function hoverTeam(data, computePuzzle, symbols, highlight) {
-  var puzzle = computePuzzle(d3.mouse(chart.node())[0])
-  var progress = data.progress.find(function(d) { return d.puzzle == puzzle })
+function hoverTeam(event, data, computePuzzle, symbols, highlight) {
+  var puzzle = computePuzzle(d3.pointer(event, chart.node())[0])
+  var progress = data.progress.find(function( d) { return d.puzzle == puzzle })
   if (progress === undefined) return
 
   if (highlight) {
     highlightTeam(data, symbols)
   }
-  moveTooltip()
+  moveTooltip(event)
   var time = d3.timeFormat('%a %H:%M:%S')(new Date(progress.time))
   drawTooltip([data.team, progress.puzzle + ': ' + time])
   chart.select('.chart-tooltip')
     .style('visibility', 'visible')
 }
 
-function moveTooltip() {
-  var mouse = d3.mouse(chart.select('.chart-background').node())
+function moveTooltip(event) {
+  var mouse = d3.pointer(event, chart.select('.chart-background').node())
   var ttx = mouse[0] + 24,
     tty = mouse[1]
   chart.select('.chart-tooltip')
@@ -443,8 +443,10 @@ function drawLegend(data, colours, symbols) {
   // Transform each group to a position just right of the main graph, and down some for each line
   var updateLegend = enterLegend.merge(legend)
   // Hide/show graph stuff
-  updateLegend.on('click', function(d, i) {
-    if (d3.event.ctrlKey) {
+  updateLegend.on('click', function(event, d) {
+    const e = updateLegend.nodes()
+    const i = e.indexOf(this)
+    if (event.ctrlKey) {
       var currentlyinvis = d3.select('[class~="invis"]' + teamClass(d)).empty()
       if (currentlyinvis) {
         i = invisteams.indexOf(d.team)
@@ -481,8 +483,8 @@ function drawLegend(data, colours, symbols) {
       }
     }
   })
-  updateLegend.on('mouseover', function(d) { highlightTeam(d, symbols) })
-  updateLegend.on('mouseout', function(d) { unhighlightTeam(d, symbols) })
+  updateLegend.on('mouseover', function(event, d) { highlightTeam(d, symbols) })
+  updateLegend.on('mouseout', function(event, d) { unhighlightTeam(d, symbols) })
   // Add the team's name
   updateLegend.append('span').text(function(d) { return d.team })
   // Add the symbol corresponding to that team
