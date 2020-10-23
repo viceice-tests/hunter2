@@ -14,7 +14,7 @@ export function cancel(event) {
   var prefix = target.data('team') ? `${target.data('team')}/` : ''
   var list_entry = target.closest('li')
   $.post(
-    prefix + 'cancelinvite', JSON.stringify({ user: target.data('user') })
+    prefix + 'cancelinvite', JSON.stringify({ user: target.data('user') }),
   ).done(function() {
     $('#inv-error').text('').hide('fast')
     hide(list_entry)
@@ -34,7 +34,7 @@ export function create(event) {
   var user = field.val()
   var team = target.data('team')
   $.post(
-    target.attr('action'), JSON.stringify({ user: user })
+    target.attr('action'), JSON.stringify({ user: user }),
   ).done(function(data) {
     $('#inv-error').text('').hide('fast')
     var cancel_link = $(`<a href="#" class="inv-cancel" data-user="${user}">Cancel</a>`)
@@ -58,7 +58,7 @@ export function accept(event) {
   var prefix = target.data('team') ? `${target.data('team')}/` : ''
   var list_entry = target.closest('li')
   $.post(
-    prefix + 'acceptinvite'
+    prefix + 'acceptinvite',
   ).done(function() {
     location.reload()
   }).fail(function(jqXHR) {
@@ -75,7 +75,7 @@ export function decline(event) {
   var prefix = target.data('team') ? `${target.data('team')}/` : ''
   var list_entry = target.closest('li')
   $.post(
-    prefix + 'denyinvite'
+    prefix + 'denyinvite',
   ).done(function() {
     $('#inv-error').text('').hide('fast')
     hide(list_entry)

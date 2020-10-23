@@ -47,5 +47,5 @@ module.exports = {
     'strict': [
       'error',
     ],
-  }
+  },
 }

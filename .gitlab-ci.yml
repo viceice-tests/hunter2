@@ -48,7 +48,7 @@ check:eslint:
   stage: test
   script:
     - install -d -m 777 reports
-    - docker-compose -f docker-compose.tools.yml run -e ESLINT_JUNIT_OUTPUT=reports/junit.xml --rm eslint -f /node_modules/eslint-junit/index.js
+    - docker-compose -f docker-compose.tools.yml run -e ESLINT_JUNIT_OUTPUT=reports/junit.xml --rm eslint -f /node_modules/eslint-junit/index.js .
   artifacts:
     reports:
       junit: reports/junit.xml

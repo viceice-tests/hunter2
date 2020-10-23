@@ -13,7 +13,7 @@ export function cancel(event) {
   var target = $(event.target)
   var list_entry = target.closest('li')
   $.post(
-    target.data('team') + '/cancelrequest'
+    target.data('team') + '/cancelrequest',
   ).done(function() {
     $('#req-error').text('').hide('fast')
     hide(list_entry)
@@ -32,7 +32,7 @@ export function create(event) {
   var field = target.find('select[name=team]')
   var team = field.val()
   $.post(
-    team + '/request'
+    team + '/request',
   ).done(function(data) {
     $('#inv-error').text('').hide('fast')
     var cancel_link = $(`<a href="#" data-team="${team}">Cancel</a>`)
@@ -52,7 +52,7 @@ export function accept(event) {
   var prefix = target.data('team') ? `${target.data('team')}/` : ''
   var list_entry = target.closest('li')
   $.post(
-    prefix + 'acceptrequest', JSON.stringify({ user: target.data('user') })
+    prefix + 'acceptrequest', JSON.stringify({ user: target.data('user') }),
   ).done(function(data) {
     $('#req-error').text('').hide('fast')
     hide(list_entry)
@@ -76,7 +76,7 @@ export function decline(event) {
   var prefix = target.data('team') ? `${target.data('team')}/` : ''
   var list_entry = target.closest('li')
   $.post(
-    prefix + 'denyrequest', JSON.stringify({ user: target.data('user') })
+    prefix + 'denyrequest', JSON.stringify({ user: target.data('user') }),
   ).done(function() {
     $('#req-error').text('').hide('fast')
     hide(list_entry)
