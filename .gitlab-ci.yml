@@ -30,6 +30,11 @@ stages:
 include:
   template: SAST.gitlab-ci.yml
 
+# Gitlab uses the existence of package.json to determine we're a Node.JS app, which we're not
+nodejs-scan-sast:
+  rules:
+    - when: never
+
 check:flake8:
   extends: .base_job
   needs: []
