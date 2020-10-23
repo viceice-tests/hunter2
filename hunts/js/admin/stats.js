@@ -445,7 +445,7 @@ function drawLegend(data, colours, symbols) {
   // Hide/show graph stuff
   updateLegend.on('click', function(event, d) {
     const e = updateLegend.nodes()
-    const i = e.indexOf(this)
+    let i = e.indexOf(this)
     if (event.ctrlKey) {
       var currentlyinvis = d3.select('[class~="invis"]' + teamClass(d)).empty()
       if (currentlyinvis) {

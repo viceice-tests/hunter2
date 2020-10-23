@@ -5,6 +5,6 @@ module.exports = merge(common, {
   mode: 'production',
 
   output: {
-    publicPath: '/static/bundles/'
+    publicPath: '/static/bundles/',
   },
 })
