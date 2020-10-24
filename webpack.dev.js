@@ -1,6 +1,5 @@
 const { merge } = require('webpack-merge')
 const common = require('./webpack.common.js')
-const path = require('path')
 
 const DEV_SERVER_HOST = process.env.H2_WEBPACK_DEV_HOST || 'localhost'
 const DEV_SERVER_PORT = parseInt(process.env.H2_WEBPACK_DEV_PORT, 10) || 4000
