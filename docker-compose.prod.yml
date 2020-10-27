@@ -43,7 +43,7 @@ services:
     volumes:
       - metrics:/prometheus
   redis:
-    image: redis:5.0.9-alpine3.12
+    image: redis:5.0.10-alpine3.12
     volumes:
       - redis:/data
   redis_exporter:
