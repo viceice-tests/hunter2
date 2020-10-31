@@ -14,10 +14,8 @@
 						{% csrf_token %}
 						{% bootstrap_form user_form layout='horizontal' %}
 						{% bootstrap_formset profile_formset layout='horizontal' %}
-						{% if show_event_details %}
-							<h3>Details for {{ request.tenant }}</h3>
-							{% bootstrap_formset attendance_formset layout='horizontal' %}
-						{% endif %}
+						<h3>Details for {{ request.tenant }}</h3>
+						{% bootstrap_formset attendance_formset layout='horizontal' %}
 						{% buttons %}
 							<button class="btn btn-primary" type="submit">Update</button>
 						{% endbuttons %}
