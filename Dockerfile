@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.1.3-experimental
 # Construct a common base image for creating python wheels and the final image
-FROM python:3.8.5-alpine3.12 AS runtime_base
+FROM python:3.8.5-alpine3.12@sha256:906616c291ddc23201c675b880e7297e5528bbd352fcbdda8bf90546bb653e0a AS runtime_base
 
 RUN --mount=type=cache,target=/var/cache/apk apk add \
     lua5.2 \
@@ -45,7 +45,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 
 # Build all the required Lua components
-FROM alpine:3.12 AS lua_build
+FROM alpine:3.12@sha256:d7342993700f8cd7aba8496c2d0e57be0666e80b4c441925fc6f9361fa81d10e AS lua_build
 
 COPY hunts/runtimes/lua/luarocks/config.lua /etc/luarocks/config-5.2.lua
 

@@ -2,13 +2,13 @@ version: '2.1'
 
 services:
   db:
-    image: postgres:9.6.16-alpine
+    image: postgres:9.6.16-alpine@sha256:3a1d32d67fff9d004a8fb50cbb4c7854dca176a9624ea12ba1bb9a5321e8eac1
     ports:
       - "5432:5432"
     volumes:
       - db:/var/lib/postgresql/data
   redis:
-    image: redis:5.0.10-alpine3.12
+    image: redis:5.0.10-alpine3.12@sha256:b38e34d20bfedc5a4331c97373e3508e8a7a855008ef9ba78d25887da36ce088
     volumes:
       - redis:/data
   webpack:
