@@ -19,7 +19,7 @@ services:
       - uploads_puzzles:/uploads/puzzles
       - uploads_solutions:/uploads/solutions
   db:
-    image: postgres:9.6.16-alpine
+    image: postgres:9.6.16-alpine@sha256:3a1d32d67fff9d004a8fb50cbb4c7854dca176a9624ea12ba1bb9a5321e8eac1
     volumes:
       - db:/var/lib/postgresql/data
   db_exporter:
@@ -27,7 +27,7 @@ services:
       - db
     environment:
       - DATA_SOURCE_NAME=postgresql://postgres@db:5432/?sslmode=disable
-    image: wrouesnel/postgres_exporter:v0.8.0
+    image: wrouesnel/postgres_exporter:v0.8.0@sha256:520fcd04d6c8f922d800d89ae96c021f4afd22e376c4b88260a8b780e3375dbe
   metrics:
     build: ./prometheus
     image: ${METRICS_IMAGE_TAG:-registry.gitlab.com/hunter2.app/hunter2/metrics}
@@ -36,7 +36,7 @@ services:
     volumes:
       - metrics:/prometheus
   redis:
-    image: redis:5.0.10-alpine3.12
+    image: redis:5.0.10-alpine3.12@sha256:b38e34d20bfedc5a4331c97373e3508e8a7a855008ef9ba78d25887da36ce088
     volumes:
       - redis:/data
   redis_exporter:
@@ -44,7 +44,7 @@ services:
       - redis
     environment:
       - REDIS_ADDR=redis://redis:6379
-    image: oliver006/redis_exporter:v1.13.1-alpine
+    image: oliver006/redis_exporter:v1.13.1-alpine@sha256:c1e6cce1b9f085c66a7c354030eb1926e4690d10d1441dd02994d39f7f56ea3f
   web:
     build: ./nginx
     depends_on:

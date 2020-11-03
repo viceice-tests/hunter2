@@ -1,11 +1,11 @@
-image: registry.gitlab.com/rconan/docker-and-compose:1.25.3-0
+image: registry.gitlab.com/rconan/docker-and-compose:1.25.3-0@sha256:8b1c5954a86520e4d5c65534935dd08f58e89e1f98b6b9e59ec94cc218dd44da
 
 variables:
   DOCKER_BUILDKIT: 1
   DOCKER_DRIVER: overlay2
 
 services:
-  - docker:19.03.13-dind
+  - docker:19.03.13-dind@sha256:331dafcf4b675f6ace9212a113d973a9cf56ea55c33415e1853e6ea1b474e0b6
 
 stages:
   - build1
