@@ -72,7 +72,8 @@ class EditProfileView(LoginRequiredMixin, View):
         return forms.UserInfoFormset(instance=request.user)
 
     def _get_attendance_formset(self, request):
-        return forms.AttendanceFormset(instance=request.user.info, queryset=request.user.info.attendance_set.filter(event=request.tenant))
+        AttendanceFormset = forms.attendance_formset_factory(request.tenant.seat_assignments)
+        return AttendanceFormset(instance=request.user.info, queryset=request.user.info.attendance_set.filter(event=request.tenant))
 
     def _render(self, request, user_form, profile_formset, attendance_formset):
         password_form = ChangePasswordForm(user=request.user) if request.user.has_usable_password() else SetPasswordForm(user=request.user)
@@ -84,7 +85,6 @@ class EditProfileView(LoginRequiredMixin, View):
             'password_form': password_form,
             'profile_formset': profile_formset,
             'attendance_formset': attendance_formset,
-            'show_event_details': request.tenant.seat_assignments,  # Seat is currently the only field in event details so hide everything if they're disabled
             'steam_account': steam_account,
         }
         return TemplateResponse(
@@ -108,7 +108,8 @@ class EditProfileView(LoginRequiredMixin, View):
             profile_formset = forms.UserInfoFormset(request.POST, instance=created_user)
             if profile_formset.is_valid():
                 created_profile = profile_formset[0].save(commit=False)
-                attendance_formset = forms.AttendanceFormset(request.POST, instance=created_profile)
+                AttendanceFormset = forms.attendance_formset_factory(request.tenant.seat_assignments)
+                attendance_formset = AttendanceFormset(request.POST, instance=created_profile)
                 if attendance_formset.is_valid():
                     created_user.save()
                     profile_formset.save()
