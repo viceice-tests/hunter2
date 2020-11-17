@@ -14,6 +14,7 @@
 import unicodedata
 
 import factory
+import faker
 import pytz
 from django.contrib.auth.models import User
 from factory.django import DjangoModelFactory
@@ -44,7 +45,10 @@ class UserFactory(DjangoModelFactory):
 
     first_name = factory.Faker('first_name')
     last_name = factory.Faker('last_name')
-    password = factory.PostGeneration(lambda user, create, extracted: user.set_password(extracted or factory.Faker('password').generate({})))
+    password = factory.Faker('password')
+    factory.PostGeneration(
+        lambda user, create, extracted: user.set_password(user.password)
+    )
 
     # Fixed values, can be overridden manually on creation.
     is_active = True
@@ -53,7 +57,11 @@ class UserFactory(DjangoModelFactory):
 
     # Joined in the last month but more recent last_login.
     date_joined = factory.Faker('date_time_this_month', tzinfo=pytz.utc)
-    last_login = factory.LazyAttribute(lambda o: factory.Faker('date_time_between_dates', datetime_start=o.date_joined, tzinfo=pytz.utc).generate({}))
+    last_login = factory.LazyAttribute(
+        lambda o: faker.Faker().date_time_between_dates(
+            datetime_start=o.date_joined, tzinfo=pytz.utc
+        ).isoformat()
+    )
 
     # We pass in 'user' to link the generated Profile to our just-generated User
     # This will call UserInfoFactory(user=our_new_user), thus skipping the SubFactory.
