@@ -10,11 +10,11 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.conf.urls import url
+from django.urls import path
 
 from . import consumers
 
 websocket_urlpatterns = [
-    url(r'^ws/hunt/?$', consumers.HuntWebsocket, name='hunt_websocket'),
-    url(r'^ws/hunt/ep/(?P<episode_number>\d+)/pz/(?P<puzzle_number>\d+)/?$', consumers.PuzzleEventWebsocket, name='puzzle_websocket'),
+    path('ws/hunt/', consumers.HuntWebsocket, name='hunt_websocket'),
+    path('ws/hunt/ep/<int:episode_number>/pz/<int:puzzle_number>/', consumers.PuzzleEventWebsocket, name='puzzle_websocket'),
 ]
