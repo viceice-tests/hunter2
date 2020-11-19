@@ -345,6 +345,34 @@ class AdminCreatePageLoadTests(EventTestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class AdminPuzzleFormPopupTests(EventTestCase):
+    def setUp(self):
+        self.user = TeamMemberFactory(user__is_staff=True, team__at_event=self.tenant, team__role=TeamRole.ADMIN)
+        self.client.force_login(self.user.user)
+        self.puzzle = PuzzleFactory(episode__event=self.tenant)
+
+    def test_admin_load_answer_form(self):
+        AnswerFactory(for_puzzle=self.puzzle)
+        response = self.client.get(reverse('admin:hunts_puzzle_change_answers', kwargs={
+            'puzzle_id': self.puzzle.id,
+        }))
+        self.assertEqual(response.status_code, 200)
+
+    def test_admin_load_hint_form(self):
+        HintFactory(puzzle=self.puzzle)
+        response = self.client.get(reverse('admin:hunts_puzzle_change_hints', kwargs={
+            'puzzle_id': self.puzzle.id,
+        }))
+        self.assertEqual(response.status_code, 200)
+
+    def test_admin_load_unlock_form(self):
+        UnlockFactory(puzzle=self.puzzle)
+        response = self.client.get(reverse('admin:hunts_puzzle_change_unlocks', kwargs={
+            'puzzle_id': self.puzzle.id,
+        }))
+        self.assertEqual(response.status_code, 200)
+
+
 class AdminPuzzleAccessTests(EventTestCase):
     def setUp(self):
         self.user = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.ADMIN)

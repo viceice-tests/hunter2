@@ -180,13 +180,9 @@ class PuzzleAdmin(ObjectPermissionsModelAdminMixin, NestedModelAdminMixin, Order
     class Form(forms.ModelForm):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.fields['runtime'].widget.attrs['class'] = 'advanced_field'
-            self.fields['options'].widget.attrs['class'] = 'advanced_field'
-            self.fields['cb_content'].widget.attrs['class'] = 'advanced_field'
-            self.fields['cb_runtime'].widget.attrs['class'] = 'advanced_field'
-            self.fields['cb_options'].widget.attrs['class'] = 'advanced_field'
-            self.fields['soln_runtime'].widget.attrs['class'] = 'advanced_field'
-            self.fields['soln_options'].widget.attrs['class'] = 'advanced_field'
+            for field in ('runtime', 'options', 'cb_content', 'cb_runtime', 'cb_options', 'soln_runtime', 'soln_options'):
+                if field in self.fields:  # If we're rendering a pop-up, these fields may not be present
+                    self.fields[field].widget.attrs['class'] = 'advanced_field'
 
     form = Form
     change_form_template = 'hunts/admin/change_puzzle.html'
@@ -224,12 +220,13 @@ class PuzzleAdmin(ObjectPermissionsModelAdminMixin, NestedModelAdminMixin, Order
         return None
 
     def get_urls(self):
+        info = self.model._meta.app_label, self.model._meta.model_name
         # Expose three extra views for editing answers, hints and unlocks without anything else
         urls = super().get_urls()
         urls = [
-            path('<str:puzzle_id>/answers/', self.onlyinlines_view(AnswerInline)),
-            path('<str:puzzle_id>/hints/', self.onlyinlines_view(HintInline)),
-            path('<str:puzzle_id>/unlocks/', self.onlyinlines_view(UnlockInline))
+            path('<str:puzzle_id>/answers/', self.onlyinlines_view(AnswerInline), name='{}_{}_change_answers'.format(*info)),
+            path('<str:puzzle_id>/hints/', self.onlyinlines_view(HintInline), name='{}_{}_change_hints'.format(*info)),
+            path('<str:puzzle_id>/unlocks/', self.onlyinlines_view(UnlockInline), name='{}_{}_change_unlocks'.format(*info))
         ] + urls
         return urls
 
