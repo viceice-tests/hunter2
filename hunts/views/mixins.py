@@ -30,7 +30,7 @@ class EpisodeUnlockedMixin():
         request.admin = is_admin_for_event.test(request.user, request.tenant)
 
         if not request.episode.started(request.team) and not request.admin:
-            if request.is_ajax():
+            if not request.accepts('text/html'):
                 raise PermissionDenied
             return TemplateResponse(
                 request,
@@ -45,7 +45,7 @@ class EpisodeUnlockedMixin():
 
         # TODO: May need caching of progress to avoid DB load
         if not request.episode.unlocked_by(request.team) and not request.admin:
-            if request.is_ajax():
+            if not request.accepts('text/html'):
                 raise PermissionDenied
             return TemplateResponse(
                 request, 'hunts/episodelocked.html', status=403
@@ -61,13 +61,13 @@ class PuzzleUnlockedMixin():
         request.admin = is_admin_for_event.test(request.user, request.tenant)
 
         if (not request.episode.started(request.team) or not request.episode.unlocked_by(request.team)) and not request.admin:
-            if request.is_ajax():
+            if not request.accepts('text/html'):
                 raise PermissionDenied
             event_url = reverse('event')
             return redirect(f'{event_url}#episode-{episode_number}')
 
         if not request.puzzle.started(request.team) and not request.admin:
-            if request.is_ajax():
+            if not request.accepts('text/html'):
                 raise PermissionDenied
             return TemplateResponse(
                 request,
@@ -79,7 +79,7 @@ class PuzzleUnlockedMixin():
             )
 
         if not request.puzzle.unlocked_by(request.team) and not request.admin:
-            if request.is_ajax():
+            if not request.accepts('text/html'):
                 raise PermissionDenied
             return TemplateResponse(
                 request, 'hunts/puzzlelocked.html', status=403

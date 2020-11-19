@@ -15,7 +15,6 @@ import uuid
 from datetime import timedelta
 import secrets
 
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -223,7 +222,7 @@ class Puzzle(OrderedModel):
         verbose_name='Puzzle page content',
         help_text='Main puzzle page content, generated using the puzzle renderer',
     )
-    options = JSONField(
+    options = models.JSONField(
         default=dict, blank=True,
         verbose_name='Puzzle page renderer configuration',
         help_text='Options for configuring the puzzle page renderer in JSON format. Currently no options are supported.',
@@ -238,7 +237,7 @@ class Puzzle(OrderedModel):
         blank=True, default='', verbose_name='AJAX callback script',
         help_text='Script for generating AJAX responses for callbacks made by puzzle',
     )
-    cb_options = JSONField(
+    cb_options = models.JSONField(
         default=dict, blank=True,
         verbose_name='AJAX callback processor configuration',
         help_text='Options for configuring the AJAX callback processor in JSON format. Currently no options are supported.',
@@ -254,7 +253,7 @@ class Puzzle(OrderedModel):
         verbose_name='Solution content',
         help_text='Content to be displayed to all users on the puzzle page after the event has completed'
     )
-    soln_options = JSONField(
+    soln_options = models.JSONField(
         default=dict, blank=True,
         verbose_name='Solution renderer configuration',
         help_text='Options for configuring the solution renderer in JSON format. Currently no options are supported.',
@@ -504,7 +503,7 @@ class UnlockAnswer(models.Model):
         verbose_name='Validator',
         help_text='Processor to use to check whether guess unlocks this unlock',
     )
-    options = JSONField(
+    options = models.JSONField(
         default=dict, blank=True,
         verbose_name='Validator configuration',
         help_text='''Options for configuring the validator in JSON format using the following keys:
@@ -559,7 +558,7 @@ class Answer(models.Model):
         verbose_name='Validator',
         help_text='Processor to use to check whether guess is correct',
     )
-    options = JSONField(
+    options = models.JSONField(
         default=dict, blank=True,
         verbose_name='Validator configuration',
         help_text='''Options for configuring the validator in JSON format using the following keys:
@@ -684,7 +683,7 @@ class Guess(ExportModelOperationsMixin('guess'), models.Model):
 
 class TeamData(models.Model):
     team = models.OneToOneField(teams.models.Team, on_delete=models.CASCADE)
-    data = JSONField(blank=True, null=True)
+    data = models.JSONField(blank=True, null=True)
 
     class Meta:
         verbose_name_plural = 'Team data'
@@ -696,7 +695,7 @@ class TeamData(models.Model):
 class UserData(models.Model):
     event = models.ForeignKey(events.models.Event, on_delete=models.DO_NOTHING)
     user = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
-    data = JSONField(blank=True, null=True)
+    data = models.JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = (('event', 'user'), )
@@ -710,7 +709,7 @@ class TeamPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
     start_time = models.DateTimeField(blank=True, null=True)
-    data = JSONField(blank=True, null=True)
+    data = models.JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = (('puzzle', 'team'), )
@@ -724,7 +723,7 @@ class UserPuzzleData(models.Model):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     user = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid.uuid4, editable=False)
-    data = JSONField(blank=True, null=True)
+    data = models.JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = (('puzzle', 'user'), )

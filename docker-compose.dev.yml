@@ -43,7 +43,7 @@ services:
     ports:
       - "${H2_LISTEN:-127.0.0.1:8080}:8000"
     volumes:
-      - ${PWD:-.}:/opt/hunter2/src:ro,delegated
+      - ${PWD:-.}:/opt/hunter2/src:delegated
       - config:/config
       - uploads_events:/uploads/events
       - uploads_puzzles:/uploads/puzzles
