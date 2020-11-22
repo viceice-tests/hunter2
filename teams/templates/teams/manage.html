@@ -8,7 +8,8 @@
 {% endblock %}
 
 {% block script %}
-{% render_bundle 'teams_manage' 'js' attrs='defer' %}
+{% comment %}This is deliberately not deferred because jQuery needs to be loaded before some other stuff in the template is rendered{% endcomment %}
+{% render_bundle 'teams_manage' 'js' %}
 {% endblock %}
 
 {% block content %}

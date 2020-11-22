@@ -1,4 +1,6 @@
-import $ from 'jquery'
+// The forms on this page use Django widgets which expect jquery
+// to be loaded into the global scope as $ and jQuery
+import $ from 'expose-loader?exposes[]=$&exposes[]=jQuery!jquery'
 
 import 'hunter2/js/base.js'
 import * as invite from './invite.js'
