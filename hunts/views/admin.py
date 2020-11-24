@@ -465,14 +465,14 @@ class TeamAdminDetailContent(LoginRequiredMixin, View):
 
         # Hints which depend on not-unlocked unlocks are not included
         hints_scheduled = {
-            puzzle.id: [
+            puzzle.id: sorted([
                 {
                     'text': h.text,
                     'time': h.unlocks_at(team, tp_datas[puzzle.id])
                 }
                 for h in puzzle.hint_set.all()
                 if h.unlocks_at(team, tp_datas[puzzle.id]) and not h.unlocked_by(team, tp_datas[puzzle.id], puzzle.guess_set.all())
-            ]
+            ], key=lambda x: x['time'])
             for puzzle in puzzles
         }
 
