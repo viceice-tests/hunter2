@@ -39,8 +39,10 @@
 			)</span>
 		</template>
 		<template v-slot:cell(given)="row">
-			<span class="date">{{ row.value | moment("ll") }}</span>
-			<span class="time">{{ row.value | moment("LTS") }}</span>
+			<human-datetime v-bind:value="row.value" />
+		</template>
+		<template v-slot:cell(time_on_puzzle)="row">
+			<human-duration v-bind:value="row.value" />
 		</template>
 	</b-table>
 

@@ -2,6 +2,11 @@
 {% load static %}
 {% load render_bundle from webpack_loader %}
 
+{% block style %}
+{{ block.super }}
+{% render_bundle 'hunts_admin_team' 'css' %}
+{% endblock %}
+
 {% block script %}
 {{ block.super }}
 {% render_bundle 'hunts_admin_team' 'js' attrs='defer' %}
