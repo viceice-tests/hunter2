@@ -1,8 +1,8 @@
 import Vue from 'vue'
-import App from './progress.vue'
-import 'bootstrap'
 import { Slider } from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
+
+import App from './progress.vue'
 
 Vue.use(Slider)
 

@@ -48,19 +48,20 @@ $hover-color: #eee;
 }
 
 #admin-progress-filters-header {
-    #filters-expanded {
+    .filters-expanded {
         float: left;
         font-weight: bold;
         font-size: 200%;
         line-height: 75%;
     }
-    &.collapsed {
-        #filters-expanded:after {
+
+    > button {
+        &.collapsed::before {
+            @extend .filters-expanded;
             content: "+";
         }
-    }
-    &:not(.collapsed) {
-        #filters-expanded:after {
+        &:not(.collapsed)::before {
+            @extend .filters-expanded;
             content: "-";
         }
     }

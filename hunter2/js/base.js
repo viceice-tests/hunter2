@@ -1,10 +1,5 @@
-import $ from 'jquery'
+const form = document.getElementById('logoutForm')
 
-import setupJQueryAjaxCsrf from './csrf'
-
-$(function() {
-  setupJQueryAjaxCsrf()
-  $('#logoutLink').click(function() {
-    $('#logoutForm').submit()
-  })
+document.getElementById('logoutLink').addEventListener('click', function() {
+  form.submit()
 })

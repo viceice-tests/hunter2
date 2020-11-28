@@ -1,4 +1,3 @@
-import 'bootstrap'
 import Vue from 'vue'
 
 import 'hunter2/js/base'
