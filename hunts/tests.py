@@ -1065,6 +1065,14 @@ class AdminContentTests(EventTestCase):
         response = self.client.get(self.guesses_url)
         self.assertEqual(response.status_code, 200)
 
+    def test_non_admin_cannot_view_guesses(self):
+        player = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.PLAYER)
+        self.client.force_login(player.user)
+        response = self.client.get(reverse('admin_guesses'))
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(reverse('admin_guesses_list'))
+        self.assertEqual(response.status_code, 403)
+
     def test_can_view_guesses_by_team(self):
         team_id = self.guesses[0].by_team.id
         self.client.force_login(self.admin_user.user)
@@ -1095,6 +1103,14 @@ class AdminContentTests(EventTestCase):
         self.client.force_login(self.admin_user.user)
         response = self.client.get(stats_url)
         self.assertEqual(response.status_code, 200)
+
+    def test_non_admin_cannot_view_stats(self):
+        player = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.PLAYER)
+        self.client.force_login(player.user)
+        response = self.client.get(reverse('admin_stats'))
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(reverse('admin_stats_content'))
+        self.assertEqual(response.status_code, 403)
 
     def test_non_admin_cannot_view_admin_team(self):
         player = TeamMemberFactory(team__at_event=self.tenant, team__role=TeamRole.PLAYER)
