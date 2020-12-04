@@ -366,15 +366,22 @@ class Progress(LoginRequiredMixin, View):
 
 
 class ProgressContent(LoginRequiredMixin, View):
-    def get(self, request, episode_id=None):
+    def get(self, request):
         admin = is_admin_for_event.test(request.user, request.tenant)
 
         if not admin:
             raise PermissionDenied
 
-        puzzles = models.Puzzle.objects.filter(episode_id__isnull=False)
-        if episode_id is not None:
-            puzzles = puzzles.filter(episode_id=episode_id)
+        puzzles = models.Puzzle.objects.filter(
+            episode_id__isnull=False
+        ).select_related(
+            'episode',
+            'episode__event',
+        ).prefetch_related(
+            'episode__event__episode_set',
+            'episode__puzzle_set',
+            'hint_set',
+        )
 
         # TODO only teams which have opened a puzzle/guessed/some other criterion
         teams = Team.objects.filter(at_event=request.tenant).prefetch_related('members').seal()

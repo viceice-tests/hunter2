@@ -102,7 +102,7 @@ class Episode(models.Model):
         return date < timezone.now()
 
     def get_relative_id(self):
-        episodes = self.event.episode_set.order_by('start_date')
+        episodes = self.event.episode_set.all()
         for index, e in enumerate(episodes):
             if e == self:
                 return index + 1
