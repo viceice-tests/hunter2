@@ -21,7 +21,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files import File
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Count, OuterRef, Prefetch, Subquery
+from django.db.models import Count, Max, OuterRef, Prefetch, Subquery
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
@@ -349,6 +349,136 @@ class EpisodeList(LoginRequiredMixin, View):
             'id': episode.pk,
             'name': episode.name
         } for episode in models.Episode.objects.filter(event=request.tenant)], safe=False)
+
+
+class Progress(LoginRequiredMixin, View):
+    def get(self, request):
+        admin = is_admin_for_event.test(request.user, request.tenant)
+
+        if not admin:
+            raise PermissionDenied
+
+        return TemplateResponse(
+            request,
+            'hunts/admin/progress.html',
+            {'wide': True},
+        )
+
+
+class ProgressContent(LoginRequiredMixin, View):
+    def get(self, request, episode_id=None):
+        admin = is_admin_for_event.test(request.user, request.tenant)
+
+        if not admin:
+            raise PermissionDenied
+
+        puzzles = models.Puzzle.objects.filter(episode_id__isnull=False)
+        if episode_id is not None:
+            puzzles = puzzles.filter(episode_id=episode_id)
+
+        # TODO only teams which have opened a puzzle/guessed/some other criterion
+        teams = Team.objects.filter(at_event=request.tenant).prefetch_related('members').seal()
+
+        all_guesses = models.Guess.objects.filter(
+            for_puzzle__episode__event=request.tenant
+        ).select_related(
+            'by_team', 'for_puzzle', 'correct_for'
+        ).seal()
+
+        team_guessed_on_puzzle = defaultdict(dict)
+        puzzle_activity = all_guesses.values('by_team', 'for_puzzle').annotate(
+            latest=Max('given'),
+            guesses=Count('id')
+        ).order_by()
+        for pz_team in puzzle_activity:
+            team_guessed_on_puzzle[pz_team['by_team']][pz_team['for_puzzle']] = {
+                'latest': pz_team['latest'],
+                'guesses': pz_team['guesses'],
+            }
+
+        all_puzzle_data = models.TeamPuzzleData.objects.filter(
+            team__at_event=request.tenant
+        ).select_related(
+            'team', 'puzzle'
+        ).prefetch_related(
+            Prefetch(
+                'puzzle__guess_set',
+                queryset=models.Guess.objects.order_by(
+                    'given'
+                ).select_related('by', 'by__user')
+            ),
+            Prefetch(
+                'puzzle__hint_set',
+                queryset=models.Hint.objects.select_related(
+                    'start_after', 'start_after__puzzle'
+                ).prefetch_related('start_after__unlockanswer_set')
+            ),
+            'puzzle__unlock_set__unlockanswer_set',
+        ).seal()
+        puzzle_data = defaultdict(dict)
+        for pzd in all_puzzle_data:
+            puzzle_data[pzd.team.id][pzd.puzzle.id] = pzd
+
+        def team_puzzle_state(team, puzzle):
+            hints_scheduled = None
+            guesses = None
+            latest_guess = None
+
+            if any(g.get_correct_for() for g in all_guesses if g.for_puzzle == puzzle and g.by_team == team):
+                state = 'solved'
+                guesses = team_guessed_on_puzzle[team.id].get(puzzle.id, {}).get('guesses', 0)
+            elif not puzzle_data[team.id].get(puzzle.id) or not puzzle_data[team.id][puzzle.id].start_time:
+                state = 'not_opened'
+            else:
+                state = 'open'
+                guesses = team_guessed_on_puzzle[team.id].get(puzzle.id, {}).get('guesses', 0)
+                latest_guess = team_guessed_on_puzzle[team.id].get(puzzle.id, {}).get('latest', None)
+                hints_scheduled = any([
+                    True
+                    for h in puzzle.hint_set.all()
+                    if h.unlocks_at(team, puzzle_data[team.id][puzzle.id]) and not h.unlocked_by(team, puzzle_data[team.id][puzzle.id], puzzle.guess_set.all())
+                ])
+            return {
+                'puzzle_id': puzzle.id,
+                'episode_number': puzzle.episode.get_relative_id(),
+                'state': state,
+                'guesses': guesses,
+                'latest_guess': latest_guess,
+                'hints_scheduled': hints_scheduled,
+            }
+
+        def team_help_needed_rating(team):
+            """Rate how much admins should be trying to assist this team relative to others"""
+            # Current implementation: number of unsolved, looked-at puzzles.
+            solved = len([1 for pz in puzzles
+                          if any(g.get_correct_for() for g in all_guesses
+                                 if g.for_puzzle == pz and g.by_team == team)
+                          ])
+            looked_at = len([1 for pz in puzzles
+                             if puzzle_data[team.id].get(pz.id) and puzzle_data[team.id][pz.id].start_time])
+            # for linear episodes, that would be be always be 1, so add in the number of solved puzzles
+            # to discriminate.
+            return looked_at - solved, -solved
+
+        teams = sorted(teams, key=team_help_needed_rating, reverse=True)
+
+        data = {
+            'puzzles': [{
+                'short_name': pz.abbr,
+                'title': pz.title,
+                'episode': pz.episode.get_relative_id(),
+            } for pz in puzzles],
+            'team_progress': [{
+                'id': t.id,
+                'url': reverse('admin_team_detail', kwargs={'team_id': t.id}),
+                'name': t.get_verbose_name(),
+                'progress': [
+                    team_puzzle_state(t, pz)
+                    for pz in puzzles
+                ]
+            } for t in teams],
+        }
+        return JsonResponse(data)
 
 
 class TeamAdmin(LoginRequiredMixin, View):

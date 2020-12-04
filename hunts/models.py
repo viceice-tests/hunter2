@@ -24,6 +24,7 @@ from django.urls import reverse
 from django_prometheus.models import ExportModelOperationsMixin
 from enumfields import EnumField, Enum
 from ordered_model.models import OrderedModel
+from seal.models import SealableModel
 
 import accounts
 import events
@@ -297,6 +298,12 @@ class Puzzle(OrderedModel):
                 return i
 
         raise RuntimeError("Could not find Puzzle pk when iterating episode's puzzle list")
+
+    @property
+    def abbr(self):
+        if self.episode is None:
+            return str(self.id)
+        return f'{self.episode.get_relative_id()}.{self.get_relative_id()}'
 
     def started(self, team):
         """Determine whether this puzzle should be visible to teams yet.
@@ -611,7 +618,7 @@ Regex:
         )
 
 
-class Guess(ExportModelOperationsMixin('guess'), models.Model):
+class Guess(ExportModelOperationsMixin('guess'), SealableModel):
     id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     for_puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     by = models.ForeignKey(accounts.models.UserProfile, on_delete=models.CASCADE)
@@ -702,7 +709,7 @@ class UserData(models.Model):
         return f'Data for {self.user.username} at {self.event}'
 
 
-class TeamPuzzleData(models.Model):
+class TeamPuzzleData(SealableModel):
     puzzle = models.ForeignKey(Puzzle, on_delete=models.CASCADE)
     team = models.ForeignKey(teams.models.Team, on_delete=models.CASCADE)
     start_time = models.DateTimeField(blank=True, null=True)

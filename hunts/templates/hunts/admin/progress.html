@@ -1,0 +1,26 @@
+{% extends "hunts/admin/base.html" %}
+{% load static %}
+{% load render_bundle from webpack_loader %}
+
+{% block style %}
+{{ block.super }}
+{% render_bundle 'hunts_admin_progress' 'css' %}
+{% endblock %}
+
+{% block title %}
+Progress - {{ block.super }}
+{% endblock %}
+
+{% block script %}
+{% render_bundle 'hunts_admin_progress' 'js' attrs='defer' %}
+{% endblock %}
+
+{% block page_header %}
+<h1>Progress</h1>
+{% endblock %}
+
+{% block content %}
+<div id="admin_progress_widget" href="{% url 'admin_progress_content' %}"></div>
+{% endblock %}
+
+

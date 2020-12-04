@@ -40,6 +40,7 @@ export default {
     }
   },
   methods: {
+    anchor: function() { return window.location.hash.substring(1) },
     updateData: function(force) {
       clearTimeout(this.timer)
       if (force || this.autoUpdate) {

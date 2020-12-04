@@ -57,6 +57,12 @@ if USE_SILK:  # nocover
         logging.error("Silk profiling enabled but not available. Check REQUIREMENTS_VERSION is set to development at build time.")
         USE_SILK = False
 
+if DEBUG:
+    import warnings
+    from seal.exceptions import UnsealedAttributeAccess
+
+    warnings.filterwarnings('error', category=UnsealedAttributeAccess)
+
 # Generate a secret key and store it the first time it is accessed
 SECRET_KEY = load_or_create_secret_key("/config/secrets.ini")
 

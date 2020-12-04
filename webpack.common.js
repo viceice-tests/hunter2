@@ -12,6 +12,7 @@ module.exports = {
     accounts_profile:        'accounts/scss/profile.scss',
     hunts_admin_crud_puzzle: 'imports-loader?imports=default|jquery|$!hunts/js/admin/crud/puzzle.js',
     hunts_admin_guesses:     'hunts/js/admin/guesses.js',
+    hunts_admin_progress:    'hunts/js/admin/progress-entrypoint.js',
     hunts_admin_stats:       'hunts/js/admin/stats.js',
     hunts_admin_team:        'hunts/js/team-admin-entrypoint.js',
     hunts_about:             'hunts/scss/about.scss',
@@ -23,7 +24,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(png|jpe?g|gif)$/i,
+        test: /\.(png|jpg|jpeg|gif|eot|ttf|woff|woff2|svg|svgz)(\?.+)?$/,
         use: [
           {
             loader: 'file-loader',
@@ -37,7 +38,7 @@ module.exports = {
         ],
       },
       {
-        test: /\.scss$/,
+        test: /\.s?css$/,
         use: [
           MiniCssExtractPlugin.loader,
           'css-loader',

@@ -16,6 +16,8 @@ from django.db import models
 from django.urls import reverse
 from enumfields import Enum, EnumField
 
+from seal.models import SealableModel
+
 import accounts
 import events
 
@@ -26,7 +28,7 @@ class TeamRole(Enum):
     AUTHOR = 'A'
 
 
-class Team(models.Model):
+class Team(SealableModel):
     # Nullable CharField with the unique property allows us to enforce uniqueness at DB schema level
     # DB will allow multiple teams with no name while still enforcing name uniqueness
     name = models.CharField(blank=True, null=True, unique=True, max_length=100)
