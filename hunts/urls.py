@@ -27,7 +27,6 @@ eventadminpatterns = [
     path('stats_content/<int:episode_id>', views.admin.StatsContent.as_view(), name='admin_stats_content'),
     path('progress', views.admin.Progress.as_view(), name='admin_progress'),
     path('progress_content', views.admin.ProgressContent.as_view(), name='admin_progress_content'),
-    path('progress_content/<int:episode_id>', views.admin.ProgressContent.as_view()),
     path('teams', views.admin.TeamAdmin.as_view(), name='admin_team'),
     path('teams/<int:team_id>', views.admin.TeamAdminDetail.as_view(), name='admin_team_detail'),
     path('teams/<int:team_id>/content', views.admin.TeamAdminDetailContent.as_view(), name='admin_team_detail_content'),
