@@ -16,6 +16,20 @@
   ],
   "pinDigests": true,
   "rangeStrategy": "pin",
+  "regexManagers": [
+    {
+      "fileMatch": ["^Dockerfile$"],
+      "matchStrings": ["^ENV poetry_version=(?<currentValue>[0-9\\.]+)$"],
+      "depNameTemplate": "poetry",
+      "datasourceTemplate": "python"
+    },
+    {
+      "fileMatch": ["^nginx/Dockerfile$"],
+      "matchStrings": ["^ && opm get knyar/nginx-lua-prometheus=(?<currentValue>[0-9\\.]+) \\$"],
+      "depNameTemplate": "knyar/nginx-lua-prometheus",
+      "datasourceTemplate": "github-releases"
+    }
+  ],
   "unpublishSafe": true,
   "yarnrc": ""
 }
