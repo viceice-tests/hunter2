@@ -306,11 +306,11 @@ requests-oauthlib = ">=0.3.0"
 
 [[package]]
 name = "django-analytical"
-version = "2.6.0"
+version = "3.0.0"
 description = "Analytics service integration for Django projects"
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 
 [[package]]
 name = "django-autocomplete-light"
@@ -1215,7 +1215,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "7ccc32e31322afde65ff8967522188fe70369a4144880016647d74ce90633c44"
+content-hash = "76f5166321c572b568d29e191e197b37ffdf63e38cf7683a57bb7e0148daee0e"
 
 [metadata.files]
 aioredis = [
@@ -1404,8 +1404,8 @@ django-allauth = [
     {file = "django-allauth-0.44.0.tar.gz", hash = "sha256:e51af457466022f52154d74c8523ac69375120fad2acce6e239635d85e610b25"},
 ]
 django-analytical = [
-    {file = "django-analytical-2.6.0.tar.gz", hash = "sha256:6ccda72996f72902902ec38183613c6c02093bc1046dc75831f0f014a663549f"},
-    {file = "django_analytical-2.6.0-py3-none-any.whl", hash = "sha256:07d6907cee47e2acafaa1332d250c8f01b8f45375cd576ca1bb0d8095f92f227"},
+    {file = "django-analytical-3.0.0.tar.gz", hash = "sha256:d2142dcfc122018dcb5bb56c97a7708f3bf5c367a00a09e7bee71c3f2ac30a53"},
+    {file = "django_analytical-3.0.0-py3-none-any.whl", hash = "sha256:acd6f9359cc4b4cd05eed8043041d625ce667566469b695f41ef6261247aea5e"},
 ]
 django-autocomplete-light = [
     {file = "django-autocomplete-light-3.8.1.tar.gz", hash = "sha256:4e84a6d95d272b0d7221614332e2bd54ffff15ec06e78947279398f6507ce225"},
