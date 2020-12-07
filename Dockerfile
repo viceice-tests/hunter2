@@ -71,7 +71,7 @@ COPY .yarnrc package.json yarn.lock /opt/hunter2/src/
 RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
     yarn install --frozen-lockfile
 COPY . .
-RUN "$(yarn bin webpack)" --config webpack.prod.js
+RUN --mount=type=cache,target=/var/cache/babel-loader "$(yarn bin webpack)" --config webpack.prod.js
 
 
 # Build the final image
