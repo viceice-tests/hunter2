@@ -1,10 +1,10 @@
 import Vue from 'vue'
 import App from './progress.vue'
 import 'bootstrap'
-import ElementUI from 'element-ui'
+import { Slider } from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 
-Vue.use(ElementUI)
+Vue.use(Slider)
 
 const id = '#admin_progress_widget'
 const el = document.querySelector(id)

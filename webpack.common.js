@@ -32,6 +32,26 @@ module.exports = {
         ],
       },
       {
+        test: /\.m?js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            cacheDirectory: '/var/cache/babel-loader',
+            presets: [['@babel/preset-env', { 'targets': 'defaults' }]],
+            plugins: [
+              [
+                'component',
+                {
+                  'libraryName': 'element-ui',
+                  'styleLibraryName': 'theme-chalk',
+                },
+              ],
+            ],
+          },
+        },
+      },
+      {
         test: /\.vue$/,
         use: [
           'vue-loader',
