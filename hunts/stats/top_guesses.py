@@ -79,7 +79,7 @@ class TopGuessesGenerator(AbstractGenerator):
             'top_teams': [
                 (
                     position,
-                    team.get_verbose_name(),
+                    team.get_display_name(),
                     team.guess_count,
                 ) for position, team in enumerate(teams[:self._number], start=1)
             ],
