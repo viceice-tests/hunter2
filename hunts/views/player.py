@@ -468,8 +468,9 @@ class StatsView(EventMustBeOverMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         generators = [Generator(event=self.request.tenant) for Generator in stats_generators]
 
+        profile = self.request.user.profile if self.request.user.is_authenticated else None
         renders = {
-            g.id: g.render(self.request.team, user=self.request.user)
+            g.id: g.render(self.request.team, user=profile)
             for g in generators
         }
 

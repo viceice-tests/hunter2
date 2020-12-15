@@ -2326,22 +2326,26 @@ class PlayerStatsViewTests(EventTestCase):
     def test_access(self):
         now = timezone.now()
         with freezegun.freeze_time(now) as frozen_datetime:
-            # The event must have a winning episode for the stats view
-            EpisodeFactory(event=self.tenant, winning=True)
-            user = TeamMemberFactory(team__role=TeamRole.PLAYER).user
-            admin = TeamMemberFactory(team__role=TeamRole.ADMIN).user
+            users = TeamMemberFactory.create_batch(11, team__role=TeamRole.PLAYER)
+            admin = TeamMemberFactory(team__role=TeamRole.ADMIN)
+            # Ensure the event has a winning episode containing a puzzle, with a correct guess by a user
+            puzzle = PuzzleFactory(episode__event=self.tenant, episode__winning=True)
+            for i, user in enumerate(users):
+                GuessFactory(for_puzzle=puzzle, correct=True, by=user, given=now - datetime.timedelta(minutes=len(users) - i))
             self.tenant.end_date = now + datetime.timedelta(minutes=1)
             self.tenant.save()
             response = self.client.get(self.url)
-            self.assertEqual(response.status_code, 403)
-            self.client.force_login(user)
+            self.assertEqual(response.status_code, 404)
+            self.client.force_login(admin.user)
             response = self.client.get(self.url)
-            self.assertEqual(response.status_code, 403)
-            self.client.force_login(admin)
+            self.assertEqual(response.status_code, 404)
+            self.client.force_login(users[-1].user)
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 404)
+            frozen_datetime.tick(datetime.timedelta(minutes=2))
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
             self.client.logout()
-            frozen_datetime.tick(datetime.timedelta(minutes=2))
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
 
