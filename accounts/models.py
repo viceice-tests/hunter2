@@ -32,6 +32,9 @@ class UserProfile(models.Model):
     def username(self):
         return self.user.username
 
+    def get_display_name(self):
+        return self.user.username
+
     def __str__(self):
         return f'{self.username}'
 

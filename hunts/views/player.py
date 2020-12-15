@@ -30,8 +30,9 @@ from events.utils import annotate_userinfo_queryset_with_seat
 from teams.models import TeamRole
 from teams.mixins import TeamMixin
 from teams.rules import is_admin_for_event
-from .mixins import EpisodeUnlockedMixin, PuzzleUnlockedMixin
+from .mixins import EpisodeUnlockedMixin, EventMustBeOverMixin, PuzzleUnlockedMixin
 from .. import models, utils
+from ..stats import __all__ as stats_generators
 
 import hunter2
 
@@ -457,4 +458,24 @@ class ExamplesView(TemplateView):
             'content': content,
             'event_name': self.request.tenant.name,
         })
+        return context
+
+
+class StatsView(EventMustBeOverMixin, TemplateView):
+    template_name = 'hunts/stats.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        generators = [Generator(event=self.request.tenant) for Generator in stats_generators]
+
+        renders = {
+            g.id: g.render(self.request.team, user=self.request.user)
+            for g in generators
+        }
+
+        context['stats'] = (
+            (g.id, g.title, renders[g.id])
+            for g in generators
+            if renders[g.id] is not None
+        )
         return context

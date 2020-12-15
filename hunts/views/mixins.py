@@ -15,6 +15,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
+from django.utils import timezone
 
 from teams.rules import is_admin_for_event
 from ..models import Puzzle
@@ -98,3 +99,11 @@ class PuzzleAdminMixin():
         if not request.admin:
             raise PermissionDenied
         return super().dispatch(request, *args, puzzle_id=puzzle_id, *args, **kwargs)
+
+
+class EventMustBeOverMixin():
+    def dispatch(self, request, *args, **kwargs):
+        if request.tenant.end_date < timezone.now() or request.user.is_authenticated and is_admin_for_event(request.user, request.tenant):
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied

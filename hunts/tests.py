@@ -1092,12 +1092,18 @@ class AdminContentTests(EventTestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_can_view_stats(self):
+        stats_url = reverse('admin_stats')
+        self.client.force_login(self.admin_user.user)
+        response = self.client.get(stats_url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_can_view_stats_content(self):
         stats_url = reverse('admin_stats_content')
         self.client.force_login(self.admin_user.user)
         response = self.client.get(stats_url)
         self.assertEqual(response.status_code, 200)
 
-    def test_can_view_stats_by_episode(self):
+    def test_can_view_stats_content_by_episode(self):
         episode_id = self.guesses[0].for_puzzle.episode.id
         stats_url = reverse('admin_stats_content', kwargs={'episode_id': episode_id})
         self.client.force_login(self.admin_user.user)
@@ -2083,8 +2089,8 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertTrue(self.run_async(comm.receive_nothing)(delay))
 
         guess = GuessFactory(for_puzzle=self.pz, by=user, guess=unlockanswer.guess)
-        _ = self.receive_json(comm, 'Websocket did not send unlock')
-        _ = self.receive_json(comm, 'Websocket did not send guess')
+        self.receive_json(comm, 'Websocket did not send unlock')
+        self.receive_json(comm, 'Websocket did not send guess')
         remaining = hint.delay_for_team(team, data.tp_data).total_seconds()
         self.assertFalse(hint.unlocked_by(team, data.tp_data))
         self.assertTrue(self.run_async(comm.receive_nothing)(remaining / 2))
@@ -2104,7 +2110,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         guess.save()
         unlockanswer.guess = guess.guess
         unlockanswer.save()
-        _ = self.receive_json(comm, 'Websocket did not resend unlock')
+        self.receive_json(comm, 'Websocket did not resend unlock')
         output = self.receive_json(comm, 'Websocket did not resend hint')
         self.assertEqual(output['type'], 'new_hint')
         self.assertEqual(output['content']['hint_uid'], hint.compact_id)
@@ -2112,7 +2118,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         # delete the unlockanswer, check for notification
         unlockanswer.delete()
 
-        _ = self.receive_json(comm, 'Websocket did not delete unlockanswer')
+        self.receive_json(comm, 'Websocket did not delete unlockanswer')
 
         # guesses are write-only - no notification
         guess.delete()
@@ -2120,12 +2126,12 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         # create a new unlockanswer for this unlock
         unlockanswer = UnlockAnswerFactory(unlock=unlock)
         guess = GuessFactory(for_puzzle=self.pz, by=user, guess='__INITIALLY_WRONG__')
-        _ = self.receive_json(comm, 'Websocket did not send guess')
+        self.receive_json(comm, 'Websocket did not send guess')
         # update the unlockanswer to match the given guess, and check that the dependent
         # hint is scheduled and arrives correctly
         unlockanswer.guess = guess.guess
         unlockanswer.save()
-        _ = self.receive_json(comm, 'Websocket did not send unlock')
+        self.receive_json(comm, 'Websocket did not send unlock')
         self.assertFalse(hint.unlocked_by(team, data.tp_data))
         self.assertTrue(self.run_async(comm.receive_nothing)(delay / 2))
         time.sleep(delay / 2)
@@ -2311,3 +2317,38 @@ class ContextProcessorTests(AsyncEventTestCase):
         output = announcements(self.request)
 
         self.assertEqual(0, len(output['announcements']))
+
+
+class PlayerStatsViewTests(EventTestCase):
+    def setUp(self):
+        self.url = reverse('player_stats')
+
+    def test_access(self):
+        now = timezone.now()
+        with freezegun.freeze_time(now) as frozen_datetime:
+            # The event must have a winning episode for the stats view
+            EpisodeFactory(event=self.tenant, winning=True)
+            user = TeamMemberFactory(team__role=TeamRole.PLAYER).user
+            admin = TeamMemberFactory(team__role=TeamRole.ADMIN).user
+            self.tenant.end_date = now + datetime.timedelta(minutes=1)
+            self.tenant.save()
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 403)
+            self.client.force_login(user)
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 403)
+            self.client.force_login(admin)
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 200)
+            self.client.logout()
+            frozen_datetime.tick(datetime.timedelta(minutes=2))
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 200)
+
+    def test_no_winning_episode(self):
+        EpisodeFactory(event=self.tenant, winning=False)
+        user = TeamMemberFactory().user
+        self.client.force_login(user)
+        self.tenant.end_date = timezone.now()
+        self.tenant.save()
+        self.client.get(self.url)
