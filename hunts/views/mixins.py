@@ -12,6 +12,7 @@
 
 
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
@@ -103,7 +104,7 @@ class PuzzleAdminMixin():
 
 class EventMustBeOverMixin():
     def dispatch(self, request, *args, **kwargs):
-        if request.tenant.end_date < timezone.now() or request.user.is_authenticated and is_admin_for_event(request.user, request.tenant):
+        if request.tenant.end_date < timezone.now():
             return super().dispatch(request, *args, **kwargs)
         else:
-            raise PermissionDenied
+            raise Http404
