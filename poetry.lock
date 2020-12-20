@@ -496,8 +496,8 @@ sqlparse = "*"
 
 [[package]]
 name = "django-solo"
-version = "1.1.3"
-description = "django-solo helps working with singletons: things like global settings that you want to edit from the admin site."
+version = "1.1.5"
+description = "Django Solo helps working with singletons"
 category = "main"
 optional = false
 python-versions = "*"
@@ -1256,7 +1256,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<3.9"
-content-hash = "e33a25eae5674715096ab2285fac985121a9552a6bb46d77eb2418afea6c8b24"
+content-hash = "fdece3a8701a63282a599773f8373131dc0adaa3a9528cb7eed7cb96504c0c55"
 
 [metadata.files]
 aioredis = [
@@ -1491,7 +1491,7 @@ django-silk = [
     {file = "django_silk-4.1.0-py2.py3-none-any.whl", hash = "sha256:a331e55618fa62eaf3cf5a63f31bc1e91205efbeeca5e587c577498b0e251ed8"},
 ]
 django-solo = [
-    {file = "django-solo-1.1.3.tar.gz", hash = "sha256:b1206b9a9411b19a4354f7d7d245909a9ea7e9cd566b594363b5adce7dc13e5d"},
+    {file = "django-solo-1.1.5.tar.gz", hash = "sha256:e412f0f844aa101fa77ba5d07768a8a77ea0e0a6e098b87a6eef3bedb2e5ecd4"},
 ]
 django-sortedm2m = [
     {file = "django-sortedm2m-3.0.2.tar.gz", hash = "sha256:8acc3638b7a2587533c7776deaa2c6c035220c8f9fff85ed67858a9c6bf51e7c"},
