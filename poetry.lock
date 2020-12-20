@@ -1199,7 +1199,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "validators"
-version = "0.18.1"
+version = "0.18.2"
 description = "Python Data Validation for Humans™."
 category = "main"
 optional = false
@@ -1256,7 +1256,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<3.9"
-content-hash = "78262291dd41fe65c2d6dc11a8c4d524de85efc883b43eeb04aab169b10643ca"
+content-hash = "e33a25eae5674715096ab2285fac985121a9552a6bb46d77eb2418afea6c8b24"
 
 [metadata.files]
 aioredis = [
@@ -1910,8 +1910,8 @@ urllib3 = [
     {file = "urllib3-1.26.2.tar.gz", hash = "sha256:19188f96923873c92ccb987120ec4acaa12f0461fa9ce5d3d0772bc965a39e08"},
 ]
 validators = [
-    {file = "validators-0.18.1-py3-none-any.whl", hash = "sha256:f787632edf9e054e9cf580d3016f5b0e9ad83b8a00a258b71406db0456e17007"},
-    {file = "validators-0.18.1.tar.gz", hash = "sha256:1a653b33c0ab091790f65f42b61aa191e354ed5fdedfeb17d24a86d0789966d7"},
+    {file = "validators-0.18.2-py3-none-any.whl", hash = "sha256:0143dcca8a386498edaf5780cbd5960da1a4c85e0719f3ee5c9b41249c4fefbd"},
+    {file = "validators-0.18.2.tar.gz", hash = "sha256:37cd9a9213278538ad09b5b9f9134266e7c226ab1fede1d500e29e0a8fbb9ea6"},
 ]
 wait = [
     {file = "wait-0.0.3.tar.gz", hash = "sha256:0eac805979a62f1c12a325d0f99c1563ee0773be1ced2017b308629d27cc7d70"},
