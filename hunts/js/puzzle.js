@@ -2,7 +2,7 @@ import $ from 'jquery'
 import 'bootstrap/js/dist/collapse'
 import { easeLinear, format, select } from 'd3'
 import RobustWebSocket from 'robust-websocket'
-import { XmlEntities as entities } from 'html-entities'
+import { encode } from 'html-entities'
 
 import 'hunter2/js/base'
 
@@ -225,7 +225,7 @@ var guesses = []
 
 function addAnswer(user, guess, correct, guess_uid) {
   var guesses_table = $('#guesses .guess-viewer-header')
-  guesses_table.after('<tr><td>' + entities.encode(user) + '</td><td>' + entities.encode(guess) + '</td></tr>')
+  guesses_table.after('<tr><td>' + encode(user) + '</td><td>' + encode(guess) + '</td></tr>')
   guesses.push(guess_uid)
 }
 
@@ -302,7 +302,7 @@ function receivedNewUnlock(content) {
     createBlankUnlock(content.unlock_uid)
   }
   unlocks.get(content.unlock_uid).unlock = content.unlock
-  var guess = entities.encode(content.guess)
+  var guess = encode(content.guess)
   if (!unlocks.get(content.unlock_uid).guesses.includes(guess)) {
     unlocks.get(content.unlock_uid).guesses.push(guess)
   }

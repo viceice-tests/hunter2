@@ -4,7 +4,7 @@ import colors from 'd3-scale-chromatic/src/colors.js'
 
 import 'hunts/scss/admin/stats.scss'
 
-import { XmlEntities as entities } from 'html-entities'
+import { encode } from 'html-entities'
 
 let schemeCategory20 = colors('1f77b4aec7e8ff7f0effbb782ca02c98df8ad62728ff98969467bdc5b0d58c564bc49c94e377c2f7b6d27f7f7fc7c7c7bcbd22dbdb8d17becf9edae5')
 
@@ -146,7 +146,7 @@ function drawTimeCompleted(lines) {
       .enter()
       .append('path')
       .attr('transform', function(d) { return 'translate(' + x(d.puzzle) + ',' + y(new Date(d.time)) + ')' })
-      .attr('class', function() { return 'marker hide-team team-' + entities.encode(parentData(this).team) })
+      .attr('class', function() { return 'marker hide-team team-' + encode(parentData(this).team) })
       .attr('fill', function() { return colours(parentData(this).team) })
       .attr('fill-opacity', function() { return symbols(parentData(this).team).fillOpacity })
       .attr('stroke', function() { return colours(parentData(this).team) })
@@ -164,11 +164,11 @@ function drawTimeCompleted(lines) {
 
       data.puzzleProgress.forEach(function (d) {
         chart.append('path')
-          .attr('class', 'line progress-line hide-team team-' + entities.encode(d.team))
+          .attr('class', 'line progress-line hide-team team-' + encode(d.team))
           .attr('stroke', colours(d.team))
           .attr('d', progressLine(d.progress))
         chart.append('path')
-          .attr('class', 'hover-line team-' + entities.encode(d.team))
+          .attr('class', 'hover-line team-' + encode(d.team))
           .attr('stroke', 'black')
           .attr('stroke-opacity', 0)
           .attr('fill', 'none')
@@ -245,7 +245,7 @@ function drawTeamPuzzleStuckness(data) {
     .enter()
     .append('path')
     .attr('transform', function(d) { return 'translate(' + x(d.puzzle) + ',' + y(d.stuckness) + ')' })
-    .attr('class', function() { return 'marker hide-team team-' + entities.encode(parentData(this).team) })
+    .attr('class', function() { return 'marker hide-team team-' + encode(parentData(this).team) })
     .attr('fill', function() { return colours(parentData(this).team) })
     .attr('fill-opacity', function() { return symbols(parentData(this).team).fillOpacity })
     .attr('stroke', function() { return colours(parentData(this).team) })
@@ -352,7 +352,7 @@ function puzzleTimeDrawer(mainPropName, subPropName) {
 }
 
 function teamClass(d) {
-  return '[class~="team-' + entities.encode(d.team) + '"]'
+  return '[class~="team-' + encode(d.team) + '"]'
 }
 
 function hoverTeam(event, data, computePuzzle, symbols, highlight) {
@@ -492,7 +492,7 @@ function drawLegend(data, colours, symbols) {
     .attr('class', 'li-marker')
     .append('path')
     .attr('transform', 'translate(10, 10)')
-    .attr('class', function(d) { return 'marker hide-team team-' + entities.encode(d.team) })
+    .attr('class', function(d) { return 'marker hide-team team-' + encode(d.team) })
     .attr('fill', function(d) { return colours(d.team) })
     .attr('fill-opacity', function(d) { return symbols(d.team).fillOpacity })
     .attr('stroke', function(d) { return colours(d.team) })
@@ -572,7 +572,7 @@ function typeChanged() {
 
 function restoreView(invisteams) {
   for (let team of invisteams) {
-    let teamclass = '.team-' + entities.encode(team)
+    let teamclass = '.team-' + encode(team)
     d3.selectAll(teamclass)
       .classed('invis', invisteams)
       .style('opacity', invisteams ? hiddenOpacity : 1)
@@ -586,7 +586,7 @@ $(function () {
     var select = $('#episode')
     select.children(':not([value=""])').remove()
     episodes.forEach(function (d) {
-      select.append('<option value="' + d.id + '">' + entities.encode(d.name) + '</option>')
+      select.append('<option value="' + d.id + '">' + encode(d.name) + '</option>')
     })
     select.change(episodeChanged)
   })
