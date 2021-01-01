@@ -44,7 +44,7 @@ services:
       - redis
     environment:
       - REDIS_ADDR=redis://redis:6379
-    image: oliver006/redis_exporter:v1.14.0-alpine@sha256:405253bea7451a7a872e5bfcfccd908b65b63132088750b4b2a28cd79ce9540d
+    image: oliver006/redis_exporter:v1.15.0-alpine@sha256:490072f47d4bda78596586db5d0fcebff6b7d2a264a2d03c9b5fe545f47073e7
   web:
     build: ./nginx
     depends_on:
