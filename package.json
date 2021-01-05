@@ -50,7 +50,7 @@
     "element-ui": "2.14.1",
     "expose-loader": "1.0.3",
     "file-loader": "6.2.0",
-    "html-entities": "1.4.0",
+    "html-entities": "2.0.2",
     "jquery": "3.5.1",
     "js-cookie": "2.2.1",
     "luxon": "1.25.0",
