@@ -735,7 +735,7 @@ signedtoken = ["cryptography", "pyjwt (>=1.0.0)"]
 
 [[package]]
 name = "parameterized"
-version = "0.7.4"
+version = "0.7.5"
 description = "Parameterized testing with any Python test framework"
 category = "main"
 optional = false
@@ -883,19 +883,20 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "pyjwt"
-version = "1.7.1"
+version = "2.0.0"
 description = "JSON Web Token implementation in Python"
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 
 [package.dependencies]
-cryptography = {version = ">=1.4", optional = true, markers = "extra == \"crypto\""}
+cryptography = {version = ">=3.3.1,<4.0.0", optional = true, markers = "extra == \"crypto\""}
 
 [package.extras]
-crypto = ["cryptography (>=1.4)"]
-flake8 = ["flake8", "flake8-import-order", "pep8-naming"]
-test = ["pytest (>=4.0.1,<5.0.0)", "pytest-cov (>=2.6.0,<3.0.0)", "pytest-runner (>=4.2,<5.0.0)"]
+crypto = ["cryptography (>=3.3.1,<4.0.0)"]
+dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.3.1,<4.0.0)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "mypy", "pre-commit"]
+docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
+tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
 
 [[package]]
 name = "pyopenssl"
@@ -1256,7 +1257,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<3.9"
-content-hash = "ca8e2ae6e9f701d84335d09d173daa41e2d94b105b08a4548ded6e056a2287cc"
+content-hash = "37973874de31deb6d85662dc5a89ed5cc4abf2c60720e1367309dd88f2f5ad70"
 
 [metadata.files]
 aioredis = [
@@ -1702,8 +1703,8 @@ oauthlib = [
     {file = "oauthlib-3.1.0.tar.gz", hash = "sha256:bee41cc35fcca6e988463cacc3bcb8a96224f470ca547e697b604cc697b2f889"},
 ]
 parameterized = [
-    {file = "parameterized-0.7.4-py2.py3-none-any.whl", hash = "sha256:59ab908e31c01505a987a2be78854e19cb1630c047bbab7848169c371d614d56"},
-    {file = "parameterized-0.7.4.tar.gz", hash = "sha256:190f8cc7230eee0b56b30d7f074fd4d165f7c45e6077582d0813c8557e738490"},
+    {file = "parameterized-0.7.5-py2.py3-none-any.whl", hash = "sha256:b36f709fcfd9e8c144c1374b16a40fc0b5984efe93e41d53e6d228ae2a1540c5"},
+    {file = "parameterized-0.7.5.tar.gz", hash = "sha256:b5e6af67b9e49485e30125b1c8f031ffa81a265ca08bfa73f31551bf03cf68c4"},
 ]
 parso = [
     {file = "parso-0.7.1-py2.py3-none-any.whl", hash = "sha256:97218d9159b2520ff45eb78028ba8b50d2bc61dcc062a9682666f2dc4bd331ea"},
@@ -1797,8 +1798,8 @@ pyhamcrest = [
     {file = "PyHamcrest-2.0.2.tar.gz", hash = "sha256:412e00137858f04bde0729913874a48485665f2d36fe9ee449f26be864af9316"},
 ]
 pyjwt = [
-    {file = "PyJWT-1.7.1-py2.py3-none-any.whl", hash = "sha256:5c6eca3c2940464d106b99ba83b00c6add741c9becaec087fb7ccdefea71350e"},
-    {file = "PyJWT-1.7.1.tar.gz", hash = "sha256:8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96"},
+    {file = "PyJWT-2.0.0-py3-none-any.whl", hash = "sha256:5c2ff2eb27d7e342dfc3cafcc16412781f06db2690fbef81922b0172598f085b"},
+    {file = "PyJWT-2.0.0.tar.gz", hash = "sha256:7a2b271c6dac2fda9e0c33d176c4253faba2c6c6b3a99c7f28a32c3c97522779"},
 ]
 pyopenssl = [
     {file = "pyOpenSSL-20.0.0-py2.py3-none-any.whl", hash = "sha256:898aefbde331ba718570244c3b01dcddb1b31a3b336613436a45e52e27d9a82d"},
