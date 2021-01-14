@@ -60,7 +60,7 @@ services:
       - H2_IMAGE_VERSION
     image: registry.gitlab.com/hunter2.app/hunter2/web:${H2_IMAGE_VERSION:-latest}
     ports:
-      - "${H2_LISTEN:-8080}:80"
+      - "${H2_LISTEN:-8080}:8080"
     volumes:
       - uploads_events:/media/events:ro
       - uploads_puzzles:/media/puzzles:ro
