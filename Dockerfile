@@ -30,7 +30,7 @@ RUN --mount=type=cache,target=/var/cache/apk apk add \
 ARG PIP_DISABLE_PIP_VERSION_CHECK=1
 
 ENV PATH "/root/.poetry/bin:${PATH}"
-ARG poetry_version=1.0.2
+ARG poetry_version=1.1.4
 RUN wget "https://raw.githubusercontent.com/python-poetry/poetry/${poetry_version}/get-poetry.py" \
  && python get-poetry.py --version "${poetry_version}" \
  && rm get-poetry.py \
