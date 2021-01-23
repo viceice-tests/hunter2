@@ -15,7 +15,9 @@
 						{% bootstrap_form user_form layout='horizontal' %}
 						{% bootstrap_formset profile_formset layout='horizontal' %}
 						<h3>Details for {{ request.tenant }}</h3>
-						{% bootstrap_formset attendance_formset layout='horizontal' %}
+						{% if attendance_formset %}
+							{% bootstrap_formset attendance_formset layout='horizontal' %}
+						{% endif %}
 						{% buttons %}
 							<button class="btn btn-primary" type="submit">Update</button>
 						{% endbuttons %}
