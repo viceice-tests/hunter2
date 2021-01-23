@@ -20,4 +20,4 @@ sed -i -e "/^H2_IMAGE_VERSION=/c H2_IMAGE_VERSION=${new_version}" .env
 sudo docker-compose pull
 sudo docker-compose run --rm app migrate_schemas
 sudo docker-compose up -d
-[[ -n "${H2_DISCORD_URL}" ]] && url -H "Content-Type: application/json" -X POST -d "{\"content\": \"Updated from ${old_version} to ${new_version}\"}" "${H2_DISCORD_URL}"
+[[ -n "${H2_DISCORD_URL}" ]] && curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"Updated from ${old_version} to ${new_version}\"}" "${H2_DISCORD_URL}"
