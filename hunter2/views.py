@@ -14,6 +14,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 from django.views.generic.base import RedirectView
 from django.views.generic import TemplateView
+from django.utils.safestring import mark_safe
 
 from events.models import Event
 from .models import Configuration
@@ -46,5 +47,5 @@ class PrivacyView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['privacy_policy'] = Configuration.get_solo().privacy_policy
+        context['privacy_policy'] = mark_safe(Configuration.get_solo().privacy_policy)
         return context
