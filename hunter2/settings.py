@@ -46,7 +46,7 @@ DATABASES = {
     'default': env.db('H2_DATABASE_URL', default="postgres://postgres:postgres@db:5432/postgres")
 }
 CACHES = {
-    'default': env.cache_url('H2_CACHE_URL', default="dummycache://"),
+    'default': env.cache_url('H2_CACHE_URL', default="rediscache://redis:6379/2"),
     'stats': env.cache_url('H2_STATS_CACHE_URL', default="rediscache://redis:6379/1"),
 }
 USE_SILK = DEBUG and env.bool('H2_SILK', default=False)
@@ -281,8 +281,9 @@ TEMPLATES = [
                 'events.context_processors.event_theme',
                 'teams.context_processors.event_team',
                 'hunts.context_processors.announcements',
-                'hunter2.context_processors.privacy_policy',
+                'hunter2.context_processors.icons',
                 'hunter2.context_processors.login_url',
+                'hunter2.context_processors.privacy_policy',
                 'hunter2.context_processors.sentry_dsn',
             ],
         },

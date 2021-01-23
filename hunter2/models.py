@@ -15,6 +15,26 @@ from django.db import models
 from solo.models import SingletonModel
 
 
+def file_path(instance, filename):
+    return f'site/{filename}'
+
+
 class Configuration(SingletonModel):
     index_content = models.TextField()
     privacy_policy = models.TextField(blank=True)
+
+
+class File(models.Model):
+    slug = models.SlugField(unique=True)
+    file = models.FileField(
+        upload_to=file_path,
+        help_text='The extension of the uploaded file will determine the Content-Type of the file when served',
+    )
+
+
+class Icon(models.Model):
+    file = models.ForeignKey(File, on_delete=models.CASCADE)
+    size = models.PositiveSmallIntegerField(help_text='The size of the icon (width and height). 0 should be used for scalable (eg. SVG) icons.', unique=True)
+
+    def url(self):
+        return self.file.file.url

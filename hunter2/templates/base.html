@@ -1,4 +1,5 @@
 {% load analytical %}
+{% load cache %}
 {% load render_bundle from webpack_loader %}
 {% load static %}
 <!DOCTYPE html>
@@ -24,6 +25,12 @@
 	{% block script %}
 	{% render_bundle 'hunter2' 'js' attrs='defer' %}
 	{% endblock %}
+
+	{% cache 300 icons %}
+	{% for icon in icons %}
+	<link rel="icon" href="{{ icon.url }}" sizes="{% if icon.size == 0 %}any{% else %}{{ icon.size }}x{{ icon.size }}{% endif %}" />
+	{% endfor %}
+	{% endcache %}
 
 	{% analytical_head_bottom %}
 </head>

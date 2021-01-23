@@ -48,6 +48,7 @@ services:
       - config:/config
       - uploads_events:/uploads/events
       - uploads_puzzles:/uploads/puzzles
+      - uploads_site:/uploads/site
       - uploads_solutions:/uploads/solutions
     tty: true
 
@@ -60,4 +61,5 @@ volumes:
   redis: {}
   uploads_events: {}
   uploads_puzzles: {}
+  uploads_site: {}
   uploads_solutions: {}
