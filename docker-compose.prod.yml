@@ -23,6 +23,7 @@ services:
       - config:/config
       - uploads_events:/uploads/events
       - uploads_puzzles:/uploads/puzzles
+      - uploads_site:/uploads/site
       - uploads_solutions:/uploads/solutions
   db:
     image: postgres:9.6.16-alpine@sha256:3a1d32d67fff9d004a8fb50cbb4c7854dca176a9624ea12ba1bb9a5321e8eac1
@@ -63,6 +64,7 @@ services:
     volumes:
       - uploads_events:/media/events:ro
       - uploads_puzzles:/media/puzzles:ro
+      - uploads_site:/media/site:ro
       - uploads_solutions:/media/solutions:ro
 
 volumes:
@@ -72,4 +74,5 @@ volumes:
   redis: {}
   uploads_events: {}
   uploads_puzzles: {}
+  uploads_site: {}
   uploads_solutions: {}

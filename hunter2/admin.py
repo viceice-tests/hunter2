@@ -16,3 +16,5 @@ from solo.admin import SingletonModelAdmin
 from . import models
 
 admin.site.register(models.Configuration, SingletonModelAdmin)
+admin.site.register(models.File)
+admin.site.register(models.Icon)

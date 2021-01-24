@@ -10,11 +10,23 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+from django.db.models import BooleanField, ExpressionWrapper, Q
 from django.urls import reverse
 
-from .models import Configuration
+from .models import Configuration, Icon
 from .utils import wwwize
 from . import settings
+
+
+def icons(request):
+    # Fetching logic is entirely in a queryset and specifically not evaluated here,
+    # such that if we hit the template fragment cache we do not perform the query
+    queryset = Icon.objects.annotate(
+        scalable=ExpressionWrapper(Q(size=0), output_field=BooleanField()),
+    ).select_related('file').order_by('scalable', 'size')
+    return {
+        'icons': queryset,
+    }
 
 
 def login_url(request):
