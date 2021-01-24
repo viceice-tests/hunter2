@@ -66,7 +66,7 @@ class EventFactory(factory.django.DjangoModelFactory):
         model = 'events.Event'
 
     name = factory.Sequence(lambda n: 'Test Event %d' % n)
-    schema_name = factory.Faker('schema_name')
+    schema_name = factory.Sequence(lambda n: f'e{n}')
     theme = factory.SubFactory(ThemeFactory)
     current = False
     about_text = factory.Faker('text')
