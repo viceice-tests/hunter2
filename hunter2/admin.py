@@ -15,6 +15,13 @@ from django.contrib import admin
 from solo.admin import SingletonModelAdmin
 from . import models
 
+
+@admin.register(models.APIToken)
+class APITokenAdmin(admin.ModelAdmin):
+    readonly_fields = ('token', )
+    list_display = ('token', )
+
+
 admin.site.register(models.Configuration, SingletonModelAdmin)
 admin.site.register(models.File)
 admin.site.register(models.Icon)

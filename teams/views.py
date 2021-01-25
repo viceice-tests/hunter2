@@ -18,10 +18,11 @@ from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.views import View
-from django.views.generic import UpdateView
+from django.views.generic import TemplateView, UpdateView
 
 from accounts.models import UserProfile
 from events.utils import annotate_userprofile_queryset_with_seat
+from hunter2.mixins import APITokenRequiredMixin
 from . import forms, models
 from .forms import CreateTeamForm, InviteForm, RequestForm
 from .mixins import TeamMixin
@@ -53,8 +54,11 @@ class CreateTeamView(LoginRequiredMixin, TeamMixin, UpdateView):
         return reverse('team', kwargs={'team_id': team_id})
 
 
-class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
-    def get(self, request):
+class ManageTeamView(LoginRequiredMixin, TeamMixin, TemplateView):
+    template_name = "teams/manage.html"
+
+    def get_context_data(self, **kwargs):
+        request = self.request
         if request.team.is_explicit():
             invite_form = InviteForm()
             invites = annotate_userprofile_queryset_with_seat(request.team.invites, request.tenant)
@@ -77,11 +81,11 @@ class ManageTeamView(LoginRequiredMixin, TeamMixin, View):
                 'create_form': create_form,
                 'request_form': request_form,
             }
-        return TemplateResponse(
-            request,
-            'teams/manage.html',
-            context=context,
-        )
+        context['token'] = request.team.token
+        if request.tenant:
+            context['discord_url'] = request.tenant.discord_url,
+            context['discord_bot_id'] = request.tenant.discord_bot_id,
+        return context
 
 
 class TeamView(LoginRequiredMixin, TeamMixin, View):
@@ -368,4 +372,21 @@ class DenyRequest(LoginRequiredMixin, TeamMixin, View):
         return JsonResponse({
             'result': 'OK',
             'message': 'Request denied',
+        })
+
+
+class TeamInfoView(APITokenRequiredMixin, View):
+    def get(self, request, team_token):
+        try:
+            team = models.Team.objects.get(token=team_token)
+        except models.Team.DoesNotExist:
+            return JsonResponse({
+                'result': 'Not Found',
+                'message': 'Invalid team token',
+            }, status=404)
+        return JsonResponse({
+            'result': 'OK',
+            'team': {
+                'name': team.name,
+            },
         })

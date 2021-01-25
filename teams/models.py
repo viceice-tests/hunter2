@@ -10,12 +10,12 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+import uuid
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from enumfields import Enum, EnumField
-
 from seal.models import SealableModel
 
 import accounts
@@ -40,6 +40,7 @@ class Team(SealableModel):
     members = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='teams')
     invites = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='team_invites')
     requests = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='team_requests')
+    token = models.UUIDField(default=uuid.uuid4, editable=False)
 
     def __str__(self):
         return '%s @%s' % (self.get_verbose_name(), self.at_event)

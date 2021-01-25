@@ -10,6 +10,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
+import uuid
 
 from django.db import models
 from solo.models import SingletonModel
@@ -17,6 +18,13 @@ from solo.models import SingletonModel
 
 def file_path(instance, filename):
     return f'site/{filename}'
+
+
+class APIToken(models.Model):
+    token = models.UUIDField(default=uuid.uuid4, editable=False)
+
+    def __str__(self):
+        return str(self.token)
 
 
 class Configuration(SingletonModel):

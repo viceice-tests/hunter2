@@ -23,6 +23,7 @@ class TeamAdmin(admin.ModelAdmin):
     ordering = ['at_event', 'name']
     list_display = ('the_name', 'at_event', 'role', 'member_count')
     list_display_links = ('the_name', )
+    readonly_fields = ('token', )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
