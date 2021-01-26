@@ -20,7 +20,7 @@ services:
       - uploads_site:/uploads/site
       - uploads_solutions:/uploads/solutions
   db:
-    image: postgres:9.6.16-alpine@sha256:3a1d32d67fff9d004a8fb50cbb4c7854dca176a9624ea12ba1bb9a5321e8eac1
+    image: postgres:9.6.16-alpine@sha256:8ec15b51fd1ec3233ca7bcf3a58e800d863f57c8d07ffdc65fe4640a19f7b2e3
     volumes:
       - db:/var/lib/postgresql/data
   db_exporter:
