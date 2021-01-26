@@ -13,6 +13,7 @@
 
 from django import forms
 from django.contrib.auth.models import User
+from django.core.exceptions import SuspiciousOperation
 from django.forms.models import inlineformset_factory, modelform_factory
 from django.forms.widgets import RadioSelect
 from django.utils.safestring import mark_safe
@@ -48,11 +49,6 @@ class UserInfoForm(forms.ModelForm):
 
     field_order = ['username', 'email', 'password1', 'password2', 'contact']
 
-    def signup(self, request, user):
-        user.info = models.UserInfo(user=user)
-        user.info.save()
-        user.save()
-
 
 class UserSignupForm(UserInfoForm):
     def __init__(self, *args, **kwargs):
@@ -62,3 +58,10 @@ class UserSignupForm(UserInfoForm):
                 label=mark_safe('I have read and agree to <a href="/privacy">the site privacy policy</a>'),
                 required=True,
             )
+
+    def signup(self, request, user):
+        if Configuration.get_solo().privacy_policy and request.POST['privacy'] != "on":
+            raise SuspiciousOperation("You must accept the privacy policy")
+        user.info = models.UserInfo(user=user, contact=request.POST['contact'])
+        user.info.save()
+        user.save()

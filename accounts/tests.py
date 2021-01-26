@@ -11,13 +11,16 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from django.contrib.auth.models import User
 from django.test import TestCase
+from django.urls import reverse
+from faker import Faker
+from hunter2.models import Configuration
 
 from accounts.factories import UserInfoFactory, UserProfileFactory, UserFactory
 
 
 class FactoryTests(TestCase):
-
     def test_user_info_factory_default_construction(self):
         UserInfoFactory.create()
 
@@ -26,3 +29,41 @@ class FactoryTests(TestCase):
 
     def test_user_factory_default_construction(self):
         UserFactory.create()
+
+
+class SignupTests(TestCase):
+    def test_signup_saves_contact_choice(self):
+        fake = Faker()
+        password = fake.password()
+        response = self.client.post(
+            reverse('account_signup'),
+            {
+                'username': fake.user_name(),
+                'email': fake.email(),
+                'password1': password,
+                'password2': password,
+                'contact': 'False',  # False is more likely to be translated to None by accident than True
+                'privacy': 'on',
+            },
+        )
+        self.assertEqual(response.status_code, 302)  # Should redirect back to where you were after signup
+        self.assertIsNotNone(User.objects.get().info.contact)
+
+    def test_signup_without_privacy(self):
+        fake = Faker()
+        config = Configuration.get_solo()
+        config.privacy_policy = fake.paragraph()
+        config.save()
+        password = fake.password()
+        response = self.client.post(
+            reverse('account_signup'),
+            {
+                'username': fake.user_name(),
+                'email': fake.email(),
+                'password1': password,
+                'password2': password,
+                'contact': fake.boolean(),
+                'privacy': 'off',
+            },
+        )
+        self.assertEqual(response.status_code, 400)
