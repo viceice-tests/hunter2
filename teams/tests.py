@@ -12,6 +12,7 @@
 
 
 import json
+import uuid
 
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
@@ -24,6 +25,7 @@ from accounts.models import UserProfile
 from events.factories import EventFactory, EventFileFactory
 from events.models import Event
 from events.test import EventAwareTestCase, EventTestCase
+from hunter2.models import APIToken
 from .factories import TeamFactory, TeamMemberFactory
 from .mixins import TeamMixin
 from .models import Team, TeamRole
@@ -407,3 +409,72 @@ class NoSchemaRulesTests(EventAwareTestCase):
         profile = TeamMemberFactory(team__at_event=event, team__role=TeamRole.ADMIN)
         event.deactivate()
         self.assertFalse(rules.is_admin_for_schema_event(profile.user, None))
+
+
+class TeamInfoTests(EventTestCase):
+    def test_no_api_token(self):
+        team = TeamFactory()
+        url = reverse('team_info', kwargs={
+            'team_token': team.token,
+        })
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 401)
+
+    def test_invalid_bearer_token(self):
+        team = TeamFactory()
+        url = reverse('team_info', kwargs={
+            'team_token': team.token,
+        })
+        response = self.client.get(url, HTTP_AUTHORIZATION=f'Bearer {uuid.uuid4()}')
+        self.assertEqual(response.status_code, 401)
+
+    def test_invalid_bearer_keyword(self):
+        team = TeamFactory()
+        url = reverse('team_info', kwargs={
+            'team_token': team.token,
+        })
+        api_token = APIToken()
+        api_token.save()
+        response = self.client.get(url, HTTP_AUTHORIZATION=f'Bear {api_token.token}')
+        self.assertEqual(response.status_code, 401)
+
+    def test_short_authorization(self):
+        team = TeamFactory()
+        url = reverse('team_info', kwargs={
+            'team_token': team.token,
+        })
+        api_token = APIToken()
+        api_token.save()
+        response = self.client.get(url, HTTP_AUTHORIZATION=f'{api_token.token}')
+        self.assertEqual(response.status_code, 401)
+
+    def test_long_authorization(self):
+        team = TeamFactory()
+        url = reverse('team_info', kwargs={
+            'team_token': team.token,
+        })
+        api_token = APIToken()
+        api_token.save()
+        response = self.client.get(url, HTTP_AUTHORIZATION=f'Bearer {api_token.token} bears')
+        self.assertEqual(response.status_code, 401)
+
+    def test_invalid_team_token(self):
+        TeamFactory()
+        url = reverse('team_info', kwargs={
+            'team_token': uuid.uuid4(),
+        })
+        api_token = APIToken()
+        api_token.save()
+        response = self.client.get(url, HTTP_AUTHORIZATION=f'Bearer {api_token.token}')
+        self.assertEqual(response.status_code, 404)
+
+    def test_team_found(self):
+        team = TeamFactory()
+        url = reverse('team_info', kwargs={
+            'team_token': team.token,
+        })
+        api_token = APIToken()
+        api_token.save()
+        response = self.client.get(url, HTTP_AUTHORIZATION=f'Bearer {api_token.token}')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['team']['name'], team.name)
