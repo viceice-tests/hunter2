@@ -44,7 +44,7 @@ services:
     volumes:
       - metrics:/prometheus
   redis:
-    image: redis:5.0.10-alpine3.12@sha256:9e0926fe90cef2fc4e435fbcb63c273d34ac9b05de6545cb92d708ccdb7f823f
+    image: redis:5.0.10-alpine3.12@sha256:cab1de051c243a956749397af796d50bf235c7183e88bc4667259f66cad4f748
     volumes:
       - redis:/data
   redis_exporter:
