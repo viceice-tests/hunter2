@@ -488,14 +488,14 @@ redis = "<4.0"
 
 [[package]]
 name = "django-seal"
-version = "1.3.0"
+version = "1.4.0"
 description = "Allows ORM constructs to be sealed to prevent them from executing queries on attribute accesses."
 category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-Django = ">=1.11"
+Django = ">=2.2"
 
 [[package]]
 name = "django-sendfile"
@@ -1328,7 +1328,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<3.9"
-content-hash = "89a39b33cde5e4dbc44d4e1fdbdff58f7920c80cde987b54df2327e8154db502"
+content-hash = "84205328a9cd2970fa8555c66805e6d9631629b4e6ac8a59814715fe1f480c41"
 
 [metadata.files]
 aioredis = [
@@ -1575,8 +1575,8 @@ django-redis-cache = [
     {file = "django-redis-cache-3.0.0.tar.gz", hash = "sha256:9a2eebef421d996a82098a19d17ff6b321265cd73178fa398913019764e8394a"},
 ]
 django-seal = [
-    {file = "django-seal-1.3.0.tar.gz", hash = "sha256:a1e4d6000ba8c36b578db876342557bb18aac5aba7dfa932d27a5baaff013f03"},
-    {file = "django_seal-1.3.0-py2.py3-none-any.whl", hash = "sha256:a1865c1bb3782d3c70a2fe3e8d1b3b87092199227f0671d439d2ee3d441b7ed2"},
+    {file = "django-seal-1.4.0.tar.gz", hash = "sha256:919df41bb087f1abd7a6236b8ac0712919c66cde0b0fd04857c64e3f6cd948c0"},
+    {file = "django_seal-1.4.0-py2.py3-none-any.whl", hash = "sha256:3746bf938d334de7eac5a388a7cc1c40c3448f71478016e062e1739dc31605e6"},
 ]
 django-sendfile = [
     {file = "django-sendfile-0.3.11.tar.gz", hash = "sha256:f3065a55e602d002af327fe785449ff0a619b6f46ad2cb84730ccb49b31a73ca"},
