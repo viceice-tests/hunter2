@@ -32,11 +32,3 @@
 		{% endif %}
 	{% endif %}
 {% endblock %}
-
-{% block announcements %}
-	{% for announcement in announcements %}
-		<div class="alert {{ announcement.type.css_class }}{% if announcement.special %} special{% endif %}" role="alert" data-announcement-id="{{ announcement.id }}">
-			<strong>{{ announcement.title|safe }}</strong> {{ announcement.message|safe }}
-		</div>
-	{% endfor %}
-{% endblock %}

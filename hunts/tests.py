@@ -1676,7 +1676,7 @@ class AnnouncementWebsocketTests(AsyncEventTestCase):
         self.assertEqual(output['content']['announcement_id'], announcement.id)
         self.assertEqual(output['content']['title'], announcement.title)
         self.assertEqual(output['content']['message'], announcement.message)
-        self.assertEqual(output['content']['css_class'], announcement.type.css_class)
+        self.assertEqual(output['content']['variant'], announcement.type.variant)
 
         announcement.message = 'different'
         announcement.save()
@@ -1686,7 +1686,7 @@ class AnnouncementWebsocketTests(AsyncEventTestCase):
         self.assertEqual(output['content']['announcement_id'], announcement.id)
         self.assertEqual(output['content']['title'], announcement.title)
         self.assertEqual(output['content']['message'], 'different')
-        self.assertEqual(output['content']['css_class'], announcement.type.css_class)
+        self.assertEqual(output['content']['variant'], announcement.type.variant)
 
         self.run_async(comm.disconnect)()
 
@@ -2207,7 +2207,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertEqual(output['content']['announcement_id'], announcement.id)
         self.assertEqual(output['content']['title'], announcement.title)
         self.assertEqual(output['content']['message'], announcement.message)
-        self.assertEqual(output['content']['css_class'], announcement.type.css_class)
+        self.assertEqual(output['content']['variant'], announcement.type.variant)
 
         announcement.message = 'different'
         announcement.save()
@@ -2217,7 +2217,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertEqual(output['content']['announcement_id'], announcement.id)
         self.assertEqual(output['content']['title'], announcement.title)
         self.assertEqual(output['content']['message'], 'different')
-        self.assertEqual(output['content']['css_class'], announcement.type.css_class)
+        self.assertEqual(output['content']['variant'], announcement.type.variant)
 
         self.run_async(comm.disconnect)()
 
@@ -2235,7 +2235,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertEqual(output['content']['announcement_id'], ann.id)
         self.assertEqual(output['content']['title'], ann.title)
         self.assertEqual(output['content']['message'], ann.message)
-        self.assertEqual(output['content']['css_class'], ann.type.css_class)
+        self.assertEqual(output['content']['variant'], ann.type.variant)
 
         ann.message = 'different'
         ann.save()
@@ -2245,7 +2245,7 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
         self.assertEqual(output['content']['announcement_id'], ann.id)
         self.assertEqual(output['content']['title'], ann.title)
         self.assertEqual(output['content']['message'], 'different')
-        self.assertEqual(output['content']['css_class'], ann.type.css_class)
+        self.assertEqual(output['content']['variant'], ann.type.variant)
 
         # Create an announcement for another puzzle and check we don't hear about it
         pz2 = PuzzleFactory()

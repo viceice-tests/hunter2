@@ -108,7 +108,7 @@ class HuntWebsocket(EventMixin, TeamMixin, JsonWebsocketConsumer):
                 'announcement_id': announcement.id,
                 'title': announcement.title,
                 'message': announcement.message,
-                'css_class': announcement.type.css_class
+                'variant': announcement.type.variant
             }
         })
 

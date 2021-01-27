@@ -1,4 +1,4 @@
-# Copyright (C) 2018 The Hunter2 Contributors.
+# Copyright (C) 2018-2021 The Hunter2 Contributors.
 #
 # This file is part of Hunter2.
 #
@@ -34,7 +34,6 @@ admin.site.login = login_required(admin.site.login)
 admin.site.logout = allauth_logout
 
 urlpatterns = [
-    path('accounts/', include('allauth.urls')),
     path('admin/crud/', admin.site.urls),
     path('nested_admin/', include('nested_admin.urls')),
     path('privacy', PrivacyView.as_view(), name='privacy'),

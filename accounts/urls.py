@@ -1,4 +1,4 @@
-# Copyright (C) 2018 The Hunter2 Contributors.
+# Copyright (C) 2018-2021 The Hunter2 Contributors.
 #
 # This file is part of Hunter2.
 #
@@ -11,10 +11,12 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.urls import path
+from django.urls import include, path
 from . import views
 
 urlpatterns = [
+    path('accounts/password/change/', views.PasswordChangeView.as_view(), name='account_change_password'),
+    path('accounts/', include('allauth.urls')),
     path('profile/<uuid:pk>', views.ProfileView.as_view(), name='profile'),
     path('profile/edit', views.EditProfileView.as_view(), name='edit_profile'),
     path('userprofile_autocomplete/', views.UserProfileAutoComplete.as_view(), name='userprofile_autocomplete'),
