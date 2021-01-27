@@ -83,8 +83,8 @@ class ManageTeamView(LoginRequiredMixin, TeamMixin, TemplateView):
             }
         context['token'] = request.team.token
         if request.tenant:
-            context['discord_url'] = request.tenant.discord_url,
-            context['discord_bot_id'] = request.tenant.discord_bot_id,
+            context['discord_url'] = request.tenant.discord_url
+            context['discord_bot_id'] = request.tenant.discord_bot_id
         return context
 
 

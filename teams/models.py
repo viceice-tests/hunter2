@@ -40,7 +40,7 @@ class Team(SealableModel):
     members = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='teams')
     invites = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='team_invites')
     requests = models.ManyToManyField(accounts.models.UserProfile, blank=True, related_name='team_requests')
-    token = models.UUIDField(default=uuid.uuid4, editable=False)
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     def __str__(self):
         return '%s @%s' % (self.get_verbose_name(), self.at_event)

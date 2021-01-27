@@ -4,6 +4,13 @@ from django.db import migrations, models
 import uuid
 
 
+def gen_uuid(apps, schema_editor):
+    Team = apps.get_model('teams', 'Team')
+    for row in Team.objects.all():
+        row.token = uuid.uuid4()
+        row.save(update_fields=['token'])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -15,5 +22,8 @@ class Migration(migrations.Migration):
             model_name='team',
             name='token',
             field=models.UUIDField(default=uuid.uuid4, editable=False),
+        ),
+        migrations.RunPython(
+            code=gen_uuid,
         ),
     ]
