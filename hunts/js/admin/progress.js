@@ -1,13 +1,19 @@
-import $ from 'jquery'
-import {BTable} from 'bootstrap-vue'
+import {BButton, BCardBody, BCardHeader, BCardText, BCollapse, BTable, VBToggle} from 'bootstrap-vue'
 import ProgressState from './state.vue'
-import URI from 'urijs'
 import DateTime from 'luxon/src/datetime.js'
 
 export default {
   components: {
+    'b-button': BButton,
+    'b-card-body': BCardBody,
+    'b-card-header': BCardHeader,
+    'b-card-text': BCardText,
+    'b-collapse': BCollapse,
     'b-table': BTable,
     'progress-state': ProgressState,
+  },
+  directives: {
+    'b-toggle': VBToggle,
   },
   computed: {
     episodes: function () {
@@ -139,22 +145,25 @@ export default {
     updateData: function(force) {
       clearTimeout(this.timer)
       if (force || this.autoUpdate) {
-        let url = URI(this.href)
         let v = this
-        $.get(url).done(function(data) {
-          let old_puzzle_length = v.puzzles.length
-          let old_oldest_latest_guess = v.oldest_latest_guess
-          let old_max_total_guesses = v.max_total_guesses
-          v.puzzles = data.puzzles
-          v.team_progress = data.team_progress
+        fetch(this.href).then(
+          response => response.json(),
+        ).then(
+          data => {
+            let old_puzzle_length = v.puzzles.length
+            let old_oldest_latest_guess = v.oldest_latest_guess
+            let old_max_total_guesses = v.max_total_guesses
+            v.puzzles = data.puzzles
+            v.team_progress = data.team_progress
 
-          if (v.filters.open_puzzles[1] === old_puzzle_length)
-            v.filters.open_puzzles[1] = v.puzzles.length
-          if (v.filters.latest_guess[1] === old_oldest_latest_guess)
-            v.filters.latest_guess[1] = v.oldest_latest_guess
-          if (v.filters.total_guesses[1] === old_max_total_guesses)
-            v.filters.total_guesses[1] = v.max_total_guesses
-        })
+            if (v.filters.open_puzzles[1] === old_puzzle_length)
+              v.filters.open_puzzles[1] = v.puzzles.length
+            if (v.filters.latest_guess[1] === old_oldest_latest_guess)
+              v.filters.latest_guess[1] = v.oldest_latest_guess
+            if (v.filters.total_guesses[1] === old_max_total_guesses)
+              v.filters.total_guesses[1] = v.max_total_guesses
+          },
+        )
         if (this.autoUpdate) {
           this.timer = setTimeout(this.updateData, 5000)
         }

@@ -5,19 +5,12 @@
 	</div>
 
 	<div class="card" id="admin-progress-filters-key">
-		<button id="admin-progress-filters-header"
-				class="btn card-header collapsed"
-				type="button"
-				data-toggle="collapse"
-				data-target="#filter-help-body"
-				aria-expanded="true"
-				aria-controls="filter-help-body">
-			<span id="filters-expanded"/>
-			<h3>Filters &amp; Help...</h3>
-		</button>
-		<div id="filter-help-body" class="card-body collapse">
-			<div class="d-flex flex-row justify-content-between">
-				<div id="admin-progress-filters-container" class="p-2 flex-grow-1">
+		<b-card-header id="admin-progress-filters-header">
+			<b-button block variant="light" v-b-toggle.filter-help-body>Filters &amp; Help...</b-button>
+		</b-card-header>
+		<b-collapse id="filter-help-body">
+			<b-card-body class="d-flex flex-row justify-content-between">
+				<b-card-text id="admin-progress-filters-container" class="p-2 flex-grow-1">
 					<h4>Filters</h4>
 					<span class="glyphicon glyphicon-plus"/>
 					<p><a href="?" v-on:click.prevent="clearFilters">Reset</a></p>
@@ -53,8 +46,8 @@
 							range
 							:max="max_total_guesses"
 					></el-slider>
-				</div>
-				<div id="admin-progress-key-container" class="p-4">
+				</b-card-text>
+				<b-card-text id="admin-progress-key-container" class="p-4">
 					<h4>Key</h4>
 					<table class="card-body">
 						<thead>
@@ -96,9 +89,9 @@
 							</tr>
 						</tbody>
 					</table>
-				</div>
-			</div>
-		</div>
+				</b-card-text>
+			</b-card-body>
+		</b-collapse>
 	</div>
 	<b-table class="admin-progress-table" :fields="fields" :items="progress_data">
 		<template v-slot:cell(team)="team">

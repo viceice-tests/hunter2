@@ -1,4 +1,5 @@
 import $ from 'jquery'
+import Cookies from 'js-cookie'
 import 'bootstrap/js/dist/collapse'
 import { easeLinear, format, select } from 'd3'
 import RobustWebSocket from 'robust-websocket'
@@ -7,6 +8,21 @@ import { encode } from 'html-entities'
 import 'hunter2/js/base'
 
 import '../scss/puzzle.scss'
+
+function csrfSafeMethod(method) {
+  // these HTTP methods do not require CSRF protection
+  return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method))
+}
+
+let csrftoken = Cookies.get('csrftoken')
+$.ajaxSetup({
+  beforeSend: function(xhr, settings) {
+    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+      xhr.setRequestHeader('X-CSRFToken', csrftoken)
+    }
+  },
+  contentType: 'application/json',
+})
 
 /* global unlocks, hints */
 
