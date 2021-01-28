@@ -3,6 +3,7 @@
 import $ from 'expose-loader?exposes[]=$&exposes[]=jQuery!jquery'
 
 import 'hunter2/js/base.js'
+import 'hunter2/js/csrf.js'
 import * as invite from './invite.js'
 import * as request from './request.js'
 
