@@ -554,7 +554,7 @@ class TeamAdminDetailContent(LoginRequiredMixin, View):
                 queryset=models.Guess.objects.filter(
                     by_team_id=team_id
                 ).order_by(
-                    'given'
+                    '-given'
                 ).select_related('by', 'by__user')
             ),
             Prefetch(

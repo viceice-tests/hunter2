@@ -1175,6 +1175,36 @@ class AdminContentTests(EventTestCase):
         self.assertEqual(response_json['solved_puzzles'][0]['id'], puzzle2.id)
         self.assertEqual(response_json['puzzles'][0]['num_guesses'], 1)
 
+    def test_admin_team_detail_content_guesses(self):
+        # Create a user/team that's made >5 guesses
+        user = TeamMemberFactory(team__at_event=self.tenant)
+        team = user.team_at(self.tenant)
+        now = timezone.now()
+        guesses = GuessFactory.create_batch(10, for_puzzle=self.puzzle, by=user)
+        # The guesses get forced to the current time when created, we have to override afterwards
+        for i, guess in enumerate(guesses):
+            guess.given = now - datetime.timedelta(minutes=i)
+            guess.save()
+        tp_data = TeamPuzzleDataFactory(team=team, puzzle=self.puzzle)
+        # FIXME: the above does not give tp_data a start_time :S
+        tp_data.start_time = timezone.now() - datetime.timedelta(minutes=20)
+        tp_data.save()
+
+        self.client.force_login(self.admin_user.user)
+        url = reverse('admin_team_detail_content', kwargs={'team_id': team.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        response_json = response.json()
+
+        self.assertTrue('puzzles' in response_json)
+        self.assertEqual(len(response_json['puzzles']), 1)
+        self.assertEqual(response_json['puzzles'][0]['id'], self.puzzle.id)
+        self.assertEqual(response_json['puzzles'][0]['guesses'], [{
+            'user': guess.by.username,
+            'guess': guess.guess,
+            'given': guess.given.isoformat(timespec='milliseconds').replace('+00:00', 'Z'),
+        } for guess in guesses[:5]])
+
     def test_admin_team_detail_content_hints(self):
         team = self.guesses[0].by_team
         member = self.guesses[0].by
