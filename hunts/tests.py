@@ -1,4 +1,4 @@
-# Copyright (C) 2018 The Hunter2 Contributors.
+# Copyright (C) 2018-2021 The Hunter2 Contributors.
 #
 # This file is part of Hunter2.
 #
@@ -2331,6 +2331,7 @@ class PlayerStatsViewTests(EventTestCase):
             # Ensure the event has a winning episode containing a puzzle, with a correct guess by a user
             puzzle = PuzzleFactory(episode__event=self.tenant, episode__winning=True)
             for i, user in enumerate(users):
+                TeamPuzzleDataFactory(puzzle=puzzle, team=user.team_at(self.tenant))
                 GuessFactory(for_puzzle=puzzle, correct=True, by=user, given=now - datetime.timedelta(minutes=len(users) - i))
             self.tenant.end_date = now + datetime.timedelta(minutes=1)
             self.tenant.save()
