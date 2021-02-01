@@ -1076,7 +1076,7 @@ python-versions = "*"
 
 [[package]]
 name = "schema"
-version = "0.7.2"
+version = "0.7.4"
 description = "Simple data validation library"
 category = "main"
 optional = false
@@ -1328,7 +1328,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<3.9"
-content-hash = "4a0707b8e1343247d436f3a4c696f8c1b1f6ab7de47a3e1bf3d7b4d6948767ec"
+content-hash = "9c0cbe8a1710916b627e3d9b3cb8ef9e7053161783df0346846bfb05ea827abd"
 
 [metadata.files]
 aioredis = [
@@ -2010,8 +2010,8 @@ rules = [
     {file = "rules-2.2.tar.gz", hash = "sha256:9bae429f9d4f91a375402990da1541f9e093b0ac077221d57124d06eeeca4405"},
 ]
 schema = [
-    {file = "schema-0.7.2-py2.py3-none-any.whl", hash = "sha256:3a03c2e2b22e6a331ae73750ab1da46916da6ca861b16e6f073ac1d1eba43b71"},
-    {file = "schema-0.7.2.tar.gz", hash = "sha256:b536f2375b49fdf56f36279addae98bd86a8afbd58b3c32ce363c464bed5fc1c"},
+    {file = "schema-0.7.4-py2.py3-none-any.whl", hash = "sha256:cf97e4cd27e203ab6bb35968532de1ed8991bce542a646f0ff1d643629a4945d"},
+    {file = "schema-0.7.4.tar.gz", hash = "sha256:fbb6a52eb2d9facf292f233adcc6008cffd94343c63ccac9a1cb1f3e6de1db17"},
 ]
 sentry-sdk = [
     {file = "sentry-sdk-0.19.5.tar.gz", hash = "sha256:737a094e49a529dd0fdcaafa9e97cf7c3d5eb964bd229821d640bc77f3502b3f"},
