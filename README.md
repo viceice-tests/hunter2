@@ -48,7 +48,11 @@ docker-compose run --rm app createevent
 ```
 
 Load an event page (such as [http://dev.hunter2.local:8080/hunt/](http://dev.hunter2.local:8080/hunt/)) and log in.
-This implicitly creates a profile for you, and then you can strugle make an admin team.
+This implicitly creates a profile for you.
+
+To access the hunter2 admin functionality, create a team normally and then use the Django admin interface
+at `/admin/crud` (e.g. [http://dev.hunter2.local:8080/admin/crud/](http://dev.hunter2.local:8080/admin/crud/))
+to change the team's role to "Admin". The normal hunt pages will then have an "Admin site" link at the top.
 
 ### Profiling ###
 To enable performance profiling with silk, do:
