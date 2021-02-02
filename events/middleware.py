@@ -62,7 +62,7 @@ def get_tenant(scope):
     try:
         return Domain.objects.get(domain=domain).tenant
     except Domain.DoesNotExist:
-        raise ValueError(f'No tenant Domain matching origin {domain}')
+        return None
 
 
 class TenantLazyObject(LazyObject):
@@ -75,6 +75,8 @@ class TenantLazyObject(LazyObject):
 
 class TenantWebsocketMiddleware(BaseMiddleware):
     def populate_scope(self, scope):
+        """Put a tenant on the scope. Sets it to None if this can't be done so that the
+        consumer can deal with the situation."""
         headers = dict(scope['headers'])
 
         if settings.USE_X_FORWARDED_HOST and b'x-forwarded-host' in headers:
@@ -85,7 +87,8 @@ class TenantWebsocketMiddleware(BaseMiddleware):
         try:
             host = host_header.decode('idna')
         except UnicodeDecodeError:
-            raise ValueError('TenantWebsocketMiddleware got malformed origin %s' % headers[b'host'])
+            scope['tenant'] = None
+            return
 
         # urlparse will fail to parse an absolute URL without initial //
         scope['domain'] = urlparse('//' + host).hostname

@@ -20,7 +20,10 @@ def activate_tenant(f):
         try:
             self.scope['tenant'].activate()
         except (AttributeError, KeyError):
-            raise ValueError('%s has no scope or no tenant on its scope' % self)
+            # The Middleware couldn't find a tenant for us, so probably the domain is bad.
+            # anyway, just reject the connection.
+            self.close(4401)
+            return
         return f(self, *args, **kwargs)
 
     return wrapper
@@ -38,4 +41,4 @@ class EventMixin:
         if handler:
             handler(message)
         else:
-            raise ValueError("No handler for message type %s" % message["type"])
+            self.close(4401)

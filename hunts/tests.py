@@ -26,7 +26,7 @@ from channels.testing import WebsocketCommunicator
 
 from accounts.factories import UserProfileFactory, UserFactory
 from events.factories import EventFileFactory, AttendanceFactory
-from events.test import EventTestCase, AsyncEventTestCase
+from events.test import EventTestCase, AsyncEventTestCase, ScopeOverrideCommunicator
 from hunter2.routing import application as websocket_app
 from teams.models import TeamRole
 from teams.factories import TeamFactory, TeamMemberFactory
@@ -1738,6 +1738,15 @@ class PuzzleWebsocketTests(AsyncEventTestCase):
     def test_anonymous_access_fails(self):
         comm = WebsocketCommunicator(websocket_app, self.url, headers=self.headers)
         connected, subprotocol = self.run_async(comm.connect)()
+
+        self.assertFalse(connected)
+
+    def test_bad_domain(self):
+        user = TeamMemberFactory()
+        headers = dict(self.headers)
+        headers[b'host'] = b'__BAD__.hunter2.local'
+        comm = ScopeOverrideCommunicator(websocket_app, self.url, {'user': user.user}, headers=tuple(headers.items()))
+        connected, _ = self.run_async(comm.connect)()
 
         self.assertFalse(connected)
 
