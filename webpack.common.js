@@ -19,7 +19,12 @@ module.exports = {
     hunts_event:             'hunts/js/event.js',
     hunts_puzzle:            'hunts/js/puzzle.js',
     hunts_stats:             'hunts/js/stats.js',
+    hunts_stats_progress:    'hunts/stats/js/progress.js',
     teams_manage:            'teams/js/manage.js',
+  },
+
+  externals: {
+    moment: 'moment',  // We don't want to let moment end up in our bundles
   },
 
   module: {

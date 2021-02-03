@@ -1,4 +1,4 @@
-# Copyright (C) 2020 The Hunter2 Contributors.
+# Copyright (C) 2020-2021 The Hunter2 Contributors.
 #
 # This file is part of Hunter2.
 #
@@ -12,12 +12,14 @@
 
 
 from .leaders import LeadersGenerator
+from .progress import ProgressGenerator
 from .top_guesses import TopGuessesGenerator
 from .totals import TotalsGenerator
 
 # __all__ is iterated elsewhere, so it should only contain generator subclasses
 __all__ = (
     LeadersGenerator,
+    ProgressGenerator,
     TopGuessesGenerator,
     TotalsGenerator,
 )
