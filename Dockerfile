@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.1.3-experimental
 # Construct a common base image for creating python wheels and the final image
-FROM python:3.8.5-alpine3.12@sha256:cbc08bfc4b1b732076742f52852ede090e960ab7470d0a60ee4f964cfa7c710a AS runtime_base
+FROM python:3.8.7-alpine3.13@sha256:fddd3a0eeb324352838c2a53451d9c489159a9d0da3d8fa75bc301073159b8a0 AS runtime_base
 
 RUN --mount=type=cache,target=/var/cache/apk apk add \
     lua5.2 \
@@ -45,7 +45,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 
 # Build all the required Lua components
-FROM alpine:3.12@sha256:3c7497bf0c7af93428242d6176e8f7905f2201d8fc5861f45be7a346b5f23436 AS lua_build
+FROM alpine:3.13.1@sha256:3747d4eb5e7f0825d54c8e80452f1e245e24bd715972c919d189a62da97af2ae AS lua_build
 
 COPY hunts/runtimes/lua/luarocks/config.lua /etc/luarocks/config-5.2.lua
 
@@ -63,7 +63,7 @@ RUN --mount=type=cache,target=/root/.cache/luarocks \
 
 
 # Build the production webpack'ed assets
-FROM node:12.20.2-alpine3.12@sha256:361042d98d4a17bae412f140c9bd9e9bf2512206141fdae6a1384298b887c5d6 as webpack_build
+FROM node:14.15.5-alpine3.13@sha256:17dc61b31b2a12a1390b5a4e2e69b0d0886a0d77647f88c5a33787ac457fa83e as webpack_build
 
 WORKDIR /opt/hunter2/src
 
