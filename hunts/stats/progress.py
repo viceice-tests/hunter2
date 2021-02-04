@@ -13,14 +13,14 @@
 import json
 from datetime import datetime
 
-from django.db.models import Min
+from django.db.models import F, Min, Q
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from schema import And, Schema
 
 from teams.models import TeamRole
 from .abstract import AbstractGenerator
-from ..models import Episode, Guess, TeamPuzzleData
+from ..models import Episode, TeamPuzzleData
 
 
 class ProgressGenerator(AbstractGenerator):
@@ -31,7 +31,7 @@ class ProgressGenerator(AbstractGenerator):
     """
     id = 'progress'
     title = 'Progress Graph'
-    version = 1
+    version = 2
 
     template = 'hunts/stats/progress.html'
 
@@ -65,40 +65,54 @@ class ProgressGenerator(AbstractGenerator):
         results = []
 
         for episode in episodes:
-            tp_datas = TeamPuzzleData.objects.filter(
-                puzzle__episode=episode, start_time__isnull=False,
-            ).order_by('start_time')
-
             by_team = {}
+            tp_datas = TeamPuzzleData.objects.filter(
+                team__role=TeamRole.PLAYER,
+                puzzle__episode=episode,
+                start_time__isnull=False,
+            ).annotate(
+                completion_time=Min('puzzle__guess__given', filter=Q(
+                    puzzle__guess__by_team=F('team'),
+                    puzzle__guess__correct_current=True,
+                    puzzle__guess__correct_for__isnull=False,
+                ))
+            ).order_by(
+                'completion_time',
+            ).select_related(
+                'puzzle',
+                'team',
+            )
 
             for tp_data in tp_datas:
-                if tp_data.team.id not in by_team:
-                    by_team[tp_data.team.id] = {
-                        'team_id': tp_data.team.id,
+                team_id = tp_data.team.id
+                # If users changed team they may have a solving guess for a puzzle from before their new team's start time which is wonky
+                # Take the minimum of progress time and start time to be the start time
+                adjusted_start_time = min(tp_data.start_time, tp_data.completion_time) if tp_data.completion_time else tp_data.start_time
+                if team_id not in by_team:
+                    by_team[team_id] = {
+                        'team_id': team_id,
                         # We have to escape team names here since they are encoded in JSON which is marked safe later
                         'team_name': escape(tp_data.team.get_display_name()),
                         'puzzle_times': [{
                             'puzzle_name': '',
-                            'date': tp_data.start_time.isoformat(),
+                            # Keep the overall start time as a Python datetime to allow comparison below
+                            # We'll format them later.
+                            'date': adjusted_start_time,
                         }]
                     }
+                # In a parallel episode the earliest start time need not have been on the earliest completion time
+                elif adjusted_start_time < by_team[team_id]['puzzle_times'][0]['date']:
+                    by_team[team_id]['puzzle_times'][0]['date'] = adjusted_start_time
 
-            correct_guesses = Guess.objects.filter(
-                correct_current=True, correct_for__isnull=False, for_puzzle__episode=episode, by_team__role=TeamRole.PLAYER,
-            ).select_related(
-                'by_team',
-                'for_puzzle',
-            ).values(
-                'by_team', 'for_puzzle__title', 'given',
-            ).annotate(
-                min_given=Min('given'),
-            ).order_by('min_given')
+                if tp_data.completion_time:
+                    by_team[team_id]['puzzle_times'].append({
+                        'puzzle_name': tp_data.puzzle.title,
+                        'date': tp_data.completion_time.isoformat(),
+                    })
 
-            for guess in correct_guesses:
-                by_team[guess['by_team']]['puzzle_times'].append({
-                    'puzzle_name': guess['for_puzzle__title'],
-                    'date': guess['given'].isoformat(),
-                })
+            # Format the start dates now we've finished comparing them
+            for team_data in by_team.values():
+                team_data['puzzle_times'][0]['date'] = team_data['puzzle_times'][0]['date'].isoformat()
 
             data = {
                 'teams': [team for team in by_team.values() if len(team['puzzle_times']) > 1],
