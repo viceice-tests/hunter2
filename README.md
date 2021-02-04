@@ -5,9 +5,10 @@ Development Environment
 -----------------------
 
 Hunter 2 requires the following minimum versions to build:
-| -------------- | ------ |
-| docker-engine  | 18.09  |
-| docker-compose | 1.25.1 |
+| Dependency     | Version |
+| -------------- | ------- |
+| docker-engine  | 18.09   |
+| docker-compose | 1.25.1  |
 
 We need to export some variables to enable the build features we are using:
 ```shell
@@ -83,6 +84,12 @@ docker-compose run --rm app createsuperuser
 docker-compose run --rm app createevent
 ```
 
+Development
+===========
+
+Hunter 2 development happens on [our Discord](https://discord.gg/9jZEcr6FwT).
+Please join us there if you want to get involved.
+
 Development Process
 -------------------
 
@@ -121,7 +128,7 @@ h2-flake8
 These commands are helpfully combined in a `h2-lint` alias to run both together.
 
 Copyright
-=======
+=========
 Hunter 2 is a platform for running online puzzle hunts. Further information can be found at https://www.hunter2.app/ including details of contributors.
 
 Copyright (C) 2017-2019  The Hunter 2 contributors.
