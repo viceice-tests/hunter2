@@ -1,4 +1,4 @@
-# Copyright (C) 2018 The Hunter2 Contributors.
+# Copyright (C) 2018-2021 The Hunter2 Contributors.
 #
 # This file is part of Hunter2.
 #
@@ -24,7 +24,6 @@ from . import settings
 from .views import DefaultAdminView, DefaultIndexView, PrivacyView
 
 urlpatterns = [
-    path('accounts/', include('allauth.urls')),
     path('admin/', DefaultAdminView.as_view(), name='admin'),
     path('', DefaultIndexView.as_view(), name='index'),
     path('privacy', PrivacyView.as_view(), name='privacy'),

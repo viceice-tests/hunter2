@@ -1,4 +1,4 @@
-# Copyright (C) 2018 The Hunter2 Contributors.
+# Copyright (C) 2018-2021 The Hunter2 Contributors.
 #
 # This file is part of Hunter2.
 #
@@ -11,13 +11,14 @@
 # You should have received a copy of the GNU Affero General Public License along with Hunter2.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from allauth.account import views as allauth_views
 from allauth.account.forms import ChangePasswordForm, SetPasswordForm
 from dal import autocomplete
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic.detail import DetailView
 from django_tenants.utils import tenant_context
@@ -65,6 +66,10 @@ class ProfileView(DetailView):
                 except Team.DoesNotExist:
                     pass
         return context
+
+
+class PasswordChangeView(allauth_views.PasswordChangeView):
+    success_url = reverse_lazy('edit_profile')
 
 
 class EditProfileView(LoginRequiredMixin, View):

@@ -17,10 +17,29 @@
 
 	<title>{% block title %}{{ request.site.name }}{% endblock %}</title>
 
+	<script>
+	window.announcements = {
+		{% for announcement in announcements %}
+		{{ announcement.id }}: {
+			"text": "{{ announcement.message | safe }}",
+			"title": "{{ announcement.title | safe }}",
+			"variant": "{{ announcement.type.variant }}",
+		},
+		{% endfor %}
+	}
+	window.messages = [
+		{% for message in messages %}
+		{
+			"text": "{{ message }}",
+			"variant": "{{ message.tags }}",
+		},
+		{% endfor %}
+	]
 	{% if sentry_dsn %}
-	<script>window.sentry_dsn = '{{ sentry_dsn }}'</script>
+	window.sentry_dsn = '{{ sentry_dsn }}'
 	{% render_bundle 'sentry' 'js' %}
 	{% endif %}
+	</script>
 
 	{% block script %}
 	{% render_bundle 'hunter2' 'js' attrs='defer' %}
@@ -69,13 +88,13 @@
 	{% block debug %}{% endblock %}
 
 	{# Annoucements & Javascript Warning #}
-	<aside id="announcements" class="container-fluid pt-3">
+	<aside id="alerts" class="container-fluid pt-3">
 		<noscript>
 			<div class="alert alert-danger" role="alert">
 				<strong>You do not have JavaScript Enabled</strong> JavaScript is required to access and take part in a hunt.
 			</div>
 		</noscript>
-		{% block announcements %}{% endblock %}
+		<div id="alert-list" />
 	</aside>
 
 	{% comment %}
