@@ -6,15 +6,13 @@ FROM ${IMAGE_TAG} AS app
 USER root
 RUN /opt/hunter2/venv/bin/python manage.py collectstatic
 
-FROM alpine:3.12@sha256:3c7497bf0c7af93428242d6176e8f7905f2201d8fc5861f45be7a346b5f23436
+FROM openresty/openresty:1.19.3.1-2-alpine
 
-RUN --mount=type=cache,target=/var/cache/apk apk add \
-    nginx \
-    nginx-mod-http-lua
+RUN --mount=type=cache,target=/var/cache/apk apk add -t opm \
+    curl \
+    perl \
+ && opm get knyar/nginx-lua-prometheus=0.20201118 \
+ && apk del --no-cache opm
 
-ADD https://raw.githubusercontent.com/knyar/nginx-lua-prometheus/379c0a4d4d6f3c5b0eb93691fc7e14fff498e1ca/prometheus.lua /usr/lib/lua/5.1/
-
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY default.conf /etc/nginx/conf.d/default.conf
 COPY --from=app /static /static
-
-CMD ["nginx", "-g", "daemon off;"]
