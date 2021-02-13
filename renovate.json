@@ -11,7 +11,8 @@
     },
     {
       "updateTypes": ["patch", "pin", "digest", "lockFileMaintenance"],
-      "automerge": true
+      "automerge": true,
+      "automergeType": "branch"
     }
   ],
   "pinDigests": true,
