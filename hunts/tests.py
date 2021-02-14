@@ -16,7 +16,8 @@ import random
 import time
 
 import freezegun
-from django.core.exceptions import ValidationError
+from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import transaction
 from django.test import RequestFactory
 from django.urls import reverse
@@ -26,8 +27,10 @@ from channels.testing import WebsocketCommunicator
 
 from accounts.factories import UserProfileFactory, UserFactory
 from events.factories import EventFileFactory, AttendanceFactory
-from events.test import EventTestCase, AsyncEventTestCase, ScopeOverrideCommunicator
+from events.models import Event
+from events.test import EventAwareTestCase, EventTestCase, AsyncEventTestCase, ScopeOverrideCommunicator
 from hunter2.routing import application as websocket_app
+from hunter2.views import DefaultEventView
 from teams.models import TeamRole
 from teams.factories import TeamFactory, TeamMemberFactory
 from . import utils
@@ -129,6 +132,37 @@ class FactoryTests(EventTestCase):
     @staticmethod
     def test_announcement_factory_default_construction():
         AnnouncementFactory.create()
+
+
+class SiteSetupTest(EventAwareTestCase):
+    def test_error_on_site_not_setup(self):
+        # Check there is no event setup
+        self.assertEqual(0, Event.objects.count())
+
+        request = RequestFactory().get("/")
+        view = DefaultEventView()
+        view.setup(request)
+
+        with self.assertRaises(ImproperlyConfigured) as context:
+            view.get_redirect_url()
+        self.assertIn("README", str(context.exception))
+
+    def test_error_on_no_event(self):
+        # Check there is no event already setup
+        self.assertEqual(0, Event.objects.count())
+
+        site = Site.objects.get()
+        site.domain = "hunter2.local"
+        site.name = "hunter2.local"
+        site.save()
+
+        request = RequestFactory().get("/")
+        view = DefaultEventView()
+        view.setup(request)
+
+        with self.assertRaises(Event.DoesNotExist) as context:
+            view.get_redirect_url()
+        self.assertIn("README", str(context.exception))
 
 
 class ErrorTests(EventTestCase):
