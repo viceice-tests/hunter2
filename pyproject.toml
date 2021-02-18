@@ -7,7 +7,7 @@ license = "AGPL-3.0-or-later"
 
 [tool.poetry.dependencies]
 python = ">=3.7,<3.9"
-lupa = "^1.8"
+lupa = "1.9"
 coverage = "==5.3"
 
 
