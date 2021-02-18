@@ -2,17 +2,14 @@
   "extends": [
     "config:base"
   ],
-  "lockFileMaintenance": true,
+  "lockFileMaintenance": {
+    "enabled": true
+  },
   "packageRules": [
     {
       "datasources": ["docker"],
       "packageNames": ["python"],
       "versionScheme": "pep440"
-    },
-    {
-      "updateTypes": ["patch", "pin", "digest", "lockFileMaintenance"],
-      "automerge": true,
-      "automergeType": "branch"
     }
   ],
   "pinDigests": true,
